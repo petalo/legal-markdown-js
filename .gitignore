@@ -75,3 +75,6 @@ docs/api/
 
 # Prettier cache
 .prettiercache
+
+# Claude configuration
+.claude/
