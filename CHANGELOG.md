@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/petalo/legal-markdown-js/compare/v1.1.0...v1.1.1) (2025-07-17)
+
+### Bug Fixes
+
+- update Node.js version requirements and CI matrix
+  ([c5acf3a](https://github.com/petalo/legal-markdown-js/commit/c5acf3a98076aa90eaf3794c276f1df905150763))
+
 # [1.1.0](https://github.com/petalo/legal-markdown-js/compare/v1.0.1...v1.1.0) (2025-07-17)
 
 ### Features
