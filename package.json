@@ -1,7 +1,7 @@
 {
   "name": "legal-markdown-js",
   "version": "1.0.0",
-  "description": "Node.js implementation of LegalMarkdown for processing legal documents with markdown and YAML",
+  "description": "Node.js implementation of LegalMarkdown for processing legal documents with markdown and YAML - Complete feature parity with Ruby version",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
