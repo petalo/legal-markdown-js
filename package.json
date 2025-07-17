@@ -112,7 +112,7 @@
   },
   "files": ["dist", "README.md", "LICENSE"],
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": ["eslint --fix", "prettier --write"],
