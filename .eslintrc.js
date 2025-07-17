@@ -26,7 +26,7 @@ module.exports = {
     
     // Code style
     'max-len': ['warn', { code: 100, ignoreComments: true }],
-    'indent': ['error', 2],
+    'indent': ['error', 2, { 'SwitchCase': 1 }],
     'quotes': ['error', 'single'],
     'semi': ['error', 'always'],
   },
