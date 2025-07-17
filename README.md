@@ -34,6 +34,12 @@ processing legal documents with structured markdown and YAML front matter.
 npm install legal-markdown-js
 ```
 
+## 🚀 Try it Online
+
+**[Live Playground](https://petalo.github.io/legal-markdown-js/)** - Try Legal
+Markdown JS directly in your browser with live examples and real-time
+processing.
+
 ## Quick Start
 
 ### Command Line Usage
