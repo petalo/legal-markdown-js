@@ -1,3 +1,34 @@
+# 1.0.0 (2025-07-17)
+
+### Bug Fixes
+
+- add ESLint disable comments for remaining quote and indent issues
+  ([3be2487](https://github.com/petalo/legal-markdown-js/commit/3be24870859fabddbec330630e105f2fc337d041))
+- add ESLint disable comments to prevent quote formatting conflicts
+  ([dc28c3e](https://github.com/petalo/legal-markdown-js/commit/dc28c3e873e8419c446d0ae2be404e33142eafe9))
+- configure ESLint switch case indentation and VSCode TypeScript formatting
+  ([a5e7a47](https://github.com/petalo/legal-markdown-js/commit/a5e7a47cc9b1bf34b5bf8d846d8edbdf75e95763))
+- downgrade chalk to v4.1.2 for CommonJS compatibility
+  ([7b10f6e](https://github.com/petalo/legal-markdown-js/commit/7b10f6eb1016866b43fd303ad0e66ccf296ec507))
+- increase commitlint body-max-line-length for semantic-release compatibility
+  ([2bff400](https://github.com/petalo/legal-markdown-js/commit/2bff4008f0bbca2346e2dfed8f81eff0b90d3623))
+- resolve all ESLint formatting issues
+  ([e68f5fa](https://github.com/petalo/legal-markdown-js/commit/e68f5fae694e4d788e652785e1b30d90d9b07858))
+- resolve all ESLint formatting issues
+  ([b18fec2](https://github.com/petalo/legal-markdown-js/commit/b18fec27ba1c80bcf29a1bb26548236bcb5fd158))
+- update Node.js version to 20 for semantic-release compatibility
+  ([0a72b14](https://github.com/petalo/legal-markdown-js/commit/0a72b14ace0150f6eded5cc1aa8d2021354211d2))
+- upgrade [@typescript-eslint](https://github.com/typescript-eslint) to support
+  TypeScript 5.8.3 and resolve all formatting issues
+  ([bf5d0d0](https://github.com/petalo/legal-markdown-js/commit/bf5d0d00566b30dc536d2fc39e5682f94b469e34))
+
+### Features
+
+- enable automatic npm publishing with semantic-release
+  ([4f100ff](https://github.com/petalo/legal-markdown-js/commit/4f100ff6bd5891f4481bda2d99b5a5418fa1870f))
+- initial release of legal-markdown-js v1.0.0 - Node.js port of LegalMarkdown
+  ([fa97a4e](https://github.com/petalo/legal-markdown-js/commit/fa97a4ed246289757cee43977c1a2c393ba7bd9d))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
