@@ -1,10 +1,22 @@
+/**
+ * @fileoverview Tests for metadata exporter functionality
+ * 
+ * Tests the metadata exporter which handles:
+ * - JSON and YAML metadata export with custom output paths
+ * - YAML front matter with nested 'meta' key support
+ * - Selective metadata export with meta-include-original option
+ * - Custom output directory configuration
+ * - Dual format exports (both JSON and YAML simultaneously)
+ * - Error handling for missing directories and invalid data
+ */
+
 import { exportMetadata, filterMetadataForExport } from '../../../src/core/exporters/metadata-exporter';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
 describe('Metadata Export', () => {
-  const testDir = path.join(__dirname, 'temp');
+  const testDir = path.join(__dirname, '../../../tests/output/temp');
 
   beforeEach(() => {
     if (!fs.existsSync(testDir)) {
@@ -114,6 +126,7 @@ describe('Metadata Export', () => {
     });
 
     it('should handle nested YAML structures', () => {
+      // Tests complex hierarchical metadata structures for legal documents
       const metadata = {
         'meta-yaml-output': 'nested.yaml',
         document: {
@@ -269,6 +282,7 @@ describe('Metadata Export', () => {
 
   describe('Support meta-include-original: option', () => {
     it('should include only meta when meta-include-original is false', () => {
+      // Tests selective export - only the 'meta' object is exported when flag is false
       const metadata = {
         title: 'Original Title',
         author: 'Original Author',
@@ -453,10 +467,10 @@ describe('Metadata Export', () => {
         title: 'No Path Test'
       };
 
-      const result = exportMetadata(metadata, 'json');
+      const result = exportMetadata(metadata, 'json', testDir);
       
       expect(result.exportedFiles).toHaveLength(1);
-      expect(path.dirname(result.exportedFiles[0])).toBe(process.cwd());
+      expect(path.dirname(result.exportedFiles[0])).toBe(testDir);
     });
   });
 });

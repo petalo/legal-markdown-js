@@ -1,16 +1,38 @@
+/**
+ * @fileoverview Integration tests for Legal Markdown processing
+ *
+ * Tests complete document processing workflows including:
+ * - Full document processing with all features
+ * - Complex nested structures and numbering
+ * - Error handling and graceful degradation
+ * - Selective processing options
+ *
+ * These are integration tests because they test the entire Legal Markdown pipeline
+ * from YAML parsing through template processing to final document generation,
+ * involving multiple components working together (parser, template engine,
+ * header numbering, file imports, metadata export).
+ */
+
 import { processLegalMarkdown } from '../../src/index';
 import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Legal Markdown Integration', () => {
+  /** Temporary directory for test files */
   const testDir = path.join(__dirname, 'temp');
 
+  /**
+   * Setup test directory before each test
+   */
   beforeEach(() => {
     if (!fs.existsSync(testDir)) {
       fs.mkdirSync(testDir, { recursive: true });
     }
   });
 
+  /**
+   * Clean up test directory after each test
+   */
   afterEach(() => {
     if (fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
@@ -18,6 +40,15 @@ describe('Legal Markdown Integration', () => {
   });
 
   describe('Complete document processing workflow', () => {
+    /**
+     * Test comprehensive document processing with all features:
+     * - YAML metadata processing
+     * - Cross-references between data
+     * - Optional clauses with conditions
+     * - File imports
+     * - Header numbering with custom formats
+     * - Metadata export
+     */
     it('should process a complete legal document with all features', () => {
       // Create a partial import file
       const importContent = `ll. Payment Terms
@@ -35,7 +66,7 @@ parties:
     type: "Corporation"
     role: "Licensor"
   - name: "ClientCorp LLC"
-    type: "LLC" 
+    type: "LLC"
     role: "Licensee"
 effective_date: "2024-01-01"
 jurisdiction: "California"
@@ -43,7 +74,7 @@ governing_law: "California State Law"
 payment_days: 30
 late_fees_apply: true
 include_warranty: false
-meta-json-output: "agreement-metadata.json"
+meta-json-output: "tests/output/agreement-metadata.json"
 level-one: "Article %n."
 level-two: "Section %n.%s"
 level-three: "(%n)"
@@ -68,7 +99,7 @@ This Agreement shall be governed by |governing_law| in |jurisdiction|.`;
       const result = processLegalMarkdown(content, {
         basePath: testDir,
         exportMetadata: true,
-        exportFormat: 'json'
+        exportFormat: 'json',
       });
 
       // Verify content processing
@@ -102,6 +133,9 @@ This Agreement shall be governed by |governing_law| in |jurisdiction|.`;
       expect(result.exportedFiles?.length).toBeGreaterThan(0);
     });
 
+    /**
+     * Test deep header nesting (5 levels) with complex data structures and conditional clauses
+     */
     it('should handle complex nested structures', () => {
       const content = `---
 title: "Complex Legal Document"
@@ -156,6 +190,9 @@ Ultimate escalation to executive team.`;
       expect(result.content).not.toContain('Enterprise escalation procedures');
     });
 
+    /**
+     * Test error handling with null values and missing references
+     */
     it('should handle error scenarios gracefully', () => {
       const content = `---
 title: "Error Test Document"
@@ -180,6 +217,9 @@ This |missing_field| should remain unchanged.`;
       expect(result.content).toContain('This |missing_field| should remain unchanged');
     });
 
+    /**
+     * Test selective processing flags to disable specific features
+     */
     it('should support selective processing options', () => {
       const content = `---
 title: "Selective Processing Test"

@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tests for the cross-reference processor and value formatting
+ * 
+ * This test suite covers the |reference| substitution system:
+ * - Pipe notation |key| for referencing metadata values
+ * - Support for various data types (strings, numbers, dates, booleans)
+ * - Nested object and array access patterns
+ * - Automatic formatting for currency, dates, and special values
+ * - Edge cases like malformed references and missing values
+ */
+
 import { processCrossReferences, formatReferenceValue } from '../../../src/core/processors/reference-processor';
 
 describe('Cross-References', () => {
@@ -195,6 +206,10 @@ effective 2024-01-01.`);
       expect(result).toBe('Quantity: 100, Price: 29.99, Total: 2999');
     });
 
+    /**
+     * Tests automatic currency formatting for financial values
+     * Important for contract amount representation
+     */
     it('should handle currency amount formatting', () => {
       const content = `Payment amount: |payment_amount|`;
       const metadata = {

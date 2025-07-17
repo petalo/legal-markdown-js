@@ -1,0 +1,146 @@
+/* Legal Header Styles - Header Field Tracking Support */
+
+/* Base legal header styling */
+.legal-header {
+  display: block;
+  margin: 1em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Level-specific styling */
+.legal-header-level-1,
+.legal-article {
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin: 2em 0 1em 0;
+  border-bottom: 3px solid #333;
+  padding-bottom: 0.2em;
+}
+
+.legal-header-level-2,
+.legal-section {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #333;
+  margin: 1.5em 0 0.8em 0;
+  border-bottom: 1px solid #666;
+  padding-bottom: 0.1em;
+}
+
+.legal-header-level-3,
+.legal-subsection {
+  font-size: 1.1em;
+  font-weight: 500;
+  color: #444;
+  margin: 1em 0 0.5em 0;
+}
+
+.legal-header-level-4,
+.legal-sub-subsection {
+  font-size: 1.05em;
+  font-weight: 500;
+  color: #555;
+  margin: 0.8em 0 0.4em 0;
+}
+
+.legal-header-level-5,
+.legal-paragraph {
+  font-size: 1em;
+  font-weight: 500;
+  color: #666;
+  margin: 0.6em 0 0.3em 0;
+}
+
+/* Data attribute based styling for more specificity */
+.legal-header[data-level='1'] {
+  /* Additional Article-level styling */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legal-header[data-level='2'] {
+  /* Additional Section-level styling */
+  font-variant: small-caps;
+}
+
+.legal-header[data-level='3'] {
+  /* Additional Subsection-level styling */
+  font-style: italic;
+}
+
+/* Hover effects for interactive documents */
+.legal-header:hover {
+  background-color: rgba(0, 120, 215, 0.1);
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+/* Print optimizations */
+@media print {
+  .legal-header {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  .legal-header:hover {
+    background-color: transparent;
+    padding: 0;
+    margin: 1em 0 0.5em 0;
+  }
+
+  .legal-header-level-1,
+  .legal-article {
+    page-break-before: always;
+  }
+
+  .legal-header-level-1:first-child {
+    page-break-before: avoid;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .legal-header-level-1,
+  .legal-article {
+    color: #e6e6e6;
+    border-bottom-color: #ccc;
+  }
+
+  .legal-header-level-2,
+  .legal-section {
+    color: #ddd;
+    border-bottom-color: #999;
+  }
+
+  .legal-header-level-3,
+  .legal-subsection {
+    color: #ccc;
+  }
+
+  .legal-header-level-4,
+  .legal-sub-subsection {
+    color: #bbb;
+  }
+
+  .legal-header-level-5,
+  .legal-paragraph {
+    color: #aaa;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .legal-header-level-1,
+  .legal-article {
+    font-size: 1.4em;
+  }
+
+  .legal-header-level-2,
+  .legal-section {
+    font-size: 1.2em;
+  }
+}

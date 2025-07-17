@@ -1,0 +1,113 @@
+/**
+ * @fileoverview Test stylesheet for retail purchase ticket/receipt documents.
+ * 
+ * This CSS file provides receipt-style formatting that mimics thermal printer
+ * output with monospace fonts and compact layout.
+ * 
+ * Style features:
+ * - Monospace typography (Courier New) for receipt authenticity
+ * - 380px width mimicking thermal printer paper
+ * - Compact spacing and dashed borders for receipt appearance
+ * - Flexible payment details layout with justified text
+ * - Loyalty program section styling
+ * - Field highlighting with dotted borders for receipt style
+ * - Print optimization removing box shadows
+ * 
+ * Used by integration tests to validate CSS generation for receipt-style
+ * documents and proper styling of retail transaction outputs.
+ */
+
+body {
+  font-family: 'Courier New', monospace;
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 10px;
+  line-height: 1.4;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 1.2em;
+  text-align: center;
+  margin: 5px 0;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 5px;
+  color: #000;
+}
+
+h2 {
+  font-size: 1em;
+  margin: 10px 0 5px 0;
+  color: #000;
+  text-transform: uppercase;
+  border-bottom: 1px dashed #333;
+  padding-bottom: 3px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  margin: 3px 0;
+  font-size: 0.9em;
+}
+
+.payment-details {
+  margin: 15px 0;
+}
+
+.payment-details li {
+  display: flex;
+  justify-content: space-between;
+}
+
+strong {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+hr {
+  border: none;
+  border-top: 1px dashed #000;
+  margin: 15px 0;
+}
+
+/* Highlighting overrides for receipt style */
+.imported-value {
+  background-color: #e8f5e9;
+  border: 1px dotted #4caf50;
+  color: #1b5e20;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 0.9em;
+}
+
+.missing-value {
+  background-color: #ffebee;
+  border: 1px dotted #f44336;
+  color: #b71c1c;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.highlight {
+  background-color: #fffde7;
+  border: 1px dotted #fbc02d;
+  color: #f57f17;
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+@media print {
+  body {
+    box-shadow: none;
+    padding: 0;
+    max-width: 100%;
+  }
+}

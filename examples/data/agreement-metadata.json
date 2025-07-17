@@ -1,0 +1,24 @@
+{
+  "title": "Software License Agreement",
+  "parties": [
+    {
+      "name": "TechCorp Inc.",
+      "type": "Corporation",
+      "role": "Licensor"
+    },
+    {
+      "name": "ClientCorp LLC",
+      "type": "LLC",
+      "role": "Licensee"
+    }
+  ],
+  "effective_date": "2024-01-01",
+  "jurisdiction": "California",
+  "governing_law": "California State Law",
+  "payment_days": 30,
+  "late_fees_apply": true,
+  "include_warranty": false,
+  "level-one": "Article %n.",
+  "level-two": "Section %n.%s",
+  "level-three": "(%n)"
+}

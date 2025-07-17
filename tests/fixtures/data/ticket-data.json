@@ -1,0 +1,25 @@
+{
+  "ticketNumber": "12345",
+  "items": [
+    {
+      "name": "Laptop Computer",
+      "price": 999.99,
+      "onSale": false
+    },
+    {
+      "name": "Wireless Mouse",
+      "price": 29.99,
+      "onSale": true
+    },
+    {
+      "name": "USB Cable",
+      "price": null
+    }
+  ],
+  "subtotal": 1029.98,
+  "taxAmount": 87.55,
+  "total": 1117.53,
+  "loyaltyMember": true,
+  "pointsEarned": 112,
+  "pointsBalance": 1523
+}

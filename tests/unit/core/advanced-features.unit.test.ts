@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tests for advanced features of the legal-markdown system
+ * 
+ * This test suite covers sophisticated functionality including:
+ * - Custom header template systems for different document types
+ * - Complex numbering format patterns (Roman numerals, alphabetic, mixed)
+ * - Multi-level template configurations and hierarchical numbering
+ * - Error handling for invalid configurations and edge cases
+ * - Integration testing with full document processing pipeline
+ */
+
 import { processLegalMarkdown } from "../../../src/index";
 import { processHeaders } from "../../../src/core/processors/header-processor";
 
@@ -204,7 +215,7 @@ lll. Sub-sub Eleven`;
 
       const result = processHeaders(content, metadata);
 
-      // Test the implemented leading zero behavior
+      // Test the implemented leading zero behavior - ensures consistent formatting for document numbering
       expect(result).toContain("01. First");
       expect(result).toContain("11. Eleventh");
       expect(result).toContain("   01.11 Sub Eleven");
@@ -334,12 +345,16 @@ l. Another Main Section`;
       expect(result).toContain("Section 2: Another Main Section");
     });
 
+    /**
+     * Integration test combining all major features: YAML front matter, 
+     * custom templates, variable substitution, and conditional clauses
+     */
     it("should handle processing with all features enabled", () => {
       const content = `---
 title: Complete Feature Test
 client_name: "Advanced Corp"
 include_advanced: true
-meta-json-output: "advanced-metadata.json"
+meta-json-output: "tests/output/advanced-metadata.json"
 level-one: "Article %n."
 level-two: "Section %n.%s"
 level-three: "(%n)"

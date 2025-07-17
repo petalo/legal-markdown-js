@@ -3,14 +3,28 @@
     "target": "es2020",
     "module": "commonjs",
     "declaration": true,
+    "declarationMap": true,
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "jest"],
+    "baseUrl": "./src",
+    "paths": {
+      "@core/*": ["core/*"],
+      "@core": ["core/index.ts"],
+      "@types": ["types.ts"],
+      "@extensions/*": ["extensions/*"],
+      "@extensions": ["extensions/index.ts"],
+      "@cli/*": ["cli/*"],
+      "@lib": ["lib/index.ts"],
+      "@constants": ["constants/index.ts"],
+      "@errors": ["errors/index.ts"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts", "dist"]
+  "exclude": ["node_modules", "**/*.test.ts", "dist", "coverage", "examples"]
 }

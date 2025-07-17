@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Markdown JS - Playground</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>Legal Markdown JS - Playground</h1>
+      <div class="header-actions">
+        <button class="theme-toggle" title="Toggle theme">🌙</button>
+        <button class="help-btn" title="Help">❓</button>
+      </div>
+    </header>
+
+    <main class="editor-container">
+      <div class="input-panel">
+        <div class="panel-header">
+          <h3>Input</h3>
+          <div class="panel-actions">
+            <label class="file-input-label">
+              📁 Upload File
+              <input type="file" class="file-input" accept=".md,.txt" style="display: none;">
+            </label>
+            <div class="example-dropdown">
+              <select class="example-select">
+                <option value="">📄 Examples</option>
+                <option value="service-agreement">Service Agreement</option>
+                <option value="lease-contract">Lease Contract</option>
+                <option value="purchase-ticket">Purchase Ticket</option>
+                <option value="nda">Non-Disclosure Agreement</option>
+                <option value="employment-contract">Employment Contract</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <textarea class="editor" placeholder="Enter your Legal Markdown content here...
+
+Select an example from the dropdown above to get started, or write your own content using YAML front matter and Legal Markdown syntax.
+
+Example structure:
+---
+title: Document Title
+variable: value
+---
+
+# {{title}}
+
+Your content with {{variable}} substitutions..."></textarea>
+      </div>
+
+      <div class="column-resizer" id="resizer1"></div>
+
+      <!-- CSS Editor Panel -->
+      <div class="css-panel">
+        <div class="panel-header">
+          <h3>Custom CSS</h3>
+          <div class="panel-actions">
+            <label class="file-input-label">
+              📁 Upload CSS
+              <input type="file" class="css-file-input" accept=".css" style="display: none;">
+            </label>
+            <div class="example-dropdown">
+              <select class="css-example-select">
+                <option value="">🎨 CSS Examples</option>
+                <option value="modern">Modern Style</option>
+                <option value="classic">Classic Legal</option>
+                <option value="minimal">Minimal</option>
+              </select>
+            </div>
+            <button class="css-reset secondary">🔄</button>
+          </div>
+        </div>
+        <div class="css-content">
+          <textarea class="css-editor" placeholder="Enter your custom CSS here...
+
+/* Example: Change document colors */
+body {
+    background: #f9f9f9;
+    color: #333;
+}
+
+h1 {
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+}
+
+/* Example: Customize spacing */
+p {
+    margin-bottom: 1.2em;
+    line-height: 1.6;
+}
+
+/* Your custom styles here... */"></textarea>
+        </div>
+      </div>
+
+      <div class="column-resizer" id="resizer2"></div>
+
+      <div class="output-panel">
+        <div class="panel-header">
+          <h3>Preview</h3>
+          <div class="panel-actions">
+            <button class="toggle-styles-btn" title="Toggle base styles">🎨</button>
+            <button class="process-btn">▶️</button>
+            <button class="download-btn secondary">💾</button>
+            <button class="download-pdf-btn secondary">📄</button>
+            <button class="print-btn secondary">🖨️</button>
+          </div>
+        </div>
+        <div class="preview-container">
+          <div class="preview-placeholder">
+            <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="options-panel">
+      <button class="options-toggle">⚙️ Processing Options</button>
+      <div class="options-content">
+        <div class="options-grid">
+          <div class="option-group">
+            <label>Processing Control</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="debug"> Debug mode
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Shows detailed processing information in the console, including step-by-step parsing and variable substitution details.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="yamlOnly"> YAML only
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Processes only the YAML front matter without rendering the markdown content. Useful for testing metadata extraction.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="noHeaders"> No headers
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables automatic header numbering (l., ll., lll.) that's typically used in legal documents.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="enableFieldTracking" checked> Field tracking
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Tracks all variable substitutions and provides a detailed report of which fields were processed and their values.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <label>Advanced Options</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="noClauses"> No clauses
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables processing of structured clauses and conditional blocks (e.g., [text]{condition}). Content will be processed as plain text.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="noReferences"> No references
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables processing of cross-references and citation links within the document. References will appear as plain text.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="noMixins"> No mixins
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables processing of mixins and helper functions (e.g., {{formatDate()}}, {{capitalize()}}). Only basic variable substitution will work.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="noImports"> No imports
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables importing of external markdown files. Import statements will be ignored and appear as plain text.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <label>Header Options</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="noReset"> No reset
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Prevents resetting header counters. Header numbering will continue from previous values instead of starting fresh.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="noIndent"> No indent
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Disables automatic indentation of nested headers and sub-clauses. All content will be left-aligned.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="throwOnYamlError"> Throw on YAML error
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Stops processing and shows an error if YAML front matter is malformed. Otherwise, continues with partial parsing.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <label>Export Options</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="exportYaml"> Export YAML
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Exports document metadata as a YAML file alongside the processed markdown. Useful for data exchange and backup.</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="exportJson"> Export JSON
+                <span class="tooltip">
+                  <span class="tooltip-icon">ℹ️</span>
+                  <span class="tooltip-text">Exports document metadata as a JSON file alongside the processed markdown. Useful for integration with other systems.</span>
+                </span>
+              </label>
+            </div>
+            <input type="text" id="title" placeholder="Document title (optional)">
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div id="messageArea"></div>
+  </div>
+
+  <script src="./legal-markdown.umd.min.js"></script>
+  <script>
+    class LegalMarkdownApp {
+      constructor() {
+        this.processedResult = null;
+        this.metadataResult = null;
+        this.theme = localStorage.getItem('theme') || 'light';
+        this.customCSS = '';
+        this.baseStylesEnabled = true; // Track base styles state
+        this.initializeTheme();
+        this.initializeElements();
+        this.bindEvents();
+        this.updateBaseStyles(); // Initialize base styles
+        this.loadExample('service-agreement');
+      }
+
+      initializeTheme() {
+        document.documentElement.setAttribute('data-theme', this.theme);
+        const themeToggle = document.querySelector('.theme-toggle');
+        if (themeToggle) {
+          themeToggle.textContent = this.theme === 'dark' ? '☀️' : '🌙';
+        }
+      }
+
+      initializeElements() {
+        this.editor = document.querySelector('.editor');
+        this.preview = document.querySelector('.preview-container');
+        this.processBtn = document.querySelector('.process-btn');
+        this.toggleStylesBtn = document.querySelector('.toggle-styles-btn');
+        this.downloadBtn = document.querySelector('.download-btn');
+        this.downloadPdfBtn = document.querySelector('.download-pdf-btn');
+        this.printBtn = document.querySelector('.print-btn');
+        this.themeToggle = document.querySelector('.theme-toggle');
+        this.optionsToggle = document.querySelector('.options-toggle');
+        this.optionsContent = document.querySelector('.options-content');
+        this.fileInput = document.querySelector('.file-input');
+        this.exampleSelect = document.querySelector('.example-select');
+        this.messageArea = document.getElementById('messageArea');
+
+        // CSS Editor elements
+        this.cssReset = document.querySelector('.css-reset');
+        this.cssContent = document.querySelector('.css-content');
+        this.cssEditor = document.querySelector('.css-editor');
+        this.cssFileInput = document.querySelector('.css-file-input');
+        this.cssExampleSelect = document.querySelector('.css-example-select');
+        
+        // Column resizers
+        this.resizer1 = document.getElementById('resizer1');
+        this.resizer2 = document.getElementById('resizer2');
+      }
+
+      bindEvents() {
+        this.processBtn.addEventListener('click', () => this.processContent());
+        this.toggleStylesBtn.addEventListener('click', () => this.toggleBaseStyles());
+        this.downloadBtn.addEventListener('click', () => this.downloadDocument());
+        this.downloadPdfBtn.addEventListener('click', () => this.downloadPDF());
+        this.printBtn.addEventListener('click', () => this.printDocument());
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.optionsToggle.addEventListener('click', () => this.toggleOptions());
+        this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+        this.exampleSelect.addEventListener('change', (e) => this.loadExample(e.target.value));
+
+        // CSS Editor events
+        this.cssReset.addEventListener('click', () => this.resetCSS());
+        this.cssFileInput.addEventListener('change', (e) => this.handleCSSFileUpload(e));
+        this.cssExampleSelect.addEventListener('change', (e) => this.loadCSSExample(e.target.value));
+        
+        // Auto-apply CSS on input (debounced)
+        this.cssEditor.addEventListener('input', 
+          this.debounce(() => this.applyCSS(), 500)
+        );
+        
+        // Column resizing
+        this.initColumnResizing();
+
+        // Help button
+        const helpBtn = document.querySelector('.help-btn');
+        if (helpBtn) {
+          helpBtn.addEventListener('click', () => this.showHelp());
+        }
+
+        // Auto-process on input (debounced)
+        this.editor.addEventListener('input',
+          this.debounce(() => this.processContent(), 1000)
+        );
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+      }
+
+      async processContent() {
+        const content = this.editor.value;
+        if (!content.trim()) {
+          this.showMessage('Please enter some content to process.', 'error');
+          this.clearPreview();
+          return;
+        }
+
+        // Validate content structure
+        const validation = this.validateContent(content);
+        if (!validation.isValid) {
+          this.showMessage(validation.message, 'warning');
+          if (validation.severity === 'error') {
+            this.clearPreview();
+            return;
+          }
+        }
+
+        try {
+          this.showProcessing();
+
+          const options = this.getProcessingOptions();
+          const result = window.LegalMarkdown.processLegalMarkdown(content, options);
+
+          this.processedResult = result.content;
+          this.metadataResult = result.metadata;
+
+          this.displayResult(result);
+          this.showProcessingStats(result);
+
+        } catch (error) {
+          console.error('Processing error:', error);
+          this.handleProcessingError(error);
+        } finally {
+          this.hideProcessing();
+        }
+      }
+
+      getProcessingOptions() {
+        return {
+          debug: document.getElementById('debug').checked,
+          yamlOnly: document.getElementById('yamlOnly').checked,
+          noHeaders: document.getElementById('noHeaders').checked,
+          noClauses: document.getElementById('noClauses').checked,
+          noReferences: document.getElementById('noReferences').checked,
+          noMixins: document.getElementById('noMixins').checked,
+          noImports: document.getElementById('noImports').checked,
+          noReset: document.getElementById('noReset').checked,
+          noIndent: document.getElementById('noIndent').checked,
+          throwOnYamlError: document.getElementById('throwOnYamlError').checked,
+          enableFieldTracking: document.getElementById('enableFieldTracking').checked,
+          exportMetadata: document.getElementById('exportYaml').checked || document.getElementById('exportJson').checked,
+          exportFormat: document.getElementById('exportYaml').checked ? 'yaml' : 'json'
+        };
+      }
+
+      displayResult(result) {
+        this.preview.innerHTML = `
+                    <div class="legal-document">
+                        ${this.formatMarkdownForDisplay(result.content)}
+                    </div>
+                `;
+
+        // Apply base styles if enabled
+        this.updateBaseStyles();
+        // Apply custom CSS if present
+        this.updatePreviewWithCSS();
+
+        if (result.fieldReport) {
+          console.log('Field Report:', result.fieldReport);
+        }
+      }
+
+      formatMarkdownForDisplay(content) {
+        // Basic markdown to HTML conversion for display
+        return content
+          .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+          .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+          .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/\n\n/g, '</p><p>')
+          .replace(/^(.+)$/gm, '<p>$1</p>')
+          .replace(/<p><\/p>/g, '')
+          .replace(/<p>(<h[1-6]>.*<\/h[1-6]>)<\/p>/g, '$1');
+      }
+
+      downloadDocument() {
+        if (!this.processedResult) {
+          this.showMessage('Please process a document first.', 'error');
+          return;
+        }
+
+        const title = document.getElementById('title').value || 'legal-document';
+        const filename = `${title.replace(/[^a-zA-Z0-9]/g, '-')}.md`;
+        this.downloadFile(this.processedResult, filename);
+      }
+
+      printDocument() {
+        if (!this.processedResult) {
+          this.showMessage('Please process a document first.', 'error');
+          return;
+        }
+
+        const printContent = this.preview.innerHTML;
+        const title = document.getElementById('title').value || 'Legal Document';
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${title}</title>
+                        <style>
+                            ${this.getContractCSS()}
+                        </style>
+                    </head>
+                    <body onload="window.print(); window.close();">
+                        ${printContent}
+                    </body>
+                    </html>
+                `);
+        printWindow.document.close();
+      }
+
+      async downloadPDF() {
+        if (!this.processedResult) {
+          this.showMessage('Please process a document first.', 'error');
+          return;
+        }
+
+        const title = document.getElementById('title').value || 'legal-document';
+        const printContent = this.preview.innerHTML;
+
+        try {
+          // Show loading message
+          this.showMessage('Generating PDF... Please wait.', 'info');
+
+          // Create a hidden iframe for PDF generation
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>${title}</title>
+                            <style>
+                                ${this.getContractCSS()}
+                                @media print {
+                                    body { margin: 0; }
+                                    @page { margin: 15mm; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${printContent}
+                        </body>
+                        </html>
+                    `);
+          iframe.contentDocument.close();
+
+          // Wait for content to load
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Focus the iframe and trigger print
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+
+          // Clean up
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            this.showMessage('PDF generation initiated. Use your browser\'s print dialog to save as PDF.', 'success');
+          }, 1000);
+
+        } catch (error) {
+          console.error('PDF generation error:', error);
+          this.showMessage('PDF generation failed. Please use the Print button instead.', 'error');
+        }
+      }
+
+      getContractCSS() {
+        const baseCSS = `
+                    body {
+                        font-family: Helvetica, Arial, sans-serif;
+                        font-size: 12pt;
+                        line-height: 1.3;
+                        color: #333;
+                        max-width: 210mm;
+                        margin: 0 auto;
+                        padding: 20mm 15mm;
+                        background-color: white;
+                    }
+
+                    h1 {
+                        color: #353954;
+                        font-size: 1.6em;
+                        line-height: 1.5em;
+                        margin: 8px 8px 32px;
+                        text-align: center;
+                        border-bottom: solid #02370a;
+                        padding: 0 5% 0.3em;
+                    }
+
+                    h2 {
+                        font-size: 14pt;
+                        margin-top: 20px;
+                        margin-bottom: 15px;
+                        border-bottom: 1px solid #41badf;
+                    }
+
+                    h3 {
+                        font-size: 10pt;
+                        font-weight: bold;
+                        border-bottom: 1px solid #41badf;
+                        margin-top: 30px;
+                        margin-bottom: 8px;
+                    }
+
+                    p {
+                        margin-bottom: 15px;
+                        text-align: justify;
+                    }
+
+                    @media print {
+                        @page {
+                            size: A4;
+                            margin: 20mm 10mm 10mm 10mm;
+                        }
+
+                        body {
+                            font-size: 11pt;
+                            color: black;
+                        }
+                    }
+                `;
+
+        // Add custom CSS if present
+        if (this.customCSS.trim()) {
+          return baseCSS + '\n\n/* Custom CSS */\n' + this.customCSS;
+        }
+
+        return baseCSS;
+      }
+
+      toggleTheme() {
+        this.theme = this.theme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('theme', this.theme);
+        this.initializeTheme();
+      }
+
+      toggleOptions() {
+        this.optionsContent.classList.toggle('open');
+        this.optionsToggle.textContent = this.optionsContent.classList.contains('open') ?
+          '🔽 Processing Options' :
+          '⚙️ Processing Options';
+      }
+
+      handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['text/plain', 'text/markdown', ''];
+        const allowedExtensions = ['.md', '.txt', '.markdown'];
+
+        const fileExtension = file.name.toLowerCase().substr(file.name.lastIndexOf('.'));
+        if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+          this.showMessage('Please select a valid text file (.md, .txt, .markdown)', 'error');
+          return;
+        }
+
+        // Validate file size (max 1MB)
+        const maxSize = 1024 * 1024; // 1MB
+        if (file.size > maxSize) {
+          this.showMessage('File too large. Maximum size is 1MB.', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target.result;
+            this.editor.value = content;
+            this.exampleSelect.value = ''; // Clear example selection
+            this.processContent();
+            this.showMessage(`📁 File "${file.name}" loaded successfully`, 'success');
+          } catch (error) {
+            this.showMessage('Error reading file: ' + error.message, 'error');
+          }
+        };
+
+        reader.onerror = () => {
+          this.showMessage('Error reading file. Please try again.', 'error');
+        };
+
+        reader.readAsText(file);
+      }
+
+      getExamples() {
+        return {
+          'service-agreement': {
+            title: 'Service Agreement',
+            content: `---
+title: Service Agreement
+client: Acme Corporation
+provider: Professional Services LLC
+effective_date: 2024-01-01
+payment_terms: 30
+jurisdiction: California
+---
+
+# {{title}}
+
+This {{title}} is entered into on {{effective_date}} between:
+
+**CLIENT**: {{client}}
+**PROVIDER**: {{provider}}
+
+l. Terms and Conditions
+ll. Services
+The Provider agrees to perform professional services as detailed in the attached statement of work.
+
+ll. Payment Terms
+Payment is due within {{payment_terms}} days of invoice date.
+
+ll. Jurisdiction
+This Agreement shall be governed by the laws of {{jurisdiction}}.
+
+l. Conclusion
+This concludes the {{title}} between the parties.`
+          },
+
+          'lease-contract': {
+            title: 'Office Lease Agreement',
+            content: `---
+title: OFFICE SPACE LEASE AGREEMENT
+contract:
+  signing_date: 2024-01-15
+  signing_city: San Francisco
+lessor:
+  company_name: Property Management LLC
+  registered_address: 123 Main Street, San Francisco, CA 94105
+  tax_id: 12-3456789
+  representative:
+    full_name: John Smith
+    id_number: 123456789
+lessee:
+  company_name: Tech Startup Inc
+  registered_address: 456 Innovation Way, San Francisco, CA 94107
+  tax_id: 98-7654321
+  representative:
+    full_name: Jane Doe
+    id_number: ""
+property:
+  address: 789 Business Plaza, Suite 500, San Francisco, CA 94108
+  area_sqm: 250
+  parking_spots: 5
+payment:
+  monthly_rent:
+    text: Five Thousand
+    number: 5000
+  late_fee_applies: true
+  late_fee_percentage: 1.5
+maintenance_included: true
+maintenance:
+  included_services:
+    - Daily cleaning
+    - HVAC maintenance
+    - Security services
+---
+
+# {{title}}
+
+This agreement is entered into on {{contract.signing_date}} in {{contract.signing_city}}.
+
+## Parties
+
+Between:
+
+**{{lessor.company_name}}**, with registered office at {{lessor.registered_address}}, and Tax ID {{lessor.tax_id}}, hereinafter referred to as "THE LESSOR".
+
+Represented by {{lessor.representative.full_name}} with ID {{lessor.representative.id_number}}.
+
+And:
+
+**{{lessee.company_name}}**, with registered office at {{lessee.registered_address}}, and Tax ID {{lessee.tax_id}}, hereinafter referred to as "THE LESSEE".
+
+Represented by {{lessee.representative.full_name}} with ID {{lessee.representative.id_number ? lessee.representative.id_number : "[ID Required]"}}.
+
+## Property Details
+
+- **Address**: {{property.address}}
+- **Area**: {{property.area_sqm}} square meters
+- **Parking Spots**: {{property.parking_spots}}
+- **Monthly Rent**: {{payment.monthly_rent.text}} ({{payment.monthly_rent.number}}) USD
+
+[## Late Payment Clause
+
+Late payments will incur a fee of {{payment.late_fee_percentage}}% per month.]{payment.late_fee_applies}
+
+[## Maintenance
+
+The following maintenance services are included:
+{{#maintenance_included}}
+{{#each maintenance.included_services}}
+- {{this}}
+{{/each}}
+{{/maintenance_included}}]{maintenance_included}`
+          },
+
+          'purchase-ticket': {
+            title: 'Purchase Ticket',
+            content: '---\n' +
+              'storeName: TechMart Store\n' +
+              'cashierName: Alice Johnson\n' +
+              'ticketNumber: "12345"\n' +
+              'receiptId: RCP-2024-12345\n' +
+              'taxRate: 8.5\n' +
+              'items:\n' +
+              '  - name: Laptop Computer\n' +
+              '    price: 999.99\n' +
+              '    onSale: false\n' +
+              '  - name: Wireless Mouse\n' +
+              '    price: 29.99\n' +
+              '    onSale: true\n' +
+              '  - name: USB Cable\n' +
+              '    price: null\n' +
+              'subtotal: 1029.98\n' +
+              'taxAmount: 87.55\n' +
+              'total: 1117.53\n' +
+              'loyaltyMember: true\n' +
+              'pointsEarned: 112\n' +
+              'pointsBalance: 1523\n' +
+              '---\n' +
+              '\n' +
+              '# Purchase Ticket - {{ticketNumber}}\n' +
+              '\n' +
+              '**Date:** @today **Store:** {{storeName}}\n' +
+              '**Cashier:** {{cashierName}}\n' +
+              '\n' +
+              '## Purchased Items\n' +
+              '\n' +
+              '{{#items}}\n' +
+              '- {{name}} {{price ? "$" + price : "[Price Missing]"}} {{onSale ? "(ON SALE!)" : ""}}\n' +
+              '{{/items}}\n' +
+              '\n' +
+              '## Payment Details\n' +
+              '\n' +
+              '- Subtotal: ${{subtotal}}\n' +
+              '- Tax ({{taxRate}}%): ${{taxAmount}}\n' +
+              '- **Total**: ${{total}}\n' +
+              '\n' +
+              '{{#loyaltyMember}}\n' +
+              '## Customer Loyalty\n' +
+              '\n' +
+              '- Member Points Earned: {{pointsEarned}}\n' +
+              '- Current Balance: {{pointsBalance}}\n' +
+              '{{/loyaltyMember}}\n' +
+              '\n' +
+              '---\n' +
+              '\n' +
+              'Thank you for shopping with us!\n' +
+              'Receipt ID: {{receiptId}}'
+          },
+
+          'nda': {
+            title: 'Non-Disclosure Agreement',
+            content: `---
+title: NON-DISCLOSURE AGREEMENT
+disclosing_party: TechCorp Inc.
+receiving_party: John Developer
+effective_date: 2024-01-01
+duration_months: 24
+jurisdiction: Delaware
+---
+
+# {{title}}
+
+This {{title}} is entered into on {{effective_date}} between:
+
+**DISCLOSING PARTY**: {{disclosing_party}}
+**RECEIVING PARTY**: {{receiving_party}}
+
+l. Definition of Confidential Information
+ll. Confidential Information includes all technical data, trade secrets, know-how, research, product plans, products, services, customers, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, hardware configuration information, marketing, finances, or other business information.
+
+l. Obligations of Receiving Party
+ll. Protection of Confidential Information
+The Receiving Party agrees to hold and maintain the Confidential Information in strict confidence.
+
+ll. Non-Disclosure
+The Receiving Party agrees not to disclose any Confidential Information to third parties without prior written consent.
+
+ll. Use Restriction
+The Receiving Party agrees to use the Confidential Information solely for the purpose of evaluating potential business opportunities.
+
+l. Term
+This Agreement shall remain in effect for {{duration_months}} months from the effective date.
+
+l. Governing Law
+This Agreement shall be governed by the laws of {{jurisdiction}}.
+
+l. Signatures
+By signing below, both parties agree to the terms and conditions of this Agreement.
+
+**{{disclosing_party}}**
+
+Signature: ___________________________ Date: ___________
+
+**{{receiving_party}}**
+
+Signature: ___________________________ Date: ___________`
+          },
+
+          'employment-contract': {
+            title: 'Employment Contract',
+            content: '---\n' +
+              'title: EMPLOYMENT AGREEMENT\n' +
+              'company: TechCorp Inc.\n' +
+              'employee: Jane Smith\n' +
+              'position: Senior Software Engineer\n' +
+              'start_date: 2024-02-01\n' +
+              'salary: 95000\n' +
+              'benefits_package: Standard\n' +
+              'probation_period: 3\n' +
+              'vacation_days: 20\n' +
+              '---\n' +
+              '\n' +
+              '# {{title}}\n' +
+              '\n' +
+              'This {{title}} is entered into between:\n' +
+              '\n' +
+              '**COMPANY**: {{company}}\n' +
+              '**EMPLOYEE**: {{employee}}\n' +
+              '\n' +
+              'l. Position and Duties\n' +
+              'll. Position\n' +
+              'The Employee is hereby employed as {{position}}.\n' +
+              '\n' +
+              'll. Start Date\n' +
+              'Employment shall commence on {{start_date}}.\n' +
+              '\n' +
+              'll. Probationary Period\n' +
+              'The Employee shall serve a probationary period of {{probation_period}} months.\n' +
+              '\n' +
+              'l. Compensation and Benefits\n' +
+              'll. Salary\n' +
+              'The Employee shall receive an annual salary of ${{salary}}.\n' +
+              '\n' +
+              'll. Benefits\n' +
+              'The Employee shall be entitled to the {{benefits_package}} benefits package.\n' +
+              '\n' +
+              'll. Vacation\n' +
+              'The Employee shall be entitled to {{vacation_days}} vacation days per year.\n' +
+              '\n' +
+              'l. Termination\n' +
+              'll. Either party may terminate this agreement with 30 days written notice.\n' +
+              '\n' +
+              'l. Confidentiality\n' +
+              'll. The Employee agrees to maintain the confidentiality of all company information.\n' +
+              '\n' +
+              'l. Governing Law\n' +
+              'This Agreement shall be governed by the laws of the state in which the Company is located.\n' +
+              '\n' +
+              '**Signatures**\n' +
+              '\n' +
+              'Company Representative: ___________________________ Date: ___________\n' +
+              '\n' +
+              'Employee: ___________________________ Date: ___________'
+          }
+        };
+      }
+
+      loadExample(exampleKey) {
+        if (!exampleKey) return;
+
+        const examples = this.getExamples();
+        const example = examples[exampleKey];
+
+        if (example) {
+          this.editor.value = example.content;
+          this.exampleSelect.value = exampleKey;
+          this.processContent();
+        } else {
+          this.showMessage('Example not found.', 'error');
+        }
+      }
+
+      validateContent(content) {
+        const validation = {
+          isValid: true,
+          message: '',
+          severity: 'info'
+        };
+
+        // Check for YAML front matter
+        const hasYamlFrontMatter = content.trim().startsWith('---');
+        if (!hasYamlFrontMatter) {
+          validation.isValid = false;
+          validation.message = 'No YAML front matter detected. Consider adding document metadata with ---';
+          validation.severity = 'warning';
+          return validation;
+        }
+
+        // Check for balanced YAML front matter
+        const yamlMatches = content.match(/^---\s*\n([\s\S]*?)\n---\s*$/m);
+        if (!yamlMatches) {
+          validation.isValid = false;
+          validation.message = 'YAML front matter is not properly formatted. Ensure it starts and ends with ---';
+          validation.severity = 'error';
+          return validation;
+        }
+
+        // Check for common YAML errors
+        const yamlContent = yamlMatches[1];
+        if (yamlContent.includes('\t')) {
+          validation.isValid = false;
+          validation.message = 'YAML contains tabs. Use spaces for indentation instead.';
+          validation.severity = 'error';
+          return validation;
+        }
+
+        // Check for template variables
+        const templateVars = content.match(/\{\{([^}]+)\}\}/g);
+        if (templateVars) {
+          const uniqueVars = [...new Set(templateVars.map(v => v.replace(/[{}]/g, '').trim()))];
+          if (uniqueVars.length > 10) {
+            validation.isValid = false;
+            validation.message = `Document contains ${uniqueVars.length} template variables. Consider breaking into sections.`;
+            validation.severity = 'warning';
+          }
+        }
+
+        // Check for unbalanced brackets
+        const openBrackets = (content.match(/\{\{/g) || []).length;
+        const closeBrackets = (content.match(/\}\}/g) || []).length;
+        if (openBrackets !== closeBrackets) {
+          validation.isValid = false;
+          validation.message = `Unbalanced template brackets: ${openBrackets} opening, ${closeBrackets} closing`;
+          validation.severity = 'error';
+          return validation;
+        }
+
+        return validation;
+      }
+
+      handleProcessingError(error) {
+        let userMessage = 'Error processing document: ';
+        let suggestions = [];
+
+        if (error.message.includes('YAML')) {
+          userMessage += 'YAML parsing error. ';
+          suggestions.push('Check your YAML syntax in the front matter');
+          suggestions.push('Ensure proper indentation with spaces, not tabs');
+          suggestions.push('Verify all YAML keys have values');
+        } else if (error.message.includes('template')) {
+          userMessage += 'Template processing error. ';
+          suggestions.push('Check that all variables are defined in YAML front matter');
+          suggestions.push('Verify template syntax: {{variable}}');
+        } else if (error.message.includes('reference')) {
+          userMessage += 'Reference processing error. ';
+          suggestions.push('Check reference syntax and file paths');
+        } else {
+          userMessage += error.message;
+        }
+
+        if (suggestions.length > 0) {
+          userMessage += '\n\nSuggestions:\n• ' + suggestions.join('\n• ');
+        }
+
+        this.showMessage(userMessage, 'error');
+        this.clearPreview();
+      }
+
+      showProcessingStats(result) {
+        let stats = [];
+
+        if (result.metadata) {
+          const yamlKeys = Object.keys(result.metadata).length;
+          stats.push(`${yamlKeys} YAML variables`);
+        }
+
+        if (result.fieldReport) {
+          stats.push(`${result.fieldReport.length} field substitutions`);
+        }
+
+        const wordCount = result.content.split(/\s+/).filter(word => word.length > 0).length;
+        stats.push(`${wordCount} words`);
+
+        if (stats.length > 0) {
+          this.showMessage(`✅ Processing complete: ${stats.join(', ')}`, 'success');
+        } else {
+          this.showMessage('Document processed successfully!', 'success');
+        }
+      }
+
+      clearPreview() {
+        this.preview.innerHTML = `
+                    <div class="preview-placeholder">
+                        <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+                    </div>
+                `;
+      }
+
+      showHelp() {
+        const helpContent = `📖 Legal Markdown Help
+
+🚀 Quick Start:
+• Select an example from the dropdown to get started
+• Or write your own content with YAML front matter
+• Use {{variable}} syntax for template substitutions
+
+📝 Document Structure:
+---
+title: Your Document Title
+variable: value
+---
+
+# {{title}}
+
+Your content with {{variable}} substitutions...
+
+⌨️ Keyboard Shortcuts:
+• Ctrl+Enter: Process document
+• Ctrl+P: Print document
+• Ctrl+S: Download Markdown
+• Ctrl+D: Download PDF
+
+🔧 Processing Options:
+• Field Tracking: Highlight variable substitutions
+• Debug Mode: Show detailed processing information
+• Export Options: Save metadata as YAML or JSON
+
+💡 Tips:
+• Use proper YAML indentation (spaces, not tabs)
+• Check template brackets are balanced {{}}
+• Use legal numbering: l., ll., lll. for sections`;
+
+        this.showMessage(helpContent, 'info');
+      }
+
+      handleKeyboardShortcuts(event) {
+        if (event.ctrlKey || event.metaKey) {
+          switch (event.key) {
+            case 'Enter':
+              event.preventDefault();
+              this.processContent();
+              break;
+            case 'p':
+              event.preventDefault();
+              this.printDocument();
+              break;
+            case 's':
+              event.preventDefault();
+              this.downloadDocument();
+              break;
+            case 'd':
+              event.preventDefault();
+              this.downloadPDF();
+              break;
+          }
+        }
+      }
+
+      showProcessing() {
+        this.processBtn.disabled = true;
+        this.processBtn.textContent = '⏳ Processing...';
+        this.preview.classList.add('loading');
+      }
+
+      hideProcessing() {
+        this.processBtn.disabled = false;
+        this.processBtn.textContent = '▶️ Process';
+        this.preview.classList.remove('loading');
+      }
+
+      showMessage(message, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+
+        // Handle multi-line messages
+        if (message.includes('\n')) {
+          const lines = message.split('\n');
+          const mainMessage = lines[0];
+          const details = lines.slice(1).join('\n');
+
+          messageDiv.innerHTML = `
+                        <div class="message-main">${this.escapeHtml(mainMessage)}</div>
+                        <div class="message-details">${this.escapeHtml(details)}</div>
+                    `;
+        } else {
+          messageDiv.textContent = message;
+        }
+
+        this.messageArea.innerHTML = '';
+        this.messageArea.appendChild(messageDiv);
+
+        // Auto-hide success messages, keep errors/warnings visible longer
+        const hideDelay = type === 'success' ? 3000 : 8000;
+        setTimeout(() => {
+          if (this.messageArea.contains(messageDiv)) {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+              if (this.messageArea.contains(messageDiv)) {
+                this.messageArea.removeChild(messageDiv);
+              }
+            }, 300);
+          }
+        }, hideDelay);
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      downloadFile(content, filename) {
+        const blob = new Blob([content], {
+          type: 'text/plain'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      toggleCSSEditor() {
+        const isVisible = this.cssContent.style.display !== 'none';
+
+        if (isVisible) {
+          // Hide CSS editor
+          this.cssContent.style.display = 'none';
+          this.cssReset.style.display = 'none';
+          this.cssApply.style.display = 'none';
+          this.cssToggle.textContent = '📝 Edit CSS';
+        } else {
+          // Show CSS editor
+          this.cssContent.style.display = 'block';
+          this.cssReset.style.display = 'inline-block';
+          this.cssApply.style.display = 'inline-block';
+          this.cssToggle.textContent = '🔽 Hide CSS';
+        }
+      }
+
+      resetCSS() {
+        this.cssEditor.value = '';
+        this.customCSS = '';
+        this.applyCSS();
+        this.showMessage('CSS reset successfully', 'success');
+      }
+
+      applyCSS() {
+        this.customCSS = this.cssEditor.value;
+        this.updatePreviewWithCSS();
+        // No mostrar mensaje en auto-apply para evitar spam
+      }
+
+      handleCSSFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.css')) {
+          this.showMessage('Please select a valid CSS file (.css)', 'error');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target.result;
+            this.cssEditor.value = content;
+            this.cssExampleSelect.value = '';
+            this.applyCSS();
+            this.showMessage(`📁 CSS file "${file.name}" loaded successfully`, 'success');
+          } catch (error) {
+            this.showMessage('Error reading CSS file: ' + error.message, 'error');
+          }
+        };
+        
+        reader.onerror = () => {
+          this.showMessage('Error reading CSS file. Please try again.', 'error');
+        };
+        
+        reader.readAsText(file);
+      }
+
+      getCSSExamples() {
+        return {
+          'modern': `/* Modern Clean Style */
+.preview-container {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
+}
+
+h1 {
+  color: #2980b9;
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 10px;
+  font-weight: 300;
+}
+
+h2 {
+  color: #34495e;
+  border-left: 4px solid #3498db;
+  padding-left: 16px;
+  margin-top: 2em;
+}
+
+p {
+  margin-bottom: 1.5em;
+  text-align: left;
+}`,
+
+          'classic': `/* Classic Legal Document */
+.preview-container {
+  font-family: 'Times New Roman', serif;
+  line-height: 1.8;
+  color: #000;
+}
+
+h1 {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: double 3px #000;
+  padding-bottom: 15px;
+}
+
+h2 {
+  font-variant: small-caps;
+  border-bottom: 1px solid #666;
+  margin-top: 2em;
+}
+
+p {
+  text-align: justify;
+  text-indent: 2em;
+  margin-bottom: 1em;
+}`,
+
+          'minimal': `/* Minimal Style */
+.preview-container {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  color: #333;
+  max-width: none;
+}
+
+h1 {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: #000;
+  border: none;
+  margin-bottom: 2em;
+}
+
+h2 {
+  font-size: 1.3em;
+  font-weight: 500;
+  color: #555;
+  border: none;
+  margin-top: 2.5em;
+  margin-bottom: 1em;
+}
+
+p {
+  margin-bottom: 1.2em;
+  text-align: left;
+}`
+        };
+      }
+
+      loadCSSExample(exampleKey) {
+        if (!exampleKey) return;
+        
+        const examples = this.getCSSExamples();
+        const example = examples[exampleKey];
+        
+        if (example) {
+          this.cssEditor.value = example;
+          this.cssExampleSelect.value = exampleKey;
+          this.applyCSS();
+          this.showMessage(`🎨 CSS example "${exampleKey}" loaded`, 'success');
+        } else {
+          this.showMessage('CSS example not found.', 'error');
+        }
+      }
+
+      initColumnResizing() {
+        const container = document.querySelector('.editor-container');
+        let isResizing = false;
+        let currentResizer = null;
+        let startX = 0;
+        let startWidths = [1, 1, 1]; // Start with equal widths
+        
+        const resizers = [this.resizer1, this.resizer2];
+        
+        resizers.forEach((resizer, index) => {
+          if (!resizer) return;
+          
+          resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            currentResizer = resizer;
+            startX = e.clientX;
+            
+            // Parse current fr values from the style
+            const currentStyle = container.style.gridTemplateColumns;
+            if (currentStyle && currentStyle.includes('fr')) {
+              const matches = currentStyle.match(/(\d*\.?\d+)fr/g);
+              if (matches && matches.length === 3) {
+                startWidths = matches.map(match => parseFloat(match.replace('fr', '')));
+              }
+            }
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            e.preventDefault();
+          });
+        });
+        
+        const handleMouseMove = (e) => {
+          if (!isResizing || !currentResizer) return;
+          
+          const deltaX = e.clientX - startX;
+          const containerWidth = container.offsetWidth;
+          // Convert pixels to fraction units (balanced sensitivity)
+          const deltaFraction = (deltaX / containerWidth) * 4;
+          
+          let newWidths = [...startWidths];
+          const minWidth = 0.3; // Minimum 30% width
+          
+          if (currentResizer === this.resizer1) {
+            // Resizing between columns 1 and 2
+            newWidths[0] = Math.max(minWidth, startWidths[0] + deltaFraction);
+            newWidths[1] = Math.max(minWidth, startWidths[1] - deltaFraction);
+          } else if (currentResizer === this.resizer2) {
+            // Resizing between columns 2 and 3
+            newWidths[1] = Math.max(minWidth, startWidths[1] + deltaFraction);
+            newWidths[2] = Math.max(minWidth, startWidths[2] - deltaFraction);
+          }
+          
+          // Apply the new column widths
+          container.style.gridTemplateColumns = `${newWidths[0]}fr 4px ${newWidths[1]}fr 4px ${newWidths[2]}fr`;
+        };
+        
+        const handleMouseUp = () => {
+          isResizing = false;
+          currentResizer = null;
+          document.removeEventListener('mousemove', handleMouseMove);
+          document.removeEventListener('mouseup', handleMouseUp);
+        };
+      }
+
+      updatePreviewWithCSS() {
+        // Remove existing custom style tag if it exists
+        const existingStyle = document.getElementById('customCSS');
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+
+        // Add new custom CSS if provided
+        if (this.customCSS.trim()) {
+          const styleTag = document.createElement('style');
+          styleTag.id = 'customCSS';
+          styleTag.textContent = `
+                        .preview-container {
+                            ${this.customCSS}
+                        }
+                    `;
+          document.head.appendChild(styleTag);
+        }
+      }
+
+      toggleBaseStyles() {
+        this.baseStylesEnabled = !this.baseStylesEnabled;
+        this.updateBaseStyles();
+        
+        // Update button appearance
+        this.toggleStylesBtn.style.opacity = this.baseStylesEnabled ? '1' : '0.5';
+        this.toggleStylesBtn.title = this.baseStylesEnabled ? 
+          'Disable base styles' : 'Enable base styles';
+        
+        this.showMessage(
+          this.baseStylesEnabled ? 'Base styles enabled' : 'Base styles disabled', 
+          'info'
+        );
+      }
+
+      updateBaseStyles() {
+        if (this.baseStylesEnabled) {
+          this.preview.classList.add('styled-preview');
+        } else {
+          this.preview.classList.remove('styled-preview');
+        }
+      }
+    }
+
+    // Initialize app when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      new LegalMarkdownApp();
+    });
+  </script>
+</body>
+
+</html>

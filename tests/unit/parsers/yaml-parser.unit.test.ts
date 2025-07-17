@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Tests for YAML front matter parsing and serialization
+ * 
+ * This test suite covers the YAML front matter system:
+ * - Basic YAML parsing with --- delimiters
+ * - Support for complex nested structures and arrays
+ * - Legal document specific fields (parties, jurisdiction, dates)
+ * - Custom variable definitions and metadata configuration
+ * - YAML validation, error handling, and serialization
+ * - Metadata output configuration extraction
+ */
+
 import { parseYamlFrontMatter, serializeToYaml, extractMetadataOutputConfig } from '../../../src/core/parsers/yaml-parser';
 
 describe('YAML Front Matter', () => {
@@ -133,6 +145,10 @@ Contract content`;
       expect(result.metadata.parties[1].type).toBe('LLC');
     });
 
+    /**
+     * Tests complex nested party structures with addresses and contacts
+     * Critical for comprehensive contract metadata representation
+     */
     it('should handle complex party structures', () => {
       const content = `---
 parties:

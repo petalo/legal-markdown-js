@@ -1,0 +1,114 @@
+/**
+ * @fileoverview Test stylesheet for office space lease agreement contract documents.
+ * 
+ * This CSS file provides professional styling for legal contract documents
+ * with proper typography, spacing, and print optimization.
+ * 
+ * Style features:
+ * - Professional serif typography (Times New Roman)
+ * - 8.5" document width with 1" margins
+ * - Structured sections with colored backgrounds and borders
+ * - Conditional clause highlighting (late payment warnings)
+ * - Field highlighting styles for imported, missing, and highlighted values
+ * - Print-optimized media queries for paper output
+ * 
+ * Used by integration tests to validate CSS generation and styling
+ * consistency across different document types.
+ */
+
+body {
+  font-family: 'Times New Roman', serif;
+  line-height: 1.6;
+  max-width: 8.5in;
+  margin: 1in auto;
+  padding: 0;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+h2 {
+  color: #34495e;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.parties {
+  margin: 20px 0;
+}
+
+.party {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #3498db;
+}
+
+.property-details {
+  background-color: #ecf0f1;
+  padding: 20px;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+.property-details ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.property-details li {
+  margin: 10px 0;
+}
+
+.late-payment-clause {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+/* Highlighting styles override */
+.imported-value {
+  background-color: #d1ecf1;
+  border-color: #0c5460;
+  color: #0c5460;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.missing-value {
+  background-color: #f8d7da;
+  border-color: #721c24;
+  color: #721c24;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.highlight {
+  background-color: #fff3cd;
+  border-color: #856404;
+  color: #856404;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+@media print {
+  body {
+    margin: 0;
+    font-size: 11pt;
+  }
+  
+  h1, h2 {
+    page-break-after: avoid;
+  }
+  
+  .party, .property-details {
+    page-break-inside: avoid;
+  }
+}

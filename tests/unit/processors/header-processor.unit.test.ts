@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tests for the header processor and numbering system
+ * 
+ * This test suite covers the core header processing functionality:
+ * - Multi-level header notation (l., ll., lll., etc.) and alternative syntax
+ * - Hierarchical numbering with proper sequence management
+ * - Custom format templates for different document types
+ * - Indentation control and level-specific formatting
+ * - Edge cases like skip-level numbering and malformed headers
+ */
+
 import { processHeaders } from '../../../src/core/processors/header-processor';
 
 describe('Headers & Numbering', () => {

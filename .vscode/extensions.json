@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.test-adapter-converter",
+    "orta.vscode-jest",
+    "redhat.vscode-yaml",
+    "yzhang.markdown-all-in-one",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

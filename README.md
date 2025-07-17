@@ -1,286 +1,171 @@
-# Legal Markdown Wizard
+# Legal Markdown JS
 
-A Node.js implementation of [LegalMarkdown](https://github.com/compleatang/legal-markdown) for processing legal documents with structured markdown and YAML front matter.
+A Node.js implementation of
+[LegalMarkdown](https://github.com/compleatang/legal-markdown) for processing
+legal documents with structured markdown and YAML front matter.
 
-## 🎯 Project Goals
+## Table of Contents
+
+- [Goals](#goals)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Key Features](#key-features)
+- [Documentation](#documentation)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Goals
 
 - **Core Parity**: 1:1 compatibility with the original Ruby legal-markdown tool
-- **Node.js Extensions**: Additional functionality leveraging the Node.js ecosystem
-- **Type Safety**: Full TypeScript implementation with comprehensive type definitions
+- **Node.js Extensions**: Additional functionality leveraging the Node.js
+  ecosystem
+- **Type Safety**: Full TypeScript implementation with comprehensive type
+  definitions
 - **Modern Tooling**: Built with modern development practices and tooling
 
-## 📁 Project Structure
-
-```
-src/
-├── core/                    # 🎯 Core functionality (parity with original)
-│   ├── parsers/            # YAML front matter parsing
-│   ├── processors/         # Document processing (headers, clauses, references, imports)
-│   ├── exporters/          # Metadata export functionality
-│   └── index.ts            # Core module exports
-├── extensions/             # 🚀 Node.js specific enhancements
-│   ├── validators/         # Document validation utilities
-│   ├── formatters/         # Advanced output formatting
-│   ├── utilities/          # Analysis and utility functions
-│   └── index.ts            # Extensions module exports
-├── cli.ts                  # Command-line interface
-├── index.ts                # Main entry point
-└── types.ts                # TypeScript type definitions
-
-tests/
-├── unit/                   # Unit tests
-│   ├── parsers/           # Parser unit tests
-│   ├── processors/        # Processor unit tests
-│   ├── exporters/         # Exporter unit tests
-│   └── core/              # Core functionality tests
-├── integration/           # Integration tests
-├── e2e/                   # End-to-end tests
-└── setup.ts               # Test configuration
-```
-
-## 🚀 Installation
+## Installation
 
 ```bash
-npm install legal-md-wizard
+npm install legal-markdown-js
 ```
 
-## 🔧 Usage
+## Quick Start
 
-### Command Line Interface
+### Command Line Usage
 
 ```bash
-# Basic usage
+# Basic document processing
 legal-md input.md output.md
 
-# Process only YAML front matter
-legal-md --yaml input.md output.md
+# Generate PDF with highlighting
+legal-md document.md --pdf --highlight
 
-# Process only headers  
-legal-md --headers input.md output.md
-
-# Export metadata
-legal-md --export-json --output-path ./metadata input.md output.md
-
-# Debug mode
-legal-md --debug input.md output.md
-
-# Skip specific processing
-legal-md --no-headers --no-references input.md output.md
+# Process with custom CSS
+legal-md document.md --html --css styles.css
 ```
 
-### Programmatic API
+### Programmatic Usage
 
 ```typescript
-import { processLegalMarkdown } from 'legal-md-wizard';
+import { processLegalMarkdown } from 'legal-markdown-js';
 
 const result = processLegalMarkdown(content, {
   basePath: './documents',
   exportMetadata: true,
-  exportFormat: 'json'
+  exportFormat: 'json',
 });
 
 console.log(result.content);
 console.log(result.metadata);
-console.log(result.exportedFiles);
 ```
 
-## 📋 Features
+## Key Features
 
-### ✅ Core Features (Legal Markdown Parity)
+### Core Compatibility
 
-| Feature | Status | Tests |
-|---------|--------|-------|
-| **File Formats** | | |
-| ✅ Markdown (.md) input | Implemented | [file-formats.unit.test.ts](tests/unit/core/file-formats.unit.test.ts) |
-| ✅ ASCII (.txt) input | Implemented | [file-formats.unit.test.ts](tests/unit/core/file-formats.unit.test.ts) |
-| **YAML Front Matter** | | |
-| ✅ Parse YAML delimiters (`---`) | Implemented | [yaml-parser.unit.test.ts](tests/unit/parsers/yaml-parser.unit.test.ts) |
-| ✅ Basic fields (title, author, date) | Implemented | [yaml-parser.unit.test.ts](tests/unit/parsers/yaml-parser.unit.test.ts) |
-| ✅ Parties array with name and type | Implemented | [yaml-parser.unit.test.ts](tests/unit/parsers/yaml-parser.unit.test.ts) |
-| ✅ Jurisdiction and governing-law | Implemented | [yaml-parser.unit.test.ts](tests/unit/parsers/yaml-parser.unit.test.ts) |
-| ✅ Custom variable definitions | Implemented | [yaml-parser.unit.test.ts](tests/unit/parsers/yaml-parser.unit.test.ts) |
-| **Headers & Numbering** | | |
-| ✅ `l.`, `ll.`, `lll.` notation | Implemented | [header-processor.unit.test.ts](tests/unit/processors/header-processor.unit.test.ts) |
-| ✅ Alternative `l1.`, `l2.` syntax | Implemented | [header-processor.unit.test.ts](tests/unit/processors/header-processor.unit.test.ts) |
-| ✅ Custom level formatting | Implemented | [header-processor.unit.test.ts](tests/unit/processors/header-processor.unit.test.ts) |
-| ✅ Hierarchical numbering | Implemented | [header-processor.unit.test.ts](tests/unit/processors/header-processor.unit.test.ts) |
-| **Optional Clauses** | | |
-| ✅ Square bracket notation `[...]` | Implemented | [clause-processor.unit.test.ts](tests/unit/processors/clause-processor.unit.test.ts) |
-| ✅ Condition syntax `{condition}` | Implemented | [clause-processor.unit.test.ts](tests/unit/processors/clause-processor.unit.test.ts) |
-| ✅ Boolean conditions | Implemented | [clause-processor.unit.test.ts](tests/unit/processors/clause-processor.unit.test.ts) |
-| ✅ AND/OR logic operations | Implemented | [clause-processor.unit.test.ts](tests/unit/processors/clause-processor.unit.test.ts) |
-| ✅ Equality conditions | Implemented | [clause-processor.unit.test.ts](tests/unit/processors/clause-processor.unit.test.ts) |
-| **Cross-References** | | |
-| ✅ Pipe notation `\|reference\|` | Implemented | [reference-processor.unit.test.ts](tests/unit/processors/reference-processor.unit.test.ts) |
-| ✅ YAML front matter values | Implemented | [reference-processor.unit.test.ts](tests/unit/processors/reference-processor.unit.test.ts) |
-| ✅ Text string references | Implemented | [reference-processor.unit.test.ts](tests/unit/processors/reference-processor.unit.test.ts) |
-| ✅ Date and number references | Implemented | [reference-processor.unit.test.ts](tests/unit/processors/reference-processor.unit.test.ts) |
-| **Partial Imports** | | |
-| ✅ `@import [filename]` syntax | Implemented | [import-processor.unit.test.ts](tests/unit/processors/import-processor.unit.test.ts) |
-| ✅ Relative and absolute paths | Implemented | [import-processor.unit.test.ts](tests/unit/processors/import-processor.unit.test.ts) |
-| ✅ Multiple imports support | Implemented | [import-processor.unit.test.ts](tests/unit/processors/import-processor.unit.test.ts) |
-| **Metadata Export** | | |
-| ✅ YAML and JSON export | Implemented | [metadata-exporter.unit.test.ts](tests/unit/exporters/metadata-exporter.unit.test.ts) |
-| ✅ Custom output paths | Implemented | [metadata-exporter.unit.test.ts](tests/unit/exporters/metadata-exporter.unit.test.ts) |
-| ✅ Include/exclude options | Implemented | [metadata-exporter.unit.test.ts](tests/unit/exporters/metadata-exporter.unit.test.ts) |
+All original Legal Markdown features are fully implemented:
 
-### 🚀 Extensions (Node.js Enhancements)
+- **File Formats**: Markdown, ASCII, reStructuredText, LaTeX
+- **YAML Front Matter**: Complete parsing with all standard fields
+- **Headers & Numbering**: Full hierarchical numbering system (`l.`, `ll.`,
+  `lll.`)
+- **Optional Clauses**: Boolean, equality, and logical operations
+  (`[text]{condition}`)
+- **Cross-References**: All reference types including special date handling
+  (`|reference|`)
+- **Partial Imports**: File inclusion with path resolution (`@import`)
+- **Metadata Export**: YAML and JSON export with custom paths
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| 🔍 **Document Validation** | Implemented | Structure validation, bracket matching |
-| 🎨 **Advanced Formatting** | Implemented | HTML output, legal styling options |
-| 📊 **Document Analysis** | Implemented | Word count, statistics, reference extraction |
-| 🧪 **Comprehensive Testing** | Implemented | Unit, integration, and E2E test suites |
+### Node.js Enhancements
 
-## 🧪 Testing
+Additional features available only in the Node.js version:
 
-The project uses a comprehensive testing strategy:
+- **Mixins System**: Template substitution with `{{variable}}` syntax
+- **PDF Generation**: Professional PDF output with styling and field
+  highlighting
+- **HTML Generation**: Custom HTML output with CSS support
+- **Template Loops**: Array iteration with `[#items]...[/items]` syntax
+- **Helper Functions**: Date, number, and string formatting helpers
+- **Batch Processing**: Multi-file processing with concurrency control
+
+## Documentation
+
+### User Documentation
+
+- **[Getting Started](docs/GETTING-STARTED.md)** - Installation and setup guide
+- **[CLI Reference](docs/CLI-REFERENCE.md)** - Complete command-line interface
+  documentation
+- **[Features Guide](docs/FEATURES-GUIDE.md)** - All features, helpers, and
+  advanced usage
+- **[Headers & Numbering](docs/HEADERS-NUMBERING.md)** - Hierarchical numbering
+  system guide
+- **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and
+  document review
+- **[Compatibility](docs/COMPATIBILITY.md)** - Ruby version compatibility
+  tracking
+
+### Developer Documentation
+
+- **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture and
+  design patterns
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - Development workflow,
+  standards, and contribution guidelines
+- **[Helper Functions](docs/HELPERS.md)** - Complete reference for template
+  helpers and functions
+- **[Development Guide](docs/DEVELOPMENT-GUIDE.md)** - Complete developer setup
+  and workflow
+- **[Release Process](docs/RELEASE-PROCESS.md)** - Versioning and release
+  procedures
+- **[Scripts Reference](docs/SCRIPTS-REFERENCE.md)** - Available npm scripts and
+  commands
+- **[API Documentation](docs/api/)** - Auto-generated TypeScript API docs
+
+## Testing
 
 ```bash
 # Run all tests
 npm test
 
 # Run specific test types
-npm test -- --testPathPattern="unit"           # Unit tests only
-npm test -- --testPathPattern="integration"    # Integration tests only
-npm test -- --testPathPattern="e2e"           # E2E tests only
+npm run test:unit
+npm run test:integration
+npm run test:e2e
 
-# Run specific test files
-npm test -- --testPathPattern="yaml-parser"   # YAML parser tests
-npm test -- --testPathPattern="header-processor" # Header processing tests
-
-# Run tests with coverage
-npm test -- --coverage
+# Run with coverage
+npm run test:coverage
 ```
 
-### Test Structure
+The project includes comprehensive testing with 495 tests across 29 test suites:
 
-- **Unit Tests** (`tests/unit/`): Test individual components in isolation
-- **Integration Tests** (`tests/integration/`): Test complete workflows and feature combinations
-- **E2E Tests** (`tests/e2e/`): Test CLI interface and full application behavior
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test complete workflows and feature combinations
+- **E2E Tests**: Test CLI interface and full application behavior
 
-## 📖 Examples
+## Contributing
 
-### Basic Legal Document
+We welcome contributions! Please see our
+[Contributing Guide](docs/CONTRIBUTING.md) for:
 
-```markdown
----
-title: "Software License Agreement"
-parties:
-  - name: "TechCorp Inc."
-    type: "Corporation"
-  - name: "Client LLC"
-    type: "LLC"
-effective_date: "2024-01-01"
-jurisdiction: "California"
-payment_terms: 30
-include_warranty: false
----
+- Development setup and workflow
+- Coding standards and best practices
+- Testing requirements
+- Pull request process
 
-l. Definitions
-ll. Software
-The "Software" means the computer program licensed under this Agreement.
-
-l. License Grant
-The license is granted to |parties.1.name| by |parties.0.name|.
-
-[Warranty provisions apply]{include_warranty}.
-
-l. Payment
-Payment is due within |payment_terms| days.
-```
-
-### Advanced Features
-
-```markdown
----
-title: "Complex Agreement"
-level-one: "Article %n:"
-level-two: "Section %n.%s"
-level-three: "(%n)"
-meta-json-output: "metadata.json"
----
-
-l. Introduction
-ll. Background
-lll. Previous Agreements
-
-@import common-clauses.md
-
-l. Terms and Conditions
-[Premium terms apply]{client_type = "premium" AND active = true}.
-```
-
-## 🔗 API Reference
-
-### Main Functions
-
-#### `processLegalMarkdown(content, options)`
-
-Process a legal markdown document with all features.
-
-**Parameters:**
-- `content: string` - The document content to process
-- `options: LegalMarkdownOptions` - Processing options
-
-**Returns:**
-```typescript
-{
-  content: string;           // Processed document content
-  metadata?: object;         // Parsed YAML front matter
-  exportedFiles?: string[];  // Paths to exported metadata files
-}
-```
-
-**Options:**
-```typescript
-interface LegalMarkdownOptions {
-  basePath?: string;         // Base path for resolving imports
-  yamlOnly?: boolean;        // Process only YAML front matter
-  noHeaders?: boolean;       // Skip header processing
-  noClauses?: boolean;       // Skip optional clause processing
-  noReferences?: boolean;    // Skip cross-reference processing
-  noImports?: boolean;       // Skip import processing
-  exportMetadata?: boolean;  // Export metadata to files
-  exportFormat?: 'yaml' | 'json'; // Metadata export format
-  exportPath?: string;       // Custom export path
-  debug?: boolean;           // Enable debug output
-}
-```
-
-## 🤝 Contributing
+### Quick Start for Contributors
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following the project structure:
-   - **Core functionality** goes in `src/core/` (maintain parity)
-   - **Extensions** go in `src/extensions/` (Node.js specific)
-4. Add tests for your changes
-5. Run the test suite (`npm test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+3. Follow the development guidelines
+4. Run the test suite (`npm test`)
+5. Submit a Pull Request
 
-### Development Guidelines
-
-- **Core vs Extensions**: Keep original legal-markdown compatibility in `src/core/`, add enhancements in `src/extensions/`
-- **Testing**: All new features must include unit tests, integration tests for complex workflows
-- **TypeScript**: Use proper typing throughout, avoid `any` types
-- **Documentation**: Update README.md and add JSDoc comments for public APIs
-
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Original [LegalMarkdown](https://github.com/compleatang/legal-markdown) project by Casey Kuhlman
+- Original [LegalMarkdown](https://github.com/compleatang/legal-markdown)
+  project by Casey Kuhlman
 - The legal tech community for inspiration and feedback
-
-## 🐛 Issues & Support
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/your-org/legal-md-wizard/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/your-org/legal-md-wizard/discussions)
-- 📚 **Documentation**: This README and inline code documentation
-- 💬 **Community**: Join our discussions for questions and community support

@@ -11,11 +11,16 @@ build/
 *.tsbuildinfo
 *.tgz
 
-# IDE files
+# IDE files (except project settings)
 .idea/
-.vscode/
 *.sublime-*
 .DS_Store
+
+# VS Code (keep project settings, ignore user settings)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+!.vscode/extensions.json
 
 # Test coverage
 coverage/
@@ -29,6 +34,7 @@ coverage/
 
 # Temp files
 .tmp/
+.temp/
 temp/
 tmp/
 *.log
@@ -36,3 +42,35 @@ tmp/
 # Generated metadata
 metadata.json
 metadata.yaml
+
+# Generated output files (but keep examples/ directory)
+*-output.md
+processed-*.md
+final-output.md
+test-output.md
+output/
+
+# Test output files (but keep reference files)
+tests/output/e2e/
+tests/output/temp/
+tests/output/*.html
+tests/output/*.css
+tests/output/*.pdf
+tests/output/*.md
+!tests/output/advanced-metadata.json
+!tests/output/agreement-metadata.json
+# Ignore specific output files
+
+# Temporary output files
+temp-*.md
+output-*.md
+
+# Documentation and coverage
+docs/coverage/
+docs/api/
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache

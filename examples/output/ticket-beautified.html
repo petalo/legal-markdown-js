@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ticket-beautified</title>
+    <meta name="ticketNumber" content="TKT-12345">
+    <meta name="purchaseDate" content="2025-07-16">
+    <meta name="storeName" content="SuperMart Downtown">
+    <meta name="cashierName" content="John Smith">
+    <meta name="subtotal" content="85.5">
+    <meta name="taxRate" content="8.25">
+    <meta name="taxAmount" content="7.05">
+    <meta name="total" content="92.55">
+    <meta name="isMember" content="true">
+    <meta name="pointsEarned" content="85">
+    <meta name="pointsBalance" content="340">
+    <meta name="receiptId" content="RCP-89234">
+    <meta name="items" content="[object Object],[object Object],[object Object],[object Object],[object Object]">
+    <meta name="businessHours" content="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]">
+    <style>
+      /* Default CSS */
+      /* Default CSS for Legal Markdown HTML Generation */
+
+/* Base styles */
+body {
+  font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Print styles */
+@media print {
+  body {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .no-break {
+    page-break-inside: avoid;
+  }
+  .page-break-before {
+    page-break-before: always;
+  }
+}
+
+/* Table responsiveness */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+/* Code blocks */
+pre {
+  background-color: #f5f5f5;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+code {
+  background-color: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* Lists */
+ul, ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+/* Links */
+a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1.1em; }
+h5 { font-size: 1em; }
+h6 { font-size: 0.9em; }
+
+      /* Custom CSS */
+      body {
+  font-family: 'Courier New', monospace;
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 10px;
+  line-height: 1.4;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 1.2em;
+  text-align: center;
+  margin: 5px 0;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 5px;
+  color: #000;
+}
+
+h2 {
+  font-size: 1em;
+  margin: 10px 0 5px 0;
+  color: #000;
+  text-transform: uppercase;
+}
+
+.missing-value {
+  color: #e74c3c;
+  background-color: #ffecec;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px dashed #e74c3c;
+  font-style: italic;
+  font-size: 0.8em;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  margin: 3px 0;
+  font-size: 0.9em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.on-sale {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.total {
+  width: 100%;
+  border-top: 1px dashed #000;
+  border-bottom: 1px dashed #000;
+  margin: 10px 0;
+  padding: 5px 0;
+}
+
+.total li {
+  font-weight: bold;
+  margin: 0;
+  padding: 5px 0;
+}
+
+.total span:last-child {
+  font-size: 1.1em;
+}
+
+.receipt-footer {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.8em;
+  border-top: 1px dashed #000;
+  padding-top: 10px;
+}
+
+.store-info {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.items-list li {
+  padding: 2px 0;
+}
+
+.payment-details {
+  text-align: right;
+}
+
+@media print {
+  body {
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+    </style>
+  </head>
+
+  <body>
+    <!-- markdownlint-disable-file -->
+    <html>
+
+      <head></head>
+
+      <body>
+        <div class="store-info" style="text-align: center">
+
+          <h1>Purchase Ticket - TKT-12345</h1>
+          <p><strong>Date:</strong> 2025-07-16<br><strong>Store:</strong> SuperMart Downtown<br><strong>Cashier:</strong> John Smith</p>
+        </div>
+
+        <h2>Purchased Items</h2>
+        <ul class="items-list">
+          <li>Organic Bananas - $4.99</li>
+          <li>Fresh Bread <span class="on-sale">(ON SALE!)</span> - $3.5</li>
+          <li>Coffee Beans - $15.99</li>
+          <li>Chocolate Bar <span class="on-sale">(ON SALE!)</span> - $2.99</li>
+          <li>Paper Towels - $8.99</li>
+        </ul>
+
+        <h2>Payment Details</h2>
+        <ul class="payment-details no-break">
+          <li><span>Subtotal:</span> <span>$85.5</span></li>
+          <li><span>Tax (8.25%):</span> <span>$7.05</span></li>
+          <li class="total"><span><strong>Total:</strong></span> <span>$92.55</span></li>
+        </ul>
+
+        <h2>Customer Loyalty</h2>
+        <ul class="no-break">
+          "**Member Status
+          "**Points Earned
+          "**Total Points
+        </ul>
+
+        <h2>Receipt Information</h2>
+        <p><strong>Receipt ID:</strong> RCP-89234<br><strong>Thank you for shopping with us!</strong></p>
+        <h2>Store Hours</h2>
+        <ul>
+          <li><span>Monday:</span> <span>9:00 AM - 9:00 PM</span></li>
+          <li><span>Tuesday:</span> <span>9:00 AM - 9:00 PM</span></li>
+          <li><span>Wednesday:</span> <span>9:00 AM - 9:00 PM</span></li>
+          <li><span>Thursday:</span> <span>9:00 AM - 9:00 PM</span></li>
+          <li><span>Friday:</span> <span>9:00 AM - 10:00 PM</span></li>
+          <li><span>Saturday:</span> <span>10:00 AM - 8:00 PM</span></li>
+          <li><span>Sunday:</span> <span>11:00 AM - 6:00 PM</span></li>
+        </ul>
+
+        <p class="receipt-footer">Save this receipt for returns and exchanges</p>
+      </body>
+
+    </html>
+  </body>
+
+</html>

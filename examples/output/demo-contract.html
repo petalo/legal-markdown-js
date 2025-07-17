@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>demo-contract</title>
+    <style>
+      /* Base styles */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      /* Print styles */
+      @media print {
+        body {
+          max-width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+        .no-break {
+          page-break-inside: avoid;
+        }
+        .page-break-before {
+          page-break-before: always;
+        }
+      }
+      
+      /* Table responsiveness */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+      }
+      
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      
+      th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+      }
+      
+      /* Code blocks */
+      pre {
+        background-color: #f5f5f5;
+        padding: 1em;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      
+      code {
+        background-color: #f5f5f5;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+      
+      /* Lists */
+      ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+      }
+      
+      /* Links */
+      a {
+        color: #0066cc;
+        text-decoration: none;
+      }
+      
+      a:hover {
+        text-decoration: underline;
+      }
+      
+      /* Headings */
+      h1, h2, h3, h4, h5, h6 {
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+      }
+      
+      h1 { font-size: 2em; }
+      h2 { font-size: 1.5em; }
+      h3 { font-size: 1.25em; }
+      h4 { font-size: 1.1em; }
+      h5 { font-size: 1em; }
+      h6 { font-size: 0.9em; }
+      
+      /* Custom CSS */
+      body {
+  font-family: 'Times New Roman', serif;
+  line-height: 1.6;
+  max-width: 8.5in;
+  margin: 1in auto;
+  padding: 0;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+h2 {
+  color: #34495e;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.parties {
+  margin: 20px 0;
+}
+
+.party {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #3498db;
+}
+
+.property-details {
+  background-color: #ecf0f1;
+  padding: 20px;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+.property-details ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.property-details li {
+  margin: 10px 0;
+}
+
+.late-payment-clause {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+/* Highlighting styles override */
+.imported-value {
+  background-color: #d1ecf1;
+  border-color: #0c5460;
+  color: #0c5460;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.missing-value {
+  background-color: #f8d7da;
+  border-color: #721c24;
+  color: #721c24;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.highlight {
+  background-color: #fff3cd;
+  border-color: #856404;
+  color: #856404;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+@media print {
+  body {
+    margin: 0;
+    font-size: 11pt;
+  }
+  
+  h1, h2 {
+    page-break-after: avoid;
+  }
+  
+  .party, .property-details {
+    page-break-inside: avoid;
+  }
+}
+/**
+ * Highlight Styles for Legal Documents
+ * 
+ * Provides visual indicators for:
+ * - Imported values (blue): Fields filled from data
+ * - Missing values (red): Required fields without values  
+ * - Logic fields (yellow): Fields with conditional logic or mixins
+ */
+
+/* Imported values - Successfully filled from data */
+.imported-value {
+  border: 1px solid #0066cc;
+  border-radius: 2px;
+  padding: 1px 3px;
+  background-color: #e6f3ff;
+  color: #004085;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+}
+
+/* Nested elements in imported values */
+.imported-value a {
+  display: inline;
+  white-space: normal;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+/* Print styles for imported values */
+@media print {
+  .imported-value {
+    border-color: #0066cc;
+    background-color: #e6f3ff;
+    color: #004085;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Missing values - Required fields without data */
+.missing-value {
+  border: 1px solid #dc3545;
+  border-radius: 2px;
+  padding: 1px 3px;
+  background-color: #fff5f5;
+  color: #dc3545;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+  font-weight: 500;
+}
+
+/* Nested elements in missing values */
+.missing-value a {
+  display: inline;
+  white-space: normal;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+/* Print styles for missing values */
+@media print {
+  .missing-value {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+    color: #dc3545;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Logic fields - Fields with conditional logic or mixins */
+.highlight {
+  border: 1px solid #ffc107;
+  border-radius: 2px;
+  padding: 3px 3px;
+  background-color: #f9f3df;
+  color: #856404;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+  margin: 1px 0;
+}
+
+/* Nested highlighting */
+.highlight .imported-value,
+.highlight .missing-value {
+  margin: 0;
+  padding: 0 3px;
+  border-radius: 1px;
+}
+
+/* Print styles for logic fields */
+@media print {
+  .highlight {
+    border-color: #ffc107;
+    background-color: #f9f3df;
+    color: #856404;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Additional helper classes */
+
+/* Legend for highlighting */
+.highlight-legend {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  page-break-inside: avoid;
+}
+
+.highlight-legend h3 {
+  margin-top: 0;
+  font-size: 1.1em;
+}
+
+.highlight-legend ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0 0 0;
+}
+
+.highlight-legend li {
+  margin: 5px 0;
+  padding: 5px 10px;
+  border-radius: 3px;
+}
+
+.highlight-legend .imported-example {
+  background-color: #e6f3ff;
+  border: 1px solid #0066cc;
+  color: #004085;
+}
+
+.highlight-legend .missing-example {
+  background-color: #fff5f5;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+}
+
+.highlight-legend .logic-example {
+  background-color: #f9f3df;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+/* Ensure visibility in different contexts */
+@media screen {
+  .imported-value,
+  .missing-value,
+  .highlight {
+    transition: background-color 0.2s ease;
+  }
+  
+  .imported-value:hover {
+    background-color: #cce5ff;
+  }
+  
+  .missing-value:hover {
+    background-color: #ffe5e5;
+  }
+  
+  .highlight:hover {
+    background-color: #fff3cd;
+  }
+}
+    </style>
+</head>
+<body>
+<html><head></head><body><p>---title: Software Development Agreementdate: 2025-07-16client:  name: Tech Innovations Inc  address: 123 Silicon Valley Blvd, CA 94025  contact: <a href="mailto:john.doe@techinnovations.comvendor">john.doe@techinnovations.comvendor</a>:  name: DevSolutions LLC  address: 456 Code Street, SF, CA 94105  contact: project:  name: Mobile Banking App  duration: 6 months  budget: 150000payment:  terms: Net 30  late_fee: true  fee_percentage: 2---</p>
+<h1><span class="missing-value" data-field="title">[title]</span></h1>
+<p><strong>Date</strong>: <span class="missing-value" data-field="date">[date]</span></p>
+<h2>PARTIES</h2>
+<p>This agreement is between:</p>
+<p><strong>CLIENT</strong>: <span class="missing-value" data-field="client.name">[client.name]</span><br><span class="missing-value" data-field="client.address">[client.address]</span><br>Contact: <span class="missing-value" data-field="client.contact">[client.contact]</span></p>
+<p><strong>VENDOR</strong>: <span class="missing-value" data-field="vendor.name">[vendor.name]</span><br><span class="missing-value" data-field="vendor.address">[vendor.address]</span><br>Contact: "[Contact Required]"</p>
+<h2>PROJECT DETAILS</h2>
+<p>Project Name: <strong><span class="missing-value" data-field="project.name">[project.name]</span></strong><br>Duration: <span class="missing-value" data-field="project.duration">[project.duration]</span><br>Total Budget: $<span class="missing-value" data-field="project.budget">[project.budget]</span></p>
+<h2>PAYMENT TERMS</h2>
+<p>Payment terms: <span class="missing-value" data-field="payment.terms">[payment.terms]</span></p>
+<p>"No late fees apply."</p>
+<h2>SIGNATURES</h2>
+<hr>
+<p>Client Representative<br>Date: ____________</p>
+<hr>
+<p>Vendor Representative<br>Date: ____________</p>
+</body></html>
+</body>
+</html>

@@ -1,0 +1,123 @@
+{
+  "contract": {
+    "title": "Office Lease Agreement",
+    "date": "2024-01-28",
+    "number": "OL-2024-001",
+    "type": "Office Lease",
+    "version": "1.0",
+    "status": "Draft",
+    "language": "EN",
+    "cure_period_days": 30,
+    "end_date": "January 31st 2027",
+    "governing_law": "England and Wales",
+    "initial_term_years": 3,
+    "jurisdiction": "London",
+    "renewal_notice_months": 6,
+    "renewal_term_years": 2,
+    "signing_city": "London",
+    "signing_date": "January 16th 2024",
+    "start_date": "February 1st 2024"
+  },
+  "default": {
+    "events": [
+      "Failure to pay rent within 5 days of due date",
+      "",
+      "Filing for bankruptcy or insolvency",
+      "Abandonment of the premises"
+    ],
+    "remedies": [
+      "Right to terminate the lease",
+      "Right to recover all unpaid rent",
+      "Right to recover damages",
+      "Right to re-enter and take possession"
+    ]
+  },
+  "insurance": {
+    "lessee_requirements": ["", "", "", "Workers' compensation insurance"],
+    "lessor_requirements": [
+      "Building insurance",
+      "Public liability insurance",
+      "Property damage insurance"
+    ]
+  },
+  "lessee": {
+    "company_name": "TechStart Solutions Ltd",
+    "notice_address": "Legal Department, TechStart Solutions Ltd, 100 Liverpool Street, London EC2M 2RH",
+    "registered_address": "100 Liverpool Street, London EC2M 2RH",
+    "representative": {
+      "full_name": "",
+      "id_number": "PB654321C"
+    },
+    "tax_id": ""
+  },
+  "lessor": {
+    "company_name": "Canary Office Spaces Ltd",
+    "notice_address": "Legal Department, Canary Office Spaces Ltd, 25 Canada Square, Canary Wharf, London E14 5LQ",
+    "registered_address": "25 Canada Square, Canary Wharf, London E14 5LQ",
+    "representative": {
+      "full_name": "James William Smith",
+      "id_number": "PA123456B"
+    },
+    "tax_id": "GB123456789"
+  },
+  "payment": {
+    "annual_rent": {
+      "number": 270000,
+      "text": "two hundred and seventy thousand"
+    },
+    "due_day": 5,
+    "maximum_increase_percentage": 5,
+    "minimum_increase_percentage": 2,
+    "monthly_rent": {
+      "number": 22500,
+      "text": "twenty-two thousand five hundred"
+    },
+    "security_deposit_months": 2,
+    "security_deposit": {
+      "number": 45000,
+      "text": "forty-five thousand"
+    }
+  },
+  "property": {
+    "name": "Innovation Tower",
+    "address": "789 Business Blvd, New York, NY 10002",
+    "floor_number": 15,
+    "area_sqm": 232.26,
+    "parking_spots": 2
+  },
+  "maintenance": {
+    "lessee_obligations": [
+      "Interior walls and finishes",
+      "Floor coverings",
+      "Light fixtures",
+      "Internal electrical systems",
+      "Office furniture and equipment"
+    ],
+    "lessor_obligations": [
+      "Structural elements",
+      "Building envelope",
+      "Common areas",
+      "HVAC systems",
+      "Elevators"
+    ]
+  },
+  "services": {
+    "included": [
+      "Water",
+      "Electricity",
+      "Internet",
+      "Heating",
+      "Air Conditioning",
+      "Cleaning",
+      "Security",
+      "Maintenance"
+    ],
+    "additional": [
+      "Electricity consumption",
+      "Internet and telecommunications",
+      "Additional cleaning services",
+      "Contents insurance",
+      "Business rates"
+    ]
+  }
+}

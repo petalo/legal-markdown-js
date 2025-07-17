@@ -1,0 +1,8 @@
+{
+  "title": "Complete Feature Test",
+  "client_name": "Advanced Corp",
+  "include_advanced": true,
+  "level-one": "Article %n.",
+  "level-two": "Section %n.%s",
+  "level-three": "(%n)"
+}

@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tests for the import processor and partial file inclusion
+ * 
+ * This test suite covers the @import directive system:
+ * - Basic @import [filename] syntax with relative and absolute paths
+ * - Multiple imports, nested imports, and import ordering
+ * - File system integration and path resolution
+ * - Import validation and error handling for missing files
+ * - Edge cases like empty imports and permission errors
+ */
+
 import { processPartialImports, validateImports } from '../../../src/core/processors/import-processor';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -216,6 +227,10 @@ Document end`;
       expect(result.importedFiles).toHaveLength(3);
     });
 
+    /**
+     * Tests recursive import processing - imports within imported files
+     * Important for modular document structures
+     */
     it('should handle nested imports', () => {
       const nestedContent = 'Nested import content.';
       const middleContent = `Middle content with nested import:

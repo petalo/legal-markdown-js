@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tests for the optional clause processor
+ * 
+ * This test suite covers the conditional clause system that allows dynamic content inclusion:
+ * - Square bracket notation [text]{condition} for conditional content
+ * - Boolean condition evaluation and complex logical expressions
+ * - Support for AND/OR operations and equality comparisons
+ * - Nested object property access and error handling
+ * - Edge cases like malformed conditions and multiline clauses
+ */
+
 import { processOptionalClauses } from '../../../src/core/processors/clause-processor';
 
 describe('Optional Clauses', () => {

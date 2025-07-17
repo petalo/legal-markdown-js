@@ -1,0 +1,100 @@
+body {
+  font-family: 'Courier New', monospace;
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 10px;
+  line-height: 1.4;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 1.2em;
+  text-align: center;
+  margin: 5px 0;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 5px;
+  color: #000;
+}
+
+h2 {
+  font-size: 1em;
+  margin: 10px 0 5px 0;
+  color: #000;
+  text-transform: uppercase;
+}
+
+.missing-value {
+  color: #e74c3c;
+  background-color: #ffecec;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px dashed #e74c3c;
+  font-style: italic;
+  font-size: 0.8em;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  margin: 3px 0;
+  font-size: 0.9em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.on-sale {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.total {
+  width: 100%;
+  border-top: 1px dashed #000;
+  border-bottom: 1px dashed #000;
+  margin: 10px 0;
+  padding: 5px 0;
+}
+
+.total li {
+  font-weight: bold;
+  margin: 0;
+  padding: 5px 0;
+}
+
+.total span:last-child {
+  font-size: 1.1em;
+}
+
+.receipt-footer {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.8em;
+  border-top: 1px dashed #000;
+  padding-top: 10px;
+}
+
+.store-info {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.items-list li {
+  padding: 2px 0;
+}
+
+.payment-details {
+  text-align: right;
+}
+
+@media print {
+  body {
+    box-shadow: none;
+    padding: 0;
+  }
+}

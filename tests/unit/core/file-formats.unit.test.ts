@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Tests for file format handling in the legal-markdown system
+ * 
+ * This test suite verifies that the system correctly processes different input formats:
+ * - Markdown (.md) files with various formatting elements
+ * - Plain text (.txt) files with special characters and spacing
+ * - File system integration and error handling
+ * - Preservation of content formatting across different file types
+ */
+
 import { processLegalMarkdown } from '../../../src/index';
 import * as fs from 'fs';
 import * as path from 'path';

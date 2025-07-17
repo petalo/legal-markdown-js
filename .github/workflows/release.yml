@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # Also trigger on manual tag creation
+  create:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test
+
+      - name: Build packages
+        run: npm run build:packages
+
+      - name: Get package info
+        id: package-info
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
+  # Separate job for package uploads on tag creation
+  upload-packages:
+    name: Upload Release Packages
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build:packages
+
+      - name: Get package info
+        id: package-info
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Upload Web Package
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('packages/legal-markdown-web-v*.zip') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./packages/legal-markdown-web-v${{ steps.package-info.outputs.version }}.zip
+          asset_name: legal-markdown-web-v${{ steps.package-info.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload CLI Package
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('packages/legal-markdown-cli-v*.zip') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./packages/legal-markdown-cli-v${{ steps.package-info.outputs.version }}.zip
+          asset_name: legal-markdown-cli-v${{ steps.package-info.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Complete Package
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('packages/legal-markdown-complete-v*.zip') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./packages/legal-markdown-complete-v${{ steps.package-info.outputs.version }}.zip
+          asset_name: legal-markdown-complete-v${{ steps.package-info.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Info
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('packages/release-info.json') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./packages/release-info.json
+          asset_name: release-info.json
+          asset_content_type: application/json

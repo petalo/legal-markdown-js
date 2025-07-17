@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Markdown Processor - Standalone</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"], input[type="file"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        textarea {
+            height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="checkbox"] {
+            width: auto;
+        }
+        .output-options {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .process-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+        .process-btn:hover {
+            background: #45a049;
+        }
+        .process-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .output-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: none;
+        }
+        .output-content {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .download-btn {
+            background: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .download-btn:hover {
+            background: #1976D2;
+        }
+        .error {
+            color: #f44336;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #4CAF50;
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Legal Markdown Processor</h1>
+        
+        <div class="info">
+            <strong>ℹ️ Standalone Version:</strong> Esta versión usa la librería completa de Legal Markdown. 
+            Todas las funcionalidades están disponibles excepto la generación de PDF.
+        </div>
+        
+        <form id="processingForm">
+            <div class="form-group">
+                <label for="inputText">Input Content:</label>
+                <textarea id="inputText" placeholder="Paste your Legal Markdown content here or upload a file..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="fileInput">Or upload a file:</label>
+                <input type="file" id="fileInput" accept=".md,.txt">
+            </div>
+            
+            <div class="form-group">
+                <label>Processing Options:</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="debug">
+                        <label for="debug">Debug mode</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="yaml">
+                        <label for="yaml">YAML only</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="headers">
+                        <label for="headers">Headers only</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noHeaders">
+                        <label for="noHeaders">No headers</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noClauses">
+                        <label for="noClauses">No clauses</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noReferences">
+                        <label for="noReferences">No references</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noImports">
+                        <label for="noImports">No imports</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noMixins">
+                        <label for="noMixins">No mixins</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noReset">
+                        <label for="noReset">No reset</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="noIndent">
+                        <label for="noIndent">No indent</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="toMarkdown">
+                        <label for="toMarkdown">To Markdown</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Output Options:</label>
+                <div class="output-options">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="html">
+                            <label for="html">HTML output</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="exportYaml">
+                            <label for="exportYaml">Export YAML</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="exportJson">
+                            <label for="exportJson">Export JSON</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="title">Document Title:</label>
+                        <input type="text" id="title" placeholder="Enter document title">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="process-btn">Process Document</button>
+        </form>
+        
+        <div id="outputSection" class="output-section">
+            <h3>Output:</h3>
+            <div id="outputContent" class="output-content"></div>
+            <button id="downloadBtn" class="download-btn">Download Result</button>
+            <button id="downloadMetadata" class="download-btn" style="display:none;">Download Metadata</button>
+        </div>
+        
+        <div id="messageArea"></div>
+    </div>
+
+    <!-- Include the bundled legal-markdown library -->
+    <script src="./legal-markdown-bundle.js"></script>
+    <script>
+        // Check if the library loaded correctly
+        if (typeof window.LegalMarkdown === 'undefined') {
+            console.error('Legal Markdown library not loaded');
+            document.querySelector('.info').innerHTML = 
+                '<strong>⚠️ Error:</strong> La librería Legal Markdown no se pudo cargar. ' +
+                'Por favor, asegúrate de que el archivo legal-markdown-bundle.js esté disponible.';
+            document.querySelector('.info').style.background = '#f8d7da';
+            document.querySelector('.info').style.color = '#721c24';
+            document.querySelector('.info').style.borderColor = '#f5c6cb';
+        }
+        
+        // Use the real library
+        const LegalMarkdown = window.LegalMarkdown || {
+            processLegalMarkdown: function() {
+                throw new Error('Legal Markdown library not available');
+            }
+        };
+        
+        let processedResult = null;
+        let metadataResult = null;
+        let outputFormat = 'md';
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('inputText').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        document.getElementById('processingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const inputText = document.getElementById('inputText').value;
+            if (!inputText.trim()) {
+                showMessage('Please enter some content to process.', 'error');
+                return;
+            }
+            
+            const options = {
+                debug: document.getElementById('debug').checked,
+                yamlOnly: document.getElementById('yaml').checked,
+                noHeaders: document.getElementById('noHeaders').checked,
+                noClauses: document.getElementById('headers').checked || document.getElementById('noClauses').checked,
+                noReferences: document.getElementById('headers').checked || document.getElementById('noReferences').checked,
+                noImports: document.getElementById('headers').checked || document.getElementById('noImports').checked,
+                noMixins: document.getElementById('headers').checked || document.getElementById('noMixins').checked,
+                noReset: document.getElementById('noReset').checked,
+                noIndent: document.getElementById('noIndent').checked,
+                throwOnYamlError: false,
+                toMarkdown: document.getElementById('toMarkdown').checked,
+                html: document.getElementById('html').checked,
+                exportMetadata: document.getElementById('exportYaml').checked || document.getElementById('exportJson').checked,
+                exportFormat: document.getElementById('exportYaml').checked ? 'yaml' : 'json',
+                title: document.getElementById('title').value,
+                basePath: '.'
+            };
+            
+            const processBtn = document.querySelector('.process-btn');
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            
+            try {
+                console.log('Processing with options:', options);
+                processedResult = await LegalMarkdown.processLegalMarkdown(inputText, options);
+                
+                if (options.html) {
+                    outputFormat = 'html';
+                } else if (options.exportMetadata) {
+                    outputFormat = options.exportFormat;
+                } else {
+                    outputFormat = 'md';
+                }
+                
+                document.getElementById('outputContent').textContent = processedResult;
+                document.getElementById('outputSection').style.display = 'block';
+                
+                if (options.exportMetadata) {
+                    document.getElementById('downloadMetadata').style.display = 'inline-block';
+                }
+                
+                showMessage('Document processed successfully!', 'success');
+                
+            } catch (error) {
+                showMessage('Error processing document: ' + error.message, 'error');
+                console.error('Processing error:', error);
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Document';
+            }
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (processedResult) {
+                downloadFile(processedResult, `output.${outputFormat}`);
+            }
+        });
+        
+        document.getElementById('downloadMetadata').addEventListener('click', function() {
+            if (metadataResult) {
+                const format = document.getElementById('exportYaml').checked ? 'yaml' : 'json';
+                downloadFile(metadataResult, `metadata.${format}`);
+            }
+        });
+        
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageArea.innerHTML = '';
+            messageArea.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

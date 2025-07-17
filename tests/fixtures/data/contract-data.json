@@ -1,0 +1,42 @@
+{
+  "title": "OFFICE SPACE LEASE AGREEMENT",
+  "contract": {
+    "signing_date": "2024-01-15",
+    "signing_city": "San Francisco"
+  },
+  "lessor": {
+    "company_name": "Property Management LLC",
+    "registered_address": "123 Main Street, San Francisco, CA 94105",
+    "tax_id": "12-3456789",
+    "representative": {
+      "full_name": "John Smith",
+      "id_number": "123456789"
+    }
+  },
+  "lessee": {
+    "company_name": "Tech Startup Inc",
+    "registered_address": "456 Innovation Way, San Francisco, CA 94107",
+    "tax_id": "98-7654321",
+    "representative": {
+      "full_name": "Jane Doe",
+      "id_number": ""
+    }
+  },
+  "property": {
+    "address": "789 Business Plaza, Suite 500, San Francisco, CA 94108",
+    "area_sqm": 250,
+    "parking_spots": 5
+  },
+  "payment": {
+    "monthly_rent": {
+      "text": "Five Thousand",
+      "number": 5000
+    },
+    "late_fee_applies": true,
+    "late_fee_percentage": 1.5
+  },
+  "maintenance_included": true,
+  "maintenance": {
+    "included_services": ["Daily cleaning", "HVAC maintenance", "Security services"]
+  }
+}

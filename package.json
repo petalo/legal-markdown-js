@@ -1,58 +1,118 @@
 {
-  "name": "legal-md-wizard",
-  "version": "0.1.0",
+  "name": "legal-markdown-js",
+  "version": "1.0.0",
   "description": "Node.js implementation of LegalMarkdown for processing legal documents with markdown and YAML",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "jest",
-    "lint": "eslint src/**/*.ts",
+    "build": "tsc && tsc-alias && cp -r src/styles dist/ && cp -r src/web dist/ && npm run build:umd && cp dist/legal-markdown.umd.min.js dist/web/",
+    "build:web": "browserify dist/web/bundle-standalone.js -o dist/web/legal-markdown-bundle.js",
+    "build:umd": "webpack --mode production --config webpack.config.js",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist coverage .turbo && tsc --build --clean",
+    "cli": "ts-node src/cli/index.ts",
+    "commit": "cz",
+    "dev": "ts-node-dev --respawn src/cli/index.ts",
+    "docs": "typedoc src --out docs/api",
+    "format:check": "prettier --check \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "husky",
     "prepublishOnly": "npm run build",
-    "cli": "ts-node src/cli.ts"
+    "prerelease": "npm run clean && npm run build && npm run test",
+    "release:dry": "semantic-release --dry-run",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:e2e": "jest tests/e2e",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test": "jest",
+    "test:e2e:ticket": "node scripts/visual-tests/generate-ticket.js",
+    "test:e2e:contract": "node scripts/visual-tests/generate-contract.js",
+    "test:e2e:all": "npm run test:e2e:ticket && npm run test:e2e:contract",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run test",
+    "web": "npm run build && node -e \"console.log('Web version available at: dist/web/index.html')\" && python3 -m http.server 8080 --directory dist/web",
+    "web:serve": "node scripts/web-serve.js",
+    "build:packages": "node scripts/build-packages.js"
   },
-  "keywords": [
-    "legal",
-    "markdown",
-    "document",
-    "contract",
-    "yaml",
-    "parser",
-    "legal-markdown"
-  ],
-  "author": "",
+  "keywords": ["legal", "markdown", "document", "contract", "yaml", "parser", "legal-markdown"],
+  "author": "@petalo",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petalo/legal-markdown-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/petalo/legal-markdown-js/issues"
+  },
+  "homepage": "https://github.com/petalo/legal-markdown-js#readme",
+  "jsdelivr": "dist/legal-markdown.umd.min.js",
+  "unpkg": "dist/legal-markdown.umd.min.js",
   "dependencies": {
-    "commander": "^11.1.0",
-    "js-yaml": "^4.1.0",
-    "marked": "^9.1.4",
+    "@types/js-beautify": "^1.14.3",
     "chalk": "^5.3.0",
-    "glob": "^10.3.10"
+    "cheerio": "^1.1.0",
+    "commander": "^11.1.0",
+    "js-beautify": "^1.15.4",
+    "js-yaml": "^4.1.0",
+    "latex-ast-parser": "^1.1.0",
+    "marked": "^15.0.12",
+    "puppeteer": "^24.13.0",
+    "restructured": "^0.0.11"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/cheerio": "^0.22.35",
+    "@types/eslint": "^9.6.1",
     "@types/jest": "^29.5.6",
     "@types/js-yaml": "^4.0.8",
     "@types/marked": "^5.0.2",
     "@types/node": "^20.8.9",
     "@typescript-eslint/eslint-plugin": "^6.9.0",
     "@typescript-eslint/parser": "^6.9.0",
+    "browserify": "^17.0.0",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.52.0",
+    "glob": "^11.0.3",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.1.2",
+    "path-browserify": "^1.0.1",
     "prettier": "^3.0.3",
+    "semantic-release": "^24.2.5",
     "ts-jest": "^29.1.1",
+    "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "tsc-alias": "^1.8.16",
+    "typedoc": "^0.28.7",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4"
   },
   "bin": {
-    "legal-md": "./dist/cli.js"
+    "legal-md": "./dist/cli/index.js",
+    "legal2md": "./dist/cli/index.js"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
   "engines": {
     "node": ">=16.0.0"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{md,json,yaml,yml}": ["prettier --write"]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "optionalDependencies": {
+    "pandoc-wasm": "^0.0.2"
   }
 }
