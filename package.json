@@ -37,7 +37,18 @@
     "web:serve": "node scripts/web-serve.js",
     "build:packages": "node scripts/build-packages.js"
   },
-  "keywords": ["legal", "markdown", "document", "contract", "yaml", "parser", "legal-markdown"],
+  "keywords": [
+    "legal",
+    "markdown",
+    "document",
+    "contract",
+    "yaml",
+    "parser",
+    "legal-markdown",
+    "typescript",
+    "nodejs",
+    "legal-tech"
+  ],
   "author": "@petalo",
   "license": "MIT",
   "repository": {
