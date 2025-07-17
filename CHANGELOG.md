@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/petalo/legal-markdown-js/compare/v1.1.1...v1.2.0) (2025-07-17)
+
+### Features
+
+- add GitHub Pages deployment for Legal Markdown playground
+  ([25b14c9](https://github.com/petalo/legal-markdown-js/commit/25b14c9ac8e4967417cfc6d6f1f1e043f123e343))
+
 ## [1.1.1](https://github.com/petalo/legal-markdown-js/compare/v1.1.0...v1.1.1) (2025-07-17)
 
 ### Bug Fixes
