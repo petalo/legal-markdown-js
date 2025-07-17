@@ -187,6 +187,7 @@ export class FallbackParsers {
 
     // Convert LaTeX quotes
     result = result.replace(/``([^']+)''/g, '"$1"');
+    // eslint-disable-next-line quotes
     result = result.replace(/\\`([^']+)'/g, "'$1'");
 
     // Convert code blocks

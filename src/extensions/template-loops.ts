@@ -462,6 +462,7 @@ function processConditionalExpression(
   // Remove quotes if present
   if (
     (selectedPart.startsWith('"') && selectedPart.endsWith('"')) ||
+    // eslint-disable-next-line quotes
     (selectedPart.startsWith("'") && selectedPart.endsWith("'"))
   ) {
     const unquotedValue = selectedPart.slice(1, -1);
@@ -500,6 +501,7 @@ function findOperatorIndex(expression: string, operator: string, startIndex: num
   for (let i = startIndex; i < expression.length; i++) {
     const char = expression[i];
 
+    // eslint-disable-next-line quotes
     if (!inQuotes && (char === '"' || char === "'")) {
       inQuotes = true;
       quoteChar = char;
@@ -532,6 +534,7 @@ function processExpression(expression: string, metadata: Record<string, any>): s
         // Handle quoted strings
         if (
           (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+          // eslint-disable-next-line quotes
           (trimmed.startsWith("'") && trimmed.endsWith("'"))
         ) {
           return trimmed.slice(1, -1);
