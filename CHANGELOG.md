@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/petalo/legal-markdown-js/compare/v1.2.0...v1.3.0) (2025-07-17)
+
+### Features
+
+- add repository link to playground header
+  ([3d24408](https://github.com/petalo/legal-markdown-js/commit/3d24408288f0ceceb7df83995cf4f1372a7f6f12))
+
 # [1.2.0](https://github.com/petalo/legal-markdown-js/compare/v1.1.1...v1.2.0) (2025-07-17)
 
 ### Features
