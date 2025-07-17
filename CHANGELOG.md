@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/petalo/legal-markdown-js/compare/v1.0.0...v1.0.1) (2025-07-17)
+
+### Bug Fixes
+
+- update package description and force republication with correct metadata
+  ([f000935](https://github.com/petalo/legal-markdown-js/commit/f000935a51b3b27dd8aa23d5f9ae6d370f52d8ad))
+
 # 1.0.0 (2025-07-17)
 
 ### Bug Fixes
