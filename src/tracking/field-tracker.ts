@@ -282,6 +282,7 @@ export class FieldTracker {
     empty: number;
     logic: number;
     fields: TrackedField[];
+    // eslint-disable-next-line indent
   } {
     const fields = Array.from(this.fields.values());
 

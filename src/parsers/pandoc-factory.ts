@@ -141,6 +141,7 @@ export class PandocFactory {
     environment: 'node' | 'browser';
     pandocWasmLoaded: boolean;
     pandocWasmInstance: any;
+    // eslint-disable-next-line indent
   } {
     const environment = typeof window === 'undefined' ? 'node' : 'browser';
     const pandocWasmInstance = PandocLoader.getPandocWasm();

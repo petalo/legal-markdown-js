@@ -289,11 +289,15 @@ function handleMacro(node: any, sectionLevel: number): string {
 
     // Quotes
     case '`':
+      // eslint-disable-next-line quotes
       return "'";
+    // eslint-disable-next-line quotes
     case "'":
+      // eslint-disable-next-line quotes
       return "'";
     case '``':
       return '"';
+    // eslint-disable-next-line quotes
     case "''":
       return '"';
 
