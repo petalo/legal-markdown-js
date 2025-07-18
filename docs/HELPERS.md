@@ -294,7 +294,16 @@ Commission: {{formatPercent(commission_rate, 2)}}
 Discount: {{formatPercent(discount, 0)}}
 
 <!-- Output: 15% -->
+
+High rate: {{formatPercent(1.5, 1)}}
+
+<!-- Output: 150.0% -->
 ```
+
+**Important:** The input value should always be in decimal format where 1.0 = 100%. For example:
+- 0.21 represents 21%
+- 1.5 represents 150%
+- 0.055 represents 5.5%
 
 ### `formatInteger(value, separator)`
 
