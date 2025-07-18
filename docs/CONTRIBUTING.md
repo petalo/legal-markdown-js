@@ -518,15 +518,26 @@ End-to-end tests should:
 
 ### Branch Strategy
 
+We use **GitHub Flow** with branch protection:
+
 ```bash
-main                    # Production-ready code
-├── develop            # Integration branch for features
-├── feature/feature-name   # Feature development
-├── fix/bug-description    # Bug fixes
-└── docs/documentation     # Documentation updates
+main                      # Production-ready code (protected)
+├── feature/feature-name  # Feature development
+├── hotfix/bug-fix       # Critical bug fixes
+└── docs/documentation   # Documentation updates
 ```
 
+**Branch Protection Rules:**
+
+- ✅ Pull requests required for all changes to `main`
+- ✅ CI must pass (all Node.js versions + security audit)
+- ✅ At least 1 reviewer approval required
+- ✅ Branches must be up to date before merge
+- ⚠️ Admin bypass enabled for emergency hotfixes
+
 ### Pull Request Process
+
+**Standard Workflow** (recommended for all changes):
 
 1. **Create Feature Branch**:
 
@@ -558,7 +569,25 @@ main                    # Production-ready code
    git push origin feature/amazing-feature
    ```
 
-7. **Create Pull Request**: Use the provided template
+7. **Create Pull Request**:
+
+   ```bash
+   gh pr create --title "feat: add amazing feature" --body "Description of changes"
+   ```
+
+8. **Wait for CI**: All status checks must pass
+9. **Code Review**: Get approval from reviewer
+10. **Merge via GitHub**: Use GitHub UI to merge
+
+**Emergency Hotfix Workflow** (admin only):
+
+```bash
+git checkout -b hotfix/critical-fix
+# Make minimal fix
+git push origin hotfix/critical-fix
+gh pr create --title "hotfix: critical issue" --label "hotfix"
+# Admin can bypass review once CI passes
+```
 
 ### Commit Message Format
 
