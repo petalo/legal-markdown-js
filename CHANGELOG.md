@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/petalo/legal-markdown-js/compare/v1.5.0...v1.5.1) (2025-07-18)
+
+### Bug Fixes
+
+- resolve ESLint warnings in parseHelperArguments function
+  ([b952985](https://github.com/petalo/legal-markdown-js/commit/b952985381527a03a5e03887b82d6e0d917cb116))
+
 # [1.5.0](https://github.com/petalo/legal-markdown-js/compare/v1.4.0...v1.5.0) (2025-07-18)
 
 ### Features
