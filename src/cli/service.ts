@@ -116,9 +116,12 @@ export class CliService {
         await this.generateFormattedOutput(content, inputPath, outputPath);
       } else {
         // Normal markdown processing
+        // Use the directory of the input file as the basePath for imports
+        const inputDir = path.dirname(resolvedInputPath);
         const result = processLegalMarkdown(content, {
           ...this.options,
-          enableFieldTracking: this.options.highlight
+          basePath: inputDir,
+          enableFieldTracking: this.options.highlight,
         });
 
         if (outputPath) {
@@ -157,7 +160,7 @@ export class CliService {
     try {
       const result = processLegalMarkdown(content, {
         ...this.options,
-        enableFieldTracking: this.options.highlight
+        enableFieldTracking: this.options.highlight,
       });
       return result.content;
     } catch (error) {
@@ -213,9 +216,14 @@ export class CliService {
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
     const dirName = path.dirname(baseOutputPath);
 
+    // Get the directory of the input file for imports
+    const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
+    const inputDir = path.dirname(resolvedInputPath);
+
     // Prepare generation options
     const generateOptions = {
       ...this.options,
+      basePath: inputDir,
       includeHighlighting: this.options.highlight,
       cssPath: this.options.css,
       title: this.options.title || baseName,

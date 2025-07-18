@@ -76,7 +76,8 @@ export function processOptionalClauses(content: string, metadata: Record<string,
   // Format: [Optional text]{condition}
   // Note: We remove the 's' flag to prevent matching across large sections of text
   // and add \n to prevent matching across too many lines
-  const optionalClausePattern = /\[([^\[\]]*?)\]\{([^\{\}]*?)\}/g;
+  // eslint-disable-next-line no-useless-escape
+  const optionalClausePattern = /\[([^[\]]*(?:\[[^\]]*\][^[\]]*)*?)\]\{([^{}]*?)\}/g;
 
   return content.replace(optionalClausePattern, (match, text, condition) => {
     // Evaluate the condition

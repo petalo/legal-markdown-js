@@ -547,7 +547,13 @@ function processItemMixins(
           mixinUsed: 'helper',
         });
         if (enableFieldTracking) {
-          return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(result)}</span></span>`;
+          const escapedField = escapeHtmlAttribute(trimmedVar);
+          const stringResult = String(result);
+          return (
+            '<span class="highlight">' +
+            `<span class="imported-value" data-field="${escapedField}">${stringResult}</span>` +
+            '</span>'
+          );
         }
         return String(result);
       }
