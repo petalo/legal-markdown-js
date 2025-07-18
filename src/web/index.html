@@ -118,8 +118,30 @@ p {
           </div>
         </div>
         <div class="preview-container">
-          <div class="preview-placeholder">
-            <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+          <div class="preview-split">
+            <div class="preview-block markdown-preview">
+              <div class="preview-header">
+                <h4>Markdown Output</h4>
+                <button class="copy-btn" data-target="markdown" title="Copy markdown">📋</button>
+              </div>
+              <div class="preview-content">
+                <div class="preview-placeholder">
+                  <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+                </div>
+              </div>
+            </div>
+            <div class="preview-resize-handle"></div>
+            <div class="preview-block html-preview">
+              <div class="preview-header">
+                <h4>HTML Preview</h4>
+                <button class="copy-btn" data-target="html" title="Copy HTML">📋</button>
+              </div>
+              <div class="preview-content">
+                <div class="preview-placeholder">
+                  <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -154,10 +176,10 @@ p {
                 </span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" id="enableFieldTracking" checked> Field tracking
+                <input type="checkbox" id="enableFieldTracking"> Field tracking
                 <span class="tooltip">
                   <span class="tooltip-icon">ℹ️</span>
-                  <span class="tooltip-text">Tracks all variable substitutions and provides a detailed report of which fields were processed and their values.</span>
+                  <span class="tooltip-text">Adds HTML spans around template variables and headers for debugging and styling. When disabled, maintains compatibility with Ruby version.</span>
                 </span>
               </label>
             </div>
@@ -263,6 +285,7 @@ p {
         this.initializeTheme();
         this.initializeElements();
         this.bindEvents();
+        this.initializePreviewResizer();
         this.updateBaseStyles(); // Initialize base styles
         this.loadExample('service-agreement');
       }
@@ -278,6 +301,8 @@ p {
       initializeElements() {
         this.editor = document.querySelector('.editor');
         this.preview = document.querySelector('.preview-container');
+        this.markdownPreview = document.querySelector('.markdown-preview .preview-content');
+        this.htmlPreview = document.querySelector('.html-preview .preview-content');
         this.processBtn = document.querySelector('.process-btn');
         this.toggleStylesBtn = document.querySelector('.toggle-styles-btn');
         this.downloadBtn = document.querySelector('.download-btn');
@@ -300,6 +325,7 @@ p {
         // Column resizers
         this.resizer1 = document.getElementById('resizer1');
         this.resizer2 = document.getElementById('resizer2');
+        this.previewResizer = document.querySelector('.preview-resize-handle');
       }
 
       bindEvents() {
@@ -331,6 +357,12 @@ p {
         if (helpBtn) {
           helpBtn.addEventListener('click', () => this.showHelp());
         }
+
+        // Copy buttons
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        copyBtns.forEach(btn => {
+          btn.addEventListener('click', (e) => this.copyContent(e.target.dataset.target));
+        });
 
         // Auto-process on input (debounced)
         this.editor.addEventListener('input',
@@ -392,13 +424,22 @@ p {
           noIndent: document.getElementById('noIndent').checked,
           throwOnYamlError: document.getElementById('throwOnYamlError').checked,
           enableFieldTracking: document.getElementById('enableFieldTracking').checked,
+          enableFieldTrackingInMarkdown: document.getElementById('enableFieldTracking').checked,
           exportMetadata: document.getElementById('exportYaml').checked || document.getElementById('exportJson').checked,
           exportFormat: document.getElementById('exportYaml').checked ? 'yaml' : 'json'
         };
       }
 
       displayResult(result) {
-        this.preview.innerHTML = `
+        // Display raw markdown output
+        this.markdownPreview.innerHTML = `
+                    <div class="legal-document">
+                        <pre style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; margin: 0; padding: 0;">${this.escapeHtml(result.content)}</pre>
+                    </div>
+                `;
+
+        // Display HTML-formatted output  
+        this.htmlPreview.innerHTML = `
                     <div class="legal-document">
                         ${this.formatMarkdownForDisplay(result.content)}
                     </div>
@@ -411,6 +452,35 @@ p {
 
         if (result.fieldReport) {
           console.log('Field Report:', result.fieldReport);
+        }
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      copyContent(target) {
+        if (!this.processedResult) {
+          this.showMessage('No content to copy. Please process a document first.', 'error');
+          return;
+        }
+
+        let textToCopy = '';
+        if (target === 'markdown') {
+          textToCopy = this.processedResult;
+        } else if (target === 'html') {
+          textToCopy = this.formatMarkdownForDisplay(this.processedResult);
+        }
+
+        if (textToCopy) {
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            this.showMessage(`${target.toUpperCase()} copied to clipboard!`, 'success');
+          }).catch(err => {
+            this.showMessage(`Failed to copy ${target}`, 'error');
+            console.error('Copy failed:', err);
+          });
         }
       }
 
@@ -1302,7 +1372,12 @@ Signature: ___________________________ Date: ___________`
       }
 
       clearPreview() {
-        this.preview.innerHTML = `
+        this.markdownPreview.innerHTML = `
+                    <div class="preview-placeholder">
+                        <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
+                    </div>
+                `;
+        this.htmlPreview.innerHTML = `
                     <div class="preview-placeholder">
                         <p>👈 Enter your Legal Markdown content and click Process to see the result</p>
                     </div>
@@ -1716,6 +1791,71 @@ p {
         const handleMouseUp = () => {
           isResizing = false;
           currentResizer = null;
+          document.removeEventListener('mousemove', handleMouseMove);
+          document.removeEventListener('mouseup', handleMouseUp);
+        };
+      }
+
+      initializePreviewResizer() {
+        if (!this.previewResizer) return;
+
+        let isResizing = false;
+        let startY = 0;
+        let startHeights = [];
+
+        this.previewResizer.addEventListener('mousedown', (e) => {
+          isResizing = true;
+          startY = e.clientY;
+          
+          const markdownBlock = document.querySelector('.markdown-preview');
+          const htmlBlock = document.querySelector('.html-preview');
+          
+          if (markdownBlock && htmlBlock) {
+            const markdownHeight = markdownBlock.offsetHeight;
+            const htmlHeight = htmlBlock.offsetHeight;
+            const totalHeight = markdownHeight + htmlHeight;
+            
+            // Store as percentages
+            startHeights = [
+              (markdownHeight / totalHeight) * 100,
+              (htmlHeight / totalHeight) * 100
+            ];
+          }
+
+          document.addEventListener('mousemove', handleMouseMove);
+          document.addEventListener('mouseup', handleMouseUp);
+          e.preventDefault();
+        });
+
+        const handleMouseMove = (e) => {
+          if (!isResizing) return;
+
+          const deltaY = e.clientY - startY;
+          const container = document.querySelector('.preview-split');
+          const containerHeight = container.offsetHeight;
+          
+          // Convert pixels to percentage (balanced sensitivity)
+          const deltaPercent = (deltaY / containerHeight) * 100;
+          
+          let newHeights = [...startHeights];
+          const minHeight = 20; // Minimum 20% height
+          
+          // Adjust heights
+          newHeights[0] = Math.max(minHeight, Math.min(80, startHeights[0] + deltaPercent));
+          newHeights[1] = Math.max(minHeight, Math.min(80, startHeights[1] - deltaPercent));
+          
+          // Apply new heights
+          const markdownBlock = document.querySelector('.markdown-preview');
+          const htmlBlock = document.querySelector('.html-preview');
+          
+          if (markdownBlock && htmlBlock) {
+            markdownBlock.style.flex = `0 0 ${newHeights[0]}%`;
+            htmlBlock.style.flex = `0 0 ${newHeights[1]}%`;
+          }
+        };
+
+        const handleMouseUp = () => {
+          isResizing = false;
           document.removeEventListener('mousemove', handleMouseMove);
           document.removeEventListener('mouseup', handleMouseUp);
         };

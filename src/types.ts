@@ -111,9 +111,17 @@ export interface LegalMarkdownOptions {
   noIndent?: boolean;
 
   /**
-   * Enable field tracking for highlighting
+   * Enable field tracking for highlighting in HTML/PDF output
+   * @deprecated Use enableFieldTrackingInMarkdown for markdown output
    */
   enableFieldTracking?: boolean;
+
+  /**
+   * Enable field tracking spans in markdown output
+   * When false (default), maintains compatibility with Ruby version
+   * When true, adds HTML spans for field tracking in markdown
+   */
+  enableFieldTrackingInMarkdown?: boolean;
 }
 
 /**
@@ -180,9 +188,17 @@ export interface HeaderOptions {
   noIndent?: boolean;
 
   /**
-   * Enable field tracking for header styling
+   * Enable field tracking for header styling in HTML/PDF output
+   * @deprecated Use enableFieldTrackingInMarkdown for markdown output
    */
   enableFieldTracking?: boolean;
+
+  /**
+   * Enable field tracking spans in markdown output for headers
+   * When false (default), maintains compatibility with Ruby version
+   * When true, adds HTML spans for field tracking in markdown
+   */
+  enableFieldTrackingInMarkdown?: boolean;
 }
 
 /**

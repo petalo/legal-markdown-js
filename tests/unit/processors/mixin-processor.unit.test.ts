@@ -14,7 +14,7 @@ import { processMixins } from '@core/processors/mixin-processor';
 describe('processMixins', () => {
   // Helper function to process mixins without field tracking for cleaner test expectations
   const processWithoutTracking = (content: string, metadata: Record<string, any> = {}) => {
-    return processMixins(content, metadata, { enableFieldTracking: false });
+    return processMixins(content, metadata, { enableFieldTrackingInMarkdown: false });
   };
   describe('Basic Variable Substitution', () => {
     it('should replace simple variables with metadata values', () => {
@@ -331,6 +331,56 @@ describe('processMixins', () => {
       const metadata = { client_name: 'Acme Corp' };
       const result = processMixins(content, metadata, { noMixins: true });
       expect(result).toBe('The client is {{client_name}}.');
+    });
+  });
+
+  describe('Field Tracking Control', () => {
+    it('should NOT include tracking fields by default (Ruby compatibility)', () => {
+      const content = 'The client is {{client_name}}.';
+      const metadata = { client_name: 'Acme Corp' };
+      const result = processMixins(content, metadata);
+      expect(result).toBe('The client is Acme Corp.');
+      expect(result).not.toContain('<span');
+      expect(result).not.toContain('data-field');
+    });
+
+    it('should include tracking fields when enableFieldTrackingInMarkdown is true', () => {
+      const content = 'The client is {{client_name}}.';
+      const metadata = { client_name: 'Acme Corp' };
+      const result = processMixins(content, metadata, { enableFieldTrackingInMarkdown: true });
+      expect(result).toContain('<span class="imported-value" data-field="client_name">Acme Corp</span>');
+    });
+
+    it('should include tracking fields for helper functions when enabled', () => {
+      const content = 'Today is {{formatDate(@today, "YYYY-MM-DD")}}.';
+      const metadata = {};
+      const result = processMixins(content, metadata, { enableFieldTrackingInMarkdown: true });
+      expect(result).toContain('<span class="highlight">');
+      expect(result).toContain('data-field="formatDate(@today, &quot;YYYY-MM-DD&quot;)"');
+    });
+
+    it('should include tracking fields for conditional expressions when enabled', () => {
+      const content = 'Status: {{active ? "Active" : "Inactive"}}.';
+      const metadata = { active: true };
+      const result = processMixins(content, metadata, { enableFieldTrackingInMarkdown: true });
+      expect(result).toContain('<span class="highlight">');
+      expect(result).toContain('data-field="active ? &quot;Active&quot; : &quot;Inactive&quot;"');
+      expect(result).toContain('Active');
+    });
+
+    it('should show missing value spans when field tracking is enabled', () => {
+      const content = 'The value is {{missing_field}}.';
+      const metadata = {};
+      const result = processMixins(content, metadata, { enableFieldTrackingInMarkdown: true });
+      expect(result).toContain('<span class="missing-value" data-field="missing_field">[[missing_field]]</span>');
+    });
+
+    it('should work with legacy enableFieldTracking for backward compatibility', () => {
+      const content = 'The client is {{client_name}}.';
+      const metadata = { client_name: 'Acme Corp' };
+      const result = processMixins(content, metadata, { enableFieldTracking: true });
+      expect(result).toBe('The client is Acme Corp.');
+      expect(result).not.toContain('<span');
     });
   });
 

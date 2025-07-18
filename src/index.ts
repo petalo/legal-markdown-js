@@ -142,6 +142,7 @@ export async function processLegalMarkdownAsync(
     processedContent = processHeaders(processedContent, metadata, {
       noReset: options.noReset,
       noIndent: options.noIndent,
+      enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
     });
   }
 
@@ -152,6 +153,8 @@ export async function processLegalMarkdownAsync(
   }
 
   // Apply field tracking to content if highlighting is enabled
+  // NOTE: This applies post-processing field tracking for HTML/PDF output
+  // Individual processors use enableFieldTrackingInMarkdown for markdown output
   if (options.enableFieldTracking) {
     processedContent = fieldTracker.applyFieldTracking(processedContent);
   }
@@ -247,6 +250,7 @@ export function processLegalMarkdown(
     processedContent = processHeaders(processedContent, metadata, {
       noReset: options.noReset,
       noIndent: options.noIndent,
+      enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
     });
   }
 
@@ -257,6 +261,8 @@ export function processLegalMarkdown(
   }
 
   // Apply field tracking to content if highlighting is enabled
+  // NOTE: This applies post-processing field tracking for HTML/PDF output
+  // Individual processors use enableFieldTrackingInMarkdown for markdown output
   if (options.enableFieldTracking) {
     processedContent = fieldTracker.applyFieldTracking(processedContent);
   }

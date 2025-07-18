@@ -342,13 +342,13 @@ export function processMixins(
             hasLogic: true,
             mixinUsed: 'helper',
           });
-          if (options.enableFieldTracking) {
+          if (options.enableFieldTrackingInMarkdown) {
             return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(result)}</span></span>`;
           }
           return String(result);
         }
         // Helper failed - treat as missing value
-        if (options.enableFieldTracking) {
+        if (options.enableFieldTrackingInMarkdown) {
           return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
         }
         return `{{${trimmedVar}}}`;
@@ -376,13 +376,13 @@ export function processMixins(
 
           if (selectedPart) {
             const processedPart = replaceMixins(selectedPart, depth + 1);
-            if (options.enableFieldTracking) {
+            if (options.enableFieldTrackingInMarkdown) {
               return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${processedPart}</span></span>`;
             }
             return processedPart;
           }
         }
-        if (options.enableFieldTracking) {
+        if (options.enableFieldTrackingInMarkdown) {
           return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
         }
         return `{{${trimmedVar}}}`;
@@ -398,7 +398,7 @@ export function processMixins(
           hasLogic: false,
         });
         // Return wrapped missing value or original mixin
-        if (options.enableFieldTracking) {
+        if (options.enableFieldTrackingInMarkdown) {
           return `<span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span>`;
         }
         return `{{${trimmedVar}}}`;
@@ -416,13 +416,13 @@ export function processMixins(
       // Check if the result contains more mixins (nested mixins)
       if (mixinPattern.test(stringValue)) {
         const nestedResult = replaceMixins(stringValue, depth + 1);
-        if (options.enableFieldTracking) {
+        if (options.enableFieldTrackingInMarkdown) {
           return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${nestedResult}</span>`;
         }
         return nestedResult;
       }
 
-      if (options.enableFieldTracking) {
+      if (options.enableFieldTrackingInMarkdown) {
         return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${stringValue}</span>`;
       }
       return stringValue;
@@ -434,7 +434,7 @@ export function processMixins(
     content,
     metadata,
     undefined,
-    options.enableFieldTracking
+    options.enableFieldTrackingInMarkdown
   );
   return replaceMixins(loopProcessedContent);
 }

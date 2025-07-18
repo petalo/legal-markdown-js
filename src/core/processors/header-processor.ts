@@ -2,14 +2,7 @@
  * @fileoverview Header Processing Module for Legal Markdown Documents
  *
  * This module provides comprehensive header processing functionality for Legal Markdown
- * documents, supporting both traditional (l., ll., lll.) and alternative (lfunction extractHeaderOptions(
-  metadata: Record<string, any>,
-  processingOptions: {
-    noReset?: boolean;
-    noIndent?: boolean;
-    enableFieldTracking?: boolean;
-  }
-): HeaderOptions {l2., l3.)
+ * documents, supporting both traditional (l., ll., lll.) and alternative (l2., l3.)
  * header syntax. It handles complex numbering schemes, hierarchical structures, and
  * various formatting options including Roman numerals, alphabetic labels, and custom
  * indentation patterns.
@@ -105,7 +98,7 @@ export function processHeaders(
   processingOptions: {
     noReset?: boolean;
     noIndent?: boolean;
-    enableFieldTracking?: boolean;
+    enableFieldTrackingInMarkdown?: boolean;
   } = {}
 ): string {
   // Extract header options from metadata
@@ -250,7 +243,11 @@ export function processHeaders(
  */
 function extractHeaderOptions(
   metadata: Record<string, any>,
-  processingOptions: { noReset?: boolean; noIndent?: boolean; enableFieldTracking?: boolean } = {}
+  processingOptions: {
+    noReset?: boolean;
+    noIndent?: boolean;
+    enableFieldTrackingInMarkdown?: boolean;
+  } = {}
 ): HeaderOptions {
   return {
     levelOne: metadata['level-one'] || 'Article %n.',
@@ -261,7 +258,7 @@ function extractHeaderOptions(
     levelIndent: parseFloat(metadata['level-indent'] || '1.5'),
     noReset: processingOptions.noReset || metadata['no-reset'] || false,
     noIndent: processingOptions.noIndent || metadata['no-indent'] || false,
-    enableFieldTracking: processingOptions.enableFieldTracking || false,
+    enableFieldTrackingInMarkdown: processingOptions.enableFieldTrackingInMarkdown || false,
   };
 }
 
@@ -465,7 +462,7 @@ function formatHeader(
     : ' '.repeat(Math.floor((level - 1) * (options.levelIndent || 1.5) * 2));
 
   // Check if field tracking is enabled for header styling
-  if (options.enableFieldTracking) {
+  if (options.enableFieldTrackingInMarkdown) {
     // Wrap header in span with CSS classes and data attributes for styling
     const headerClasses = [
       'legal-header',

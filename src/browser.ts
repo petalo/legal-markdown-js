@@ -133,7 +133,7 @@ export function processLegalMarkdown(
     processedContent = processHeaders(processedContent, metadata, {
       noReset: options.noReset,
       noIndent: options.noIndent,
-      enableFieldTracking: options.enableFieldTracking,
+      enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
     });
   }
 

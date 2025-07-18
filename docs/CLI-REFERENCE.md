@@ -55,16 +55,17 @@ legal-md --version
 
 ### Processing Control
 
-| Option            | Description                            |
-| ----------------- | -------------------------------------- |
-| `--debug`, `-d`   | Enable debug mode with detailed output |
-| `--yaml`, `-y`    | Process only YAML front matter         |
-| `--headers`       | Process only headers                   |
-| `--no-headers`    | Skip header processing                 |
-| `--no-clauses`    | Skip optional clause processing        |
-| `--no-references` | Skip cross-reference processing        |
-| `--no-imports`    | Skip import processing                 |
-| `--no-mixins`     | Skip mixin processing                  |
+| Option                    | Description                                 |
+| ------------------------- | ------------------------------------------- |
+| `--debug`, `-d`           | Enable debug mode with detailed output      |
+| `--yaml`, `-y`            | Process only YAML front matter              |
+| `--headers`               | Process only headers                        |
+| `--no-headers`            | Skip header processing                      |
+| `--no-clauses`            | Skip optional clause processing             |
+| `--no-references`         | Skip cross-reference processing             |
+| `--no-imports`            | Skip import processing                      |
+| `--no-mixins`             | Skip mixin processing                       |
+| `--enable-field-tracking` | Add field tracking spans to markdown output |
 
 ### Output Control
 
@@ -121,9 +122,29 @@ legal-md --no-clauses input.md output.md     # Skip optional clauses
 legal-md --no-references input.md output.md  # Skip cross-references
 legal-md --no-imports input.md output.md     # Skip imports
 
+# Enable field tracking in markdown output
+legal-md --enable-field-tracking input.md output.md  # Add HTML spans for tracking
+
 # Combine multiple skip options
 legal-md --no-headers --no-mixins input.md output.md
 ```
+
+### Field Tracking Options
+
+```bash
+# Enable field tracking in markdown output (Ruby compatibility: disabled by default)
+legal-md --enable-field-tracking input.md output.md
+
+# Field tracking is automatically enabled for HTML and PDF output
+legal-md --html --highlight input.md        # HTML with field tracking
+legal-md --pdf --highlight input.md         # PDF with field tracking
+```
+
+**Note**: Field tracking adds HTML `<span>` elements to mark template variables
+and expressions in the output. This is useful for document review and debugging,
+but may not be desired for clean markdown output. The feature maintains
+compatibility with the original Ruby LegalMarkdown by being disabled by default
+for markdown output.
 
 ### Header Processing Options
 
@@ -321,6 +342,22 @@ legal-md --export-json contract.md processed-contract.md
 
 # Export to custom location
 legal-md --export-yaml --output-path ./metadata contract.md processed-contract.md
+```
+
+### Field Tracking Examples
+
+```bash
+# Generate markdown with field tracking for review
+legal-md --enable-field-tracking contract.md reviewed-contract.md
+
+# Generate HTML with field tracking (automatic)
+legal-md --html --highlight contract.md
+
+# Generate PDF with field tracking (automatic)
+legal-md --pdf --highlight contract.md
+
+# Process with field tracking and export metadata
+legal-md --enable-field-tracking --export-json contract.md processed-contract.md
 ```
 
 ### Pipeline Processing

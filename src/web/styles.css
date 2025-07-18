@@ -274,14 +274,79 @@ body {
 /* Preview */
 .preview-container {
   flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-lg);
+  overflow: hidden;
   background: var(--color-surface);
   transition: background-color var(--transition-base);
 }
 
+/* Split preview layout */
+.preview-split {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+}
+
+.preview-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.preview-header h4 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.preview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+}
+
+.preview-resize-handle {
+  height: 4px;
+  background: var(--color-border);
+  cursor: ns-resize;
+  transition: background-color var(--transition-fast);
+}
+
+.preview-resize-handle:hover {
+  background: var(--color-input-focus);
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition-fast);
+}
+
+.copy-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .copy-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Base preview without styles */
-.preview-container {
+.preview-content {
   /* Minimal base styles only */
   color: var(--color-text);
 }

@@ -488,9 +488,19 @@ Visual indicators for template fields in HTML and PDF output:
 
 ### Field Tracking Report
 
+Field tracking provides visibility into template variable usage and helps
+identify missing data. The system now separates field tracking for different
+output formats:
+
 ```typescript
+// For HTML/PDF output (automatic field tracking)
 const result = processLegalMarkdown(content, {
-  enableFieldTracking: true,
+  enableFieldTracking: true, // Always enabled for HTML/PDF
+});
+
+// For markdown output (Ruby compatibility: disabled by default)
+const result = processLegalMarkdown(content, {
+  enableFieldTrackingInMarkdown: true, // Explicitly enable for markdown
 });
 
 console.log(result.fieldReport);
@@ -506,6 +516,16 @@ console.log(result.fieldReport);
 //   ]
 // }
 ```
+
+**Field Tracking Behavior:**
+
+- **Markdown output**: Clean output by default (Ruby compatibility), enable with
+  `--enable-field-tracking` CLI flag or `enableFieldTrackingInMarkdown: true`
+  option
+- **HTML/PDF output**: Field tracking always enabled when
+  `enableFieldTracking: true` and `--highlight` flag is used
+- **Playground**: Split preview with separate markdown and HTML outputs, each
+  with independent field tracking controls
 
 ## Batch Processing
 
@@ -674,9 +694,13 @@ module.exports = {
 ### Quality Assurance
 
 1. **Field tracking**: Use field tracking to identify missing data
+   - For document review: `legal-md --enable-field-tracking input.md output.md`
+   - For HTML/PDF review: `legal-md --html --highlight input.md` (automatic)
 2. **Validation**: Validate YAML and template syntax
 3. **Testing**: Test templates with various data scenarios
 4. **Review workflow**: Use highlighting for document review
+   - Markdown: Clean output for final documents, tracking for review
+   - HTML/PDF: Highlighting available for visual review
 
 ### Security Considerations
 

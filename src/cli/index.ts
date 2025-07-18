@@ -99,6 +99,7 @@ program
   .option('--pdf', 'Generate PDF output')
   .option('--html', 'Generate HTML output')
   .option('--highlight', 'Enable field highlighting in HTML/PDF output')
+  .option('--enable-field-tracking', 'Add field tracking spans to markdown output')
   .option('--css <path>', 'Path to custom CSS file for HTML/PDF')
   .option('--title <title>', 'Document title for HTML/PDF')
   .action(async (input, output, options) => {
@@ -133,6 +134,7 @@ program
           pdf: options.pdf,
           html: options.html,
           highlight: options.highlight,
+          enableFieldTrackingInMarkdown: options.enableFieldTracking,
           css: options.css,
           title: options.title,
         };
@@ -185,6 +187,7 @@ program
         pdf: options.pdf,
         html: options.html,
         highlight: options.highlight,
+        enableFieldTrackingInMarkdown: options.enableFieldTracking,
         css: options.css,
         title: options.title,
       };

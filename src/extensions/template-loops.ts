@@ -421,6 +421,7 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
     const char = argsString[i];
 
     if ((char === '"' || char === "'") && !inQuotes) {
+      // eslint-disable-line quotes
       inQuotes = true;
       quoteChar = char;
       currentArg += char;
@@ -456,6 +457,7 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
 function resolveHelperArgument(arg: string, metadata: Record<string, any>): any {
   // Handle quoted strings
   if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
+    // eslint-disable-line quotes
     return arg.slice(1, -1);
   }
 
