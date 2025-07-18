@@ -1,3 +1,17 @@
+# [1.4.0](https://github.com/petalo/legal-markdown-js/compare/v1.3.0...v1.4.0) (2025-07-18)
+
+### Bug Fixes
+
+- resolve ESLint warnings and CLI import functionality bug
+  ([96428cb](https://github.com/petalo/legal-markdown-js/commit/96428cb26aac667f42216d0c6e6bed649ae0736e))
+- resolve multiple critical bugs in core processing
+  ([4e5f6fc](https://github.com/petalo/legal-markdown-js/commit/4e5f6fc11c7fc1de46057f8767128e6e79aba650))
+
+### Features
+
+- update playground with corrected features demo content
+  ([af36ec0](https://github.com/petalo/legal-markdown-js/commit/af36ec0481b2afee90debf345f8e1071398ddd1b))
+
 # [1.3.0](https://github.com/petalo/legal-markdown-js/compare/v1.2.0...v1.3.0) (2025-07-17)
 
 ### Features
