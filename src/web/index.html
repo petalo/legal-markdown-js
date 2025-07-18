@@ -38,6 +38,7 @@
                 <option value="purchase-ticket">Purchase Ticket</option>
                 <option value="nda">Non-Disclosure Agreement</option>
                 <option value="employment-contract">Employment Contract</option>
+                <option value="features-demo">🎯 Features Demo</option>
               </select>
             </div>
           </div>
@@ -295,7 +296,7 @@ p {
         this.cssEditor = document.querySelector('.css-editor');
         this.cssFileInput = document.querySelector('.css-file-input');
         this.cssExampleSelect = document.querySelector('.css-example-select');
-        
+
         // Column resizers
         this.resizer1 = document.getElementById('resizer1');
         this.resizer2 = document.getElementById('resizer2');
@@ -316,12 +317,12 @@ p {
         this.cssReset.addEventListener('click', () => this.resetCSS());
         this.cssFileInput.addEventListener('change', (e) => this.handleCSSFileUpload(e));
         this.cssExampleSelect.addEventListener('change', (e) => this.loadCSSExample(e.target.value));
-        
+
         // Auto-apply CSS on input (debounced)
-        this.cssEditor.addEventListener('input', 
+        this.cssEditor.addEventListener('input',
           this.debounce(() => this.applyCSS(), 500)
         );
-        
+
         // Column resizing
         this.initColumnResizing();
 
@@ -912,6 +913,267 @@ Signature: ___________________________ Date: ___________`
               'Company Representative: ___________________________ Date: ___________\n' +
               '\n' +
               'Employee: ___________________________ Date: ___________'
+          },
+
+          'features-demo': {
+            title: 'Legal Markdown Features Demo',
+            content: '---\n' +
+              '# This is a comprehensive playground document to demonstrate all Legal Markdown JS features\n' +
+              'title: Legal Markdown JS - Features Playground\n' +
+              'document_type: Interactive Demo\n' +
+              'doc_version: v2.0\n' +
+              '\n' +
+              '# Basic Document Information\n' +
+              'client_name: john doe\n' +
+              'company_name: acme corporation\n' +
+              'project_name: legal markdown integration\n' +
+              'contract_amount: 50000\n' +
+              'currency: USD\n' +
+              'payment_terms: 30\n' +
+              'jurisdiction: California\n' +
+              '\n' +
+              '# Date Variables\n' +
+              'start_date: 2024-01-15\n' +
+              'end_date: 2024-12-31\n' +
+              'project_duration: 12\n' +
+              '\n' +
+              '# Nested Objects\n' +
+              'client:\n' +
+              '  company:\n' +
+              '    name: Acme Corporation\n' +
+              '    address:\n' +
+              '      street: 123 Business St\n' +
+              '      city: San Francisco\n' +
+              '      state: CA\n' +
+              '      zip: 94105\n' +
+              '  contact:\n' +
+              '    name: John Smith\n' +
+              '    email: john.smith@acme.com\n' +
+              '    phone: (555) 123-4567\n' +
+              '\n' +
+              '# Arrays for Loops\n' +
+              'services:\n' +
+              '  - name: Web Development\n' +
+              '    hours: 120\n' +
+              '    rate: 150\n' +
+              '    description: Frontend and backend development\n' +
+              '  - name: UI/UX Design\n' +
+              '    hours: 60\n' +
+              '    rate: 120\n' +
+              '    description: User interface and experience design\n' +
+              '  - name: Project Management\n' +
+              '    hours: 40\n' +
+              '    rate: 100\n' +
+              '    description: Project coordination and management\n' +
+              '\n' +
+              'team_members:\n' +
+              '  - name: Alice Johnson\n' +
+              '    role: Senior Developer\n' +
+              '  - name: Bob Wilson\n' +
+              '    role: Designer\n' +
+              '  - name: Carol Davis\n' +
+              '    role: Project Manager\n' +
+              '\n' +
+              '# Boolean Variables\n' +
+              'includes_warranty: true\n' +
+              'warranty_period: 12\n' +
+              'premium_support: true\n' +
+              'confidentiality_required: true\n' +
+              'international_project: false\n' +
+              '\n' +
+              '# Numerical Variables\n' +
+              'tax_rate: 0.21\n' +
+              'discount_rate: 0.15\n' +
+              'population: 1234567\n' +
+              'sequence_number: 42\n' +
+              '---\n' +
+              '\n' +
+              '# {{title}}\n' +
+              '\n' +
+              '_This document demonstrates Legal Markdown JS features in the web playground._\n' +
+              '\n' +
+              '**Document Type:** {{document_type}}\n' +
+              '**Version:** {{doc_version}}\n' +
+              '**Generated:** @today\n' +
+              '\n' +
+              '---\n' +
+              '\n' +
+              'l. Basic Variable Substitution\n' +
+              '\n' +
+              'll. Simple Variables\n' +
+              'Client: {{client_name}}\n' +
+              'Company: {{company_name}}\n' +
+              'Project: {{project_name}}\n' +
+              'Amount: ${{contract_amount}}\n' +
+              'Currency: {{currency}}\n' +
+              'Payment Terms: {{payment_terms}} days\n' +
+              'Jurisdiction: {{jurisdiction}}\n' +
+              '\n' +
+              'll. Nested Object Access\n' +
+              'Company Name: {{client.company.name}}\n' +
+              'Address: {{client.company.address.street}}, {{client.company.address.city}}, {{client.company.address.state}} {{client.company.address.zip}}\n' +
+              'Contact: {{client.contact.name}} ({{client.contact.email}})\n' +
+              'Phone: {{client.contact.phone}}\n' +
+              '\n' +
+              'll. Array Access\n' +
+              'First Service: {{services.0.name}} - {{services.0.hours}} hours at ${{services.0.rate}}/hour\n' +
+              'Second Service: {{services.1.name}} - {{services.1.hours}} hours at ${{services.1.rate}}/hour\n' +
+              'Third Service: {{services.2.name}} - {{services.2.hours}} hours at ${{services.2.rate}}/hour\n' +
+              'Team Lead: {{team_members.0.name}} ({{team_members.0.role}})\n' +
+              '\n' +
+              'l. String Helpers\n' +
+              '\n' +
+              'll. Case Conversion\n' +
+              'Original: {{client_name}}\n' +
+              'Capitalized: {{capitalize(client_name)}}\n' +
+              'Title Case: {{titleCase(client_name)}}\n' +
+              'Uppercase: {{upper(client_name)}}\n' +
+              'Lowercase: {{lower(client_name)}}\n' +
+              'Words Capitalized: {{capitalizeWords(client_name)}}\n' +
+              'Test Simple: {{upper("test")}}\n' +
+              '\n' +
+              'll. String Manipulation\n' +
+              'Initials: {{initials(client_name)}}\n' +
+              'Truncated Project: {{truncate(project_name, 15, "...")}}\n' +
+              'Replaced Spaces: {{replaceAll(client_name, " ", "_")}}\n' +
+              'Cleaned Text: {{clean("  extra   spaces  ")}}\n' +
+              '\n' +
+              'll. Case Conversions\n' +
+              'camelCase: {{camelCase(client_name)}}\n' +
+              'PascalCase: {{pascalCase(client_name)}}\n' +
+              'kebab-case: {{kebabCase(client_name)}}\n' +
+              'snake_case: {{snakeCase(client_name)}}\n' +
+              '\n' +
+              'l. Date Processing\n' +
+              '\n' +
+              'll. Today Date Processing\n' +
+              'Today (default): @today\n' +
+              'Today (ISO): @today[iso]\n' +
+              'Today (long): @today[long]\n' +
+              'Today (European): @today[european]\n' +
+              'Today (legal): @today[legal]\n' +
+              '\n' +
+              'll. Date Helpers with Variables\n' +
+              'Start Date: {{formatDate(start_date, "MMMM Do, YYYY")}}\n' +
+              'End Date: {{formatDate(end_date, "MMMM Do, YYYY")}}\n' +
+              'Contract Duration: {{project_duration}} months\n' +
+              '\n' +
+              'll. Date Calculations with Date Variables\n' +
+              'Future Date (1 year): {{formatDate(addYears(start_date, 1), "YYYY-MM-DD")}}\n' +
+              'Future Date (6 months): {{formatDate(addMonths(start_date, 6), "MMMM YYYY")}}\n' +
+              'Future Date (30 days): {{formatDate(addDays(start_date, 30), "DD/MM/YYYY")}}\n' +
+              'Payment Due: {{formatDate(addDays(start_date, payment_terms), "MMMM Do, YYYY")}}\n' +
+              '\n' +
+              'l. Number Helpers\n' +
+              '\n' +
+              'll. Currency Formatting\n' +
+              'Dollar Format: {{formatDollar(contract_amount)}}\n' +
+              'Euro Format: {{formatEuro(contract_amount)}}\n' +
+              'Pound Format: {{formatPound(contract_amount)}}\n' +
+              'Currency USD: {{formatCurrency(contract_amount, "USD")}}\n' +
+              'Currency EUR: {{formatCurrency(contract_amount, "EUR")}}\n' +
+              'Currency GBP: {{formatCurrency(contract_amount, "GBP")}}\n' +
+              '\n' +
+              'll. Number Formatting\n' +
+              'Population: {{formatInteger(population)}}\n' +
+              'Tax Rate: {{formatPercent(tax_rate, 1)}}\n' +
+              'Discount: {{formatPercent(discount_rate, 2)}}\n' +
+              'Rounded Tax: {{round(tax_rate, 2)}}\n' +
+              '\n' +
+              'll. Numbers to Words\n' +
+              'Sequence: {{numberToWords(sequence_number)}}\n' +
+              'Amount: {{capitalize(numberToWords(contract_amount))}}\n' +
+              '\n' +
+              'l. Conditional Content\n' +
+              '\n' +
+              'll. Basic Conditionals\n' +
+              '[This project includes warranty coverage.]{includes_warranty}\n' +
+              '[Premium support is included in this package.]{premium_support}\n' +
+              '[This is a confidential project.]{confidentiality_required}\n' +
+              '[This is an international project.]{international_project}\n' +
+              '\n' +
+              'll. Conditional Expressions\n' +
+              'Support Level: {{premium_support ? "Premium Support Included" : "Standard Support"}}\n' +
+              'Project Type: {{international_project ? "International Project" : "Domestic Project"}}\n' +
+              'Warranty Status: {{includes_warranty ? "Warranty Included" : "No Warranty"}}\n' +
+              '\n' +
+              'l. Template Loops\n' +
+              '\n' +
+              'll. Services List\n' +
+              '{{#services}}\n' +
+              '- **{{name}}**: {{description}}\n' +
+              '  - Hours: {{hours}}\n' +
+              '  - Rate: ${{rate}}/hour\n' +
+              '  - Subtotal: ${{formatInteger(hours)}}\n' +
+              '{{/services}}\n' +
+              '\n' +
+              'll. Team Members\n' +
+              '{{#team_members}}\n' +
+              '- **{{name}}** ({{role}})\n' +
+              '{{/team_members}}\n' +
+              '\n' +
+              'll. Conditional Loop\n' +
+              '{{#includes_warranty}}\n' +
+              '## Warranty Information\n' +
+              '\n' +
+              'This project includes a {{warranty_period}}-month warranty period.\n' +
+              'Warranty expires: {{formatDate(addMonths(start_date, warranty_period), "MMMM Do, YYYY")}}\n' +
+              '{{/includes_warranty}}\n' +
+              '\n' +
+              'l. Advanced Features\n' +
+              '\n' +
+              'll. Nested Helpers\n' +
+              'Formatted Client: {{upper(titleCase(client_name))}}\n' +
+              'Contract ID: {{upper(initials(client_name))}}-@today[medium]\n' +
+              'Clean Company: {{titleCase(replaceAll(company_name, " ", "_"))}}\n' +
+              'Short Project: {{upper(truncate(project_name, 10, "..."))}}\n' +
+              '\n' +
+              'll. Simple Calculations\n' +
+              'Total Service Hours: {{services.0.hours}} + {{services.1.hours}} + {{services.2.hours}}\n' +
+              'First Service Value: {{formatDollar(18000)}}\n' +
+              'Second Service Value: {{formatDollar(7200)}}\n' +
+              'Third Service Value: {{formatDollar(4000)}}\n' +
+              '\n' +
+              'll. Pluralization\n' +
+              'Duration: {{project_duration}} {{pluralize("month", project_duration)}}\n' +
+              'Payment Terms: {{payment_terms}} {{pluralize("day", payment_terms)}}\n' +
+              'Warranty: {{warranty_period}} {{pluralize("month", warranty_period)}}\n' +
+              '\n' +
+              'l. Legal Document Structure\n' +
+              '\n' +
+              'll. Definitions\n' +
+              'For purposes of this Agreement:\n' +
+              '- "Client" means {{titleCase(client_name)}}\n' +
+              '- "Company" means {{client.company.name}}\n' +
+              '- "Project" means {{project_name}}\n' +
+              '- "Effective Date" means @today[long]\n' +
+              '\n' +
+              'll. Terms and Conditions\n' +
+              'This Agreement is effective as of @today[long] and shall remain in effect for {{project_duration}} months.\n' +
+              '\n' +
+              'lll. Payment Terms\n' +
+              'Payment shall be due within {{payment_terms}} {{pluralize("day", payment_terms)}} of invoice date.\n' +
+              '\n' +
+              'lll. Tax Information\n' +
+              'Applicable tax rate is {{formatPercent(tax_rate, 1)}} as determined by {{jurisdiction}} law.\n' +
+              '\n' +
+              'll. Governing Law\n' +
+              'This Agreement shall be governed by the laws of {{jurisdiction}}.\n' +
+              '\n' +
+              'l. Document Summary\n' +
+              '\n' +
+              '**Document Information:**\n' +
+              '- Generated: @today[legal]\n' +
+              '- Client: {{titleCase(client_name)}} ({{initials(client_name)}})\n' +
+              '- Project: {{project_name}}\n' +
+              '- Duration: {{project_duration}} {{pluralize("month", project_duration)}}\n' +
+              '- Total Value: {{formatDollar(contract_amount)}}\n' +
+              '- Payment Terms: {{payment_terms}} {{pluralize("day", payment_terms)}}\n' +
+              '- Tax Rate: {{formatPercent(tax_rate, 1)}}\n' +
+              '\n' +
+              '---\n' +
+              '\n' +
+              '_This document serves as a practical demonstration of Legal Markdown JS capabilities in the web playground._'
           }
         };
       }
@@ -1238,11 +1500,11 @@ Your content with {{variable}} substitutions...
             this.showMessage('Error reading CSS file: ' + error.message, 'error');
           }
         };
-        
+
         reader.onerror = () => {
           this.showMessage('Error reading CSS file. Please try again.', 'error');
         };
-        
+
         reader.readAsText(file);
       }
 
@@ -1255,18 +1517,32 @@ Your content with {{variable}} substitutions...
   color: #2c3e50;
 }
 
-h1 {
+h1, .legal-header-level-1 {
   color: #2980b9;
   border-bottom: 3px solid #3498db;
   padding-bottom: 10px;
   font-weight: 300;
 }
 
-h2 {
+h2, .legal-header-level-2 {
   color: #34495e;
   border-left: 4px solid #3498db;
   padding-left: 16px;
   margin-top: 2em;
+}
+
+h3, .legal-header-level-3 {
+  color: #27ae60;
+  border-left: 3px solid #2ecc71;
+  padding-left: 12px;
+  margin-top: 1.5em;
+}
+
+h4, .legal-header-level-4 {
+  color: #e67e22;
+  border-left: 2px solid #f39c12;
+  padding-left: 8px;
+  margin-top: 1.2em;
 }
 
 p {
@@ -1281,7 +1557,7 @@ p {
   color: #000;
 }
 
-h1 {
+h1, .legal-header-level-1 {
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -1289,10 +1565,23 @@ h1 {
   padding-bottom: 15px;
 }
 
-h2 {
+h2, .legal-header-level-2 {
   font-variant: small-caps;
   border-bottom: 1px solid #666;
   margin-top: 2em;
+}
+
+h3, .legal-header-level-3 {
+  font-variant: small-caps;
+  border-bottom: 1px dotted #999;
+  margin-top: 1.5em;
+  font-size: 1.1em;
+}
+
+h4, .legal-header-level-4 {
+  font-style: italic;
+  margin-top: 1.2em;
+  font-size: 1em;
 }
 
 p {
@@ -1309,7 +1598,7 @@ p {
   max-width: none;
 }
 
-h1 {
+h1, .legal-header-level-1 {
   font-size: 1.8em;
   font-weight: 600;
   color: #000;
@@ -1317,13 +1606,31 @@ h1 {
   margin-bottom: 2em;
 }
 
-h2 {
+h2, .legal-header-level-2 {
   font-size: 1.3em;
   font-weight: 500;
   color: #555;
   border: none;
   margin-top: 2.5em;
   margin-bottom: 1em;
+}
+
+h3, .legal-header-level-3 {
+  font-size: 1.1em;
+  font-weight: 500;
+  color: #666;
+  border: none;
+  margin-top: 2em;
+  margin-bottom: 0.8em;
+}
+
+h4, .legal-header-level-4 {
+  font-size: 1em;
+  font-weight: 500;
+  color: #777;
+  border: none;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
 }
 
 p {
@@ -1335,10 +1642,10 @@ p {
 
       loadCSSExample(exampleKey) {
         if (!exampleKey) return;
-        
+
         const examples = this.getCSSExamples();
         const example = examples[exampleKey];
-        
+
         if (example) {
           this.cssEditor.value = example;
           this.cssExampleSelect.value = exampleKey;
@@ -1355,17 +1662,17 @@ p {
         let currentResizer = null;
         let startX = 0;
         let startWidths = [1, 1, 1]; // Start with equal widths
-        
+
         const resizers = [this.resizer1, this.resizer2];
-        
+
         resizers.forEach((resizer, index) => {
           if (!resizer) return;
-          
+
           resizer.addEventListener('mousedown', (e) => {
             isResizing = true;
             currentResizer = resizer;
             startX = e.clientX;
-            
+
             // Parse current fr values from the style
             const currentStyle = container.style.gridTemplateColumns;
             if (currentStyle && currentStyle.includes('fr')) {
@@ -1374,24 +1681,24 @@ p {
                 startWidths = matches.map(match => parseFloat(match.replace('fr', '')));
               }
             }
-            
+
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
             e.preventDefault();
           });
         });
-        
+
         const handleMouseMove = (e) => {
           if (!isResizing || !currentResizer) return;
-          
+
           const deltaX = e.clientX - startX;
           const containerWidth = container.offsetWidth;
           // Convert pixels to fraction units (balanced sensitivity)
           const deltaFraction = (deltaX / containerWidth) * 4;
-          
+
           let newWidths = [...startWidths];
           const minWidth = 0.3; // Minimum 30% width
-          
+
           if (currentResizer === this.resizer1) {
             // Resizing between columns 1 and 2
             newWidths[0] = Math.max(minWidth, startWidths[0] + deltaFraction);
@@ -1401,11 +1708,11 @@ p {
             newWidths[1] = Math.max(minWidth, startWidths[1] + deltaFraction);
             newWidths[2] = Math.max(minWidth, startWidths[2] - deltaFraction);
           }
-          
+
           // Apply the new column widths
           container.style.gridTemplateColumns = `${newWidths[0]}fr 4px ${newWidths[1]}fr 4px ${newWidths[2]}fr`;
         };
-        
+
         const handleMouseUp = () => {
           isResizing = false;
           currentResizer = null;
@@ -1437,14 +1744,14 @@ p {
       toggleBaseStyles() {
         this.baseStylesEnabled = !this.baseStylesEnabled;
         this.updateBaseStyles();
-        
+
         // Update button appearance
         this.toggleStylesBtn.style.opacity = this.baseStylesEnabled ? '1' : '0.5';
-        this.toggleStylesBtn.title = this.baseStylesEnabled ? 
+        this.toggleStylesBtn.title = this.baseStylesEnabled ?
           'Disable base styles' : 'Enable base styles';
-        
+
         this.showMessage(
-          this.baseStylesEnabled ? 'Base styles enabled' : 'Base styles disabled', 
+          this.baseStylesEnabled ? 'Base styles enabled' : 'Base styles disabled',
           'info'
         );
       }
