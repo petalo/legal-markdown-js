@@ -116,7 +116,10 @@ export class CliService {
         await this.generateFormattedOutput(content, inputPath, outputPath);
       } else {
         // Normal markdown processing
-        const result = processLegalMarkdown(content, this.options);
+        const result = processLegalMarkdown(content, {
+          ...this.options,
+          enableFieldTracking: this.options.highlight
+        });
 
         if (outputPath) {
           const resolvedOutputPath = resolveFilePath(this.options.basePath, outputPath);
@@ -152,7 +155,10 @@ export class CliService {
    */
   public async processContent(content: string): Promise<string> {
     try {
-      const result = processLegalMarkdown(content, this.options);
+      const result = processLegalMarkdown(content, {
+        ...this.options,
+        enableFieldTracking: this.options.highlight
+      });
       return result.content;
     } catch (error) {
       this.handleError(error);

@@ -74,7 +74,9 @@
 export function processOptionalClauses(content: string, metadata: Record<string, any>): string {
   // Regular expression to match optional clauses
   // Format: [Optional text]{condition}
-  const optionalClausePattern = /\[(.*?)\]\{(.*?)\}/gs;
+  // Note: We remove the 's' flag to prevent matching across large sections of text
+  // and add \n to prevent matching across too many lines
+  const optionalClausePattern = /\[([^\[\]]*?)\]\{([^\{\}]*?)\}/g;
 
   return content.replace(optionalClausePattern, (match, text, condition) => {
     // Evaluate the condition

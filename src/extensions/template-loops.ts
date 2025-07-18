@@ -34,6 +34,7 @@
  */
 
 import { fieldTracker } from '../tracking/field-tracker';
+import { helpers } from '../helpers';
 
 /**
  * Escapes HTML attribute values to prevent breaking HTML structure
@@ -376,6 +377,136 @@ function createEnhancedMetadata(
 }
 
 /**
+ * Evaluates a helper function expression with arguments
+ *
+ * @param expression - The helper function expression (e.g., "formatDate(@today, 'long')")
+ * @param metadata - Metadata context for argument resolution
+ * @returns The result of the helper function call, or undefined if invalid
+ */
+function evaluateHelperExpression(expression: string, metadata: Record<string, any>): any {
+  try {
+    // Parse helper function call: helperName(arg1, arg2, ...)
+    const match = expression.match(/^(\w+)\((.*)\)$/);
+    if (!match) return undefined;
+
+    const [, helperName, argsString] = match;
+    const helper = helpers[helperName as keyof typeof helpers];
+
+    if (!helper || typeof helper !== 'function') {
+      return undefined;
+    }
+
+    // Parse arguments
+    const args = argsString ? parseHelperArguments(argsString, metadata) : [];
+
+    // Call the helper function
+    return (helper as any)(...args);
+  } catch (error) {
+    console.error(`Error evaluating helper expression: ${expression}`, error);
+    return undefined;
+  }
+}
+
+/**
+ * Parses helper function arguments, handling nested calls and variable references
+ */
+function parseHelperArguments(argsString: string, metadata: Record<string, any>): any[] {
+  const args: any[] = [];
+  let currentArg = '';
+  let parenDepth = 0;
+  let inQuotes = false;
+  let quoteChar = '';
+
+  for (let i = 0; i < argsString.length; i++) {
+    const char = argsString[i];
+
+    if ((char === '"' || char === "'") && !inQuotes) {
+      inQuotes = true;
+      quoteChar = char;
+      currentArg += char;
+    } else if (char === quoteChar && inQuotes) {
+      inQuotes = false;
+      quoteChar = '';
+      currentArg += char;
+    } else if (char === '(' && !inQuotes) {
+      parenDepth++;
+      currentArg += char;
+    } else if (char === ')' && !inQuotes) {
+      parenDepth--;
+      currentArg += char;
+    } else if (char === ',' && parenDepth === 0 && !inQuotes) {
+      args.push(resolveHelperArgument(currentArg.trim(), metadata));
+      currentArg = '';
+    } else {
+      currentArg += char;
+    }
+  }
+
+  // Add the last argument
+  if (currentArg.trim()) {
+    args.push(resolveHelperArgument(currentArg.trim(), metadata));
+  }
+
+  return args;
+}
+
+/**
+ * Resolves a single helper argument, handling different types
+ */
+function resolveHelperArgument(arg: string, metadata: Record<string, any>): any {
+  // Handle quoted strings
+  if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
+    return arg.slice(1, -1);
+  }
+
+  // Handle boolean values
+  if (arg === 'true') return true;
+  if (arg === 'false') return false;
+
+  // Handle numbers
+  if (/^\d+$/.test(arg)) {
+    return parseInt(arg, 10);
+  }
+  if (/^\d+\.\d+$/.test(arg)) {
+    return parseFloat(arg);
+  }
+
+  // Handle @today special case
+  if (arg === '@today') {
+    return new Date();
+  }
+
+  // Handle nested helper function calls
+  if (arg.includes('(') && arg.includes(')')) {
+    const result = evaluateHelperExpression(arg, metadata);
+    if (result !== undefined) {
+      return result;
+    }
+  }
+
+  // Handle variable references
+  return resolvePath(metadata, arg);
+}
+
+/**
+ * Resolves a nested path in metadata (e.g., "client.name")
+ */
+function resolvePath(obj: Record<string, any>, path: string): any {
+  const keys = path.split('.');
+  let current = obj;
+
+  for (const key of keys) {
+    if (current && typeof current === 'object' && key in current) {
+      current = current[key];
+    } else {
+      return undefined;
+    }
+  }
+
+  return current;
+}
+
+/**
  * Processes mixins within loop content with enhanced metadata
  *
  * @param content - The content to process
@@ -403,6 +534,24 @@ function processItemMixins(
         return `<span class="highlight">${result}</span>`;
       }
       return result;
+    }
+
+    // Check if it's a helper function call
+    if (trimmedVar.includes('(') && trimmedVar.includes(')')) {
+      const result = evaluateHelperExpression(trimmedVar, metadata);
+      if (result !== undefined) {
+        // Track field with helper
+        fieldTracker.trackField(trimmedVar, {
+          value: result,
+          hasLogic: true,
+          mixinUsed: 'helper',
+        });
+        if (enableFieldTracking) {
+          return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(result)}</span></span>`;
+        }
+        return String(result);
+      }
+      // If helper evaluation failed, fall through to missing value handling
     }
 
     // Handle simple variable substitution

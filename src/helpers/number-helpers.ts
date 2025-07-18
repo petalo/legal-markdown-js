@@ -91,8 +91,9 @@ export function formatInteger(value: number | string, separator: string = ','): 
  * // String input
  * formatPercent('0.25');           // "25.00%"
  *
- * // Whole number input (treated as percentage)
- * formatPercent(25);               // "25.00%"
+ * // Values greater than 1 are treated as decimals too
+ * formatPercent(1.5);              // "150.00%"
+ * formatPercent(2.5);              // "250.00%"
  * ```
  */
 export function formatPercent(
@@ -103,7 +104,10 @@ export function formatPercent(
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return String(value);
 
-  const formatted = num.toFixed(decimals);
+  // Always convert to percentage (multiply by 100)
+  // Input should always be in decimal format: 0.21 = 21%, 1.5 = 150%
+  const percentage = num * 100;
+  const formatted = percentage.toFixed(decimals);
   return symbol ? `${formatted}%` : formatted;
 }
 

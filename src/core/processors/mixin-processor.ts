@@ -205,11 +205,12 @@ export function processMixins(
   function parseArguments(argsString: string, metadata: Record<string, any>): any[] {
     if (!argsString.trim()) return [];
 
-    // Simple argument parsing - split by comma but handle quoted strings
+    // Advanced argument parsing - split by comma but handle quoted strings and nested parentheses
     const args: any[] = [];
     let current = '';
     let inQuotes = false;
     let quoteChar = '';
+    let parenDepth = 0;
 
     for (let i = 0; i < argsString.length; i++) {
       const char = argsString[i];
@@ -217,16 +218,30 @@ export function processMixins(
       if (!inQuotes && (char === '"' || char === "'")) {
         inQuotes = true;
         quoteChar = char;
+        current += char;
         continue;
       }
 
       if (inQuotes && char === quoteChar) {
         inQuotes = false;
         quoteChar = '';
+        current += char;
         continue;
       }
 
-      if (!inQuotes && char === ',') {
+      if (!inQuotes && char === '(') {
+        parenDepth++;
+        current += char;
+        continue;
+      }
+
+      if (!inQuotes && char === ')') {
+        parenDepth--;
+        current += char;
+        continue;
+      }
+
+      if (!inQuotes && char === ',' && parenDepth === 0) {
         args.push(parseArgument(current.trim(), metadata));
         current = '';
         continue;
@@ -280,6 +295,14 @@ export function processMixins(
     // Handle @today special value
     if (arg === '@today') {
       return new Date();
+    }
+
+    // Handle nested helper function calls
+    if (arg.includes('(') && arg.includes(')')) {
+      const result = evaluateHelperExpression(arg, metadata);
+      if (result !== undefined) {
+        return result;
+      }
     }
 
     // Handle variable references

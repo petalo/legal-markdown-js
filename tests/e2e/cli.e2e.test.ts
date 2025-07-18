@@ -363,7 +363,7 @@ include_warranty: true
 ---
 
 l. Agreement
-This agreement is between |client|.
+This agreement is between {{client}}.
 
 @import clause.md
 

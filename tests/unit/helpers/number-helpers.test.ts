@@ -43,16 +43,16 @@ describe('Number Helpers', () => {
 
   describe('formatPercent', () => {
     it('should format as percentage', () => {
-      expect(formatPercent(0.15)).toBe('0.15%');
-      expect(formatPercent(25.5)).toBe('25.50%');
+      expect(formatPercent(0.15)).toBe('15.00%');
+      expect(formatPercent(0.255)).toBe('25.50%');
     });
 
     it('should format with custom decimals', () => {
-      expect(formatPercent(0.156, 1)).toBe('0.2%');
+      expect(formatPercent(0.156, 1)).toBe('15.6%');
     });
 
     it('should format without symbol', () => {
-      expect(formatPercent(0.15, 2, false)).toBe('0.15');
+      expect(formatPercent(0.15, 2, false)).toBe('15.00');
     });
   });
 

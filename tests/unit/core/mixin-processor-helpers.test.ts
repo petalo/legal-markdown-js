@@ -66,7 +66,7 @@ describe('Mixin Processor - Helpers', () => {
       const metadata = { rate: 0.075 };
       const result = processMixins(content, metadata);
       
-      expect(result).toBe('Rate: 0.07%');
+      expect(result).toBe('Rate: 7.50%');
     });
 
     it('should process numberToWords helper', () => {
