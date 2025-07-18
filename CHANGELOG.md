@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/petalo/legal-markdown-js/compare/v1.4.0...v1.5.0) (2025-07-18)
+
+### Features
+
+- implement field tracking control system
+  ([e07fc1f](https://github.com/petalo/legal-markdown-js/commit/e07fc1f1b8205dadb1271ce3a54ec85de87b3393))
+
 # [1.4.0](https://github.com/petalo/legal-markdown-js/compare/v1.3.0...v1.4.0) (2025-07-18)
 
 ### Bug Fixes
