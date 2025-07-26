@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,17 +31,17 @@ echo "📄 Using CLI: $CLI"
 
 # Demonstrate various CLI usage patterns
 echo "  Basic processing..."
-$CLI demo-contract.md --output demo-contract.output.md
+$CLI "$SCRIPT_DIR/demo-contract.md" "$SCRIPT_DIR/demo-contract.output.md"
 
 echo "  HTML generation..."
-$CLI demo-contract.md --html --title "Demo Contract" --output demo-contract.output.html
+$CLI "$SCRIPT_DIR/demo-contract.md" --html --title "Demo Contract" -o "$SCRIPT_DIR/demo-contract.output.html"
 
 echo "  PDF generation..."
-$CLI demo-contract.md --pdf --output demo-contract.output.pdf
+$CLI "$SCRIPT_DIR/demo-contract.md" --pdf -o "$SCRIPT_DIR/demo-contract.output.pdf"
 
 echo "  Processing with highlighting..."
-$CLI simple-contract.md --highlight --output simple-contract.output.md
-$CLI simple-contract.md --html --highlight --output simple-contract.output.html
+$CLI "$SCRIPT_DIR/simple-contract.md" --highlight -o "$SCRIPT_DIR/simple-contract.output.md"
+$CLI "$SCRIPT_DIR/simple-contract.md" --html --highlight -o "$SCRIPT_DIR/simple-contract.output.html"
 
 echo "  Batch processing demonstration..."
 for file in *.md; do

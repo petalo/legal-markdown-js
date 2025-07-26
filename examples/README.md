@@ -28,10 +28,10 @@ Learn header processing and numbering systems.
 
 ### 🔗 Cross References
 
-Master cross-reference processing and value substitution.
+Master cross-reference processing for internal section linking.
 
 - **[basic-references](cross-references/basic-references/)** - Basic
-  cross-reference syntax and metadata integration
+  cross-reference syntax for internal section references
 
 ### ❓ Optional Clauses
 

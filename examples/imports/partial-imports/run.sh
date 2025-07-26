@@ -38,8 +38,8 @@ echo "Standard terms apply." >> partials/terms.md
 echo "---" > partials/footer.md
 echo "*This document is legally binding.*" >> partials/footer.md
 
-$CLI main-contract.md main-contract.output.md
-$CLI main-contract.md --html > main-contract.output.html
+$CLI "$SCRIPT_DIR/main-contract.md" "$SCRIPT_DIR/main-contract.output.md"
+$CLI "$SCRIPT_DIR/main-contract.md" --html -o "$SCRIPT_DIR/main-contract.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"

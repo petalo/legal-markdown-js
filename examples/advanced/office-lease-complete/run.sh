@@ -31,9 +31,9 @@ echo "📄 Using CLI: $CLI"
 
 # Process complex office lease with rich data
 echo "  Processing lease-agreement.md..."
-$CLI lease-agreement.md lease-agreement.output.md
-$CLI lease-agreement.md --html -o lease-agreement.output.html
-$CLI lease-agreement.md --pdf --output lease-agreement.output.pdf
+$CLI "$SCRIPT_DIR/lease-agreement.md" "$SCRIPT_DIR/lease-agreement.output.md"
+$CLI "$SCRIPT_DIR/lease-agreement.md" --html -o "$SCRIPT_DIR/lease-agreement.output.html"
+$CLI "$SCRIPT_DIR/lease-agreement.md" --pdf -o "$SCRIPT_DIR/lease-agreement.output.pdf"
 
 if [ -f "lease-data.json" ]; then
     echo "  Processing lease-with-data.md with external data..."
@@ -46,9 +46,9 @@ if [ -f "lease-data.json" ]; then
     }" >> temp.md
     echo "---" >> temp.md
     tail -n +2 lease-with-data.md >> temp.md
-    $CLI temp.md lease-with-data.output.md
-    $CLI temp.md --html -o lease-with-data.output.html
-    $CLI temp.md --pdf --highlight --output lease-with-data.HIGHLIGHT.output.pdf
+    $CLI "$SCRIPT_DIR/temp.md" "$SCRIPT_DIR/lease-with-data.output.md"
+    $CLI "$SCRIPT_DIR/temp.md" --html -o "$SCRIPT_DIR/lease-with-data.output.html"
+    $CLI "$SCRIPT_DIR/temp.md" --pdf --highlight -o "$SCRIPT_DIR/lease-with-data.HIGHLIGHT.output.pdf"
     rm temp.md
 fi
 

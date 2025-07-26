@@ -41,12 +41,12 @@ if [ -f "contract-data.json" ]; then
     }" >> temp.md
     echo "---" >> temp.md
     tail -n +2 formatted-contract.md >> temp.md
-    $CLI temp.md formatted-contract.output.md
-    $CLI temp.md --html -o formatted-contract.output.html
+    $CLI "$SCRIPT_DIR/temp.md" "$SCRIPT_DIR/formatted-contract.output.md"
+    $CLI "$SCRIPT_DIR/temp.md" --html -o "$SCRIPT_DIR/formatted-contract.output.html"
     rm temp.md
 else
-    $CLI formatted-contract.md formatted-contract.output.md
-    $CLI formatted-contract.md --html -o formatted-contract.output.html
+    $CLI "$SCRIPT_DIR/formatted-contract.md" "$SCRIPT_DIR/formatted-contract.output.md"
+    $CLI "$SCRIPT_DIR/formatted-contract.md" --html -o "$SCRIPT_DIR/formatted-contract.output.html"
 fi
 
 echo "✅ Example completed successfully!"

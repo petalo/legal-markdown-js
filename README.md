@@ -5,8 +5,8 @@
 > feature parity.
 
 Process markdown with YAML front matter, conditional clauses
-`[text]{condition}`, cross-references `|variable|`, imports `@import`, and
-generate professional PDFs ready to be shared.
+`[text]{condition}`, cross-references `|reference|`, mixins `{{variable}}`,
+imports `@import`, and generate professional PDFs ready to be shared.
 
 ![Legal Markdown JS Example](docs/legal-markdown-js-example.png)
 
@@ -84,8 +84,7 @@ All original Legal Markdown features are fully implemented:
   `lll.`)
 - **Optional Clauses**: Boolean, equality, and logical operations
   (`[text]{condition}`)
-- **Cross-References**: All reference types including special date handling
-  (`|reference|`)
+- **Cross-References**: Internal section references using (`|reference|`) syntax
 - **Partial Imports**: File inclusion with path resolution (`@import`)
 - **Metadata Export**: YAML and JSON export with custom paths
 
@@ -93,7 +92,8 @@ All original Legal Markdown features are fully implemented:
 
 Additional features available only in the Node.js version:
 
-- **Mixins System**: Template substitution with `{{variable}}` syntax
+- **Mixins System**: Template substitution and helpers with `{{variable}}`
+  syntax
 - **PDF Generation**: Professional PDF output with styling and field
   highlighting
 - **HTML Generation**: Custom HTML output with CSS support

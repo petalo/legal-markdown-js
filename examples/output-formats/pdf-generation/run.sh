@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Generate PDF outputs with and without highlighting
 echo "  Processing printable-agreement.md..."
-$CLI printable-agreement.md --output printable-agreement.output.md
-$CLI printable-agreement.md --html --output printable-agreement.output.html
-$CLI printable-agreement.md --pdf --output printable-agreement.output.pdf
-$CLI printable-agreement.md --pdf --highlight --output printable-agreement.HIGHLIGHT.output.pdf
+$CLI "$SCRIPT_DIR/printable-agreement.md" "$SCRIPT_DIR/printable-agreement.output.md"
+$CLI "$SCRIPT_DIR/printable-agreement.md" --html -o "$SCRIPT_DIR/printable-agreement.output.html"
+$CLI "$SCRIPT_DIR/printable-agreement.md" --pdf -o "$SCRIPT_DIR/printable-agreement.output.pdf"
+$CLI "$SCRIPT_DIR/printable-agreement.md" --pdf --highlight -o "$SCRIPT_DIR/printable-agreement.HIGHLIGHT.output.pdf"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files including PDFs:"

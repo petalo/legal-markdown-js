@@ -1,13 +1,13 @@
 # Basic Cross References
 
-Basic cross-reference processing with metadata substitution using the
+Basic cross-reference processing for internal section references using the
 |reference| syntax.
 
 ## 📋 What this example demonstrates
 
 - Cross-reference syntax |ref|
-- Metadata substitution
-- Value resolution
+- Internal section references
+- Section number resolution
 - Reference processing
 
 ## 📁 Files
@@ -25,10 +25,11 @@ Basic cross-reference processing with metadata substitution using the
 
 ## 🔍 Key features shown
 
-1. **Reference Syntax**: Using |reference| for value substitution
-2. **Metadata Integration**: Combining YAML metadata with document
-3. **Value Resolution**: Automatic replacement of references
-4. **Type Handling**: Proper formatting of different data types
+1. **Reference Syntax**: Using |reference| for internal section references
+2. **Section Linking**: Automatic linking between document sections
+3. **Number Resolution**: Replacement of references with section numbers and
+   titles
+4. **Hierarchical Navigation**: Cross-referencing across different header levels
 
 ## 💡 Learn more
 

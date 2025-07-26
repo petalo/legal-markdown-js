@@ -1,131 +1,455 @@
-/* Default CSS for Legal Markdown HTML Generation */
+/**
+ * Default Legal Markdown Styles
+ *
+ * Professional stylesheet for legal documents, optimized for both screen and print media.
+ * Features modern typography, clean design, and comprehensive print optimizations.
+ *
+ * Structure:
+ * 1. Variables and base configuration
+ * 2. Typography and visual hierarchy
+ * 3. Content elements
+ * 4. Tables and signatures
+ * 5. Print optimizations
+ * 6. Utilities and special classes
+ */
 
-/* Variables and Configuration */
+/* Variables and base configuration
+   ========================================================================== */
 :root {
+  /* Colors - Professional slate and teal palette */
+  --color-primary: #1e293b;    /* Slate 800 */
+  --color-accent: #0891b2;     /* Cyan 600 */
+  --color-link: #0891b2;       /* Cyan 600 */
+  --color-text: #334155;       /* Slate 700 */
+  --color-error: #dc2626;      /* Red 600 */
+  --color-bg: #ffffff;         /* White */
+  --color-muted: #64748b;      /* Slate 500 */
+
+  /* Typography */
+  --font-primary: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+
   /* Assets - Default logo placeholder */
   --logo-filename: https://placehold.co/120x40/2563eb/ffffff.png?text=LOGO;
+
+  /* Spacing */
+  --spacing-xsmall: 4px;
+  --spacing-small: 8px;
+  --spacing-medium: 16px;
+  --spacing-large: 32px;
+  --spacing-xlarge: 48px;
+
+  /* Sizes */
+  --font-size-base: 12pt;
+  --font-size-h1: 1.8em;
+  --font-size-h2: 1.4em;
+  --font-size-h3: 1.2em;
+  --font-size-h4: 1.1em;
+
+  /* Layout */
+  --max-width: 210mm; /* A4 width */
+  --border-radius: 6px;
+  --border-width: 1px;
 }
 
-/* Base styles */
+/* Base document configuration
+   ========================================================================== */
 body {
-  font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
   line-height: 1.6;
-  color: #333;
-  max-width: 800px;
+  color: var(--color-text);
+  max-width: var(--max-width);
   margin: 0 auto;
-  padding: 20px;
+  padding: 20mm 15mm;
+  background-color: var(--color-bg);
 }
 
-/* Print styles */
-@media print {
-  body {
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  .no-break {
-    page-break-inside: avoid;
-  }
-  .page-break-before {
-    page-break-before: always;
-  }
+/* Typography hierarchy
+   ========================================================================== */
+/* Prevent page breaks in headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  page-break-after: avoid;
+  page-break-inside: avoid;
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
-/* Table responsiveness */
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+/* Main document title */
+h1,
+.legal-header-level-1 {
+  font-size: var(--font-size-h1);
+  line-height: 1.3;
+  margin: var(--spacing-medium) 0 var(--spacing-large);
+  text-align: center;
+  border-bottom: 3px solid var(--color-accent);
+  padding-bottom: var(--spacing-medium);
+  color: var(--color-primary);
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1em 0;
+/* Section headings */
+h2,
+.legal-header-level-2 {
+  font-size: var(--font-size-h2);
+  margin-top: var(--spacing-large);
+  margin-bottom: var(--spacing-medium);
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: var(--spacing-small);
+  color: var(--color-primary);
 }
 
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
+/* Subsection headings */
+h3,
+.legal-header-level-3 {
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  margin-top: var(--spacing-large);
+  margin-bottom: var(--spacing-medium);
+  border-bottom: 1px solid var(--color-accent);
+  padding-bottom: var(--spacing-xsmall);
+  color: var(--color-primary);
 }
 
-th {
-  background-color: #f5f5f5;
-  font-weight: bold;
+/* Minor headings */
+h4,
+.legal-header-level-4 {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  margin-top: var(--spacing-medium);
+  margin-bottom: var(--spacing-small);
+  color: var(--color-primary);
 }
 
-/* Code blocks */
-pre {
-  background-color: #f5f5f5;
-  padding: 1em;
-  border-radius: 4px;
-  overflow-x: auto;
+/* Legal headers */
+h5,
+h6,
+.legal-header-level-5,
+.legal-header-level-6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: var(--spacing-medium);
+  margin-bottom: var(--spacing-small);
+  color: var(--color-primary);
 }
 
-code {
-  background-color: #f5f5f5;
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-size: 0.9em;
+/* Content elements
+   ========================================================================== */
+/* Paragraphs */
+p {
+  margin-bottom: var(--spacing-medium);
+  text-align: justify;
+  orphans: 3; /* Minimum lines at start of page */
+  widows: 3; /* Minimum lines at end of page */
+  page-break-inside: avoid;
+}
+
+/* Links */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--color-accent);
 }
 
 /* Lists */
 ul,
 ol {
-  margin: 1em 0;
-  padding-left: 2em;
+  margin: var(--spacing-medium) 0;
+  padding-left: var(--spacing-large);
+  page-break-inside: auto;
 }
 
-/* Links */
-a {
-  color: #0066cc;
-  text-decoration: none;
+li {
+  margin-bottom: var(--spacing-small);
+  page-break-inside: auto;
 }
 
-a:hover {
-  text-decoration: underline;
-}
-
-/* Headings */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.legal-header-level-1,
-.legal-header-level-2,
-.legal-header-level-3,
-.legal-header-level-4,
-.legal-header-level-5,
-.legal-header-level-6 {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  font-weight: 600;
-}
-
-h1,
-.legal-header-level-1 {
-  font-size: 2em;
-}
-h2,
-.legal-header-level-2 {
-  font-size: 1.5em;
-}
-h3,
-.legal-header-level-3 {
-  font-size: 1.25em;
-}
-h4,
-.legal-header-level-4 {
-  font-size: 1.1em;
-}
-h5,
-.legal-header-level-5 {
-  font-size: 1em;
-}
-h6,
-.legal-header-level-6 {
+/* Code blocks */
+pre {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-medium) 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
   font-size: 0.9em;
+  line-height: 1.4;
+}
+
+code {
+  background-color: #f1f5f9;
+  color: var(--color-primary);
+  padding: var(--spacing-xsmall) var(--spacing-small);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* Horizontal separators */
+hr {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  margin: var(--spacing-large) 0;
+}
+
+/* Empty fields and missing values */
+.missing-value {
+  background-color: #fef2f2;
+  color: var(--color-error);
+  padding: var(--spacing-xsmall) var(--spacing-small);
+  border-radius: 4px;
+  border: var(--border-width) dashed var(--color-error);
+  font-style: italic;
+}
+
+/* Tables
+   ========================================================================== */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: var(--spacing-medium) 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-medium) 0;
+  table-layout: fixed;
+  background-color: var(--color-bg);
+}
+
+th,
+td {
+  border: var(--border-width) solid #e2e8f0;
+  padding: var(--spacing-small) var(--spacing-medium);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Signature table
+   ========================================================================== */
+.signatures {
+  page-break-inside: avoid;
+  margin-top: var(--spacing-xlarge);
+  border: none;
+}
+
+.signatures th {
+  display: none; /* Hide headers while maintaining structure */
+}
+
+.signatures th,
+.signatures td {
+  padding: var(--spacing-medium);
+  text-align: left;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Two-column layout: 1/3 for labels, 2/3 for signatures */
+.signatures th:first-child,
+.signatures td:first-child {
+  width: 33.33%;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.signatures th:last-child,
+.signatures td:last-child {
+  width: 66.67%;
+}
+
+.signatures td:last-child {
+  height: 6em;
+  vertical-align: bottom;
+  font-weight: normal;
+}
+
+/* Table of contents
+   ========================================================================== */
+.table-of-contents {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-large) 0;
+}
+
+.table-of-contents li {
+  margin-bottom: var(--spacing-small);
+  list-style-type: none;
+}
+
+/* Confidential section
+   ========================================================================== */
+.confidential {
+  width: 100%;
+  background-color: var(--color-accent) !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: var(--spacing-medium) 0 !important;
+  margin: var(--spacing-large) 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  display: block !important;
+  border-radius: var(--border-radius) !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Separator section
+   ========================================================================== */
+.separator {
+  width: 100%;
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: var(--spacing-small) 0 !important;
+  margin: var(--spacing-large) 0 var(--spacing-medium) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  display: block !important;
+  border-radius: var(--border-radius) !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Algorithm blocks
+   ========================================================================== */
+.algorithm {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-medium) 0;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.algorithm pre {
+  margin: 0;
+  white-space: pre-wrap;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Utilities
+   ========================================================================== */
+.no-break {
+  page-break-inside: avoid !important;
+}
+
+.page-break-before {
+  page-break-before: always !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-muted {
+  color: var(--color-muted) !important;
+}
+
+/* Print optimizations
+   ========================================================================== */
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 20mm 15mm 15mm 15mm;
+  }
+
+  body {
+    font-size: 11pt;
+    color: black;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Links */
+  a {
+    text-decoration: none;
+    color: var(--color-link);
+  }
+
+  /* Internal links */
+  a[href^='#'] {
+    color: var(--color-link);
+    text-decoration: none;
+  }
+
+  a[data-internal-link='true'] {
+    color: var(--color-link) !important;
+    text-decoration: none !important;
+  }
+
+  /* Show URLs after external links */
+  a[href^='http']:after {
+    content: ' (' attr(href) ')';
+    font-size: 90%;
+    color: var(--color-muted);
+  }
+
+  /* Page break control */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  p, li {
+    page-break-inside: avoid;
+  }
+
+  ul, ol {
+    page-break-inside: auto;
+  }
+
+  img {
+    page-break-inside: avoid;
+    max-width: 100%;
+  }
+
+  /* Maintain colors in print */
+  .confidential,
+  .separator {
+    background-color: var(--color-accent) !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .algorithm {
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Remove backgrounds for better printing */
+  pre,
+  code {
+    background-color: transparent !important;
+    border: 1px solid #ccc !important;
+  }
 }

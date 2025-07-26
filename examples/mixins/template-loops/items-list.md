@@ -1,17 +1,16 @@
 ---
-contract_date: @today
 amount: 50000
-client_name: "john doe"
-company_name: "ACME corp"
+client_name: 'john doe'
+company_name: 'ACME corp'
 payment_terms: 30
 interest_rate: 0.05
 project_duration: 6
-currency: "USD"
+currency: 'USD'
 ---
 
 # {{titleCase(client_name)}} Service Agreement
 
-**Date:** {{formatDate(contract_date, "MMMM Do, YYYY")}}  
+**Date:** {{formatDate(@today, "MMMM Do, YYYY")}}  
 **Client:** {{capitalizeWords(client_name)}}  
 **Company:** {{titleCase(company_name)}}
 
@@ -24,17 +23,16 @@ currency: "USD"
 ## Payment Schedule
 
 **Payment Terms:** {{payment_terms}} days  
-**Due Date:**
-{{formatDate(addDays(contract_date, payment_terms), "MMMM Do, YYYY")}}  
+**Due Date:** {{formatDate(addDays(@today, payment_terms), "MMMM Do, YYYY")}}  
 **Project Duration:** {{project_duration}}
 {{pluralize("month", project_duration)}}  
 **Project End Date:**
-{{formatDate(addMonths(contract_date, project_duration), "MMMM Do, YYYY")}}
+{{formatDate(addMonths(@today, project_duration), "MMMM Do, YYYY")}}
 
 ## Additional Information
 
 **Document ID:**
-{{upper(replaceAll(kebabCase(client_name), "-", ""))}}{{formatDate(contract_date, "YYMMDD")}}  
+{{upper(replaceAll(kebabCase(client_name), "-", ""))}}{{formatDate(@today, "YYMMDD")}}  
 **Client
 Initials:** {{initials(client_name)}}  
 **Generated:** {{formatDate(@today, "dddd, MMMM Do, YYYY")}}
@@ -43,8 +41,8 @@ Initials:** {{initials(client_name)}}
 
 This agreement is valid for {{project_duration}}
 {{pluralize("month", project_duration)}} starting from
-{{formatDate(contract_date, "MMMM Do, YYYY")}} and ending on
-{{formatDate(addMonths(contract_date, project_duration), "MMMM Do, YYYY")}}.
+{{formatDate(@today, "MMMM Do, YYYY")}} and ending on
+{{formatDate(addMonths(@today, project_duration), "MMMM Do, YYYY")}}.
 
 The total amount of {{formatCurrency(amount, currency)}}
 ({{numberToWords(amount)}} dollars) shall be paid within {{payment_terms}} days

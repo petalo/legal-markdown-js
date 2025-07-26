@@ -84,3 +84,8 @@ docs/api/
 
 # repomix configuration
 .repomix/
+
+# Examples directory output files
+examples/**/*.html
+examples/**/*.pdf
+examples/**/*output*

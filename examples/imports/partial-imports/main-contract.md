@@ -12,8 +12,9 @@ jurisdiction: California
 
 # Services Agreement
 
-This Services Agreement (the "Agreement") is entered into as of |effective_date|
-by and between |party_a| ("Client") and |party_b| ("Service Provider").
+This Services Agreement (the "Agreement") is entered into as of
+{{effective_date}} by and between {{party_a}} ("Client") and {{party_b}}
+("Service Provider").
 
 l. SERVICES
 
@@ -25,7 +26,7 @@ and workmanlike manner and in accordance with industry standards.
 
 l. COMPENSATION
 
-ll. Fees Client shall pay Service Provider the sum of $|payment_amount| as
+ll. Fees Client shall pay Service Provider the sum of ${{payment_amount}} as
 compensation for the Services.
 
 ll. Payment Terms Payment shall be made within 30 days of receiving an invoice
@@ -38,7 +39,7 @@ from Service Provider.
 l. GENERAL PROVISIONS
 
 ll. Governing Law This Agreement shall be governed by the laws of the State of
-|jurisdiction|.
+{{jurisdiction}}.
 
 ll. Entire Agreement This Agreement constitutes the entire agreement between the
 parties with respect to the subject matter hereof.
@@ -46,6 +47,6 @@ parties with respect to the subject matter hereof.
 IN WITNESS WHEREOF, the parties hereto have executed this Agreement as of the
 date first above written.
 
-CLIENT: |party_a|
+CLIENT: {{party_a}}
 
-SERVICE PROVIDER: |party_b|
+SERVICE PROVIDER: {{party_b}}

@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,15 +31,15 @@ echo "📄 Using CLI: $CLI"
 
 # Process document with YAML frontmatter
 echo "  Processing document.md..."
-$CLI document.md --output document.output.md
-$CLI document.md --html --output document.output.html
+$CLI "$SCRIPT_DIR/document.md" "$SCRIPT_DIR/document.output.md"
+$CLI "$SCRIPT_DIR/document.md" --html -o "$SCRIPT_DIR/document.output.html"
 
 # Extract only YAML metadata
 echo "  Extracting YAML only..."
-$CLI document.md --yaml-only --output document.yaml-only.md
+$CLI "$SCRIPT_DIR/document.md" --yaml-only -o "$SCRIPT_DIR/document.yaml-only.md"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - document.output.md"
-echo "  - document.output.html"
-echo "  - document.yaml-only.md"
+echo "  - $SCRIPT_DIR/document.output.md"
+echo "  - $SCRIPT_DIR/document.output.html"
+echo "  - $SCRIPT_DIR/document.yaml-only.md"
