@@ -68,7 +68,7 @@
     "js-beautify": "^1.15.4",
     "js-yaml": "^4.1.0",
     "latex-ast-parser": "^1.1.0",
-    "marked": "^16.1.1",
+    "marked": "^15.0.12",
     "puppeteer": "^24.13.0",
     "restructured": "^0.0.11"
   },
