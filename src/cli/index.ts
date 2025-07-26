@@ -33,9 +33,7 @@
  */
 
 import { Command } from 'commander';
-import * as path from 'path';
 import chalk from 'chalk';
-import { processLegalMarkdown } from '../index';
 import { LegalMarkdownOptions } from '@types';
 import { CliService } from './service';
 import { FileNotFoundError } from '@errors';
@@ -156,7 +154,25 @@ program
 
       // Handle input file
       if (!input) {
-        console.error(chalk.red('Error: Input file is required'));
+        console.error(chalk.red('Error: Input file is required\n'));
+        console.error(chalk.yellow('Usage examples:'));
+        console.error(
+          chalk.cyan('  legal-md document.md output.md           ') + '# Process file to file'
+        );
+        console.error(
+          chalk.cyan('  legal-md document.md --stdout            ') + '# Process file to stdout'
+        );
+        console.error(chalk.cyan('  legal-md document.md --pdf --title "Doc" ') + '# Generate PDF');
+        console.error(
+          chalk.cyan('  legal-md document.md --html --highlight  ') +
+            '# Generate HTML with highlighting'
+        );
+        console.error(
+          chalk.cyan('  cat document.md | legal-md --stdin       ') + '# Process from stdin'
+        );
+        console.error(
+          chalk.cyan('  legal-md --help                          ') + '# Show all options\n'
+        );
         process.exit(1);
       }
 
