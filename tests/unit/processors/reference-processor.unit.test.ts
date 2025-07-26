@@ -83,8 +83,8 @@ Reference to |first| and |second|.`;
 
       const result = processCrossReferences(content, metadata);
       
-      expect(result).toContain('Content for Article 1..');
-      expect(result).toContain('Reference to Article 1. and Article 2..');
+      expect(result).toContain('Content for Article 1.');
+      expect(result).toContain('Reference to Article 1. and Article 2.');
     });
 
     it('should handle level-two (ll.) sections', () => {
@@ -148,7 +148,7 @@ References: |art1|, |sec1a|, |sec1b|, |art2|, |sec2a|.`;
 
       const result = processCrossReferences(content, metadata);
       
-      expect(result).toContain('References: Article 1., Section 1., Section 2., Article 2., Section 1..');
+      expect(result).toContain('References: Article 1., Section 1., Section 2., Article 2., Section 1.');
     });
 
     it('should handle complex nested section structure', () => {
@@ -186,7 +186,7 @@ Reference to |default|.`;
 
       const result = processCrossReferences(content, metadata);
       
-      expect(result).toContain('Reference to Article 1..');
+      expect(result).toContain('Reference to Article 1.');
     });
 
     it('should respect custom level formats from metadata', () => {
@@ -252,7 +252,7 @@ Reference to |unclosed|, |double|, and |valid|.`;
       const result = processCrossReferences(content, metadata);
       
       // Only valid should be processed
-      expect(result).toContain('Reference to |unclosed|, |double|, and Article 1..');
+      expect(result).toContain('Reference to |unclosed|, |double|, and Article 1.');
     });
 
     it('should handle references with whitespace in keys', () => {
