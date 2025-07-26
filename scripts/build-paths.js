@@ -5,8 +5,27 @@
  * This script loads path constants and provides them for build operations
  */
 
-require('dotenv').config();
+// Load .env file silently without dotenv messages
+const fs = require('fs');
 const path = require('path');
+
+// Parse .env manually to avoid dotenv messages
+try {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const match = line.match(/^([^#=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim().replace(/^['"]|['"]$/g, '');
+        process.env[key] = value;
+      }
+    });
+  }
+} catch (error) {
+  // Ignore errors, use defaults
+}
 
 // Get paths from environment with defaults
 const PATHS = {
