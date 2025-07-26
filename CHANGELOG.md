@@ -1,3 +1,11 @@
+# [2.2.0](https://github.com/petalo/legal-markdown-js/compare/v2.1.0...v2.2.0) (2025-07-26)
+
+### Features
+
+- implement environment-based path configuration system
+  ([#18](https://github.com/petalo/legal-markdown-js/issues/18))
+  ([9af1007](https://github.com/petalo/legal-markdown-js/commit/9af1007ca2bbdf61b20be8d3e5c48a174b91bad9))
+
 # [2.1.0](https://github.com/petalo/legal-markdown-js/compare/v2.0.1...v2.1.0) (2025-07-26)
 
 ### Features
