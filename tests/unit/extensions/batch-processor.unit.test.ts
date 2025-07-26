@@ -22,7 +22,7 @@ import { promisify } from 'util';
 const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
-const rmdir = promisify(fs.rmdir);
+const rm = promisify(fs.rm);
 
 describe('Batch Processor', () => {
   const testDir = path.join(__dirname, 'batch-test-temp');
@@ -39,7 +39,7 @@ describe('Batch Processor', () => {
   afterEach(async () => {
     // Clean up test directories
     if (fs.existsSync(testDir)) {
-      await rmdir(testDir, { recursive: true });
+      await rm(testDir, { recursive: true });
     }
   });
 

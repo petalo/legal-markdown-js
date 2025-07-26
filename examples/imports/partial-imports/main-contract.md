@@ -33,7 +33,7 @@ from Service Provider.
 
 [l. CONFIDENTIALITY
 
-@import clauses/confidentiality.md ]{include_confidentiality}
+@import ./clauses/confidentiality.md ]{include_confidentiality}
 
 l. GENERAL PROVISIONS
 

@@ -18,7 +18,7 @@ installation to creating your first legal document.
 
 ## Prerequisites
 
-- Node.js >= 16.0.0
+- Node.js >= 18.0.0
 - npm >= 7.0.0
 
 Check your versions:
