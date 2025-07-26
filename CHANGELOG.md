@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/petalo/legal-markdown-js/compare/v2.0.0...v2.0.1) (2025-07-26)
+
+### Bug Fixes
+
+- correct workflow triggers for release and package upload jobs
+  ([6a00a92](https://github.com/petalo/legal-markdown-js/commit/6a00a92277b469a7ed9b333a67f9542a831dc909))
+
 # [2.0.0](https://github.com/petalo/legal-markdown-js/compare/v1.5.1...v2.0.0) (2025-07-26)
 
 ### Bug Fixes
