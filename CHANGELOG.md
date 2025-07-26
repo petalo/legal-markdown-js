@@ -1,3 +1,24 @@
+# [2.0.0](https://github.com/petalo/legal-markdown-js/compare/v1.5.1...v2.0.0) (2025-07-26)
+
+### Bug Fixes
+
+- configure semantic-release for protected branch compatibility
+  ([20870d5](https://github.com/petalo/legal-markdown-js/commit/20870d57cafd009dc1b7f314176e3055ac10d276))
+- disable footer-max-line-length rule for semantic-release compatibility
+  ([7368a03](https://github.com/petalo/legal-markdown-js/commit/7368a03b03b771f75d466fc6511b9385b8d0f7ce))
+- resolve CLI module path resolution errors
+  ([1cd3a56](https://github.com/petalo/legal-markdown-js/commit/1cd3a566522ed8f142ebe932c80fb60618e708fd))
+
+### Features
+
+- implement force_commands for document-driven configuration
+  ([#14](https://github.com/petalo/legal-markdown-js/issues/14))
+  ([6505f8d](https://github.com/petalo/legal-markdown-js/commit/6505f8db21b3b76b6e7670a54ea9c823778683ed))
+
+### BREAKING CHANGES
+
+- Documents can now override CLI options via force_commands
+
 ## [1.5.1](https://github.com/petalo/legal-markdown-js/compare/v1.5.0...v1.5.1) (2025-07-18)
 
 ### Bug Fixes
