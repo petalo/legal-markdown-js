@@ -83,7 +83,7 @@
     "@types/js-yaml": "^4.0.8",
     "@types/marked": "^5.0.2",
     "@types/node": "^20.8.9",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^7.18.0",
     "browserify": "^17.0.0",
     "commitizen": "^4.3.1",
