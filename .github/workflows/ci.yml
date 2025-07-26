@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   test:
-    name: Test (Node ${{ matrix.node-version }})
+    name: CI / Test (Node ${{ matrix.node-version }}) (pull_request)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -57,7 +57,7 @@ jobs:
           name: codecov-umbrella
 
   security:
-    name: Security Audit
+    name: CI / Security Audit (pull_request)
     runs-on: ubuntu-latest
 
     steps:
