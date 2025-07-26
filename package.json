@@ -10,7 +10,7 @@
     "build:styles": "mkdir -p dist/styles && cp -r $(node scripts/build-paths.js styles)/* dist/styles/ 2>/dev/null || true",
     "build:assets": "mkdir -p dist/assets && cp -r $(node scripts/build-paths.js images)/* dist/assets/ 2>/dev/null || true",
     "build:web": "cp -r src/web dist/",
-    "build:copy-umd": "cp dist/legal-markdown.umd.min.js dist/web/"
+    "build:copy-umd": "cp dist/legal-markdown.umd.min.js dist/web/",
     "build:umd": "webpack --mode production --config webpack.config.js",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist coverage .turbo && tsc --build --clean",
