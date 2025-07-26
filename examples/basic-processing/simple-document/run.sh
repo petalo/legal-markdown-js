@@ -31,16 +31,16 @@ echo "📄 Using CLI: $CLI"
 
 # Process simple documents
 echo "  Processing input.md..."
-$CLI input.md input.output.md
-$CLI input.md --html -o input.output.html
+$CLI "$SCRIPT_DIR/input.md" "$SCRIPT_DIR/input.output.md"
+$CLI "$SCRIPT_DIR/input.md" --html -o "$SCRIPT_DIR/input.output.html"
 
 echo "  Processing example.md..."
-$CLI example.md example.output.md
-$CLI example.md --html -o example.output.html
+$CLI "$SCRIPT_DIR/example.md" "$SCRIPT_DIR/example.output.md"
+$CLI "$SCRIPT_DIR/example.md" --html -o "$SCRIPT_DIR/example.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - input.output.md"
-echo "  - input.output.html"
-echo "  - example.output.md"
-echo "  - example.output.html"
+echo "  - $SCRIPT_DIR/input.output.md"
+echo "  - $SCRIPT_DIR/input.output.html"
+echo "  - $SCRIPT_DIR/example.output.md"
+echo "  - $SCRIPT_DIR/example.output.html"

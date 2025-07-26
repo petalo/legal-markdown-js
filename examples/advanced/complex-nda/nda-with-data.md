@@ -1,92 +1,107 @@
 ---
-ticketNumber: TKT-12345
-purchaseDate: @today
-storeName: SuperMart Downtown
-cashierName: John Smith
-subtotal: 85.50
-taxRate: 8.25
-taxAmount: 7.05
-total: 92.55
-isMember: true
-pointsEarned: 85
-pointsBalance: 340
-receiptId: RCP-89234
-items:
-  - name: Organic Bananas
-    price: 4.99
-    onSale: false
-  - name: Fresh Bread
-    price: 3.50
-    onSale: true
-  - name: Coffee Beans
-    price: 15.99
-    onSale: false
-  - name: Chocolate Bar
-    price: 2.99
-    onSale: true
-  - name: Paper Towels
-    price: 8.99
-    onSale: false
-businessHours:
-  - day: Monday
-    hours: "9:00 AM - 9:00 PM"
-  - day: Tuesday
-    hours: "9:00 AM - 9:00 PM"
-  - day: Wednesday
-    hours: "9:00 AM - 9:00 PM"
-  - day: Thursday
-    hours: "9:00 AM - 9:00 PM"
-  - day: Friday
-    hours: "9:00 AM - 10:00 PM"
-  - day: Saturday
-    hours: "10:00 AM - 8:00 PM"
-  - day: Sunday
-    hours: "11:00 AM - 6:00 PM"
+title: 'Non-Disclosure Agreement'
+effective_date: '2024-07-26'
+disclosing_party: 'TechCorp Solutions Inc.'
+receiving_party: 'Innovation Partners LLC'
+jurisdiction: 'Delaware'
+term_years: '5'
+financial_detailed: true
+purpose_evaluation: true
+return_required: true
+legal_disclosure: true
+termination_clause: true
+attorney_fees: true
+level-one: '%n.'
+level-two: '%n.%s'
+level-three: '%n.%s.%t'
+meta-yaml-output: 'examples/output/nda-metadata.yaml'
 ---
 
-<!-- markdownlint-disable-file -->
-<div class="store-info" style="text-align: center">
+# {{title}}
 
-# Purchase Ticket - {{ticketNumber}}
+This Non-Disclosure Agreement ("Agreement") is effective as of
+{{effective_date}} between {{disclosing_party}} ("Disclosing Party") and
+{{receiving_party}} ("Receiving Party").
 
-**Date:** {{purchaseDate}} **Store:** {{storeName}} **Cashier:** {{cashierName}}
+l. **Definition of Confidential Information**
 
-</div>
+"Confidential Information" means any information disclosed by the Disclosing
+Party to the Receiving Party, including but not limited to:
 
-## Purchased Items
+ll. Technical data, trade secrets, know-how, research, product plans, or
+products
 
-<ul class="items-list">
-{{#items}}
-- {{name}} {{onSale ? "<span class="on-sale" >(ON SALE!)</span>" : ""}} - ${{price}}
-{{/items}}
-</ul>
+ll. Customers, customer lists, or supplier information
 
-## Payment Details
+ll. Financial information [including revenue, costs, and
+pricing]{financial_detailed}
 
-<ul class="payment-details">
-<li><span>Subtotal:</span> <span>${{subtotal}}</span></li>
-<li><span>Tax ({{taxRate}}%):</span> <span>${{taxAmount}}</span></li>
-<li class="total"><span><strong>Total:</strong></span> <span>${{total}}</span></li>
-</ul>
+ll. Marketing plans or strategies
 
-## Customer Loyalty
+l. **Obligations of Receiving Party**
 
-<ul>
-{{isMember ? "**Member Status:** Active" : "Not a member yet"}}
-{{isMember ? "**Points Earned:** " + pointsEarned : ""}}
-{{isMember ? "**Total Points:** " + pointsBalance : ""}}
-</ul>
+The Receiving Party agrees to:
 
-## Receipt Information
+ll. Hold all Confidential Information in strict confidence
 
-**Receipt ID:** {{receiptId}} **Thank you for shopping with us!**
+ll. Not disclose Confidential Information to third parties without written
+consent
 
-## Store Hours
+ll. Use Confidential Information solely for [evaluation
+purposes]{purpose_evaluation}
 
-<ul>
-{{#businessHours}}
-- <span>{{day}}:</span> <span>{{hours}}</span>
-{{/businessHours}}
-</ul>
+lll. [Return or destroy all Confidential Information upon
+request]{return_required}
 
-<p class="receipt-footer">Save this receipt for returns and exchanges</p>
+l. **Exceptions**
+
+This Agreement does not apply to information that:
+
+ll. Is publicly available through no breach of this Agreement
+
+ll. Was known to Receiving Party prior to disclosure
+
+ll. Is independently developed without use of Confidential Information
+
+[ll. Is required to be disclosed by law or court order]{legal_disclosure}
+
+l. **Term and Termination**
+
+ll. This Agreement shall remain in effect for {{term_years}} years from the
+effective date
+
+ll. Obligations regarding Confidential Information shall survive termination
+
+[ll. Either party may terminate this Agreement with 30 days written
+notice]{termination_clause}
+
+l. **Remedies**
+
+ll. Monetary damages may be inadequate for breach of this Agreement
+
+ll. Disclosing Party shall be entitled to equitable relief, including injunction
+
+[ll. Prevailing party in any litigation shall be entitled to attorney's
+fees]{attorney_fees}
+
+l. **Governing Law**
+
+This Agreement shall be governed by the laws of {{jurisdiction}}.
+
+---
+
+**{{disclosing_party}}**
+
+Signature: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\*** Date: \***\*\_\_\_\*\***
+
+Print Name: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\***
+
+Title: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\***
+
+**{{receiving_party}}**
+
+Signature: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\*** Date: \***\*\_\_\_\*\***
+
+Print Name: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\***
+
+Title: \***\*\*\*\*\*\*\***\_\***\*\*\*\*\*\*\***

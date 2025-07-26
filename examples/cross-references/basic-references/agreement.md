@@ -1,117 +1,111 @@
 ---
-title: 'Cross-References Example'
+title: 'Internal Cross-References Example'
 level-one: 'Article %n.'
 level-two: 'Section %n.'
 level-three: '(%n)'
-references:
-  payment_section: 'Article 3'
-  termination_clause: 'Section 4.2'
-  governing_law: 'Article 7'
 ---
 
 # {{title}}
 
-This document demonstrates cross-referencing capabilities in LegalMarkdown.
+This document demonstrates internal cross-referencing capabilities following the
+original Ruby Legal Markdown specification.
 
-l. **Definitions**
+l. **Definitions** |definitions|
 
 For purposes of this Agreement, the following terms have the meanings set forth
 below. Capitalized terms not defined herein shall have the meanings assigned in
-|payment_section|.
+|payment|.
 
-l. **Scope of Work**
+l. **Scope of Work** |scope|
 
 The services described herein are subject to the payment terms outlined in
-|payment_section| and the termination provisions of |termination_clause|.
+|payment| and the termination provisions of |termination|.
 
-ll. Service Specifications
+ll. **Service Specifications** |specifications|
 
-All services must comply with the standards referenced in |quality_standards|.
+All services must comply with the standards referenced in |specifications|.
 
-ll. Delivery Requirements
+ll. **Delivery Requirements** |delivery|
 
 Delivery schedules are subject to the force majeure provisions detailed in
-|force_majeure_clause|.
+|misc|.
 
-l. **Payment Terms** {#payment_section}
+l. **Payment Terms** |payment|
 
-ll. Invoice Processing
+Payment obligations as defined in |payment| are binding upon both parties.
 
-Invoices shall be submitted according to the procedures outlined in
-|invoice_procedures|.
+ll. **Invoice Processing** |invoicing|
 
-ll. Late Payment
+Invoices shall be submitted according to the procedures outlined in |invoicing|.
 
-Late payment penalties are governed by |late_payment_terms| and |governing_law|.
+ll. **Late Payment** |late_fees|
 
-l. **Termination**
+Late payment penalties are governed by |late_fees| and |governing|.
 
-ll. Termination for Cause
+l. **Termination** |termination|
 
-Either party may terminate this Agreement for cause as defined in
-|cause_definition|.
+ll. **Termination for Cause** |term_cause|
 
-ll. Termination for Convenience {#termination_clause}
+Either party may terminate this Agreement for cause as defined in |term_cause|.
 
-Termination for convenience requires notice as specified in
-|notice_requirements|.
+ll. **Termination for Convenience** |term_convenience|
 
-lll. Effect of Termination
+Termination for convenience requires notice as specified in |term_convenience|.
 
-Upon termination, the provisions of |survival_clause| shall remain in effect.
+lll. **Effect of Termination** |term_effect|
 
-l. **Dispute Resolution**
+Upon termination, the provisions of |term_effect| shall remain in effect.
 
-ll. Governing Law
+l. **Dispute Resolution** |disputes|
 
-This Agreement is subject to |governing_law|.
+ll. **Governing Law** |governing|
 
-ll. Arbitration
+This Agreement is subject to |governing|.
 
-Disputes shall be resolved through arbitration as detailed in
-|arbitration_procedures|.
+ll. **Arbitration** |arbitration|
 
-l. **Miscellaneous**
+Disputes shall be resolved through arbitration as detailed in |arbitration|.
 
-ll. Amendment
+l. **Miscellaneous** |misc|
 
-This Agreement may only be amended as provided in |amendment_procedures|.
+ll. **Amendment** |amendments|
 
-ll. Entire Agreement
+This Agreement may only be amended as provided in |amendments|.
 
-This Agreement, together with the documents referenced in
-|incorporated_documents|, constitutes the entire agreement.
+ll. **Entire Agreement** |entire|
 
-l. **Governing Law** {#governing_law}
-
-This Agreement shall be governed by the laws of Delaware, without regard to
-conflict of law principles.
+This Agreement, together with the documents referenced in |entire|, constitutes
+the entire agreement.
 
 ---
 
 ## Cross-Reference Notes
 
-The following references are used in this document:
+This document demonstrates how internal cross-references work:
 
-- `|payment_section|` → References Article 3 (Payment Terms)
-- `|termination_clause|` → References Section 4.2 (Termination for Convenience)
-- `|governing_law|` → References Article 7 (Governing Law)
-- `|quality_standards|` → Placeholder reference (would link to external
-  document)
-- `|force_majeure_clause|` → Placeholder reference
-- `|invoice_procedures|` → Placeholder reference
-- `|late_payment_terms|` → Placeholder reference
-- `|cause_definition|` → Placeholder reference
-- `|notice_requirements|` → Placeholder reference
-- `|survival_clause|` → Placeholder reference
-- `|arbitration_procedures|` → Placeholder reference
-- `|amendment_procedures|` → Placeholder reference
-- `|incorporated_documents|` → Placeholder reference
+- `` `|definitions|` `` → References Article 1. (Definitions)
+- `` `|scope|` `` → References Article 2. (Scope of Work)
+- `` `|payment|` `` → References Article 3. (Payment Terms)
+- `` `|termination|` `` → References Article 4. (Termination)
+- `` `|disputes|` `` → References Article 5. (Dispute Resolution)
+- `` `|misc|` `` → References Article 6. (Miscellaneous)
+- `` `|specifications|` `` → References Section 1. (Service Specifications)
+- `` `|delivery|` `` → References Section 2. (Delivery Requirements)
+- `` `|invoicing|` `` → References Section 1. (Invoice Processing)
+- `` `|late_fees|` `` → References Section 2. (Late Payment)
+- And many more...
 
 ## Usage
 
-Process this file to see how cross-references are resolved:
+Process this file to see how internal cross-references are resolved:
 
 ```bash
-legal-md cross-references.md output.md
+legal-md agreement.md agreement-output.md
 ```
+
+The processor will:
+
+1. Scan for headers with `|key|` syntax
+2. Assign section numbers based on legal numbering (l., ll., lll.)
+3. Replace all `|key|` references with the corresponding section numbers
+4. Leave the header definitions intact

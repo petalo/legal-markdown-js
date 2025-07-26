@@ -1,8 +1,14 @@
 # Legal Markdown Helpers
 
 Legal Markdown includes a complete system of helpers to format and manipulate
-dates, numbers, and strings in legal documents. Helpers are used with the syntax
-`{{helperName(args)}}` and can be nested to create complex expressions.
+dates, numbers, and strings in legal documents. Helpers are used with the
+**mixin syntax** `{{helperName(args)}}` and can be nested to create complex
+expressions.
+
+> **Note on Syntax**: Legal Markdown uses two distinct syntaxes:
+>
+> - `{{variable}}` for **mixins** (variables, helpers, template loops)
+> - `|reference|` for **cross-references** (internal section references)
 
 ## Table of Contents
 

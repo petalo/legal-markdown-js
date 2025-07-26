@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo "🚀 Processing Template Loops example..."
 
@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Process document with template loops
 echo "  Processing items-list.md..."
-$CLI items-list.md --output items-list.output.md
-$CLI items-list.md --html --output items-list.output.html
+$CLI "$SCRIPT_DIR/items-list.md" "$SCRIPT_DIR/items-list.output.md"
+$CLI "$SCRIPT_DIR/items-list.md" --html -o "$SCRIPT_DIR/items-list.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - items-list.output.md (with expanded loops)"
-echo "  - items-list.output.html (with rendered arrays)"
+echo "  - $SCRIPT_DIR/items-list.output.md (with expanded loops)"
+echo "  - $SCRIPT_DIR/items-list.output.html (with rendered arrays)"

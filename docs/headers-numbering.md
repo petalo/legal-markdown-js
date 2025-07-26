@@ -10,6 +10,7 @@ numbering system in Legal Markdown JS.
 - [Default Formats](#default-formats)
 - [Template Variables](#template-variables)
 - [Custom Configuration](#custom-configuration)
+- [Cross-References](#cross-references)
 - [Practical Examples](#practical-examples)
 - [Special Cases](#special-cases)
 - [Troubleshooting](#troubleshooting)
@@ -262,6 +263,86 @@ Part ii Main Content
    Chapter 1 Analysis
       Section a Results
 ```
+
+## Cross-References
+
+Legal Markdown supports cross-references to internal sections using the
+`|reference|` syntax. Cross-references allow you to reference other numbered
+sections within the same document.
+
+### Basic Cross-Reference Syntax
+
+```markdown
+l. **Introduction** |intro|
+
+This section introduces the key concepts.
+
+l. **Implementation** |implementation|
+
+As discussed in |intro|, the implementation follows these principles.
+```
+
+### How Cross-References Work
+
+1. **Section Markers**: Add `|key|` after any numbered section header
+2. **References**: Use `|key|` anywhere in the document to reference that
+   section
+3. **Automatic Replacement**: References are replaced with the section's number
+   and title
+
+### Cross-Reference Examples
+
+#### Simple References
+
+```markdown
+l. **Services** |services|
+
+ll. **Scope** |scope|
+
+The scope defined in |scope| applies to all |services|.
+```
+
+**Output:**
+
+```markdown
+Article 1. Services
+
+Section 1. Scope
+
+The scope defined in Section 1. Scope applies to all Article 1. Services.
+```
+
+#### Complex Document Structure
+
+```markdown
+l. **Terms and Conditions** |terms|
+
+ll. **Payment Terms** |payment|
+
+ll. **Delivery Terms** |delivery|
+
+l. **Compliance** |compliance|
+
+All obligations in |terms|, including |payment| and |delivery|, must comply with
+|compliance| requirements.
+```
+
+### Important Notes
+
+- **Unique Keys**: Each reference key must be unique within the document
+- **Case Sensitive**: Reference keys are case-sensitive
+- **No Spaces**: Keys cannot contain spaces or special characters
+- **Fallback**: If a reference key is not found as an internal section, the
+  system falls back to metadata variables
+
+### Cross-References vs Mixins
+
+Legal Markdown uses two distinct syntaxes for different purposes:
+
+| Syntax          | Purpose                     | Example          | Output                     |
+| --------------- | --------------------------- | ---------------- | -------------------------- |
+| `\|reference\|` | Internal section references | `\|payment\|`    | "Section 2. Payment Terms" |
+| `{{variable}}`  | Variables and helpers       | `{{party_name}}` | "ACME Corporation"         |
 
 ## Practical Examples
 

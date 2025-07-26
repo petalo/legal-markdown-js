@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Process document with conditional clauses
 echo "  Processing nda-template.md..."
-$CLI nda-template.md nda-template.output.md
-$CLI nda-template.md --html -o nda-template.output.html
+$CLI "$SCRIPT_DIR/nda-template.md" "$SCRIPT_DIR/nda-template.output.md"
+$CLI "$SCRIPT_DIR/nda-template.md" --html -o "$SCRIPT_DIR/nda-template.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - nda-template.output.md (with conditional content)"
-echo "  - nda-template.output.html (with styled conditions)"
+echo "  - $SCRIPT_DIR/nda-template.output.md (with conditional content)"
+echo "  - $SCRIPT_DIR/nda-template.output.html (with styled conditions)"

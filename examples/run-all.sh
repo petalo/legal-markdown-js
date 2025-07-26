@@ -1,5 +1,5 @@
 #!/bin/bash
-# Ejecutar todos los ejemplos de Legal Markdown
+#Executable script to run all Legal Markdown examples
 
 set -e
 
@@ -24,9 +24,9 @@ run_example() {
     local example_path="$1"
     local example_name="$(basename "$example_path")"
     local category="$(basename "$(dirname "$example_path")")"
-    
+
     echo "📁 [$category] Running $example_name..."
-    
+
     if (cd "$example_path" && timeout 60 ./run.sh > /dev/null 2>&1); then
         echo "  ✅ Success"
         ((SUCCESS_COUNT++))
@@ -59,9 +59,9 @@ echo
 for example_dir in "${EXAMPLE_DIRS[@]}"; do
     example_name="$(basename "$example_dir")"
     category="$(basename "$(dirname "$example_dir")")"
-    
+
     echo "📁 [$category] Running $example_name..."
-    
+
     if (cd "$example_dir" && timeout 60 ./run.sh > /dev/null 2>&1); then
         echo "  ✅ Success"
         ((SUCCESS_COUNT++))

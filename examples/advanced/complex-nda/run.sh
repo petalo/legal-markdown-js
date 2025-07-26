@@ -31,8 +31,8 @@ echo "📄 Using CLI: $CLI"
 
 # Process complex NDA with advanced features
 echo "  Processing nda-template.md..."
-$CLI nda-template.md nda-template.output.md
-$CLI nda-template.md --html -o nda-template.output.html
+$CLI "$SCRIPT_DIR/nda-template.md" "$SCRIPT_DIR/nda-template.output.md"
+$CLI "$SCRIPT_DIR/nda-template.md" --html -o "$SCRIPT_DIR/nda-template.output.html"
 
 if [ -f "nda-data.json" ]; then
     echo "  Processing nda-with-data.md with company data..."
@@ -44,9 +44,9 @@ if [ -f "nda-data.json" ]; then
     }" >> temp.md
     echo "---" >> temp.md
     tail -n +2 nda-with-data.md >> temp.md
-    $CLI temp.md nda-with-data.output.md
-    $CLI temp.md --html -o nda-with-data.output.html
-    $CLI temp.md --pdf --highlight --output nda-with-data.HIGHLIGHT.output.pdf
+    $CLI "$SCRIPT_DIR/temp.md" "$SCRIPT_DIR/nda-with-data.output.md"
+    $CLI "$SCRIPT_DIR/temp.md" --html -o "$SCRIPT_DIR/nda-with-data.output.html"
+    $CLI "$SCRIPT_DIR/temp.md" --pdf --highlight -o "$SCRIPT_DIR/nda-with-data.HIGHLIGHT.output.pdf"
     rm temp.md
 fi
 

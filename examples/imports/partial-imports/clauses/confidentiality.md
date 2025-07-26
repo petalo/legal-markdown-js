@@ -9,4 +9,4 @@ confidentiality of the disclosed Confidential Information with the same degree
 of care as it uses to protect its own confidential information.
 
 ll. Term of Confidentiality The obligations under this Article shall survive the
-termination of this Agreement for a period of |confidentiality_term| years.
+termination of this Agreement for a period of {{confidentiality_term}} years.

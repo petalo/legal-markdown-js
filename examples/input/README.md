@@ -63,4 +63,4 @@ npx legal-md examples/nda-template.md examples/nda-output.md --metadata examples
 2. Use header notation: `l.`, `ll.`, `lll.`, etc.
 3. Add optional clauses with `[clause]{condition}`
 4. Include imports with `@import filename.md`
-5. Reference other sections with `|reference|`
+5. Reference other sections with `{{reference}}`

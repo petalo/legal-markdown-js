@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Process document with multiple header levels
 echo "  Processing contract.md..."
-$CLI contract.md --output contract.output.md
-$CLI contract.md --html --output contract.output.html
+$CLI "$SCRIPT_DIR/contract.md" "$SCRIPT_DIR/contract.output.md"
+$CLI "$SCRIPT_DIR/contract.md" --html -o "$SCRIPT_DIR/contract.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - contract.output.md (with numbered headers)"
-echo "  - contract.output.html (with styled headers)"
+echo "  - $SCRIPT_DIR/contract.output.md (with numbered headers)"
+echo "  - $SCRIPT_DIR/contract.output.html (with styled headers)"

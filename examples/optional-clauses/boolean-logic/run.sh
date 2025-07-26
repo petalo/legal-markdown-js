@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Process document with complex boolean logic
 echo "  Processing complex-conditions.md..."
-$CLI complex-conditions.md complex-conditions.output.md
-$CLI complex-conditions.md --html -o complex-conditions.output.html
+$CLI "$SCRIPT_DIR/complex-conditions.md" "$SCRIPT_DIR/complex-conditions.output.md"
+$CLI "$SCRIPT_DIR/complex-conditions.md" --html -o "$SCRIPT_DIR/complex-conditions.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - complex-conditions.output.md (with resolved logic)"
-echo "  - complex-conditions.output.html (with conditional styling)"
+echo "  - $SCRIPT_DIR/complex-conditions.output.md (with resolved logic)"
+echo "  - $SCRIPT_DIR/complex-conditions.output.html (with conditional styling)"

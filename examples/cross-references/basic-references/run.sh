@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo "🚀 Processing Basic Cross References example..."
 
@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -29,17 +29,18 @@ detect_cli() {
 CLI=$(detect_cli)
 echo "📄 Using CLI: $CLI"
 
-# Process document with cross-references and metadata
-echo "  Processing agreement.md with metadata..."
-# Combine metadata with document for processing
-cat metadata.yaml > temp.md
-echo "---" >> temp.md
-tail -n +2 agreement.md >> temp.md
-$CLI temp.md --output agreement.output.md
-$CLI temp.md --html --output agreement.output.html
-rm temp.md
+# Process documents with internal cross-references
+echo "  Processing agreement.md..."
+$CLI "$SCRIPT_DIR/agreement.md" "$SCRIPT_DIR/agreement.output.md"
+$CLI "$SCRIPT_DIR/agreement.md" --html -o "$SCRIPT_DIR/agreement.output.html"
+
+echo "  Processing internal-references.md..."
+$CLI "$SCRIPT_DIR/internal-references.md" "$SCRIPT_DIR/internal-references.output.md"
+$CLI "$SCRIPT_DIR/internal-references.md" --html -o "$SCRIPT_DIR/internal-references.output.html"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
-echo "  - agreement.output.md (with resolved references)"
-echo "  - agreement.output.html (with formatted values)"
+echo "  - $SCRIPT_DIR/agreement.output.md (with resolved internal cross-references)"
+echo "  - $SCRIPT_DIR/agreement.output.html (with resolved internal cross-references)"
+echo "  - $SCRIPT_DIR/internal-references.output.md (with resolved cross-references)"
+echo "  - $SCRIPT_DIR/internal-references.output.html (with resolved cross-references)"

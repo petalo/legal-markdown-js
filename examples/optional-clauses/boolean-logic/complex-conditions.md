@@ -8,7 +8,7 @@ term_years: '5'
 level-one: '%n.'
 level-two: '%n.%s'
 level-three: '%n.%s.%t'
-meta-yaml-output: 'nda-metadata.yaml'
+meta-yaml-output: 'examples/output/nda-metadata.yaml'
 ---
 
 # {{title}}

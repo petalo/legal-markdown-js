@@ -20,7 +20,7 @@ contract:
 default:
   events:
     - Failure to pay rent within 5 days of due date
-    - # Empty - will be highlighted
+    - "" # Empty - will be highlighted
     - Filing for bankruptcy or insolvency
     - Abandonment of the premises
   remedies:
@@ -30,9 +30,9 @@ default:
     - Right to re-enter and take possession
 insurance:
   lessee_requirements:
-    - # Empty field 1
-    - # Empty field 2
-    - # Empty field 3
+    - "" # Empty field 1
+    - "" # Empty field 2
+    - "" # Empty field 3
     - Workers' compensation insurance
   lessor_requirements:
     - Building insurance
@@ -45,7 +45,7 @@ lessee:
   representative:
     full_name: "" # Empty - will be highlighted
     id_number: PB654321C
-  tax_id: # Empty - will be highlighted
+  tax_id: "" # Empty - will be highlighted
 lessor:
   company_name: Canary Office Spaces Ltd
   notice_address: "Legal Department, Canary Office Spaces Ltd, 25 Canada Square, Canary Wharf, London E14 5LQ"
@@ -181,14 +181,18 @@ pounds sterling).
 
 ### 4.1. Included Services
 
-The following services are included in the monthly rent: {{#services.included}}
+The following services are included in the monthly rent:
+
+{{#services.included}}
 
 - {{.}} {{/services.included}}
 
 ### 4.2. Additional Services
 
 The following services shall be contracted and paid for separately by the
-LESSEE: {{#services.additional}}
+LESSEE:
+
+{{#services.additional}}
 
 - {{.}} {{/services.additional}}
 
@@ -197,6 +201,7 @@ LESSEE: {{#services.additional}}
 ### 5.1. Lessor's Obligations
 
 The LESSOR shall be responsible for maintaining:
+
 {{#maintenance.lessor_obligations}}
 
 - {{.}} {{/maintenance.lessor_obligations}}
@@ -204,6 +209,7 @@ The LESSOR shall be responsible for maintaining:
 ### 5.2. Lessee's Obligations
 
 The LESSEE shall be responsible for maintaining:
+
 {{#maintenance.lessee_obligations}}
 
 - {{.}} {{/maintenance.lessee_obligations}}
@@ -213,25 +219,33 @@ The LESSEE shall be responsible for maintaining:
 ### 6.1. Lessor's Insurance
 
 The LESSOR shall maintain the following insurance coverage:
+
 {{#insurance.lessor_requirements}}
 
 - {{.}} {{/insurance.lessor_requirements}}
 
 ### 6.2. Lessee's Insurance
 
-The LESSEE shall obtain and maintain: {{#insurance.lessee_requirements}}
-{{. ? "- " + . : ""}} {{/insurance.lessee_requirements}}
+The LESSEE shall obtain and maintain:
+
+{{#insurance.lessee_requirements}}
+
+- {{.}} {{/insurance.lessee_requirements}}
 
 ## 7. Default and Remedies
 
 ### 7.1. Events of Default
 
-The following shall constitute events of default: {{#default.events}}
-{{. ? "- " + . : ""}} {{/default.events}}
+The following shall constitute events of default:
+
+{{#default.events}}
+
+- {{.}} {{/default.events}}
 
 ### 7.2. Remedies
 
 Upon an event of default, the LESSOR may exercise the following remedies:
+
 {{#default.remedies}}
 
 - {{.}} {{/default.remedies}}

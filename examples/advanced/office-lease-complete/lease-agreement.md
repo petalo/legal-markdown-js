@@ -73,15 +73,18 @@ Statistics Institute, with a minimum increase of
 ### 4.1. Included Services
 
 The following services are included in the base rent:
-{{#each services.included}}
 
-- {{this}} {{/each}}
+{{#services.included}}
+
+- {{.}} {{/services.included}}
 
 ### 4.2. Additional Expenses
 
-The LESSEE shall be responsible for: {{#each services.additional}}
+The LESSEE shall be responsible for:
 
-- {{this}} {{/each}}
+{{#services.additional}}
+
+- {{.}} {{/services.additional}}
 
 ## 5. Use of Premises
 
@@ -105,16 +108,18 @@ subject to reasonable security procedures and building rules.
 ### 6.1. LESSOR's Obligations
 
 The LESSOR shall maintain in good condition and repair:
-{{#each maintenance.lessor_obligations}}
 
-- {{this}} {{/each}}
+{{#maintenance.lessor_obligations}}
+
+- {{.}} {{/maintenance.lessor_obligations}}
 
 ### 6.2. LESSEE's Obligations
 
 The LESSEE shall maintain in good condition and repair:
-{{#each maintenance.lessee_obligations}}
 
-- {{this}} {{/each}}
+{{#maintenance.lessee_obligations}}
+
+- {{.}} {{/maintenance.lessee_obligations}}
 
 ## 7. Alterations and Improvements
 
@@ -133,15 +138,19 @@ LESSOR upon installation, unless otherwise agreed in writing.
 
 ### 8.1. LESSEE's Insurance
 
-The LESSEE shall maintain: {{#each insurance.lessee_requirements}}
+The LESSEE shall maintain:
 
-- {{this}} {{/each}}
+{{#insurance.lessee_requirements}}
+
+- {{.}} {{/insurance.lessee_requirements}}
 
 ### 8.2. LESSOR's Insurance
 
-The LESSOR shall maintain: {{#each insurance.lessor_requirements}}
+The LESSOR shall maintain:
 
-- {{this}} {{/each}}
+{{#insurance.lessor_requirements}}
+
+- {{.}} {{/insurance.lessor_requirements}}
 
 ## 9. Assignment and Subletting
 
@@ -153,16 +162,19 @@ withheld.
 
 ### 10.1. Events of Default
 
-The following shall constitute events of default: {{#each default.events}}
+The following shall constitute events of default:
 
-- {{this}} {{/each}}
+{{#default.events}}
+
+- {{.}} {{/default.events}}
 
 ### 10.2. Remedies
 
 Upon default, the non-defaulting party shall have the following remedies:
-{{#each default.remedies}}
 
-- {{this}} {{/each}}
+{{#default.remedies}}
+
+- {{.}} {{/default.remedies}}
 
 ## 11. Termination
 

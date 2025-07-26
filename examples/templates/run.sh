@@ -14,8 +14,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else

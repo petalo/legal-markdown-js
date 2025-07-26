@@ -12,8 +12,8 @@ detect_cli() {
         echo "legal-md"
     elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
         echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
     elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
         echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
     else
@@ -31,10 +31,10 @@ echo "📄 Using CLI: $CLI"
 
 # Process document and export metadata
 echo "  Processing document-with-meta.md..."
-$CLI document-with-meta.md --output document-with-meta.output.md
-$CLI document-with-meta.md --html --output document-with-meta.output.html
-$CLI document-with-meta.md --export-yaml --output document-with-meta.output.yaml
-$CLI document-with-meta.md --export-json --output document-with-meta.output.json
+$CLI "$SCRIPT_DIR/document-with-meta.md" "$SCRIPT_DIR/document-with-meta.output.md"
+$CLI "$SCRIPT_DIR/document-with-meta.md" --html -o "$SCRIPT_DIR/document-with-meta.output.html"
+$CLI "$SCRIPT_DIR/document-with-meta.md" --export-yaml -o "$SCRIPT_DIR/document-with-meta.output.yaml"
+$CLI "$SCRIPT_DIR/document-with-meta.md" --export-json -o "$SCRIPT_DIR/document-with-meta.output.json"
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files with exported metadata:"
