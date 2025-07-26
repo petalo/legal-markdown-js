@@ -33,6 +33,7 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [PDF with Highlighting](#pdf-with-highlighting)
   - [PDF with Custom CSS](#pdf-with-custom-css)
   - [PDF Options](#pdf-options)
+  - [PDF with Logo Headers/Footers](#pdf-with-logo-headersfooters)
   - [Generate Both Versions](#generate-both-versions)
 - [HTML Generation](#html-generation)
   - [Basic HTML Generation](#basic-html-generation)
@@ -406,6 +407,84 @@ const buffer = await generatePdf(content, 'output.pdf', {
   cssPath: './styles/legal.css',
 });
 ```
+
+### PDF with Logo Headers/Footers
+
+The PDF generator automatically detects and includes logos in headers when a CSS
+file is provided with logo configuration:
+
+#### Automatic Logo Detection
+
+```css
+/* In your CSS file (e.g., src/styles/contract.css) */
+:root {
+  --logo-filename: logo.company.png;
+}
+```
+
+```typescript
+import { generatePdf } from 'legal-markdown-js';
+
+// Logo automatically detected and included in header
+const buffer = await generatePdf(content, 'output.pdf', {
+  cssPath: '.src/styles/contract.css', // Contains --logo-filename
+  format: 'A4',
+});
+```
+
+#### Manual Header/Footer Templates
+
+```typescript
+const buffer = await generatePdf(content, 'output.pdf', {
+  displayHeaderFooter: true,
+  headerTemplate: `
+    <div style="width: 100%; text-align: right; padding-right: 25mm;">
+      <img src="data:image/png;base64,iVBORw0..." style="height: 40px;" />
+    </div>
+  `,
+  footerTemplate: `
+    <div style="width: 100%; text-align: right; padding: 10px 25mm; font-size: 10px;">
+      Page <span class="pageNumber"></span> / <span class="totalPages"></span>
+    </div>
+  `,
+});
+```
+
+#### Using Template Helpers
+
+```typescript
+import { PdfTemplates } from 'legal-markdown-js/generators/pdf-templates';
+import { PDF_TEMPLATE_CONSTANTS } from 'legal-markdown-js/constants';
+
+// Generate templates programmatically
+const headerTemplate = PdfTemplates.generateHeaderTemplate(logoBase64);
+const footerTemplate = PdfTemplates.generateFooterTemplate();
+const customHeader = PdfTemplates.generateCustomHeaderTemplate(
+  'Confidential',
+  logoBase64
+);
+
+const buffer = await generatePdf(content, 'output.pdf', {
+  displayHeaderFooter: true,
+  headerTemplate,
+  footerTemplate,
+});
+```
+
+#### Logo Requirements
+
+- **Format**: PNG only
+- **Size**: Maximum 500KB
+- **Location**: Place in `src/assets/images/` directory
+- **Reference**: Use `--logo-filename` CSS variable to specify
+
+#### Logo Integration Process
+
+1. **Detection**: System scans CSS for `--logo-filename` property
+2. **Validation**: Checks file exists, is PNG format, and within size limits
+3. **Encoding**: Converts to base64 for embedding
+4. **Template Generation**: Creates header/footer with logo positioning
+5. **Fallback**: Continues without logo if any step fails
 
 ### Generate Both Versions
 
