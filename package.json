@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && tsc-alias && mkdir -p dist/styles && cp -r $(node scripts/build-paths.js styles)/* dist/styles/ && cp -r $(node scripts/build-paths.js images) dist/assets && cp -r src/web dist/ && npm run build:umd && cp dist/legal-markdown.umd.min.js dist/web/",
+    "build": "tsc && tsc-alias && mkdir -p dist/styles dist/assets && cp -r $(node scripts/build-paths.js styles)/* dist/styles/ && cp -r $(node scripts/build-paths.js images)/* dist/assets/ 2>/dev/null || true && cp -r src/web dist/ && npm run build:umd && cp dist/legal-markdown.umd.min.js dist/web/",
     "build:umd": "webpack --mode production --config webpack.config.js",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist coverage .turbo && tsc --build --clean",
