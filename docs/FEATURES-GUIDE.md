@@ -44,6 +44,11 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [Field Tracking Report](#field-tracking-report)
 - [Batch Processing](#batch-processing)
   - [Batch Options](#batch-options)
+- [Force Commands](#force-commands)
+  - [Basic Usage](#basic-usage-2)
+  - [Template Variables in Commands](#template-variables-in-commands)
+  - [Security and Validation](#security-and-validation)
+  - [Command Priority](#command-priority)
 - [Advanced Features](#advanced-features)
   - [Custom Header Formats](#custom-header-formats)
   - [Multi-language Support](#multi-language-support)
@@ -559,6 +564,178 @@ console.log(`Errors: ${result.totalErrors}`);
 - `preserveStructure`: Maintain directory structure
 - `concurrency`: Number of parallel processes
 - `onProgress`: Progress callback function
+
+## Force Commands
+
+The Force Commands feature enables **document-driven configuration**, allowing
+documents to specify their own processing options directly in the YAML front
+matter. This makes documents self-configuring and eliminates the need for manual
+CLI flags.
+
+### Basic Usage
+
+Documents can include a `force_commands` field that contains command-line
+options:
+
+```yaml
+---
+title: Service Agreement
+client_name: Acme Corporation
+effective_date: 2024-01-01
+
+# Embedded processing configuration
+force_commands: >
+  --css corporate-theme.css --pdf --highlight --export-yaml --export-json
+  --title "{{title}} - {{client_name}}"
+---
+# {{title}}
+
+This agreement is between Legal Services Inc. and {{titleCase(client_name)}}.
+
+The effective date of this agreement is {{formatDate(effective_date, "MMMM Do,
+YYYY")}}.
+```
+
+When this document is processed with `legal-md document.md`, it automatically:
+
+1. **Applies corporate CSS**: Uses `corporate-theme.css` for styling
+2. **Generates PDF**: Creates PDF output with highlighting enabled
+3. **Exports metadata**: Creates both YAML and JSON metadata files
+4. **Sets dynamic title**: Uses template variables in the document title
+5. **Processes templates**: Resolves all `{{variable}}` expressions
+
+### Template Variables in Commands
+
+Force commands support full template variable resolution, allowing dynamic
+configuration:
+
+```yaml
+---
+document_type: Service Agreement
+client_name: Acme Corporation
+effective_date: 2024-01-01
+contract_value: 50000
+currency: USD
+
+force_commands: >
+  --output-name
+  {{titleCase(document_type)}}_{{titleCase(client_name)}}_{{formatDate(effective_date,
+  "YYYYMMDD")}}.pdf --title "{{document_type}} - {{client_name}}
+  ({{formatCurrency(contract_value, currency)}})" --css corporate-style.css
+  --pdf --highlight --format A4 --export-yaml --export-json
+---
+```
+
+This generates:
+
+- **PDF file**: `Service_Agreement_Acme_Corporation_20240101.pdf`
+- **Document title**: "Service Agreement - Acme Corporation ($50,000.00)"
+- **Metadata exports**: YAML and JSON files with processed data
+
+### Available Commands
+
+All CLI options are supported in force_commands:
+
+| Category     | Commands                                                  | Description            |
+| ------------ | --------------------------------------------------------- | ---------------------- |
+| **Output**   | `--css <file>`, `--output-name <name>`, `--title <title>` | Styling and naming     |
+| **Formats**  | `--pdf`, `--html`, `--format <format>`, `--landscape`     | Output format control  |
+| **Features** | `--highlight`, `--export-yaml`, `--export-json`           | Enhanced functionality |
+| **Debug**    | `--debug`                                                 | Troubleshooting        |
+
+### Alternative Field Names
+
+The feature supports multiple naming conventions for flexibility:
+
+```yaml
+# All of these work identically:
+force_commands: --pdf --highlight # Recommended
+force-commands: --pdf --highlight # Kebab case
+forceCommands: --pdf --highlight # Camel case
+commands: --pdf --highlight # Short form
+```
+
+### Security and Validation
+
+Force commands include built-in security measures:
+
+**Protected Commands**: Critical system options cannot be overridden:
+
+- `--stdin`, `--stdout` (I/O redirection)
+- `--yaml`, `--headers` (Core processing flags)
+- `--no-*` flags (Processing control)
+
+**Path Validation**: File paths are validated to prevent security issues:
+
+- Paths containing `..` are rejected (prevents directory traversal)
+- Absolute paths starting with `/` are rejected
+- Only relative paths within the project are allowed
+
+**Template Sandboxing**: Template resolution is limited to document metadata
+only.
+
+### Command Priority
+
+Force commands **take precedence** over CLI arguments:
+
+```bash
+# CLI command:
+legal-md document.md --html --css basic.css
+
+# Document contains:
+# force_commands: --pdf --css advanced.css
+
+# Result: PDF is generated with advanced.css
+# (force_commands override CLI options)
+```
+
+This design ensures documents are truly self-configuring and portable across
+different environments.
+
+### Multi-line Commands
+
+For complex configurations, use YAML multi-line syntax:
+
+```yaml
+---
+force_commands: |
+  --css corporate-theme.css
+  --pdf --highlight --format A4
+  --export-yaml --export-json  
+  --title "{{document_type}} - Generated {{formatDate(today, "YYYY-MM-DD")}}"
+  --output-name {{document_type}}_{{client}}_Final.pdf
+---
+```
+
+### Use Cases
+
+**Self-Configuring Documents**: Documents that specify their own styling and
+output requirements:
+
+```yaml
+force_commands: --css legal-brief.css --pdf --format legal --landscape
+```
+
+**Template-Driven Output**: Dynamic file naming based on document content:
+
+```yaml
+force_commands:
+  --output-name {{case_number}}_{{document_type}}_{{formatDate(filing_date,
+  "YYYYMMDD")}}.pdf
+```
+
+**Workflow Integration**: Automatic metadata export for downstream processing:
+
+```yaml
+force_commands: --export-json --export-yaml --pdf --highlight
+```
+
+**Client-Specific Styling**: Different styling based on client requirements:
+
+```yaml
+force_commands:
+  --css {{client_code}}-theme.css --title "{{client_name}} - {{document_type}}"
+```
 
 ## Advanced Features
 

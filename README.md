@@ -97,6 +97,7 @@ Additional features available only in the Node.js version:
 - **HTML Generation**: Custom HTML output with CSS support
 - **Template Loops**: Array iteration with `[#items]...[/items]` syntax
 - **Helper Functions**: Date, number, and string formatting helpers
+- **Force Commands**: Document-driven configuration with embedded CLI options
 - **Batch Processing**: Multi-file processing with concurrency control
 
 ## Documentation

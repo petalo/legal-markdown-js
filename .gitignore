@@ -78,3 +78,6 @@ docs/api/
 
 # Claude configuration
 .claude/
+
+# Anything related to petalo
+*petalo*

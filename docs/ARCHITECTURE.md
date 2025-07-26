@@ -795,39 +795,3 @@ graph TB
         CDN --> BROWSERS
     end
 ```
-
-## Future Roadmap
-
-```mermaid
-timeline
-    title Legal Markdown JS Development Roadmap
-
-    section Current (v0.1.0)
-        Core Parity : Full Ruby compatibility
-        TypeScript Support : Complete type definitions
-        PDF/HTML Generation : Professional output
-        Helper System : Date/Number/String helpers
-
-    section Phase 2 (v0.2.0)
-        Plugin System : Extensible architecture
-        Template Engine : Advanced templating
-        Cloud Integration : Cloud storage support
-        API Server : REST API endpoints
-
-    section Phase 3 (v0.3.0)
-        Collaborative Editing : Real-time collaboration
-        Version Control : Document versioning
-        Digital Signatures : Legal document signing
-        Blockchain Integration : Document verification
-
-    section Future Vision
-        AI Integration : Smart document generation
-        Legal Database : Case law integration
-        Multi-language : International support
-        Enterprise Features : Advanced enterprise tools
-```
-
-This architecture documentation provides a comprehensive overview of the Legal
-Markdown JS system, its components, processing flow, and extension points. The
-modular design ensures maintainability while the clear separation of concerns
-allows for easy testing and future enhancements.
