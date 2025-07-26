@@ -148,8 +148,8 @@ p {
     </main>
 
     <footer class="options-panel">
-      <button class="options-toggle">⚙️ Processing Options</button>
-      <div class="options-content">
+      <button class="options-toggle">🔽 Processing Options</button>
+      <div class="options-content open">
         <div class="options-grid">
           <div class="option-group">
             <label>Processing Control</label>
@@ -162,10 +162,10 @@ p {
                 </span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" id="yamlOnly"> YAML only
+                <input type="checkbox" id="yamlOnly"> Skip YAML
                 <span class="tooltip">
                   <span class="tooltip-icon">ℹ️</span>
-                  <span class="tooltip-text">Processes only the YAML front matter without rendering the markdown content. Useful for testing metadata extraction.</span>
+                  <span class="tooltip-text">Skip YAML variable substitution in content. Returns raw markdown with variables unprocessed (e.g., {{title}} stays as {{title}}). Useful for testing content without variable replacement.</span>
                 </span>
               </label>
               <label class="checkbox-item">
@@ -438,7 +438,7 @@ p {
                     </div>
                 `;
 
-        // Display HTML-formatted output  
+        // Display HTML-formatted output
         this.htmlPreview.innerHTML = `
                     <div class="legal-document">
                         ${this.formatMarkdownForDisplay(result.content)}
@@ -727,7 +727,7 @@ jurisdiction: California
 
 # {{title}}
 
-This {{title}} is entered into on {{effective_date}} between:
+This {{title}} is entered into on {{formatDate(effective_date, "YYYY-MM-DD")}} between:
 
 **CLIENT**: {{client}}
 **PROVIDER**: {{provider}}
@@ -1806,15 +1806,15 @@ p {
         this.previewResizer.addEventListener('mousedown', (e) => {
           isResizing = true;
           startY = e.clientY;
-          
+
           const markdownBlock = document.querySelector('.markdown-preview');
           const htmlBlock = document.querySelector('.html-preview');
-          
+
           if (markdownBlock && htmlBlock) {
             const markdownHeight = markdownBlock.offsetHeight;
             const htmlHeight = htmlBlock.offsetHeight;
             const totalHeight = markdownHeight + htmlHeight;
-            
+
             // Store as percentages
             startHeights = [
               (markdownHeight / totalHeight) * 100,
@@ -1833,21 +1833,21 @@ p {
           const deltaY = e.clientY - startY;
           const container = document.querySelector('.preview-split');
           const containerHeight = container.offsetHeight;
-          
+
           // Convert pixels to percentage (balanced sensitivity)
           const deltaPercent = (deltaY / containerHeight) * 100;
-          
+
           let newHeights = [...startHeights];
           const minHeight = 20; // Minimum 20% height
-          
+
           // Adjust heights
           newHeights[0] = Math.max(minHeight, Math.min(80, startHeights[0] + deltaPercent));
           newHeights[1] = Math.max(minHeight, Math.min(80, startHeights[1] - deltaPercent));
-          
+
           // Apply new heights
           const markdownBlock = document.querySelector('.markdown-preview');
           const htmlBlock = document.querySelector('.html-preview');
-          
+
           if (markdownBlock && htmlBlock) {
             markdownBlock.style.flex = `0 0 ${newHeights[0]}%`;
             htmlBlock.style.flex = `0 0 ${newHeights[1]}%`;

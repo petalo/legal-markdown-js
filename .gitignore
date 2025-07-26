@@ -8,6 +8,7 @@ yarn-error.log*
 # Build output
 dist/
 build/
+packages/
 *.tsbuildinfo
 *.tgz
 
@@ -78,3 +79,6 @@ docs/api/
 
 # Claude configuration
 .claude/
+
+# repomix configuration
+.repomix/

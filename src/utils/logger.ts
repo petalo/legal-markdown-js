@@ -46,9 +46,20 @@
  * logger.error('Processing failed', { error: 'Invalid syntax' });
  * ```
  */
+// Global debug state for browser compatibility
+let debugEnabled = false;
+
 export const logger = {
   /**
-   * Log debug messages (only shown when DEBUG environment variable is set)
+   * Enable or disable debug logging
+   * @param {boolean} enabled - Whether to enable debug logging
+   */
+  setDebugEnabled: (enabled: boolean) => {
+    debugEnabled = enabled;
+  },
+
+  /**
+   * Log debug messages (only shown when DEBUG environment variable is set or debug is enabled)
    *
    * @method debug
    * @param {string} message - The debug message to log
@@ -56,14 +67,15 @@ export const logger = {
    * @returns {void}
    * @example
    * ```typescript
-   * // Enable debug mode: DEBUG=true node app.js
+   * // Enable debug mode: DEBUG=true node app.js or logger.setDebugEnabled(true)
    * logger.debug('Processing field', { name: 'client.name', type: 'string' });
    * logger.debug('Import resolved', { path: './shared/header.md' });
    * ```
    */
   debug: (message: string, data?: any) => {
     // Browser-compatible debug check
-    const isDebugEnabled = typeof process !== 'undefined' && process.env && process.env.DEBUG;
+    const isDebugEnabled =
+      debugEnabled || (typeof process !== 'undefined' && process.env && process.env.DEBUG);
     if (isDebugEnabled) {
       console.debug(`[DEBUG] ${message}`, data || '');
     }

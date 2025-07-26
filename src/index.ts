@@ -319,7 +319,7 @@ export async function generateHtml(
   // Generate HTML
   return htmlGenerator.generateHtml(processed.content, {
     cssPath: options.cssPath,
-    highlightCssPath: options.highlightCssPath || path.join(__dirname, '../styles/highlight.css'),
+    highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
     includeHighlighting: options.includeHighlighting,
     title: options.title,
     metadata: processed.metadata,
@@ -376,7 +376,7 @@ export async function generatePdf(
   // Generate PDF
   return pdfGenerator.generatePdf(processed.content, outputPath, {
     cssPath: options.cssPath,
-    highlightCssPath: options.highlightCssPath || path.join(__dirname, '../styles/highlight.css'),
+    highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
     includeHighlighting: options.includeHighlighting,
     title: options.title,
     metadata: processed.metadata,

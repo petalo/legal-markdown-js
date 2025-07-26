@@ -227,7 +227,7 @@ export class CliService {
       includeHighlighting: this.options.highlight,
       cssPath: this.options.css,
       title: this.options.title || baseName,
-      highlightCssPath: path.join(__dirname, '../../styles/highlight.css'),
+      highlightCssPath: path.join(__dirname, '../styles/highlight.css'),
     };
 
     // Generate HTML if requested
