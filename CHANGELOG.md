@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/petalo/legal-markdown-js/compare/v2.2.0...v2.3.0) (2025-07-26)
+
+### Features
+
+- implement complete template loops with dot notation support
+  ([076de84](https://github.com/petalo/legal-markdown-js/commit/076de84107d9c008c138542a71d5bc06ebda8b73))
+
 # [2.2.0](https://github.com/petalo/legal-markdown-js/compare/v2.1.0...v2.2.0) (2025-07-26)
 
 ### Features
