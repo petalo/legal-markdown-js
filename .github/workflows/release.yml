@@ -3,10 +3,9 @@ name: Release
 on:
   push:
     branches: [main]
-  # Also trigger on manual tag creation
-  create:
-    tags:
-      - 'v*'
+  # Trigger on release creation for package uploads
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -18,7 +17,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, 'skip ci')
 
     steps:
       - name: Checkout
@@ -58,11 +57,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
 
-  # Separate job for package uploads on tag creation
+  # Separate job for package uploads on release creation
   upload-packages:
     name: Upload Release Packages
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release' && github.event.action == 'created'
 
     steps:
       - name: Checkout
