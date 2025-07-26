@@ -32,6 +32,8 @@
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as https from 'https';
+import * as http from 'http';
 import { logger } from '../utils/logger';
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
 import { PdfTemplates } from './pdf-templates';
@@ -177,6 +179,135 @@ async function loadAndEncodeImage(logoPath: string): Promise<string> {
 }
 
 /**
+ * Downloads and validates logo image from external URL, converting to base64
+ *
+ * Performs comprehensive validation:
+ * - URL accessibility and download
+ * - File size limit (500KB max)
+ * - PNG format validation using magic numbers
+ * - Base64 encoding for embedding
+ *
+ * @async
+ * @param {string} logoUrl - URL to the logo image
+ * @returns {Promise<string>} Base64 encoded image string
+ * @throws {Error} When download or validation fails
+ * @example
+ * ```typescript
+ * const base64Logo = await downloadAndEncodeImage('https://example.com/logo.png');
+ * // Returns: 'iVBORw0KGgoAAAANSUhEUgAAA...'
+ * ```
+ */
+async function downloadAndEncodeImage(logoUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      logger.debug('Downloading logo from URL', { logoUrl });
+
+      const protocol = logoUrl.startsWith('https://') ? https : http;
+
+      const request = protocol.get(logoUrl, response => {
+        // Check for redirect
+        if (response.statusCode === 301 || response.statusCode === 302) {
+          const redirectUrl = response.headers.location;
+          if (redirectUrl) {
+            logger.debug('Following redirect', { from: logoUrl, to: redirectUrl });
+            downloadAndEncodeImage(redirectUrl).then(resolve).catch(reject);
+            return;
+          }
+        }
+
+        // Check for successful response
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download logo: HTTP ${response.statusCode}`));
+          return;
+        }
+
+        // Check content length
+        const contentLength = parseInt(response.headers['content-length'] || '0', 10);
+        if (contentLength > PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE) {
+          reject(
+            new Error(
+              `Logo file too large: ${contentLength} bytes ` +
+                `(max ${PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE})`
+            )
+          );
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        let downloadedBytes = 0;
+
+        response.on('data', (chunk: Buffer) => {
+          downloadedBytes += chunk.length;
+
+          // Check size limit during download
+          if (downloadedBytes > PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE) {
+            reject(
+              new Error(
+                `Logo file too large: ${downloadedBytes} bytes ` +
+                  `(max ${PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE})`
+              )
+            );
+            return;
+          }
+
+          chunks.push(chunk);
+        });
+
+        response.on('end', () => {
+          try {
+            const logoBuffer = Buffer.concat(chunks);
+
+            // Validate PNG magic numbers (0x89, 0x50, 0x4E, 0x47)
+            if (
+              logoBuffer.length < 8 ||
+              logoBuffer[0] !== 0x89 ||
+              logoBuffer[1] !== 0x50 ||
+              logoBuffer[2] !== 0x4e ||
+              logoBuffer[3] !== 0x47
+            ) {
+              reject(new Error('Invalid logo file format: must be PNG'));
+              return;
+            }
+
+            // Convert to base64
+            const base64Logo = logoBuffer.toString('base64');
+            logger.debug('Logo downloaded and encoded successfully', {
+              url: logoUrl,
+              size: logoBuffer.length,
+              base64Length: base64Logo.length,
+            });
+
+            resolve(base64Logo);
+          } catch (error) {
+            reject(error);
+          }
+        });
+
+        response.on('error', error => {
+          reject(new Error(`Failed to download logo: ${error.message}`));
+        });
+      });
+
+      request.on('error', error => {
+        reject(new Error(`Failed to download logo: ${error.message}`));
+      });
+
+      // Set timeout for the request
+      request.setTimeout(10000, () => {
+        request.destroy();
+        reject(new Error('Logo download timeout (10 seconds)'));
+      });
+    } catch (error) {
+      logger.error('Failed to download logo from URL', {
+        logoUrl,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      reject(error);
+    }
+  });
+}
+
+/**
  * PDF Generator for Legal Markdown Documents
  *
  * Converts processed Legal Markdown content into PDF documents using Puppeteer
@@ -304,13 +435,21 @@ export class PdfGenerator {
 
           const logoFilename = await detectLogoFromCSS(options.cssPath);
           if (logoFilename) {
-            // Construct absolute path to logo file
-            const logoPath = path.join(__dirname, '../assets/images', logoFilename);
-            logoBase64 = await loadAndEncodeImage(logoPath);
+            // Check if logoFilename is an external URL or local file
+            if (logoFilename.startsWith('http://') || logoFilename.startsWith('https://')) {
+              // Handle external URL
+              logoBase64 = await downloadAndEncodeImage(logoFilename);
+            } else {
+              // Handle local file
+              const logoPath = path.join(__dirname, '../assets/images', logoFilename);
+              logoBase64 = await loadAndEncodeImage(logoPath);
+            }
 
             logger.info('Logo detected and loaded successfully', {
               logoFilename,
-              logoPath,
+              logoPath: logoFilename.startsWith('http')
+                ? logoFilename
+                : `${__dirname}/../assets/images/${logoFilename}`,
               cssPath: options.cssPath,
             });
           }

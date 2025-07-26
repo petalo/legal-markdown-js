@@ -1,5 +1,11 @@
 /* Default CSS for Legal Markdown HTML Generation */
 
+/* Variables and Configuration */
+:root {
+  /* Assets - Default logo placeholder */
+  --logo-filename: https://placehold.co/120x40/2563eb/ffffff.png?text=LOGO;
+}
+
 /* Base styles */
 body {
   font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
