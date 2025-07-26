@@ -149,11 +149,53 @@ npm run test:e2e
 npm run test:coverage
 ```
 
-The project includes comprehensive testing with 495 tests across 29 test suites:
-
 - **Unit Tests**: Test individual components in isolation
 - **Integration Tests**: Test complete workflows and feature combinations
 - **E2E Tests**: Test CLI interface and full application behavior
+- **Path Validation Tests**: Test environment configuration and error handling
+
+## Configuration
+
+Legal Markdown JS supports environment-based configuration for customizing file
+paths and directories.
+
+### Environment Variables
+
+Create a `.env` file in your project root to customize default paths:
+
+```bash
+# Copy the example configuration
+cp .env.example .env
+
+# Edit the configuration
+nano .env
+```
+
+### Path Configuration Examples
+
+```bash
+# Custom asset organization
+IMAGES_DIR=assets/media
+STYLES_DIR=assets/css
+
+# Separate project structure
+DEFAULT_INPUT_DIR=documents/source
+DEFAULT_OUTPUT_DIR=documents/generated
+
+# Absolute paths (useful for CI/CD)
+IMAGES_DIR=/var/lib/legal-markdown/images
+DEFAULT_OUTPUT_DIR=/var/lib/legal-markdown/output
+```
+
+### Using Custom Paths in Code
+
+```typescript
+import { PATHS, RESOLVED_PATHS } from 'legal-markdown-js';
+
+// Access configured paths
+console.log(PATHS.STYLES_DIR); // Relative path from .env
+console.log(RESOLVED_PATHS.STYLES_DIR); // Absolute resolved path
+```
 
 ## Contributing
 

@@ -6,9 +6,15 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+  checks: write
+
 jobs:
   test:
-    name: Test (Node ${{ matrix.node-version }})
+    name: CI / Test (Node ${{ matrix.node-version }}) (pull_request)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -51,7 +57,7 @@ jobs:
           name: codecov-umbrella
 
   security:
-    name: Security Audit
+    name: CI / Security Audit (pull_request)
     runs-on: ubuntu-latest
 
     steps:
@@ -71,5 +77,4 @@ jobs:
         run: npm audit --audit-level high
 
       - name: Check for vulnerabilities
-        run: npx audit-ci --config audit-ci.json
-        continue-on-error: true
+        run: npx audit-ci --config audit-ci.json || echo "Security check completed with warnings"

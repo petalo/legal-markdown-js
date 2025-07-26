@@ -37,6 +37,7 @@ import chalk from 'chalk';
 import { LegalMarkdownOptions } from '@types';
 import { CliService } from './service';
 import { FileNotFoundError } from '@errors';
+import { RESOLVED_PATHS } from '@constants';
 
 /**
  * Helper function to read content from standard input
@@ -127,7 +128,7 @@ program
           exportMetadata: options.exportYaml || options.exportJson,
           exportFormat: options.exportYaml ? 'yaml' : 'json',
           exportPath: options.outputPath,
-          basePath: process.cwd(),
+          basePath: RESOLVED_PATHS.DEFAULT_INPUT_DIR,
           verbose: options.debug,
           pdf: options.pdf,
           html: options.html,
