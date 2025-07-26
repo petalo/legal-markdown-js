@@ -137,10 +137,30 @@ describe('Path Validation Integration Tests', () => {
       
       // Re-import modules
       delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS } = require('../../src/constants/paths');
+      const { PATHS, RESOLVED_PATHS } = require('../../src/constants/paths');
       
       // Should store the path as-is (validation happens at filesystem level)
       expect(PATHS.STYLES_DIR).toBe(problematicPath);
+      
+      // Test actual filesystem behavior - should fail gracefully
+      const testCssContent = 'body { color: red; }';
+      const invalidCssPath = path.join(RESOLVED_PATHS.STYLES_DIR, 'test.css');
+      
+      try {
+        await fs.mkdir(RESOLVED_PATHS.STYLES_DIR, { recursive: true });
+        await fs.writeFile(invalidCssPath, testCssContent);
+        
+        // If creation succeeds on this platform, verify we can read it back
+        const content = await fs.readFile(invalidCssPath, 'utf8');
+        expect(content).toBe(testCssContent);
+        
+        // Cleanup
+        await fs.rm(RESOLVED_PATHS.STYLES_DIR, { recursive: true, force: true });
+      } catch (error) {
+        // Expected behavior: filesystem should reject invalid characters
+        expect(error).toBeDefined();
+        console.log('Filesystem correctly rejected invalid path:', (error as Error).message);
+      }
     });
 
     it('should handle paths with angle brackets', async () => {

@@ -29,10 +29,10 @@ try {
 
 // Get paths from environment with defaults
 const PATHS = {
-  IMAGES_DIR: process.env.IMAGES_DIR || 'src/assets/images',
-  STYLES_DIR: process.env.STYLES_DIR || 'src/styles',
-  DEFAULT_INPUT_DIR: process.env.DEFAULT_INPUT_DIR || 'input',
-  DEFAULT_OUTPUT_DIR: process.env.DEFAULT_OUTPUT_DIR || 'output',
+  IMAGES_DIR: process.env.IMAGES_DIR?.trim() || 'src/assets/images',
+  STYLES_DIR: process.env.STYLES_DIR?.trim() || 'src/styles',
+  DEFAULT_INPUT_DIR: process.env.DEFAULT_INPUT_DIR?.trim() || 'input',
+  DEFAULT_OUTPUT_DIR: process.env.DEFAULT_OUTPUT_DIR?.trim() || 'output',
 };
 
 // Resolve absolute paths

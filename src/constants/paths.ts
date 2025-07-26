@@ -20,25 +20,25 @@ export const PATHS = {
    * Directory containing images assets
    * @default "src/assets/images"
    */
-  IMAGES_DIR: process.env.IMAGES_DIR || 'src/assets/images',
+  IMAGES_DIR: process.env.IMAGES_DIR?.trim() || 'src/assets/images',
 
   /**
    * Directory containing CSS styles
    * @default "src/styles"
    */
-  STYLES_DIR: process.env.STYLES_DIR || 'src/styles',
+  STYLES_DIR: process.env.STYLES_DIR?.trim() || 'src/styles',
 
   /**
    * Default directory for input files
    * @default "input"
    */
-  DEFAULT_INPUT_DIR: process.env.DEFAULT_INPUT_DIR || 'input',
+  DEFAULT_INPUT_DIR: process.env.DEFAULT_INPUT_DIR?.trim() || 'input',
 
   /**
    * Default directory for output files
    * @default "output"
    */
-  DEFAULT_OUTPUT_DIR: process.env.DEFAULT_OUTPUT_DIR || 'output',
+  DEFAULT_OUTPUT_DIR: process.env.DEFAULT_OUTPUT_DIR?.trim() || 'output',
 } as const;
 
 /**
