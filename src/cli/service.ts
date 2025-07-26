@@ -32,6 +32,12 @@ import { processLegalMarkdown, generateHtml, generatePdf, generatePdfVersions } 
 import { LegalMarkdownOptions } from '@types';
 import { readFileSync, writeFileSync, resolveFilePath } from '@lib';
 import { LegalMarkdownError, FileNotFoundError } from '@errors';
+import {
+  extractForceCommands,
+  parseForceCommands,
+  applyForceCommands,
+} from '../core/parsers/force-commands-parser';
+import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
 import chalk from 'chalk';
 import * as path from 'path';
 
@@ -111,18 +117,27 @@ export class CliService {
 
       const content = readFileSync(resolvedInputPath);
 
-      // Determine output format
-      if (this.options.pdf || this.options.html) {
-        await this.generateFormattedOutput(content, inputPath, outputPath);
+      // Use the directory of the input file as the basePath for imports
+      const inputDir = path.dirname(resolvedInputPath);
+
+      // Process force commands and update options FIRST
+      const effectiveOptions = this.processForceCommands(content, {
+        ...this.options,
+        basePath: inputDir,
+        enableFieldTracking: this.options.highlight,
+      });
+
+      // Determine output format using effective options (after force commands)
+      if (effectiveOptions.pdf || effectiveOptions.html) {
+        await this.generateFormattedOutputWithOptions(
+          content,
+          inputPath,
+          outputPath,
+          effectiveOptions
+        );
       } else {
         // Normal markdown processing
-        // Use the directory of the input file as the basePath for imports
-        const inputDir = path.dirname(resolvedInputPath);
-        const result = processLegalMarkdown(content, {
-          ...this.options,
-          basePath: inputDir,
-          enableFieldTracking: this.options.highlight,
-        });
+        const result = processLegalMarkdown(content, effectiveOptions);
 
         if (outputPath) {
           const resolvedOutputPath = resolveFilePath(this.options.basePath, outputPath);
@@ -158,10 +173,13 @@ export class CliService {
    */
   public async processContent(content: string): Promise<string> {
     try {
-      const result = processLegalMarkdown(content, {
+      // Process force commands and update options
+      const effectiveOptions = this.processForceCommands(content, {
         ...this.options,
         enableFieldTracking: this.options.highlight,
       });
+
+      const result = processLegalMarkdown(content, effectiveOptions);
       return result.content;
     } catch (error) {
       this.handleError(error);
@@ -207,10 +225,11 @@ export class CliService {
    * @param {string} [outputPath] - Output path override
    * @returns {Promise<void>}
    */
-  private async generateFormattedOutput(
+  private async generateFormattedOutputWithOptions(
     content: string,
     inputPath: string,
-    outputPath?: string
+    outputPath: string | undefined,
+    options: Partial<CliOptions>
   ): Promise<void> {
     const baseOutputPath = outputPath || inputPath;
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
@@ -220,19 +239,18 @@ export class CliService {
     const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
     const inputDir = path.dirname(resolvedInputPath);
 
-    // Prepare generation options
+    // Use the passed options (already processed for force commands)
     const generateOptions = {
-      ...this.options,
+      ...options,
       basePath: inputDir,
-      includeHighlighting: this.options.highlight,
-      cssPath: this.options.css,
-      title: this.options.title || baseName,
-      highlightCssPath: path.join(__dirname, '../styles/highlight.css'),
+      includeHighlighting: options.highlight,
+      cssPath: (options as any).cssPath || options.css,
+      title: options.title || baseName,
     };
 
     // Generate HTML if requested
-    if (this.options.html) {
-      if (this.options.highlight) {
+    if (generateOptions.html) {
+      if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
         const normalHtmlPath = path.join(dirName, `${baseName}.html`);
         const highlightedHtmlPath = path.join(dirName, `${baseName}.HIGHLIGHT.html`);
@@ -261,8 +279,8 @@ export class CliService {
     }
 
     // Generate PDF if requested
-    if (this.options.pdf) {
-      if (this.options.highlight) {
+    if (generateOptions.pdf) {
+      if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
         const normalPdfPath = path.join(dirName, `${baseName}.pdf`);
         const highlightedPdfPath = path.join(dirName, `${baseName}.HIGHLIGHT.pdf`);
@@ -301,6 +319,56 @@ export class CliService {
 
     if (this.options.debug) {
       console.error(error);
+    }
+  }
+
+  /**
+   * Process force commands from content and apply them to options
+   *
+   * @private
+   * @param {string} content - The content to analyze for force commands
+   * @param {Partial<CliOptions>} baseOptions - Base options to extend
+   * @returns {Partial<CliOptions>} Updated options with force commands applied
+   */
+  private processForceCommands(
+    content: string,
+    baseOptions: Partial<CliOptions>
+  ): Partial<CliOptions> {
+    try {
+      // Parse YAML front matter to extract metadata
+      const { metadata } = parseYamlFrontMatter(content, false);
+
+      if (!metadata) {
+        return baseOptions;
+      }
+
+      // Extract force commands from metadata
+      const forceCommandsString = extractForceCommands(metadata);
+
+      if (!forceCommandsString) {
+        return baseOptions;
+      }
+
+      this.log(`Found force commands: ${forceCommandsString}`, 'info');
+
+      // Parse the force commands
+      const forceCommands = parseForceCommands(forceCommandsString, metadata, baseOptions);
+
+      if (!forceCommands) {
+        this.log('Failed to parse force commands', 'warn');
+        return baseOptions;
+      }
+
+      // Apply force commands to base options
+      const updatedOptions = applyForceCommands(baseOptions, forceCommands);
+
+      this.log(`Applied force commands: ${Object.keys(forceCommands).join(', ')}`, 'success');
+
+      return updatedOptions;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.log(`Error processing force commands: ${errorMessage}`, 'warn');
+      return baseOptions;
     }
   }
 }

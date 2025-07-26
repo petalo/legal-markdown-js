@@ -229,6 +229,120 @@ legal-md input.md --html --title "Legal Document"
 legal-md input.md --pdf --html --highlight --title "Contract"
 ```
 
+## Force Commands
+
+Legal Markdown supports **document-driven configuration** through the
+`force_commands` feature. This allows documents to specify their own processing
+options directly in the YAML front matter, making documents self-configuring and
+portable.
+
+### Basic Usage
+
+Add a `force_commands` field to your document's YAML front matter:
+
+```yaml
+---
+title: Service Agreement
+client: Acme Corp
+force_commands: --pdf --highlight --css corporate.css
+---
+# {{title}}
+
+This agreement is between us and {{client}}.
+```
+
+When processed, this document will automatically:
+
+- Generate PDF output
+- Enable field highlighting
+- Apply corporate.css styling
+
+### Syntax
+
+```yaml
+---
+force_commands: >
+  --css theme.css --pdf --highlight --output-name {{title}}_{{formatDate(date,
+  "YYYYMMDD")}}.pdf --title "{{title}} - {{client}}"
+---
+```
+
+### Supported Commands
+
+All CLI options are supported in force_commands:
+
+| Command                | Description                    | Example                                 |
+| ---------------------- | ------------------------------ | --------------------------------------- |
+| `--css <file>`         | Custom CSS file                | `--css corporate.css`                   |
+| `--output-name <name>` | Custom output filename         | `--output-name Contract_{{client}}.pdf` |
+| `--pdf`                | Generate PDF output            | `--pdf`                                 |
+| `--html`               | Generate HTML output           | `--html`                                |
+| `--highlight`          | Enable field highlighting      | `--highlight`                           |
+| `--export-yaml`        | Export metadata as YAML        | `--export-yaml`                         |
+| `--export-json`        | Export metadata as JSON        | `--export-json`                         |
+| `--title <title>`      | Document title                 | `--title "{{title}} - {{client}}"`      |
+| `--format <format>`    | PDF format (A4, letter, legal) | `--format A4`                           |
+| `--landscape`          | Landscape orientation          | `--landscape`                           |
+| `--debug`              | Enable debug mode              | `--debug`                               |
+
+### Template Support
+
+Force commands support full template variable resolution:
+
+```yaml
+---
+client_name: Acme Corporation
+effective_date: 2024-01-01
+force_commands: >
+  --output-name Contract_{{titleCase(client_name)}}_{{formatDate(effective_date,
+  "YYYYMMDD")}}.pdf --title "Agreement - {{client_name}}" --pdf --export-yaml
+---
+```
+
+This generates: `Contract_Acme_Corporation_20240101.pdf`
+
+### Alternative Field Names
+
+The feature supports multiple naming conventions:
+
+- `force_commands` (recommended)
+- `force-commands`
+- `forceCommands`
+- `commands`
+
+### Security Features
+
+- **Protected Commands**: Critical options like `--stdin`, `--yaml`, `--no-*`
+  flags cannot be overridden
+- **Path Validation**: File paths are validated to prevent directory traversal
+  attacks
+- **Template Sandboxing**: Only document metadata is available for template
+  resolution
+
+### Priority
+
+Force commands **override** CLI arguments. If both are specified:
+
+```bash
+legal-md document.md --html  # CLI says HTML
+
+# Document has: force_commands: --pdf
+# Result: PDF is generated (force_commands wins)
+```
+
+### Examples
+
+```bash
+# Document with force commands processes automatically
+legal-md self-configuring-document.md
+
+# No CLI flags needed - everything specified in document
+# Force commands handle: --pdf --highlight --css --title --export-yaml
+```
+
+See the [Force Commands Guide](../examples/force-commands/) for detailed
+examples.
+
 ## Advanced Options
 
 ### Error Handling

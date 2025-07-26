@@ -80,5 +80,8 @@ docs/api/
 # Claude configuration
 .claude/
 
+# Anything related to petalo
+*petalo*
+
 # repomix configuration
 .repomix/
