@@ -22,7 +22,8 @@ blocks using the `{{#variable}}...{{/variable}}` syntax.
 
 ### Array Loops
 
-Use `{{#arrayName}}...{{/arrayName}}` to iterate over arrays of data.
+Use `{{#arrayName}}...{{/arrayName}}` to iterate over arrays of data. The system
+supports both simple array names and nested object paths using dot notation.
 
 **Basic syntax:**
 
@@ -30,6 +31,18 @@ Use `{{#arrayName}}...{{/arrayName}}` to iterate over arrays of data.
 {{#items}}
 
 - {{name}} - {{price}} {{/items}}
+```
+
+**With nested objects (dot notation):**
+
+```markdown
+{{#services.included}}
+
+- {{.}} {{/services.included}}
+
+{{#contract.parties}}
+
+- {{name}} ({{role}}) {{/contract.parties}}
 ```
 
 **With conditionals:**
@@ -77,15 +90,33 @@ list syntax to prevent nested `<ul>` elements:
 
 Within loops, you have access to special context variables:
 
+- `{{.}}` - Current item value (for primitive arrays) or current object (for
+  object arrays)
 - `@index` - Current item index (0-based)
 - `@total` - Total number of items
 - `@first` - True if first item
 - `@last` - True if last item
 
-**Example:**
+**Example with primitive arrays:**
+
+```markdown
+{{#services.included}}
+
+- {{.}} {{/services.included}}
+```
+
+**Example with object arrays:**
 
 ```markdown
 {{#items}} {{@index + 1}}. {{name}} {{@last ? "(Final item)" : ""}} {{/items}}
+```
+
+**Example with nested object paths:**
+
+```markdown
+{{#maintenance.lessor_obligations}}
+
+- {{.}} {{/maintenance.lessor_obligations}}
 ```
 
 ### Table Loops
@@ -103,16 +134,25 @@ Perfect for generating table rows:
 
 ### Important Notes
 
-1. **List Processing:** The system automatically converts markdown list syntax
+1. **Dot Notation Support:** Template loops support nested object access using
+   dot notation (e.g., `{{#services.included}}`, `{{#contract.parties}}`). This
+   allows you to iterate over arrays stored in nested objects within your YAML
+   front matter.
+
+2. **Current Item Access:** Use `{{.}}` to access the current item value in
+   primitive arrays or the current object in object arrays. This is essential
+   for displaying individual array values.
+
+3. **List Processing:** The system automatically converts markdown list syntax
    (`- item`) to HTML `<li>` elements when inside HTML `<ul>` containers to
    prevent nested lists.
 
-2. **Nested Loops:** Loops can be nested, and each maintains its own context.
+4. **Nested Loops:** Loops can be nested, and each maintains its own context.
 
-3. **HTML Integration:** You can mix HTML and markdown within loops - the system
+5. **HTML Integration:** You can mix HTML and markdown within loops - the system
    handles the conversion intelligently.
 
-4. **Error Handling:** If the array variable doesn't exist, the loop block is
+6. **Error Handling:** If the array variable doesn't exist, the loop block is
    simply omitted from the output.
 
 ## Date Helpers
@@ -300,7 +340,9 @@ High rate: {{formatPercent(1.5, 1)}}
 <!-- Output: 150.0% -->
 ```
 
-**Important:** The input value should always be in decimal format where 1.0 = 100%. For example:
+**Important:** The input value should always be in decimal format where 1.0 =
+100%. For example:
+
 - 0.21 represents 21%
 - 1.5 represents 150%
 - 0.055 represents 5.5%

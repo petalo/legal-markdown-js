@@ -141,6 +141,11 @@ export function processMixins(
    * ```
    */
   function resolvePath(obj: any, path: string): any {
+    // Handle special case for current item in template loops
+    if (path === '.') {
+      return obj?.['.'];
+    }
+
     return path.split('.').reduce((current, part) => {
       // Handle array indices like parties.0.name
       const match = part.match(/^(\w+)\[(\d+)\]$/);
@@ -434,7 +439,7 @@ export function processMixins(
     content,
     metadata,
     undefined,
-    options.enableFieldTrackingInMarkdown
+    options.enableFieldTrackingInMarkdown || false
   );
   return replaceMixins(loopProcessedContent);
 }

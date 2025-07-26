@@ -129,7 +129,7 @@ export function processTemplateLoops(
  */
 function findLoopBlocks(content: string): LoopBlock[] {
   const loopBlocks: LoopBlock[] = [];
-  const loopPattern = /\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
+  const loopPattern = /\{\{#([\w.]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
 
   let match;
   while ((match = loopPattern.exec(content)) !== null) {
@@ -321,26 +321,29 @@ function resolveLoopVariable(
   metadata: Record<string, any>,
   parentContext?: LoopContext
 ): any {
-  // First check if it's available in current metadata
-  if (Object.prototype.hasOwnProperty.call(metadata, variable)) {
-    return metadata[variable];
+  // First try to resolve using dot notation from metadata
+  const resolvedFromMetadata = resolvePath(metadata, variable);
+  if (resolvedFromMetadata !== undefined) {
+    return resolvedFromMetadata;
   }
 
   // Then check parent context (for nested loops)
-  if (
-    parentContext &&
-    parentContext.item &&
-    Object.prototype.hasOwnProperty.call(parentContext.item, variable)
-  ) {
-    return parentContext.item[variable];
+  if (parentContext && parentContext.item) {
+    const resolvedFromContext = resolvePath(parentContext.item, variable);
+    if (resolvedFromContext !== undefined) {
+      return resolvedFromContext;
+    }
   }
 
   // Check parent context's parent (for deeper nesting)
   let ctx = parentContext;
   while (ctx && ctx.parent) {
     ctx = ctx.parent;
-    if (ctx.item && Object.prototype.hasOwnProperty.call(ctx.item, variable)) {
-      return ctx.item[variable];
+    if (ctx.item) {
+      const resolvedFromNestedContext = resolvePath(ctx.item, variable);
+      if (resolvedFromNestedContext !== undefined) {
+        return resolvedFromNestedContext;
+      }
     }
   }
 
@@ -366,6 +369,9 @@ function createEnhancedMetadata(
   if (item && typeof item === 'object' && !Array.isArray(item)) {
     Object.assign(enhanced, item);
   }
+
+  // Add special dot notation for current item value
+  enhanced['.'] = item;
 
   // Add loop context variables
   enhanced['@index'] = context.index;
@@ -722,6 +728,11 @@ function resolveVariablePath(
   metadata: Record<string, any>,
   context?: LoopContext
 ): any {
+  // Handle special case for current item in template loops
+  if (path === '.') {
+    return metadata['.'];
+  }
+
   // Split path by dots
   const parts = path.split('.');
   let current = metadata;
