@@ -26,7 +26,16 @@
  * ```
  */
 
-import { marked } from 'marked';
+// Dynamic import for marked to handle ES modules compatibility
+let markedInstance: any;
+
+const getMarked = async () => {
+  if (!markedInstance) {
+    const { marked } = await import('marked');
+    markedInstance = marked;
+  }
+  return markedInstance;
+};
 import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -75,7 +84,7 @@ export class HtmlGenerator {
    * @constructor
    */
   constructor() {
-    this.configureMarked();
+    // Configuration will be done lazily when first needed
   }
 
   /**
@@ -83,9 +92,10 @@ export class HtmlGenerator {
    *
    * @private
    * @method configureMarked
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  private configureMarked(): void {
+  private async configureMarked(): Promise<void> {
+    const marked = await getMarked();
     // Configure marked options
     marked.setOptions({
       gfm: true,
@@ -179,6 +189,8 @@ export class HtmlGenerator {
       const contentWithoutFrontmatter = this.removeYamlFrontmatter(markdownContent);
 
       // Convert markdown to HTML
+      await this.configureMarked(); // Ensure marked is configured
+      const marked = await getMarked();
       const htmlContent = await marked.parse(contentWithoutFrontmatter);
 
       // Load and manipulate with cheerio

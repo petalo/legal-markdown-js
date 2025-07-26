@@ -35,20 +35,10 @@ module.exports = {
   // Pattern to match test files
   testMatch: ['**/tests/**/*.test.ts'],
 
-  // Transform TypeScript files using ts-jest with ES module support
+  // Transform TypeScript files using ts-jest
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      useESM: true
-    }],
+    '^.+\\.ts$': 'ts-jest',
   },
-
-  // Handle ES modules that don't transform (like marked)
-  transformIgnorePatterns: [
-    'node_modules/(?!(marked)/)'
-  ],
-
-  // Support for ES modules
-  extensionsToTreatAsEsm: ['.ts'],
 
   /**
    * Module name mapping for clean imports
