@@ -104,7 +104,7 @@
     "typedoc": "^0.28.7",
     "typescript": "^5.2.2",
     "webpack": "^5.88.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^6.0.1"
   },
   "bin": {
     "legal-md": "./dist/cli/index.js",
