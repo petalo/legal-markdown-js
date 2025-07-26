@@ -1,12 +1,14 @@
 # Legal Markdown JS
 
-A complete Node.js/TypeScript reimplementation of the original Ruby
-[LegalMarkdown](https://github.com/compleatang/legal-markdown) tool for
-processing legal documents with structured markdown and YAML front matter.
+> A complete Node.js/TypeScript reimplementation of the original Ruby
+> [LegalMarkdown](https://github.com/compleatang/legal-markdown) tool with 100%
+> feature parity.
 
-> **Note**: This project provides 100% feature parity with the
-> [original LegalMarkdown](https://github.com/compleatang/legal-markdown) while
-> adding modern JavaScript ecosystem enhancements.
+Process markdown with YAML front matter, conditional clauses
+`[text]{condition}`, cross-references `|variable|`, imports `@import`, and
+generate professional PDFs ready to be shared.
+
+![Legal Markdown JS Example](docs/legal-markdown-js-example.png)
 
 ## Table of Contents
 

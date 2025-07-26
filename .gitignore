@@ -8,6 +8,7 @@ yarn-error.log*
 # Build output
 dist/
 build/
+packages/
 *.tsbuildinfo
 *.tgz
 
@@ -81,3 +82,6 @@ docs/api/
 
 # Anything related to petalo
 *petalo*
+
+# repomix configuration
+.repomix/

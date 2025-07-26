@@ -56,6 +56,7 @@ try {
   convertLatexToLegalMarkdownSync = (content: string) => content;
 }
 import { fieldTracker } from './tracking/field-tracker';
+import { logger } from './utils/logger';
 import { LegalMarkdownOptions } from '@types';
 
 /**
@@ -93,6 +94,14 @@ export function processLegalMarkdown(
   metadata?: Record<string, any>;
   fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
 } {
+  // Configure debug logging
+  if (options.debug) {
+    logger.setDebugEnabled(true);
+    logger.debug('Debug mode enabled for Legal Markdown processing', { options });
+  } else {
+    logger.setDebugEnabled(false);
+  }
+
   // Clear field tracker for new document
   fieldTracker.clear();
 
@@ -105,47 +114,73 @@ export function processLegalMarkdown(
     preprocessedContent,
     options.throwOnYamlError
   );
+  logger.debug('YAML front matter parsed', {
+    metadata,
+    yamlVariables: Object.keys(metadata || {}).length,
+  });
 
   // If only processing YAML, return early
   if (options.yamlOnly) {
+    logger.debug('YAML-only processing mode: returning content without variable substitution');
     return { content: contentWithoutYaml, metadata };
   }
 
   let processedContent = contentWithoutYaml;
+  logger.debug('Starting content processing', { contentLength: processedContent.length });
 
   // Process optional clauses
   if (!options.noClauses) {
+    logger.debug('Processing optional clauses');
     processedContent = processOptionalClauses(processedContent, metadata);
+  } else {
+    logger.debug('Skipping optional clauses processing');
   }
 
   // Process cross references
   if (!options.noReferences) {
+    logger.debug('Processing cross references');
     processedContent = processCrossReferences(processedContent, metadata);
+  } else {
+    logger.debug('Skipping cross references processing');
   }
 
   // Process mixins
   if (!options.noMixins) {
+    logger.debug('Processing mixins and template variables');
     processedContent = processMixins(processedContent, metadata, options);
+  } else {
+    logger.debug('Skipping mixins processing');
   }
 
   // Process headers (numbering, etc)
   if (!options.noHeaders) {
+    logger.debug('Processing headers and numbering');
     processedContent = processHeaders(processedContent, metadata, {
       noReset: options.noReset,
       noIndent: options.noIndent,
       enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
     });
+  } else {
+    logger.debug('Skipping headers processing');
   }
 
   // Apply field tracking to content if highlighting is enabled
   if (options.enableFieldTracking) {
+    logger.debug('Applying field tracking to content');
     processedContent = fieldTracker.applyFieldTracking(processedContent);
   }
+
+  const fieldReport = options.enableFieldTracking ? fieldTracker.generateReport() : undefined;
+  logger.debug('Legal Markdown processing completed', {
+    outputLength: processedContent.length,
+    fieldsTracked: fieldReport?.total || 0,
+    yamlVariables: Object.keys(metadata || {}).length,
+  });
 
   return {
     content: processedContent,
     metadata,
-    fieldReport: options.enableFieldTracking ? fieldTracker.generateReport() : undefined,
+    fieldReport,
   };
 }
 

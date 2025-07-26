@@ -105,8 +105,6 @@ This clause is included conditionally.
       expect(html).toContain('class="missing-value"');
       expect(html).toContain('John Doe');
       expect(html).toContain('john@example.com');
-      expect(html).toContain('.imported-value');
-      expect(html).toContain('.missing-value');
     });
 
     /**

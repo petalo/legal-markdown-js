@@ -34,6 +34,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { logger } from '../utils/logger';
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
+import { PdfTemplates } from './pdf-templates';
+import { PDF_TEMPLATE_CONSTANTS } from '../constants';
 
 /**
  * Configuration options for PDF generation
@@ -67,6 +69,111 @@ export interface PdfGeneratorOptions extends HtmlGeneratorOptions {
   printBackground?: boolean;
   /** Whether to prefer CSS page size over format option */
   preferCSSPageSize?: boolean;
+  /** Path to CSS file for automatic logo detection */
+  cssPath?: string;
+}
+
+/**
+ * Detects logo filename from CSS file by parsing --logo-filename custom property
+ *
+ * Searches for CSS custom property `--logo-filename` and extracts the filename value.
+ * Handles quoted and unquoted values, removing whitespace and quotes as needed.
+ *
+ * @async
+ * @param {string} cssPath - Path to the CSS file to parse
+ * @returns {Promise<string | null>} Logo filename or null if not found
+ * @example
+ * ```typescript
+ * // CSS contains: --logo-filename: logo.petalo.png;
+ * const filename = await detectLogoFromCSS('./styles/contract.css');
+ * // Returns: 'logo.petalo.png'
+ * ```
+ */
+async function detectLogoFromCSS(cssPath: string): Promise<string | null> {
+  try {
+    logger.debug('Detecting logo from CSS file', { cssPath });
+
+    const cssContent = await fs.readFile(cssPath, 'utf8');
+    const match = cssContent.match(/--logo-filename:\s*([^;]+);/);
+
+    if (!match) {
+      logger.debug('No --logo-filename property found in CSS');
+      return null;
+    }
+
+    const filename = match[1].trim().replace(/['"]/g, '');
+    logger.debug('Logo filename detected from CSS', { filename });
+
+    return filename;
+  } catch (error) {
+    logger.warn('Failed to read --logo-filename from CSS', {
+      cssPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+/**
+ * Loads and validates logo image file, converting to base64
+ *
+ * Performs comprehensive validation:
+ * - File existence and readability
+ * - File size limit (500KB max)
+ * - PNG format validation using magic numbers
+ * - Base64 encoding for embedding
+ *
+ * @async
+ * @param {string} logoPath - Absolute path to the logo image file
+ * @returns {Promise<string>} Base64 encoded image string
+ * @throws {Error} When file validation fails
+ * @example
+ * ```typescript
+ * const base64Logo = await loadAndEncodeImage('./assets/images/logo.png');
+ * // Returns: 'iVBORw0KGgoAAAANSUhEUgAAA...'
+ * ```
+ */
+async function loadAndEncodeImage(logoPath: string): Promise<string> {
+  try {
+    logger.debug('Loading and validating logo file', { logoPath });
+
+    // Check file existence and size
+    const stats = await fs.stat(logoPath);
+    if (stats.size > PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE) {
+      throw new Error(
+        `Logo file too large: ${stats.size} bytes (max ${PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE})`
+      );
+    }
+
+    // Read file and validate PNG format
+    const logoBuffer = await fs.readFile(logoPath);
+
+    // Validate PNG magic numbers (0x89, 0x50, 0x4E, 0x47)
+    if (
+      logoBuffer.length < 8 ||
+      logoBuffer[0] !== 0x89 ||
+      logoBuffer[1] !== 0x50 ||
+      logoBuffer[2] !== 0x4e ||
+      logoBuffer[3] !== 0x47
+    ) {
+      throw new Error('Invalid logo file format: must be PNG');
+    }
+
+    // Convert to base64
+    const base64Logo = logoBuffer.toString('base64');
+    logger.debug('Logo file loaded and encoded successfully', {
+      size: stats.size,
+      base64Length: base64Logo.length,
+    });
+
+    return base64Logo;
+  } catch (error) {
+    logger.error('Failed to load logo file', {
+      logoPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }
 
 /**
@@ -179,7 +286,7 @@ export class PdfGenerator {
         format: options.format || 'A4',
         landscape: options.landscape || false,
         printBackground: options.printBackground !== false,
-        displayHeaderFooter: options.displayHeaderFooter || false,
+        displayHeaderFooter: false, // Will be set based on logo detection
         preferCSSPageSize: options.preferCSSPageSize || false,
         margin: options.margin || {
           top: '1cm',
@@ -189,12 +296,59 @@ export class PdfGenerator {
         },
       };
 
-      // Add header and footer if provided
-      if (options.headerTemplate) {
-        pdfOptions.headerTemplate = options.headerTemplate;
+      // Auto-detect logo and generate templates if cssPath provided
+      let logoBase64: string | null = null;
+      if (options.cssPath && !options.headerTemplate && !options.footerTemplate) {
+        try {
+          logger.debug('Auto-detecting logo from CSS', { cssPath: options.cssPath });
+
+          const logoFilename = await detectLogoFromCSS(options.cssPath);
+          if (logoFilename) {
+            // Construct absolute path to logo file
+            const logoPath = path.join(__dirname, '../assets/images', logoFilename);
+            logoBase64 = await loadAndEncodeImage(logoPath);
+
+            logger.info('Logo detected and loaded successfully', {
+              logoFilename,
+              logoPath,
+              cssPath: options.cssPath,
+            });
+          }
+        } catch (error) {
+          logger.warn('Logo detection failed, proceeding without logo', {
+            cssPath: options.cssPath,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue without logo - graceful fallback
+        }
       }
-      if (options.footerTemplate) {
-        pdfOptions.footerTemplate = options.footerTemplate;
+
+      // Generate header and footer templates
+      let headerTemplate = options.headerTemplate;
+      let footerTemplate = options.footerTemplate;
+
+      if (!headerTemplate && !footerTemplate) {
+        // Auto-generate templates based on logo detection
+        headerTemplate = PdfTemplates.generateHeaderTemplate(logoBase64 || undefined);
+        footerTemplate = PdfTemplates.generateFooterTemplate();
+        pdfOptions.displayHeaderFooter = true;
+
+        logger.debug('Auto-generated header/footer templates', {
+          hasLogo: !!logoBase64,
+          headerLength: headerTemplate.length,
+          footerLength: footerTemplate.length,
+        });
+      } else {
+        // Use manually provided templates
+        pdfOptions.displayHeaderFooter = options.displayHeaderFooter || false;
+      }
+
+      // Set header and footer templates
+      if (headerTemplate) {
+        pdfOptions.headerTemplate = headerTemplate;
+      }
+      if (footerTemplate) {
+        pdfOptions.footerTemplate = footerTemplate;
       }
 
       // Generate PDF

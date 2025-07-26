@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo "🚀 Processing Partial Imports example..."
 
@@ -10,12 +10,10 @@ echo "🚀 Processing Partial Imports example..."
 detect_cli() {
     if command -v legal-md &> /dev/null; then
         echo "legal-md"
-    elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
-        echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
-    elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
-        echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
+    elif [ -f "$PROJECT_ROOT/package.json" ] && command -v npm &> /dev/null; then
+        echo "npm run cli --silent --"
     else
         echo "❌ Error: Legal Markdown CLI not found"
         echo "Options:"
@@ -40,8 +38,8 @@ echo "Standard terms apply." >> partials/terms.md
 echo "---" > partials/footer.md
 echo "*This document is legally binding.*" >> partials/footer.md
 
-$CLI main-contract.md --output main-contract.output.md
-$CLI main-contract.md --html --output main-contract.output.html
+$CLI main-contract.md main-contract.output.md
+$CLI main-contract.md --html > main-contract.output.html
 
 echo "✅ Example completed successfully!"
 echo "📁 Generated files:"
