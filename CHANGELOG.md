@@ -1,3 +1,15 @@
+# [2.4.0](https://github.com/petalo/legal-markdown-js/compare/v2.3.0...v2.4.0) (2025-07-26)
+
+### Bug Fixes
+
+- correct double periods in cross-reference test expectations
+  ([65ef15b](https://github.com/petalo/legal-markdown-js/commit/65ef15b91575bb4ce2e3633b313a90c5b5f5c46d))
+
+### Features
+
+- reimplement cross-references to match Ruby specification
+  ([2ac491e](https://github.com/petalo/legal-markdown-js/commit/2ac491e3b781f34ad518fff59b003e3e9deec095))
+
 # [2.3.0](https://github.com/petalo/legal-markdown-js/compare/v2.2.0...v2.3.0) (2025-07-26)
 
 ### Features
