@@ -33,3 +33,6 @@ export { HEADER_PATTERNS, IMPORT_PATTERNS, CLAUSE_PATTERNS, REFERENCE_PATTERNS }
 
 // PDF constants: template styling and configuration
 export { PDF_TEMPLATE_CONSTANTS } from './pdf';
+
+// Path constants: environment-based paths
+export { PATHS, RESOLVED_PATHS } from './paths';

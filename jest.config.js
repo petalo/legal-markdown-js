@@ -1,6 +1,6 @@
 /**
  * @fileoverview Jest testing framework configuration
- * 
+ *
  * Configures Jest for TypeScript testing with:
  * - TypeScript compilation via ts-jest
  * - Module path mapping for clean imports
@@ -12,23 +12,34 @@
 module.exports = {
   // Use ts-jest preset for TypeScript support
   preset: 'ts-jest',
-  
+
   // Node.js environment for testing (not browser)
   testEnvironment: 'node',
-  
+
   // Root directories to search for source and test files
   roots: ['<rootDir>/src', '<rootDir>/tests'],
-  
+
+  // Speed optimizations
+  maxWorkers: 1,
+  testTimeout: 5000,
+  cache: true,
+  cacheDirectory: '<rootDir>/.jest-cache',
+  clearMocks: true,
+  bail: false,
+  verbose: false,
+  silent: true,
+
+  forceExit: false,
+  detectOpenHandles: false,
+
   // Pattern to match test files
-  testMatch: [
-    '**/tests/**/*.test.ts'
-  ],
-  
+  testMatch: ['**/tests/**/*.test.ts'],
+
   // Transform TypeScript files using ts-jest
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  
+
   /**
    * Module name mapping for clean imports
    * Maps @-prefixed aliases to actual source paths
@@ -42,28 +53,24 @@ module.exports = {
     '^@cli/(.*)$': '<rootDir>/src/cli/$1',
     '^@lib$': '<rootDir>/src/lib/index.ts',
     '^@constants$': '<rootDir>/src/constants/index.ts',
-    '^@errors$': '<rootDir>/src/errors/index.ts'
+    '^@errors$': '<rootDir>/src/errors/index.ts',
   },
-  
+
   /**
    * Coverage collection configuration
    * Includes all source files except CLI (excluded from coverage)
    */
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/cli/**/*.ts'
-  ],
-  
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/cli/**/*.ts'],
+
   // Coverage output directory
   coverageDirectory: 'coverage',
-  
+
   // Coverage report formats
   coverageReporters: ['text', 'lcov', 'html'],
-  
+
   // Global test setup file
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  
+
   // Test timeout in milliseconds
-  testTimeout: 10000
+  testTimeout: 10000,
 };
