@@ -1,3 +1,11 @@
+# [2.1.0](https://github.com/petalo/legal-markdown-js/compare/v2.0.1...v2.1.0) (2025-07-26)
+
+### Features
+
+- complete PDF logo system with external URL support
+  ([#17](https://github.com/petalo/legal-markdown-js/issues/17))
+  ([68b8f52](https://github.com/petalo/legal-markdown-js/commit/68b8f52d3c17ac3ab355eb0a5b8d4d718d9b3a02))
+
 ## [2.0.1](https://github.com/petalo/legal-markdown-js/compare/v2.0.0...v2.0.1) (2025-07-26)
 
 ### Bug Fixes
