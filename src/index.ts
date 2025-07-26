@@ -56,6 +56,7 @@ import { fieldTracker } from './tracking/field-tracker';
 import { htmlGenerator } from './generators/html-generator';
 import { pdfGenerator } from './generators/pdf-generator';
 import { LegalMarkdownOptions } from '@types';
+import { RESOLVED_PATHS } from '@constants';
 import path from 'path';
 
 /**

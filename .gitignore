@@ -71,11 +71,10 @@ output-*.md
 docs/coverage/
 docs/api/
 
-# ESLint cache
+# cache files
 .eslintcache
-
-# Prettier cache
 .prettiercache
+.jest-cache/
 
 # Claude configuration
 .claude/

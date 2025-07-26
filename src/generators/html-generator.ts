@@ -32,6 +32,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { html as beautifyHtml } from 'js-beautify';
 import { logger } from '../utils/logger';
+import { RESOLVED_PATHS } from '@constants';
 
 /**
  * Configuration options for HTML generation
@@ -330,7 +331,7 @@ export class HtmlGenerator {
     // Load default CSS only if no custom CSS is provided
     let defaultCss = '';
     if (useDefaultCss) {
-      const defaultCssPath = path.join(__dirname, '..', 'styles', 'default.css');
+      const defaultCssPath = path.join(RESOLVED_PATHS.STYLES_DIR, 'default.css');
       defaultCss = await this.loadCss(defaultCssPath);
     }
 
