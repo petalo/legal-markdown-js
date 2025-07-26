@@ -10,12 +10,10 @@ echo "🚀 Processing Partial Imports example..."
 detect_cli() {
     if command -v legal-md &> /dev/null; then
         echo "legal-md"
-    elif [ -f "$PROJECT_ROOT/bin/cli.js" ]; then
-        echo "$PROJECT_ROOT/bin/cli.js"
-    elif [ -f "$PROJECT_ROOT/dist/cli.js" ]; then
-        echo "node $PROJECT_ROOT/dist/cli.js"
-    elif [ -f "$PROJECT_ROOT/src/cli/index.ts" ]; then
-        echo "npx tsx $PROJECT_ROOT/src/cli/index.ts"
+    elif [ -f "$PROJECT_ROOT/dist/cli/index.js" ]; then
+        echo "node $PROJECT_ROOT/dist/cli/index.js"
+    elif [ -f "$PROJECT_ROOT/package.json" ] && command -v npm &> /dev/null; then
+        echo "npm run cli --silent --"
     else
         echo "❌ Error: Legal Markdown CLI not found"
         echo "Options:"
