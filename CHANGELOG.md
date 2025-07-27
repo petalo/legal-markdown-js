@@ -1,3 +1,13 @@
+# [2.5.0](https://github.com/petalo/legal-markdown-js/compare/v2.4.0...v2.5.0) (2025-07-27)
+
+### Features
+
+- implement modern pipeline architecture with AST-based processing
+  ([0a9d04e](https://github.com/petalo/legal-markdown-js/commit/0a9d04eee41504cd05ee157287fc4cff17718ce8))
+- implement modern pipeline architecture with AST-based processing
+  ([#20](https://github.com/petalo/legal-markdown-js/issues/20))
+  ([3147475](https://github.com/petalo/legal-markdown-js/commit/3147475ebbc437a52f70d078cf9c33638c8a63b1))
+
 # [2.4.0](https://github.com/petalo/legal-markdown-js/compare/v2.3.0...v2.4.0) (2025-07-26)
 
 ### Bug Fixes
