@@ -72,6 +72,7 @@ Your content with {{variable}} substitutions..."></textarea>
             <div class="example-dropdown">
               <select class="css-example-select">
                 <option value="">🎨 CSS Examples</option>
+                <option value="default">Default Legal Styles</option>
                 <option value="modern">Modern Style</option>
                 <option value="classic">Classic Legal</option>
                 <option value="minimal">Minimal</option>
@@ -176,7 +177,7 @@ p {
                 </span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" id="enableFieldTracking"> Field tracking
+                <input type="checkbox" id="enableFieldTracking" checked> Field tracking
                 <span class="tooltip">
                   <span class="tooltip-icon">ℹ️</span>
                   <span class="tooltip-text">Adds HTML spans around template variables and headers for debugging and styling. When disabled, maintains compatibility with Ruby version.</span>
@@ -273,6 +274,7 @@ p {
     <div id="messageArea"></div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="./legal-markdown.umd.min.js"></script>
   <script>
     class LegalMarkdownApp {
@@ -288,6 +290,7 @@ p {
         this.initializePreviewResizer();
         this.updateBaseStyles(); // Initialize base styles
         this.loadExample('service-agreement');
+        this.loadCSSExample('default'); // Load default CSS by default
       }
 
       initializeTheme() {
@@ -485,18 +488,21 @@ p {
       }
 
       formatMarkdownForDisplay(content) {
-        // Basic markdown to HTML conversion for display
-        return content
-          .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-          .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-          .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-          .replace(/\n\n/g, '</p><p>')
-          .replace(/^(.+)$/gm, '<p>$1</p>')
-          .replace(/<p><\/p>/g, '')
-          .replace(/<p>(<h[1-6]>.*<\/h[1-6]>)<\/p>/g, '$1');
+        // IMPORTANT: This content has already been processed by our Legal Markdown pipeline
+        // in processContent(). Here we just need to convert the final markdown to HTML.
+        try {
+          return marked.parse(content, {
+            breaks: true,
+            gfm: true
+          });
+        } catch (error) {
+          console.error('Marked library failed to load from CDN:', error);
+          return `<p>Error: Markdown parser unavailable. Please check your internet connection.</p>
+                  <pre>${this.escapeHtml(content)}</pre>`;
+        }
       }
+
+
 
       downloadDocument() {
         if (!this.processedResult) {
@@ -1357,7 +1363,7 @@ Signature: ___________________________ Date: ___________`
           stats.push(`${yamlKeys} YAML variables`);
         }
 
-        if (result.fieldReport) {
+        if (result.fieldReport && Array.isArray(result.fieldReport)) {
           stats.push(`${result.fieldReport.length} field substitutions`);
         }
 
@@ -1585,6 +1591,7 @@ Your content with {{variable}} substitutions...
 
       getCSSExamples() {
         return {
+          // DEFAULT_CSS_PLACEHOLDER - This will be replaced during build
           'modern': `/* Modern Clean Style */
 .preview-container {
   font-family: 'Segoe UI', system-ui, sans-serif;
