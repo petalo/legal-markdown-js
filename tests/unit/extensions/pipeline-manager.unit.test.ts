@@ -144,5 +144,19 @@ Content here`;
       expect(result).toBeDefined();
       expect(result.content).toBeDefined();
     });
+
+    it('should handle undefined content gracefully', async () => {
+      const pipeline = createDefaultPipeline();
+      const content = undefined as any;
+      const metadata = {};
+      const options = {
+        legalMarkdownOptions: {}
+      };
+
+      const result = await pipeline.execute(content, metadata, options);
+
+      expect(result).toBeDefined();
+      expect(result.content).toBeDefined();
+    });
   });
 });
