@@ -102,6 +102,7 @@ ${escapedCSS}\`,
     console.log('✅ Web playground build completed successfully!');
     console.log(`   → HTML: ${htmlTargetPath}`);
     console.log(`   → Default CSS injected: ${Math.round(defaultCSS.length / 1024)}KB`);
+    console.log('   → Ready for deployment');
 
   } catch (error) {
     console.error('❌ Web build failed:', error.message);
