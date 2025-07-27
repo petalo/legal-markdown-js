@@ -96,6 +96,36 @@ export class CliService {
   }
 
   /**
+   * Resolves output file path using environment variables for relative paths
+   *
+   * @param {string} outputPath - The output path to resolve
+   * @returns {string} The resolved absolute output path
+   * @private
+   */
+  private resolveOutputPath(outputPath: string): string {
+    if (path.isAbsolute(outputPath)) {
+      return outputPath;
+    }
+
+    return resolveFilePath(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, outputPath);
+  }
+
+  /**
+   * Determines the output directory for generated files
+   *
+   * @param {string | undefined} outputPath - The output path (if provided)
+   * @returns {string} The directory to use for output files
+   * @private
+   */
+  private getOutputDirectory(outputPath: string | undefined): string {
+    if (outputPath && path.isAbsolute(outputPath)) {
+      return path.dirname(outputPath);
+    }
+
+    return RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+  }
+
+  /**
    * Processes a file from input path to output path
    *
    * @async
@@ -141,11 +171,7 @@ export class CliService {
         const result = processLegalMarkdown(content, effectiveOptions);
 
         if (outputPath) {
-          // Use DEFAULT_OUTPUT_DIR for output files unless it's an absolute path
-          const outputBasePath = path.isAbsolute(outputPath)
-            ? ''
-            : RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
-          const resolvedOutputPath = resolveFilePath(outputBasePath, outputPath);
+          const resolvedOutputPath = this.resolveOutputPath(outputPath);
           writeFileSync(resolvedOutputPath, result.content);
           this.log(`Output written to: ${resolvedOutputPath}`, 'success');
           console.log('Successfully processed');
@@ -238,14 +264,7 @@ export class CliService {
   ): Promise<void> {
     const baseOutputPath = outputPath || inputPath;
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
-
-    // Use DEFAULT_OUTPUT_DIR for output files unless it's an absolute path
-    let dirName: string;
-    if (outputPath && path.isAbsolute(outputPath)) {
-      dirName = path.dirname(outputPath);
-    } else {
-      dirName = RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
-    }
+    const dirName = this.getOutputDirectory(outputPath);
 
     // Get the directory of the input file for imports
     const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
