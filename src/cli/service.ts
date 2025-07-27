@@ -38,6 +38,7 @@ import {
   applyForceCommands,
 } from '../core/parsers/force-commands-parser';
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
+import { RESOLVED_PATHS } from '@constants';
 import chalk from 'chalk';
 import * as path from 'path';
 
@@ -140,7 +141,11 @@ export class CliService {
         const result = processLegalMarkdown(content, effectiveOptions);
 
         if (outputPath) {
-          const resolvedOutputPath = resolveFilePath(this.options.basePath, outputPath);
+          // Use DEFAULT_OUTPUT_DIR for output files unless it's an absolute path
+          const outputBasePath = path.isAbsolute(outputPath)
+            ? ''
+            : RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+          const resolvedOutputPath = resolveFilePath(outputBasePath, outputPath);
           writeFileSync(resolvedOutputPath, result.content);
           this.log(`Output written to: ${resolvedOutputPath}`, 'success');
           console.log('Successfully processed');
@@ -233,7 +238,14 @@ export class CliService {
   ): Promise<void> {
     const baseOutputPath = outputPath || inputPath;
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
-    const dirName = path.dirname(baseOutputPath);
+
+    // Use DEFAULT_OUTPUT_DIR for output files unless it's an absolute path
+    let dirName: string;
+    if (outputPath && path.isAbsolute(outputPath)) {
+      dirName = path.dirname(outputPath);
+    } else {
+      dirName = RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+    }
 
     // Get the directory of the input file for imports
     const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
