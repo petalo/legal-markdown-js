@@ -79,17 +79,17 @@ describe('Date Helpers', () => {
 
     it('should format with month names', () => {
       const result = formatDate(testDate, 'MMMM Do, YYYY');
-      expect(result).toBe('January 15o, 2024');
+      expect(result).toBe('January 15th, 2024');
     });
 
     it('should format with day names', () => {
       const result = formatDate(testDate, 'dddd, MMMM Do, YYYY');
-      expect(result).toBe('Monday, January 15o, 2024');
+      expect(result).toBe('Monday, January 15th, 2024');
     });
 
     it('should use predefined formats', () => {
       const result = formatDate(testDate, DateFormats.FORMAL);
-      expect(result).toBe('Monday, January 15o, 2024');
+      expect(result).toBe('Monday, January 15th, 2024');
     });
 
     it('should format in Spanish', () => {

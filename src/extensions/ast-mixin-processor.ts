@@ -168,7 +168,7 @@ function isInsideTemplateLoop(
  */
 function cleanCache(): void {
   const now = Date.now();
-  for (const [key, entry] of Array.from(parseCache.entries())) {
+  for (const [key, entry] of parseCache.entries()) {
     if (now - entry.timestamp > CACHE_TTL) {
       parseCache.delete(key);
     }

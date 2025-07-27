@@ -265,7 +265,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
   // For example, "Do" must be processed before "D" to prevent "Do" -> "15o"
   // And "MMMMES" must be processed before "MMMM" to prevent Spanish conflicts
   const sortedTokens = Object.keys(replacements).sort((a, b) => b.length - a.length);
-  
+
   // Use word boundary regex to prevent partial matches within words
   // This prevents "M" from matching inside "Monday" after replacement
   for (const token of sortedTokens) {
@@ -303,7 +303,15 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
 function addOrdinalSuffix(num: number): string {
   const suffix = ['th', 'st', 'nd', 'rd'];
   const value = num % 100;
-  return num + (suffix[(value - 20) % 10] || suffix[value] || suffix[0]);
+
+  // Handle special cases: 11th, 12th, 13th
+  if (value >= 11 && value <= 13) {
+    return num + suffix[0]; // 'th'
+  }
+
+  // Handle regular cases: 1st, 2nd, 3rd, 4th, etc.
+  const lastDigit = value % 10;
+  return num + (suffix[lastDigit] || suffix[0]);
 }
 
 /**
