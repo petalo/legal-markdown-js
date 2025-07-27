@@ -39,9 +39,9 @@
  * ```
  */
 
-import { LegalMarkdownOptions } from '@types';
-import { fieldTracker } from '../tracking/field-tracker';
-import { helpers } from '../helpers';
+import { LegalMarkdownOptions } from '../types';
+import { fieldTracker } from './tracking/field-tracker';
+import { extensionHelpers as helpers } from './helpers';
 
 /**
  * Represents a single node in the parsed AST

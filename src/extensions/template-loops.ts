@@ -33,8 +33,8 @@
  * ```
  */
 
-import { fieldTracker } from '../tracking/field-tracker';
-import { helpers } from '../helpers';
+import { fieldTracker } from './tracking/field-tracker';
+import { extensionHelpers as helpers } from './helpers';
 
 /**
  * Escapes HTML attribute values to prevent breaking HTML structure

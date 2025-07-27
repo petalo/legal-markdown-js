@@ -26,7 +26,7 @@ import {
   contains,
   replaceAll,
   initials,
-} from '../../../src/helpers/string-helpers';
+} from '../../../../src/extensions/helpers/string-helpers';
 
 describe('String Helpers', () => {
   describe('capitalize', () => {

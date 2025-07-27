@@ -46,8 +46,8 @@
  */
 
 import { LegalMarkdownOptions } from '@types';
-import { fieldTracker } from '../../tracking/field-tracker';
-import { helpers } from '../../helpers';
+import { fieldTracker } from '@extensions/tracking/field-tracker';
+import { extensionHelpers as helpers } from '@extensions/helpers';
 import { processTemplateLoops } from '../../extensions/template-loops';
 
 /**

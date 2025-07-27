@@ -33,7 +33,7 @@
  * ```
  */
 
-import { logger } from '../utils/logger';
+import { logger } from '../../utils/logger';
 
 /**
  * Enumeration of possible field statuses during processing

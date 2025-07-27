@@ -55,7 +55,7 @@ try {
   // Fallback for browser environments without pandoc-wasm
   convertLatexToLegalMarkdownSync = (content: string) => content;
 }
-import { fieldTracker } from './tracking/field-tracker';
+import { fieldTracker } from '@extensions/tracking/field-tracker';
 import { logger } from './utils/logger';
 import { LegalMarkdownOptions } from '@types';
 

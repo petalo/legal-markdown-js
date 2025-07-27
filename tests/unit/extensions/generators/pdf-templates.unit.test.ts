@@ -5,8 +5,8 @@
  * including logo integration and proper HTML/CSS output.
  */
 
-import { PdfTemplates } from '../../../src/generators/pdf-templates';
-import { PDF_TEMPLATE_CONSTANTS } from '../../../src/constants';
+import { PdfTemplates } from '../../../../src/extensions/generators/pdf-templates';
+import { PDF_TEMPLATE_CONSTANTS } from '../../../../src/constants';
 
 describe('PDF Templates', () => {
   describe('PDF_TEMPLATE_CONSTANTS', () => {

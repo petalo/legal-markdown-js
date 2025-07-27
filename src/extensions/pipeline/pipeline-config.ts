@@ -46,7 +46,7 @@ import {
   convertLatexToLegalMarkdown,
   convertLatexToLegalMarkdownSync,
 } from '@extensions/latex-parser';
-import { fieldTracker } from '../../tracking/field-tracker';
+import { fieldTracker } from '../tracking/field-tracker';
 import { PipelineManager } from './pipeline-manager';
 import { PipelineStep, PipelineConfig } from './types';
 import { ConsolePipelineLogger, LogLevel } from './pipeline-logger';

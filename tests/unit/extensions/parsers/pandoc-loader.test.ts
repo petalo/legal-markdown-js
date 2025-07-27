@@ -1,4 +1,4 @@
-import { PandocLoader } from '../../../src/parsers/pandoc-loader';
+import { PandocLoader } from '../../../../src/extensions/parsers/pandoc-loader';
 
 describe('PandocLoader', () => {
   beforeEach(() => {

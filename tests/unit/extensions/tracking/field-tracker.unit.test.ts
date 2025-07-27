@@ -9,7 +9,7 @@
  * - Field value wrapping and visual indicators
  */
 
-import { fieldTracker, FieldStatus } from '../../../src/tracking/field-tracker';
+import { fieldTracker, FieldStatus } from '../../../../src/extensions/tracking/field-tracker';
 
 describe('Field Tracker', () => {
   beforeEach(() => {

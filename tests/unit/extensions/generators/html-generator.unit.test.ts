@@ -9,7 +9,7 @@
  * - Accessibility features (proper alt tags, semantic markup)
  */
 
-import { htmlGenerator } from '../../../src/generators/html-generator';
+import { htmlGenerator } from '../../../../src/extensions/generators/html-generator';
 import * as fs from 'fs/promises';
 
 jest.mock('fs/promises');

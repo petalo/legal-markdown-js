@@ -55,3 +55,13 @@ export * from './rst-parser';
 export * from './latex-parser';
 export * from './template-loops';
 export * from './ast-mixin-processor';
+
+// Advanced helpers (Node.js extensions)
+export * from './helpers';
+
+// Enhanced parsers and generators
+export * from './parsers';
+export * from './generators';
+
+// Enhanced field tracking
+export * from './tracking/field-tracker';

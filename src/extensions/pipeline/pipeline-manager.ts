@@ -38,7 +38,7 @@
 
 import { BaseProcessor } from '@core';
 import { LegalMarkdownOptions } from '@types';
-import { fieldTracker } from '../../tracking/field-tracker';
+import { fieldTracker } from '../tracking/field-tracker';
 import {
   PipelineStep,
   PipelineResult,
