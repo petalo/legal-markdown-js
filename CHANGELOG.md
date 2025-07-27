@@ -1,3 +1,11 @@
+## [2.6.3](https://github.com/petalo/legal-markdown-js/compare/v2.6.2...v2.6.3) (2025-07-27)
+
+### Bug Fixes
+
+- resolve CSS paths relative to STYLES_DIR environment variable
+  ([#26](https://github.com/petalo/legal-markdown-js/issues/26))
+  ([80c25d1](https://github.com/petalo/legal-markdown-js/commit/80c25d17111ad8028edcab0c2a1e673b811d01bf))
+
 ## [2.6.2](https://github.com/petalo/legal-markdown-js/compare/v2.6.1...v2.6.2) (2025-07-27)
 
 ### Bug Fixes
