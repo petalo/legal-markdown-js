@@ -9,7 +9,15 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Escapes CSS content for safe inclusion in JavaScript template literals
+ * Escapes CSS content for safe inclusion in JavaScript template literals.
+ * 
+ * @param {string} css - The CSS content to escape.
+ * @returns {string} - The escaped CSS content.
+ * 
+ * Example:
+ *   Input: "body { background: url('image.png'); }"
+ *   Output: "body { background: url('image.png'); }"
+ *           (with backslashes added where necessary for safe inclusion in template literals)
  */
 function escapeCSSForJS(css) {
   return css

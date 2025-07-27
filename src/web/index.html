@@ -274,7 +274,7 @@ p {
     <div id="messageArea"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@16.1.1/marked.min.js"></script>
   <script src="./legal-markdown.umd.min.js"></script>
   <script>
     class LegalMarkdownApp {
@@ -490,14 +490,20 @@ p {
       formatMarkdownForDisplay(content) {
         // IMPORTANT: This content has already been processed by our Legal Markdown pipeline
         // in processContent(). Here we just need to convert the final markdown to HTML.
+        if (typeof marked === 'undefined') {
+          console.error('Marked library is not available. Ensure it is loaded correctly.');
+          return `<p>Error: Markdown parser unavailable. Please check your setup.</p>
+                  <pre>${this.escapeHtml(content)}</pre>`;
+        }
+
         try {
           return marked.parse(content, {
             breaks: true,
             gfm: true
           });
         } catch (error) {
-          console.error('Marked library failed to load from CDN:', error);
-          return `<p>Error: Markdown parser unavailable. Please check your internet connection.</p>
+          console.error('Markdown parsing failed:', error);
+          return `<p>Error: Failed to process Markdown content.</p>
                   <pre>${this.escapeHtml(content)}</pre>`;
         }
       }
