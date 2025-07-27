@@ -1,3 +1,13 @@
+# [2.6.0](https://github.com/petalo/legal-markdown-js/compare/v2.5.0...v2.6.0) (2025-07-27)
+
+### Features
+
+- add Spanish date format to DateFormats
+  ([e8de026](https://github.com/petalo/legal-markdown-js/commit/e8de0261ed48a6f1fce34874ef85b69403b4acfc)),
+  closes [#23](https://github.com/petalo/legal-markdown-js/issues/23)
+- add Spanish date format to DateFormats
+  ([3d22281](https://github.com/petalo/legal-markdown-js/commit/3d2228126ba9e305259b5fb04ffd21175148f7fa))
+
 # [2.5.0](https://github.com/petalo/legal-markdown-js/compare/v2.4.0...v2.5.0) (2025-07-27)
 
 ### Features
