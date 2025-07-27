@@ -60,16 +60,29 @@ legal-md document.md --html --css styles.css
 ### Programmatic Usage
 
 ```typescript
-import { processLegalMarkdown } from 'legal-markdown-js';
+import {
+  processLegalMarkdown,
+  processLegalMarkdownAsync,
+} from 'legal-markdown-js';
 
+// Synchronous processing (legacy)
 const result = processLegalMarkdown(content, {
   basePath: './documents',
   exportMetadata: true,
   exportFormat: 'json',
 });
 
-console.log(result.content);
-console.log(result.metadata);
+// Asynchronous processing with modern pipeline (recommended)
+const asyncResult = await processLegalMarkdownAsync(content, {
+  basePath: './documents',
+  exportMetadata: true,
+  exportFormat: 'json',
+  enableFieldTracking: true,
+});
+
+console.log(asyncResult.content);
+console.log(asyncResult.metadata);
+console.log(asyncResult.fieldReport); // Enhanced field tracking
 ```
 
 ## Key Features
@@ -94,13 +107,58 @@ Additional features available only in the Node.js version:
 
 - **Mixins System**: Template substitution and helpers with `{{variable}}`
   syntax
+- **AST-Based Processing**: Modern AST-based mixin processing to prevent text
+  contamination (v2.4.0+)
+- **Pipeline Architecture**: Configurable step-based processing pipeline with
+  dependency management and performance monitoring (v2.4.0+)
 - **PDF Generation**: Professional PDF output with styling and field
   highlighting
 - **HTML Generation**: Custom HTML output with CSS support
-- **Template Loops**: Array iteration with `[#items]...[/items]` syntax
+- **Template Loops**: Array iteration with `{{#items}}...{{/items}}` syntax
 - **Helper Functions**: Date, number, and string formatting helpers
 - **Force Commands**: Document-driven configuration with embedded CLI options
 - **Batch Processing**: Multi-file processing with concurrency control
+- **Field Tracking**: Enhanced field tracking with proper categorization for
+  document review
+
+## Architecture & Performance
+
+### Modern Pipeline System (v2.4.0+)
+
+Legal Markdown JS features a completely rewritten processing pipeline that
+provides:
+
+- **Step-Based Architecture**: Configurable processing steps with dependency
+  management
+- **AST-Based Processing**: Modern AST parsing for mixin processing to prevent
+  text contamination
+- **Performance Monitoring**: Built-in step profiling and performance metrics
+- **Error Recovery**: Graceful fallback to legacy processing when needed
+- **Field Tracking**: Enhanced field tracking with proper status categorization
+
+#### Processing Order
+
+The new pipeline ensures correct processing order to prevent conflicts:
+
+1. **YAML Front Matter** - Parse document metadata
+2. **Import Processing** - Handle file imports and inclusions
+3. **Optional Clauses** - Process conditional text blocks
+4. **Cross-References** - Resolve internal document references
+5. **Template Loops** - Expand array iterations first
+6. **AST Mixin Processing** - Process variables and helpers (avoids loop
+   conflicts)
+7. **Header Processing** - Apply numbering and formatting
+8. **Field Tracking** - Apply highlighting and generate reports
+
+#### API Usage
+
+```typescript
+// Use the modern async API for best performance
+const result = await processLegalMarkdownAsync(content, options);
+
+// Automatic fallback to legacy processing if needed
+// No code changes required for existing applications
+```
 
 ## Documentation
 

@@ -248,6 +248,41 @@ Payment date: {{formatDate(addDays(contract_date, 30), "MMMM Do, YYYY")}}
 Grace period: {{formatDate(addDays(@today, 15), "DD/MM/YYYY")}}
 ```
 
+### Predefined Date Formats
+
+The system provides predefined format constants for common legal document
+formats:
+
+**Available formats:**
+
+- `DateFormats.ISO`: 'YYYY-MM-DD'
+- `DateFormats.US`: 'MM/DD/YYYY'
+- `DateFormats.EU`: 'DD/MM/YYYY'
+- `DateFormats.UK`: 'DD/MM/YYYY'
+- `DateFormats.FULL`: 'MMMM Do, YYYY'
+- `DateFormats.FULL_US`: 'MMMM D, YYYY'
+- `DateFormats.SHORT`: 'MMM D, YYYY'
+- `DateFormats.LEGAL`: 'Do day of MMMM, YYYY'
+- `DateFormats.FORMAL`: 'dddd, MMMM Do, YYYY'
+
+**Examples:**
+
+```markdown
+<!-- Note: These are used internally with formatDate -->
+
+ISO Date: {{formatDate(@today, "YYYY-MM-DD")}}
+
+<!-- Output: 2025-07-16 -->
+
+Legal format: {{formatDate(@today, "Do day of MMMM, YYYY")}}
+
+<!-- Output: 16th day of July, 2025 -->
+
+Formal format: {{formatDate(@today, "dddd, MMMM Do, YYYY")}}
+
+<!-- Output: Wednesday, July 16th, 2025 -->
+```
+
 ## Number Helpers
 
 ### `formatCurrency(amount, currency, decimals)`
@@ -399,6 +434,55 @@ Result: {{round(calculation, 2)}}
 Percentage: {{round(percentage, 0)}}%
 
 <!-- Output: 15% -->
+```
+
+### `formatNumber(value, decimals, decimalSeparator, thousandSeparator)`
+
+Formats a number with custom decimal and thousand separators.
+
+**Parameters:**
+
+- `value`: Number to format
+- `decimals`: Number of decimal places (default: 2)
+- `decimalSeparator`: Character for decimal separation (default: '.')
+- `thousandSeparator`: Character for thousand separation (default: ',')
+
+**Examples:**
+
+```markdown
+Standard US: {{formatNumber(1234.56)}}
+
+<!-- Output: 1,234.56 -->
+
+European: {{formatNumber(1234.56, 2, ",", " ")}}
+
+<!-- Output: 1 234,56 -->
+
+Custom: {{formatNumber(1234.56, 1, ":", "|")}}
+
+<!-- Output: 1|234:6 -->
+```
+
+### `parseDate(dateStr)`
+
+Parses date strings in various formats and returns a Date object.
+
+**Supported formats:**
+
+- ISO format: YYYY-MM-DD
+- US format: MM/DD/YYYY
+- European format: DD/MM/YYYY
+- Alternative separators: MM-DD-YYYY, DD-MM-YYYY
+
+**Examples:**
+
+```markdown
+<!-- Note: This helper is mainly for internal use -->
+<!-- For document usage, prefer formatDate with known dates -->
+
+Valid date: {{formatDate(parseDate("2025-07-16"), "MMMM Do, YYYY")}}
+
+<!-- Output: July 16th, 2025 -->
 ```
 
 ## String Helpers
@@ -556,6 +640,72 @@ Initials: {{initials(full_name)}}
 Signature: {{initials(signatory_name)}}
 
 <!-- Input: "María García López" → Output: "MGL" -->
+```
+
+### `padStart(str, length, char)`
+
+Pads a string to a specified length from the start (left side).
+
+**Parameters:**
+
+- `str`: String to pad
+- `length`: Target length of the result
+- `char`: Character to use for padding (default: ' ')
+
+**Examples:**
+
+```markdown
+ID: {{padStart(sequence_number, 5, "0")}}
+
+<!-- Input: "42" → Output: "00042" -->
+
+Aligned: {{padStart(name, 15)}}
+
+<!-- Input: "John" → Output: "           John" -->
+```
+
+### `padEnd(str, length, char)`
+
+Pads a string to a specified length from the end (right side).
+
+**Parameters:**
+
+- `str`: String to pad
+- `length`: Target length of the result
+- `char`: Character to use for padding (default: ' ')
+
+**Examples:**
+
+```markdown
+Column: {{padEnd(title, 20, ".")}}
+
+<!-- Input: "Chapter 1" → Output: "Chapter 1..........." -->
+
+Name: {{padEnd(client_name, 25)}}
+
+<!-- Input: "Acme Corp" → Output: "Acme Corp                " -->
+```
+
+### `contains(str, substring, caseSensitive)`
+
+Checks if a string contains a substring with optional case sensitivity.
+
+**Parameters:**
+
+- `str`: String to search in
+- `substring`: Substring to search for
+- `caseSensitive`: Whether search is case sensitive (default: false)
+
+**Examples:**
+
+```markdown
+{{contains(description, "urgent") ? "PRIORITY" : "NORMAL"}}
+
+<!-- Checks if description contains "urgent" (case insensitive) -->
+
+{{contains(title, "Contract", true) ? "Legal Doc" : "Other"}}
+
+<!-- Case sensitive search for exact "Contract" -->
 ```
 
 ### `replaceAll(str, search, replace)`

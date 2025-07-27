@@ -98,52 +98,46 @@ graph TB
 
 ## Core Processing Pipeline
 
-The document processing follows a strict pipeline to ensure correct order of
-operations:
+The document processing follows a strict pipeline system with AST-based
+processing and configurable steps to ensure correct order of operations
+
+### Pipeline Architecture
+
+The pipeline system uses a step-based architecture with dependency management,
+performance monitoring, and enhanced error handling:
 
 ```mermaid
 flowchart TD
-    START([Document Input]) --> PREP[Preprocessing]
+    START([Document Input]) --> PIPELINE[Pipeline Manager]
 
-    PREP --> CONV{Format Conversion}
-    CONV -->|RST| RST_CONV[RST to Markdown]
-    CONV -->|LaTeX| TEX_CONV[LaTeX to Markdown]
-    CONV -->|Markdown| YAML_PARSE[YAML Front Matter Parsing]
-    RST_CONV --> YAML_PARSE
-    TEX_CONV --> YAML_PARSE
+    PIPELINE --> RST_STEP[RST Conversion]
+    RST_STEP --> LATEX_STEP[LaTeX Conversion]
+    LATEX_STEP --> YAML_STEP[YAML Front Matter]
+    YAML_STEP --> IMPORT_STEP[Import Processing]
+    IMPORT_STEP --> CLAUSE_STEP[Optional Clauses]
+    CLAUSE_STEP --> REF_STEP[Cross-References]
+    REF_STEP --> TEMPLATE_STEP[Template Loops]
+    TEMPLATE_STEP --> MIXIN_STEP[AST Mixin Processing]
+    MIXIN_STEP --> HEADER_STEP[Header Processing]
+    HEADER_STEP --> META_STEP[Metadata Export]
+    META_STEP --> TRACK_STEP[Field Tracking]
+    TRACK_STEP --> COMPLETE[Processing Complete]
 
-    YAML_PARSE --> CHECK{YAML Only?}
-    CHECK -->|Yes| YAML_OUT[Return YAML + Content]
-    CHECK -->|No| IMPORT_PROC[Import Processing]
+    COMPLETE --> END([Output])
 
-    IMPORT_PROC --> CLAUSE_PROC[Optional Clause Processing]
-    CLAUSE_PROC --> REF_PROC[Cross-Reference Processing]
-    REF_PROC --> MIXIN_PROC[Mixin Processing]
-    MIXIN_PROC --> HEADER_PROC[Header Processing]
-    HEADER_PROC --> META_EXPORT[Metadata Export]
-    META_EXPORT --> TRACK_APPLY[Field Tracking Application]
-    TRACK_APPLY --> COMPLETE[Processing Complete]
-
-    YAML_OUT --> END([Output])
-    COMPLETE --> END
-
-    subgraph "Optional Processing Steps"
-        IMPORT_PROC
-        CLAUSE_PROC
-        REF_PROC
-        MIXIN_PROC
-        HEADER_PROC
-        META_EXPORT
-        TRACK_APPLY
+    subgraph "Pipeline Features"
+        METRICS[Performance Metrics]
+        ERROR_HANDLING[Error Recovery]
+        PROFILING[Step Profiling]
+        LOGGING[Comprehensive Logging]
+        FALLBACK[Legacy Fallback]
     end
 
-    subgraph "Configurable via Options"
-        noImports["--no-imports"]
-        noClauses["--no-clauses"]
-        noReferences["--no-references"]
-        noMixins["--no-mixins"]
-        noHeaders["--no-headers"]
-    end
+    PIPELINE --> METRICS
+    PIPELINE --> ERROR_HANDLING
+    PIPELINE --> PROFILING
+    PIPELINE --> LOGGING
+    PIPELINE --> FALLBACK
 ```
 
 ## Module Architecture
@@ -266,11 +260,108 @@ flowchart TD
     NUM_TRACK --> RESET
 ```
 
-### 3. Mixin Processing with Helper System
+### 3. Pipeline System
+
+The new pipeline system provides enhanced processing capabilities with
+step-based architecture:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant PipelineManager
+    participant YamlProcessor
+    participant TemplateLoopsProcessor
+    participant ASTMixinProcessor
+    participant FieldTracker
+    participant Logger
+
+    Client->>PipelineManager: Execute Pipeline
+    PipelineManager->>Logger: Start Pipeline
+
+    PipelineManager->>YamlProcessor: Process Step
+    YamlProcessor->>PipelineManager: Content + Metadata
+
+    PipelineManager->>TemplateLoopsProcessor: Process Step
+    Note over TemplateLoopsProcessor: Expands {{#items}}...{{/items}} loops
+    TemplateLoopsProcessor->>PipelineManager: Content with expanded arrays
+
+    PipelineManager->>ASTMixinProcessor: Process Step
+    Note over ASTMixinProcessor: Processes {{variables}} outside loops
+    ASTMixinProcessor->>FieldTracker: Track fields
+    ASTMixinProcessor->>PipelineManager: Final content
+
+    PipelineManager->>Logger: Complete Pipeline
+    PipelineManager->>Client: Result with metrics
+```
+
+#### Pipeline Step Architecture
+
+```mermaid
+classDiagram
+    class PipelineManager {
+        -steps: Map~string, PipelineStep~
+        -logger: PipelineLogger
+        -state: PipelineState
+        +registerStep(step)
+        +execute(content, metadata, options)
+        +validateConfiguration()
+        +abort(reason)
+    }
+
+    class PipelineStep {
+        +name: string
+        +processor: BaseProcessor
+        +order: number
+        +enabled: boolean
+        +dependencies?: string[]
+        +timeout?: number
+        +description?: string
+    }
+
+    class BaseProcessor {
+        <<interface>>
+        +process(content, metadata, options)
+        +isEnabled(options)
+    }
+
+    class StepResult {
+        +stepName: string
+        +success: boolean
+        +inputSize: number
+        +outputSize: number
+        +fieldsTracked: number
+        +duration: number
+        +errors: ProcessingError[]
+        +warnings: string[]
+    }
+
+    PipelineManager --> PipelineStep
+    PipelineStep --> BaseProcessor
+    PipelineManager --> StepResult
+```
+
+#### Key Pipeline Improvements
+
+1. **Template Loops First**: Template loops (order 7) run before AST mixins
+   (order 8) to prevent processing conflicts
+2. **AST-based Mixin Processing**: Prevents text contamination by parsing
+   content into nodes
+3. **Template Loop Exclusion**: AST processor skips content inside
+   `{{#loops}}...{{/loops}}` blocks
+4. **Enhanced Field Tracking**: Properly categorizes fields as `filled`,
+   `empty`, or `logic`
+5. **Performance Monitoring**: Each step reports duration, input/output sizes,
+   and field counts
+6. **Error Recovery**: Pipeline continues processing other steps when
+   non-critical errors occur
+
+### 4. Legacy Mixin Processing (v2.3.x and earlier)
+
+The original mixin processing system (still available as fallback):
 
 ```mermaid
 graph TB
-    subgraph "Mixin Processing Flow"
+    subgraph "Legacy Mixin Processing Flow"
         INPUT["Content with expressions"]
         PATTERN["Find expression patterns"]
         EVAL[Evaluate Expression]

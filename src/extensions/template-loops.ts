@@ -97,6 +97,8 @@ export function processTemplateLoops(
   context?: LoopContext,
   enableFieldTracking: boolean = true
 ): string {
+  // Template loops now run before AST processor, so no need to skip based on spans
+
   // Find all loop blocks in the content
   const loopBlocks = findLoopBlocks(content);
 
@@ -240,12 +242,18 @@ function expandArrayLoop(
     let processedContent = content;
 
     // First, process any nested loops
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Before nested loops processing: "${processedContent}"`);
+    }
     processedContent = processTemplateLoops(
       processedContent,
       enhancedMetadata,
       loopContext,
       enableFieldTracking
     );
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`After nested loops processing: "${processedContent}"`);
+    }
 
     // Then process regular mixins in the content
     processedContent = processItemMixins(
@@ -368,6 +376,14 @@ function createEnhancedMetadata(
   // Add current item properties if it's an object
   if (item && typeof item === 'object' && !Array.isArray(item)) {
     Object.assign(enhanced, item);
+    // Debug: log enhanced metadata for template loops
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line max-len
+      console.log(
+        'Template loops enhanced metadata for item:',
+        JSON.stringify({ item, enhanced }, null, 2)
+      );
+    }
   }
 
   // Add special dot notation for current item value
@@ -529,15 +545,29 @@ function processItemMixins(
   context?: LoopContext,
   enableFieldTracking: boolean = true
 ): string {
+  // Template loops now run before AST processor, so no need to skip based on spans
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`processItemMixins called with content: "${content}"`);
+  }
+
   // Use a simple regex to find and replace mixins
   const mixinPattern = /\{\{([^}]+)\}\}/g;
 
   return content.replace(mixinPattern, (match, variable) => {
     const trimmedVar = variable.trim();
 
+    // Debug: log each mixin being processed
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Processing mixin: "${trimmedVar}" with metadata keys:`, Object.keys(metadata));
+    }
+
     // Handle conditional expressions (ternary operator)
     if (trimmedVar.includes('?') && trimmedVar.includes(':')) {
       const result = processConditionalExpression(trimmedVar, metadata, enableFieldTracking);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Conditional result for "${trimmedVar}":`, result);
+      }
       if (enableFieldTracking) {
         return `<span class="highlight">${result}</span>`;
       }
@@ -570,6 +600,10 @@ function processItemMixins(
 
     // Handle simple variable substitution
     const value = resolveVariablePath(trimmedVar, metadata, context);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Simple variable "${trimmedVar}" resolved to:`, value);
+    }
 
     if (value === undefined || value === null) {
       if (enableFieldTracking) {
@@ -618,6 +652,14 @@ function processConditionalExpression(
 
   // Resolve condition value
   const conditionValue = resolveVariablePath(condition, metadata);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Condition "${condition}" resolved to:`, conditionValue);
+    console.log(
+      // eslint-disable-next-line max-len
+      `Selected part: ${conditionValue ? 'truePart' : 'falsePart'} = "${conditionValue ? truePart : falsePart}"`
+    );
+  }
 
   // Choose appropriate part based on condition
   const selectedPart = conditionValue ? truePart : falsePart;

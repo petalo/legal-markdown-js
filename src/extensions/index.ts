@@ -54,3 +54,4 @@ export * from './batch-processor';
 export * from './rst-parser';
 export * from './latex-parser';
 export * from './template-loops';
+export * from './ast-mixin-processor';
