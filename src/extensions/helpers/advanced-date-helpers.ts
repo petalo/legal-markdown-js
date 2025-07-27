@@ -272,9 +272,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
     const replacement = replacements[token];
     // Use word boundaries (\b) for single-character tokens to prevent partial matches
     const isShortToken = token.length <= 2;
-    const regex = isShortToken 
-      ? new RegExp(`\\b${token}\\b`, 'g')
-      : new RegExp(token, 'g');
+    const regex = isShortToken ? new RegExp(`\\b${token}\\b`, 'g') : new RegExp(token, 'g');
     result = result.replace(regex, replacement);
   }
 
