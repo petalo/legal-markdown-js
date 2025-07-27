@@ -20,8 +20,7 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
 
   // Speed optimizations
-  maxWorkers: 1,
-  testTimeout: 5000,
+  maxWorkers: '50%',
   cache: true,
   cacheDirectory: '<rootDir>/.jest-cache',
   clearMocks: true,
@@ -29,8 +28,14 @@ module.exports = {
   verbose: false,
   silent: true,
 
+  // Incremental testing optimizations
+  watchman: true,
   forceExit: false,
   detectOpenHandles: false,
+  
+  // Memory and performance optimizations
+  workerIdleMemoryLimit: '512MB',
+  maxConcurrency: 5,
 
   // Pattern to match test files
   testMatch: ['**/tests/**/*.test.ts'],
@@ -71,6 +76,6 @@ module.exports = {
   // Global test setup file
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 
-  // Test timeout in milliseconds
+  // Test timeout in milliseconds (removed duplicate)
   testTimeout: 10000,
 };
