@@ -14,6 +14,8 @@
  * - Mixin system for reusable content
  * - Date processing utilities
  * - Metadata export capabilities
+ * - Base processor interfaces for pipeline management
+ * - Core field tracking infrastructure
  *
  * @example
  * ```typescript
@@ -21,20 +23,38 @@
  *   parseYamlFrontMatter,
  *   processHeaders,
  *   processOptionalClauses,
- *   processCrossReferences
+ *   processCrossReferences,
+ *   BaseProcessor,
+ *   FieldState
  * } from './core';
  *
  * // Use core processors in a custom pipeline
  * const { content, metadata } = parseYamlFrontMatter(rawContent);
  * const processed = processHeaders(content, metadata);
+ *
+ * // Implement a custom processor
+ * class MyProcessor implements BaseProcessor {
+ *   name = 'my-processor';
+ *   isEnabled(options) { return true; }
+ *   process(content, metadata, options) { return content; }
+ * }
  * ```
  */
 
+// Core parsers
 export * from './parsers/yaml-parser';
+
+// Core processors
 export * from './processors/header-processor';
 export * from './processors/clause-processor';
 export * from './processors/reference-processor';
 export * from './processors/import-processor';
-export * from './processors/mixin-processor';
+export * from '../extensions/ast-mixin-processor';
 export * from './processors/date-processor';
+
+// Core exporters
 export * from './exporters/metadata-exporter';
+
+// Core infrastructure for pipeline management
+export * from './processors/base-processor';
+export * from './tracking/field-state';

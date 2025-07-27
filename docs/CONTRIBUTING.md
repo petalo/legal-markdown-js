@@ -26,30 +26,38 @@ This separation ensures:
 
 ```text
 src/
-├── core/                    # 🎯 Core functionality (parity with original)
+├── core/                    # 🎯 Core functionality (modern pipeline architecture)
+│   ├── processors/         # Base processor interfaces and core types
+│   │   └── base-processor.ts       # BaseProcessor interface for pipeline
+│   ├── tracking/           # Core field tracking interfaces
+│   │   └── field-state.ts          # FieldState and CoreFieldState types
 │   ├── parsers/            # YAML front matter parsing
-│   │   └── yaml-parser.ts  # YAML delimiter and content parsing
-│   ├── processors/         # Document processing components
-│   │   ├── header-processor.ts     # l., ll., lll. header numbering
-│   │   ├── clause-processor.ts     # [text]{condition} optional clauses
-│   │   ├── reference-processor.ts  # |reference| cross-references
-│   │   ├── import-processor.ts     # @import file inclusion
-│   │   ├── mixin-processor.ts      # {{variable}} template substitution
-│   │   └── date-processor.ts       # @today date processing
+│   │   └── yaml-parser.ts          # YAML delimiter and content parsing
 │   ├── exporters/          # Metadata export functionality
 │   │   └── metadata-exporter.ts    # YAML/JSON metadata export
 │   └── index.ts            # Core module exports
-├── extensions/             # 🚀 Node.js specific enhancements
+├── processors/             # 🔄 Document processing components (legacy structure)
+│   ├── header-processor.ts         # l., ll., lll. header numbering
+│   ├── clause-processor.ts         # [text]{condition} optional clauses
+│   ├── reference-processor.ts      # |reference| cross-references
+│   ├── import-processor.ts         # @import file inclusion
+│   ├── mixin-processor.ts          # {{variable}} template substitution (legacy)
+│   └── date-processor.ts           # @today date processing
+├── extensions/             # 🚀 Modern Node.js enhancements
+│   ├── pipeline/           # 🎯 Modern Pipeline System (v2.4.0+)
+│   │   ├── types.ts                # Pipeline interfaces and types
+│   │   ├── pipeline-manager.ts     # Core pipeline orchestration
+│   │   ├── pipeline-logger.ts      # Performance monitoring and logging
+│   │   └── pipeline-config.ts      # Default pipeline configurations
+│   ├── ast-mixin-processor.ts      # 🔬 AST-based mixin processing
+│   ├── template-loops.ts           # {{#items}}...{{/items}} loop processing
+│   ├── batch-processor.ts          # Multi-file processing
 │   ├── validators/         # Document validation utilities
-│   │   ├── structure-validator.ts  # Document structure validation
-│   │   └── bracket-matcher.ts      # Bracket and syntax validation
+│   │   └── index.ts                # Document structure validation
 │   ├── formatters/         # Advanced output formatting
-│   │   ├── html-generator.ts       # HTML output generation
-│   │   └── pdf-generator.ts        # PDF output generation
+│   │   └── index.ts                # HTML/PDF output generation
 │   ├── utilities/          # Analysis and utility functions
-│   │   ├── batch-processor.ts      # Multi-file processing
-│   │   ├── field-tracker.ts        # Field usage tracking
-│   │   └── document-analyzer.ts    # Document statistics
+│   │   └── index.ts                # Document analysis utilities
 │   ├── parsers/            # Additional format parsers
 │   │   ├── rst-parser.ts           # reStructuredText support
 │   │   └── latex-parser.ts         # LaTeX document support
@@ -74,21 +82,43 @@ src/
 ├── index.ts                # Main entry point
 └── types.ts                # Legacy type definitions (deprecated)
 
+├── tracking/               # Field tracking functionality
+│   └── field-tracker.ts           # Enhanced field tracking system
+├── generators/             # Output generators
+│   ├── html-generator.ts           # HTML output generation
+│   └── pdf-generator.ts            # PDF generation utilities
+├── types/                  # TypeScript type definitions
+│   ├── core.ts            # Core types and interfaces
+│   ├── extensions.ts      # Extension-specific types
+│   └── index.ts           # Type exports
+├── index.ts                # Main entry point
+├── browser.ts              # Browser entry point
+└── types.ts                # Legacy type definitions (deprecated)
+
 tests/
 ├── unit/                   # Unit tests
-│   ├── parsers/           # Parser unit tests
-│   ├── processors/        # Processor unit tests
-│   ├── exporters/         # Exporter unit tests
+│   ├── core/              # Core functionality tests
+│   ├── processors/        # Legacy processor unit tests
+│   ├── extensions/        # Modern extension tests
+│   │   ├── ast-mixin-processor.unit.test.ts    # AST processing tests
+│   │   ├── pipeline-manager.unit.test.ts       # Pipeline system tests
+│   │   ├── template-loops.unit.test.ts         # Template loop tests
+│   │   └── batch-processor.unit.test.ts        # Batch processing tests
+│   ├── tracking/          # Field tracking tests
+│   │   └── field-tracker.unit.test.ts          # Enhanced tracking tests
 │   ├── helpers/           # Helper function tests
-│   └── core/              # Core functionality tests
+│   ├── generators/        # Output generator tests
+│   └── parsers/           # Parser unit tests
 ├── integration/           # Integration tests
-│   ├── workflows/         # Complete processing workflows
-│   ├── cli/               # CLI interface tests
-│   └── compatibility/     # Ruby version compatibility tests
+│   ├── core-functionality.test.ts              # Core workflow integration
+│   ├── legal-markdown.integration.test.ts      # Main processing integration
+│   ├── template-loops.integration.test.ts      # Template loop integration
+│   ├── pdf-generation.integration.test.ts      # PDF generation integration
+│   ├── examples-validation.integration.test.ts # Example validation
+│   └── paths-validation.integration.test.ts    # Path handling validation
 ├── e2e/                   # End-to-end tests
-│   ├── contracts/         # Legal contract processing
-│   ├── agreements/        # Various agreement types
-│   └── templates/         # Template-based documents
+│   ├── cli.e2e.test.ts               # CLI interface tests
+│   └── pdf-generation.e2e.test.ts   # Complete PDF workflow tests
 ├── fixtures/              # Test data and examples
 │   ├── input/             # Sample input documents
 │   ├── expected/          # Expected output files
@@ -174,13 +204,106 @@ npm run version          # Bump version and create changelog
 
 ## 🛠️ Development Guidelines
 
+### Modern Pipeline System (v2.4.0+)
+
+Legal Markdown JS now features a modern pipeline architecture for enhanced
+processing:
+
+#### Pipeline Components
+
+1. **Pipeline Manager** (`src/extensions/pipeline/pipeline-manager.ts`):
+   - Orchestrates step-by-step document processing
+   - Handles dependencies between processing steps
+   - Provides comprehensive error handling and recovery
+   - Includes performance monitoring and metrics
+
+2. **Pipeline Configuration** (`src/extensions/pipeline/pipeline-config.ts`):
+   - Pre-configured processing pipelines for different use cases
+   - `createDefaultPipeline()` - Standard document processing
+   - `createHtmlPipeline()` - HTML output with field tracking
+   - Configurable step ordering and dependencies
+
+3. **AST Mixin Processor** (`src/extensions/ast-mixin-processor.ts`):
+   - Prevents text contamination issues from the legacy processor
+   - Uses Abstract Syntax Tree parsing for clean variable substitution
+   - Supports all mixin types: variables, helpers, conditionals
+   - Automatic bracket value detection for missing fields
+
+#### Pipeline Development Guidelines
+
+When working on pipeline components:
+
+```typescript
+/**
+ * Example Pipeline Step Implementation
+ */
+export class CustomProcessor implements BaseProcessor {
+  public isEnabled(options: LegalMarkdownOptions): boolean {
+    return options.enableCustomProcessing ?? true;
+  }
+
+  public process(
+    content: string,
+    metadata: Record<string, any>,
+    options: LegalMarkdownOptions
+  ): string {
+    // Process content here
+    return processedContent;
+  }
+}
+
+// Register with pipeline
+const pipeline = createDefaultPipeline();
+pipeline.registerStep({
+  name: 'custom-processing',
+  processor: new CustomProcessor(),
+  order: 9, // After mixins (8) but before final steps
+  enabled: true,
+  dependencies: ['mixins'], // Requires mixins to complete first
+});
+```
+
+#### AST Processing Guidelines
+
+When extending AST functionality:
+
+```typescript
+/**
+ * AST Node Processing Example
+ */
+export function processCustomNodes(
+  nodes: MixinNode[],
+  metadata: Record<string, any>
+): string {
+  return nodes
+    .map(node => {
+      if (node.type === 'text') {
+        return node.content;
+      }
+
+      // Process mixin nodes with isolated context
+      const resolvedValue = resolveCustomMixin(node.variable, metadata);
+
+      // Track field for highlighting/validation
+      fieldTracker.trackField(node.variable, {
+        value: resolvedValue,
+        mixinUsed: 'custom',
+      });
+
+      return String(resolvedValue);
+    })
+    .join('');
+}
+```
+
 ### Core Functionality Development
 
 When working on `src/core/` components:
 
-1. **Maintain Parity**: Ensure identical behavior to the Ruby version
-2. **Test Coverage**: Include comprehensive unit tests
-3. **TypeScript**: Use strict typing throughout
+1. **Pipeline Integration**: Implement BaseProcessor interface for pipeline
+   compatibility
+2. **Type Safety**: Use strict typing with proper interfaces
+3. **Test Coverage**: Include comprehensive unit tests
 4. **Documentation**: Include JSDoc comments for all public APIs
 
 **Example Core Processor**:
@@ -248,6 +371,67 @@ export class PdfGenerator {
 }
 ```
 
+### Enhanced Field Tracking System
+
+The field tracking system (`src/tracking/field-tracker.ts`) provides
+comprehensive field monitoring:
+
+#### Field Tracking Guidelines
+
+1. **Mixin Type Classification**: Track whether fields use variables, helpers,
+   or conditionals
+2. **Status Detection**: Automatically classify fields as filled, empty, or
+   logic-based
+3. **HTML Generation**: Support for highlighting with CSS classes when enabled
+4. **Performance**: Efficient tracking for large documents
+
+**Example Field Tracking Usage**:
+
+```typescript
+import { fieldTracker, FieldStatus } from '../tracking/field-tracker';
+
+// Track a field during processing
+fieldTracker.trackField('client.name', {
+  value: 'Acme Corporation',
+  mixinUsed: 'variable', // 'variable' | 'helper' | 'conditional'
+  hasLogic: false,
+});
+
+// Generate comprehensive report
+const report = fieldTracker.generateReport();
+console.log(`Total fields: ${report.total}`);
+console.log(
+  `Filled: ${report.filled}, Empty: ${report.empty}, Logic: ${report.logic}`
+);
+
+// Get fields by status
+const emptyFields = fieldTracker.getFieldsByStatus(FieldStatus.EMPTY);
+```
+
+#### Field Tracking Integration
+
+When creating new processors, integrate field tracking:
+
+```typescript
+export class CustomProcessor implements BaseProcessor {
+  public process(content: string, metadata: Record<string, any>): string {
+    // Process content and track fields
+    const processedContent = this.processContent(content, metadata);
+
+    // Track discovered fields
+    this.discoveredFields.forEach(field => {
+      fieldTracker.trackField(field.name, {
+        value: field.resolvedValue,
+        mixinUsed: field.type,
+        hasLogic: field.type !== 'variable',
+      });
+    });
+
+    return processedContent;
+  }
+}
+```
+
 ### Helper System Development
 
 When adding new helpers to the `src/helpers/` system:
@@ -256,6 +440,7 @@ When adding new helpers to the `src/helpers/` system:
 2. **Error Handling**: Graceful handling of invalid inputs
 3. **Type Safety**: Strong typing for all parameters and returns
 4. **Documentation**: Clear examples in JSDoc comments
+5. **AST Compatibility**: Ensure helpers work with the AST processor
 
 **Example Helper**:
 
@@ -392,40 +577,76 @@ Unit tests should:
 - Cover all code paths and edge cases
 - Use descriptive test names
 - Include both positive and negative test cases
+- Test pipeline components thoroughly
+- Verify AST processing correctness
+- Validate field tracking integration
 
-**Example Unit Test**:
+**Example Pipeline Component Test**:
 
 ```typescript
-describe('HeaderProcessor', () => {
-  let processor: HeaderProcessor;
+describe('Pipeline Manager', () => {
+  it('should execute pipeline steps in correct order', async () => {
+    const pipeline = createDefaultPipeline();
+    const content = '{{name}} - {{formatDate(@today, "YYYY-MM-DD")}}';
+    const metadata = { name: 'John Doe' };
+    const options = { legalMarkdownOptions: {} };
 
-  beforeEach(() => {
-    processor = new HeaderProcessor();
+    const result = await pipeline.execute(content, metadata, options);
+
+    expect(result.success).toBe(true);
+    expect(result.content).toContain('John Doe');
+    expect(result.stepResults).toHaveLength(6); // All pipeline steps
   });
 
-  describe('process()', () => {
-    it('should number headers with l. notation correctly', () => {
-      const input = 'l. First\nll. Second\nlll. Third';
-      const expected = '1. First\n1.1. Second\n1.1.1. Third';
+  it('should handle null content gracefully', async () => {
+    const pipeline = createDefaultPipeline();
+    const result = await pipeline.execute(
+      null as any,
+      {},
+      {
+        legalMarkdownOptions: {},
+      }
+    );
 
-      const result = processor.process(input);
+    expect(result).toBeDefined();
+    expect(result.content).toBeDefined();
+  });
+});
+```
 
-      expect(result).toBe(expected);
-    });
+**Example AST Processor Test**:
 
-    it('should handle empty content gracefully', () => {
-      const result = processor.process('');
-      expect(result).toBe('');
-    });
+```typescript
+describe('AST Mixin Processor', () => {
+  beforeEach(() => {
+    fieldTracker.clear();
+  });
 
-    it('should preserve non-header content unchanged', () => {
-      const input = 'Regular text\nl. Header\nMore text';
-      const result = processor.process(input);
+  it('should prevent text contamination in variable resolution', () => {
+    const content = 'Client: {{client.name}}. Phone: {{client.phone}}';
+    const metadata = {
+      client: {
+        name: 'John Smith & Associates', // Contains special characters
+        phone: '555-0123',
+      },
+    };
 
-      expect(result).toContain('Regular text');
-      expect(result).toContain('More text');
-      expect(result).toContain('1. Header');
-    });
+    const result = processMixins(content, metadata);
+
+    expect(result).toBe('Client: John Smith & Associates. Phone: 555-0123');
+    // Should not contaminate other variable resolution
+  });
+
+  it('should track fields correctly during AST processing', () => {
+    const content = 'Name: {{name}}, Date: {{formatDate(@today)}}';
+    const metadata = { name: 'John Doe' };
+    const options = { enableFieldTracking: true };
+
+    processMixins(content, metadata, options);
+
+    const fields = fieldTracker.getFields();
+    expect(fields.get('name')?.status).toBe(FieldStatus.FILLED);
+    expect(fields.get('formatDate(@today)')?.status).toBe(FieldStatus.LOGIC);
   });
 });
 ```
@@ -677,29 +898,6 @@ test(integration): add comprehensive workflow tests
 - Profile code with performance testing
 - Use efficient algorithms and data structures
 - Consider lazy loading for expensive operations
-
-## 🎯 Areas for Contribution
-
-### High Priority
-
-1. **Core Feature Completeness**: Ensure 100% Ruby compatibility
-2. **Test Coverage**: Achieve comprehensive test coverage
-3. **Performance Optimization**: Improve processing speed
-4. **Documentation**: Complete API and user documentation
-
-### Medium Priority
-
-1. **Additional File Formats**: Support more input formats
-2. **Enhanced PDF Generation**: Advanced PDF styling options
-3. **Batch Processing**: Improved multi-file processing
-4. **Plugin System**: Extensible architecture for custom processors
-
-### Nice to Have
-
-1. **IDE Integration**: VS Code extension for Legal Markdown
-2. **Web Interface**: Browser-based document processor
-3. **Cloud Integration**: Direct cloud storage support
-4. **Collaborative Features**: Multi-user document editing
 
 ## 📞 Getting Help
 

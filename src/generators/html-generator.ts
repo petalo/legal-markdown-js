@@ -92,6 +92,9 @@ export class HtmlGenerator {
       breaks: true,
       pedantic: false,
     });
+
+    // Note: In modern marked versions, HTML is preserved by default
+    // Our inline spans should be maintained during parsing
   }
 
   /**

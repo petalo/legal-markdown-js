@@ -180,7 +180,7 @@ export class FieldTracker {
     const { value, originalValue, hasLogic = false, mixinUsed } = options;
 
     let status: FieldStatus;
-    if (hasLogic || mixinUsed) {
+    if (hasLogic || (mixinUsed && ['conditional', 'helper', 'loop'].includes(mixinUsed))) {
       status = FieldStatus.LOGIC;
     } else if (value === undefined || value === null || value === '') {
       status = FieldStatus.EMPTY;

@@ -45,7 +45,8 @@ import { processHeaders } from '@core/processors/header-processor';
 import { processOptionalClauses } from '@core/processors/clause-processor';
 import { processCrossReferences } from '@core/processors/reference-processor';
 import { processPartialImports } from '@core/processors/import-processor';
-import { processMixins } from '@core/processors/mixin-processor';
+import { processMixins } from '@extensions/ast-mixin-processor';
+import { processTemplateLoops } from '@extensions/template-loops';
 import { exportMetadata } from '@core/exporters/metadata-exporter';
 import { convertRstToLegalMarkdownSync, convertRstToLegalMarkdown } from '@extensions/rst-parser';
 import {
@@ -57,6 +58,7 @@ import { htmlGenerator } from './generators/html-generator';
 import { pdfGenerator } from './generators/pdf-generator';
 import { LegalMarkdownOptions } from '@types';
 import { RESOLVED_PATHS } from '@constants';
+import { createDefaultPipeline, createHtmlPipeline } from '@extensions/pipeline/pipeline-config';
 import path from 'path';
 
 /**
@@ -88,6 +90,51 @@ import path from 'path';
  * ```
  */
 export async function processLegalMarkdownAsync(
+  content: string,
+  options: LegalMarkdownOptions = {}
+): Promise<{
+  content: string;
+  metadata?: Record<string, any>;
+  exportedFiles?: string[];
+  fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
+}> {
+  try {
+    // Use the new pipeline system for processing
+    const pipeline = createDefaultPipeline();
+    const metadata: Record<string, any> = {};
+
+    const pipelineOptions = {
+      legalMarkdownOptions: options,
+      enableStepProfiling: process.env.NODE_ENV === 'development',
+    };
+
+    const result = await pipeline.execute(content, metadata, pipelineOptions);
+
+    if (!result.success) {
+      console.warn('Pipeline execution had errors, falling back to legacy processing');
+      return processLegalMarkdownLegacy(content, options);
+    }
+
+    // Convert pipeline result to expected format
+    return {
+      content: result.content,
+      metadata: result.metadata,
+      exportedFiles: result.exportedFiles || [],
+      fieldReport: result.fieldReport,
+    };
+  } catch (error) {
+    console.warn('Pipeline system failed, falling back to legacy processing:', error);
+    return processLegalMarkdownLegacy(content, options);
+  }
+}
+
+/**
+ * Legacy processing function as fallback
+ *
+ * This function contains the original processing logic and serves as a
+ * reliable fallback if the new pipeline system encounters issues.
+ */
+async function processLegalMarkdownLegacy(
   content: string,
   options: LegalMarkdownOptions = {}
 ): Promise<{
@@ -133,10 +180,18 @@ export async function processLegalMarkdownAsync(
     processedContent = processCrossReferences(processedContent, metadata);
   }
 
-  // Process mixins
+  // Process mixins first (AST-based, no contamination)
   if (!options.noMixins) {
     processedContent = processMixins(processedContent, metadata, options);
   }
+
+  // Process template loops after mixins (now separated from mixin processor)
+  processedContent = processTemplateLoops(
+    processedContent,
+    metadata,
+    undefined,
+    options.enableFieldTrackingInMarkdown || false
+  );
 
   // Process headers (numbering, etc)
   if (!options.noHeaders) {
@@ -148,7 +203,11 @@ export async function processLegalMarkdownAsync(
   }
 
   // Export metadata if requested or specified in metadata
-  if (options.exportMetadata || metadata['meta-yaml-output'] || metadata['meta-json-output']) {
+  if (
+    options.exportMetadata ||
+    (metadata as any)['meta-yaml-output'] ||
+    (metadata as any)['meta-json-output']
+  ) {
     const exportResult = exportMetadata(metadata, options.exportFormat, options.exportPath);
     exportedFiles = [...exportedFiles, ...exportResult.exportedFiles];
   }
@@ -156,7 +215,8 @@ export async function processLegalMarkdownAsync(
   // Apply field tracking to content if highlighting is enabled
   // NOTE: This applies post-processing field tracking for HTML/PDF output
   // Individual processors use enableFieldTrackingInMarkdown for markdown output
-  if (options.enableFieldTracking) {
+  // Skip if enableFieldTrackingInMarkdown is true (already processed by AST processor)
+  if (options.enableFieldTracking && !options.enableFieldTrackingInMarkdown) {
     processedContent = fieldTracker.applyFieldTracking(processedContent);
   }
 
@@ -171,8 +231,9 @@ export async function processLegalMarkdownAsync(
 /**
  * Main function to process a Legal Markdown document (sync version with fallback)
  *
- * This function uses fallback parsers for RST/LaTeX to maintain backward compatibility
- * and ensure the library works without pandoc dependencies.
+ * This function uses the legacy processing approach to maintain synchronous operation.
+ * For better performance, debugging, and features, consider using the async version
+ * `processLegalMarkdownAsync` which uses the new pipeline system.
  *
  * @param {string} content - The raw Legal Markdown content to process
  * @param {LegalMarkdownOptions} [options={}] - Configuration options for processing
@@ -241,10 +302,18 @@ export function processLegalMarkdown(
     processedContent = processCrossReferences(processedContent, metadata);
   }
 
-  // Process mixins
+  // Process mixins first (AST-based, no contamination)
   if (!options.noMixins) {
     processedContent = processMixins(processedContent, metadata, options);
   }
+
+  // Process template loops after mixins (now separated from mixin processor)
+  processedContent = processTemplateLoops(
+    processedContent,
+    metadata,
+    undefined,
+    options.enableFieldTrackingInMarkdown || false
+  );
 
   // Process headers (numbering, etc)
   if (!options.noHeaders) {
@@ -264,7 +333,8 @@ export function processLegalMarkdown(
   // Apply field tracking to content if highlighting is enabled
   // NOTE: This applies post-processing field tracking for HTML/PDF output
   // Individual processors use enableFieldTrackingInMarkdown for markdown output
-  if (options.enableFieldTracking) {
+  // Skip if enableFieldTrackingInMarkdown is true (already processed by AST processor)
+  if (options.enableFieldTracking && !options.enableFieldTrackingInMarkdown) {
     processedContent = fieldTracker.applyFieldTracking(processedContent);
   }
 
@@ -311,10 +381,62 @@ export async function generateHtml(
     title?: string;
   } = {}
 ): Promise<string> {
+  try {
+    // Use HTML-optimized pipeline for better performance and field tracking
+    const pipeline = createHtmlPipeline({
+      enableFieldTracking: options.includeHighlighting,
+      includeHighlighting: options.includeHighlighting,
+    });
+
+    const metadata: Record<string, any> = {};
+
+    const pipelineOptions = {
+      legalMarkdownOptions: {
+        ...options,
+        enableFieldTracking: options.includeHighlighting,
+        enableFieldTrackingInMarkdown: options.includeHighlighting,
+      },
+      enableStepProfiling: process.env.NODE_ENV === 'development',
+    };
+
+    const result = await pipeline.execute(content, metadata, pipelineOptions);
+
+    if (!result.success) {
+      console.warn('HTML pipeline failed, falling back to legacy processing');
+      return generateHtmlLegacy(content, options);
+    }
+
+    // Generate HTML using the processed content
+    return htmlGenerator.generateHtml(result.content, {
+      cssPath: options.cssPath,
+      highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+      includeHighlighting: options.includeHighlighting,
+      title: options.title,
+      metadata: result.metadata,
+    });
+  } catch (error) {
+    console.warn('HTML generation pipeline failed, falling back to legacy processing:', error);
+    return generateHtmlLegacy(content, options);
+  }
+}
+
+/**
+ * Legacy HTML generation as fallback
+ */
+async function generateHtmlLegacy(
+  content: string,
+  options: LegalMarkdownOptions & {
+    cssPath?: string;
+    highlightCssPath?: string;
+    includeHighlighting?: boolean;
+    title?: string;
+  } = {}
+): Promise<string> {
   // Process the legal markdown first (use async version for better RST/LaTeX support)
   const processed = await processLegalMarkdownAsync(content, {
     ...options,
     enableFieldTracking: options.includeHighlighting,
+    enableFieldTrackingInMarkdown: options.includeHighlighting,
   });
 
   // Generate HTML
@@ -368,10 +490,67 @@ export async function generatePdf(
     landscape?: boolean;
   } = {}
 ): Promise<Buffer> {
+  try {
+    // Use PDF-optimized pipeline (same as HTML pipeline for now)
+    const pipeline = createHtmlPipeline({
+      enableFieldTracking: options.includeHighlighting,
+      includeHighlighting: options.includeHighlighting,
+    });
+
+    const metadata: Record<string, any> = {};
+
+    const pipelineOptions = {
+      legalMarkdownOptions: {
+        ...options,
+        enableFieldTracking: options.includeHighlighting,
+        enableFieldTrackingInMarkdown: options.includeHighlighting,
+      },
+      enableStepProfiling: process.env.NODE_ENV === 'development',
+    };
+
+    const result = await pipeline.execute(content, metadata, pipelineOptions);
+
+    if (!result.success) {
+      console.warn('PDF pipeline failed, falling back to legacy processing');
+      return generatePdfLegacy(content, outputPath, options);
+    }
+
+    // Generate PDF using the processed content
+    return pdfGenerator.generatePdf(result.content, outputPath, {
+      cssPath: options.cssPath,
+      highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+      includeHighlighting: options.includeHighlighting,
+      title: options.title,
+      metadata: result.metadata,
+      format: options.format,
+      landscape: options.landscape,
+    });
+  } catch (error) {
+    console.warn('PDF generation pipeline failed, falling back to legacy processing:', error);
+    return generatePdfLegacy(content, outputPath, options);
+  }
+}
+
+/**
+ * Legacy PDF generation as fallback
+ */
+async function generatePdfLegacy(
+  content: string,
+  outputPath: string,
+  options: LegalMarkdownOptions & {
+    cssPath?: string;
+    highlightCssPath?: string;
+    includeHighlighting?: boolean;
+    title?: string;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
+  } = {}
+): Promise<Buffer> {
   // Process the legal markdown first (use async version for better RST/LaTeX support)
   const processed = await processLegalMarkdownAsync(content, {
     ...options,
     enableFieldTracking: options.includeHighlighting,
+    enableFieldTrackingInMarkdown: options.includeHighlighting,
   });
 
   // Generate PDF

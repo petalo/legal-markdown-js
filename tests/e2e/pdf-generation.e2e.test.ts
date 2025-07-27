@@ -302,8 +302,9 @@ pointsBalance: ${ticketData.pointsBalance}
       
       // Check field tracking report
       expect(result.fieldReport).toBeDefined();
-      expect(result.fieldReport?.filled).toBeGreaterThan(0);
-      // Note: All fields have values in the test data, so no empty fields expected
+      expect(result.fieldReport?.total).toBeGreaterThan(0);
+      // Template loops are tracked as logic, not filled fields
+      expect(result.fieldReport?.logic).toBeGreaterThan(0);
     });
 
     it('should generate receipt-style HTML', async () => {
