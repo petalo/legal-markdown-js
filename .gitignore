@@ -12,7 +12,14 @@ packages/
 *.tsbuildinfo
 *.tgz
 
-# IDE files (except project settings)
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
 .idea/
 *.sublime-*
 .DS_Store
@@ -21,20 +28,17 @@ packages/
 .vscode/settings.json
 .vscode/launch.json
 .vscode/tasks.json
-
 !.vscode/extensions.json
+
+# Cache files
+.eslintcache
+.prettiercache
+.jest-cache/
 
 # Test coverage
 coverage/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Temp files
+# Temporary files
 .tmp/
 .temp/
 temp/
@@ -45,11 +49,13 @@ tmp/
 metadata.json
 metadata.yaml
 
-# Generated output files (but keep examples/ directory)
+# Generated output files
 *-output.md
 processed-*.md
 final-output.md
 test-output.md
+temp-*.md
+output-*.md
 output/
 
 # Test output files (but keep reference files)
@@ -61,31 +67,20 @@ tests/output/*.pdf
 tests/output/*.md
 !tests/output/advanced-metadata.json
 !tests/output/agreement-metadata.json
-# Ignore specific output files
-
-# Temporary output files
-temp-*.md
-output-*.md
-
-# Documentation and coverage
-docs/coverage/
-docs/api/
-
-# cache files
-.eslintcache
-.prettiercache
-.jest-cache/
-
-# Claude configuration
-.claude/
-
-# Anything related to petalo
-*petalo*
-
-# repomix configuration
-.repomix/
 
 # Examples directory output files
 examples/**/*.html
 examples/**/*.pdf
 examples/**/*output*
+
+# Documentation and coverage
+docs/coverage/
+docs/api/
+
+# Configuration directories
+.claude/
+.repomix/
+
+# Project-specific
+*petalo*
+input/
