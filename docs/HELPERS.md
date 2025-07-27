@@ -264,6 +264,7 @@ formats:
 - `DateFormats.SHORT`: 'MMM D, YYYY'
 - `DateFormats.LEGAL`: 'Do day of MMMM, YYYY'
 - `DateFormats.FORMAL`: 'dddd, MMMM Do, YYYY'
+- `DateFormats.SPANISH`: 'D de MMMMES de YYYY'
 
 **Examples:**
 
@@ -281,6 +282,10 @@ Legal format: {{formatDate(@today, "Do day of MMMM, YYYY")}}
 Formal format: {{formatDate(@today, "dddd, MMMM Do, YYYY")}}
 
 <!-- Output: Wednesday, July 16th, 2025 -->
+
+Spanish format: {{formatDate(@today, "D de MMMMES de YYYY")}}
+
+<!-- Output: 16 de julio de 2025 -->
 ```
 
 ## Number Helpers
