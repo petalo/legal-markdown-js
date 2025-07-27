@@ -91,6 +91,11 @@ describe('Date Helpers', () => {
       const result = formatDate(testDate, DateFormats.FULL);
       expect(result).toBe('January 15th, 2024');
     });
+
+    it('should format in Spanish', () => {
+      const result = formatDate(testDate, DateFormats.SPANISH);
+      expect(result).toBe('15 de enero de 2024');
+    });
   });
 
   describe('parseDate', () => {

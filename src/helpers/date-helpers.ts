@@ -179,6 +179,7 @@ export function addMonths(date: Date | string, months: number): Date {
  * // Legal document formats
  * formatDate(date, DateFormats.LEGAL);   // "16th day of July, 2025"
  * formatDate(date, DateFormats.FORMAL);  // "Wednesday, July 16th, 2025"
+ * formatDate(date, DateFormats.SPANISH); // "16 de julio de 2025"
  *
  * // Custom format
  * formatDate(date, 'MMMM Do, YYYY');     // "July 16th, 2025"
@@ -228,6 +229,21 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
     'Dec',
   ];
 
+  const monthNamesSpanish = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -241,6 +257,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
     DD: day,
     D: String(d.getDate()),
     MMMM: monthNames[d.getMonth()],
+    MMMMES: monthNamesSpanish[d.getMonth()],
     MMM: monthNamesShort[d.getMonth()],
     dddd: dayNames[d.getDay()],
     ddd: dayNamesShort[d.getDay()],
@@ -276,6 +293,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
   const orderedTokens = [
     'dddd',
     'ddd', // Day names (must come before DD/D)
+    'MMMMES', // Spanish month names (must come before MMMM)
     'MMMM',
     'MMM', // Month names (must come before MM/M)
     'YYYY',
@@ -340,6 +358,7 @@ function getOrdinalSuffix(n: number): string {
  * formatDate(date, DateFormats.FORMAL);  // "Wednesday, July 16th, 2025"
  * formatDate(date, DateFormats.US);      // "07/16/2025"
  * formatDate(date, DateFormats.EU);      // "16/07/2025"
+ * formatDate(date, DateFormats.SPANISH); // "16 de julio de 2025"
  * ```
  */
 export const DateFormats = {
@@ -352,6 +371,7 @@ export const DateFormats = {
   SHORT: 'MMM D, YYYY',
   LEGAL: 'Do day of MMMM, YYYY',
   FORMAL: 'dddd, MMMM Do, YYYY',
+  SPANISH: 'D de MMMMES de YYYY',
 } as const;
 
 /**
