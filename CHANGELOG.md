@@ -1,3 +1,10 @@
+## [2.6.4](https://github.com/petalo/legal-markdown-js/compare/v2.6.3...v2.6.4) (2025-07-27)
+
+### Bug Fixes
+
+- **playground:** address Copilot security and error handling suggestions
+  ([df5ed04](https://github.com/petalo/legal-markdown-js/commit/df5ed04ea05cac7af155b2aa42533d1963bdb7bc))
+
 ## [2.6.3](https://github.com/petalo/legal-markdown-js/compare/v2.6.2...v2.6.3) (2025-07-27)
 
 ### Bug Fixes
