@@ -19,7 +19,7 @@ import {
   numberToWords,
   formatNumber,
   round,
-} from '../../../src/helpers/number-helpers';
+} from '../../../../src/extensions/helpers/number-helpers';
 
 describe('Number Helpers', () => {
   describe('formatInteger', () => {

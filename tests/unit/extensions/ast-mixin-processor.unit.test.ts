@@ -13,7 +13,7 @@ import {
   processMixins, 
   classifyMixinType
 } from '../../../src/extensions/ast-mixin-processor';
-import { fieldTracker, FieldStatus } from '../../../src/tracking/field-tracker';
+import { fieldTracker, FieldStatus } from '../../../src/extensions/tracking/field-tracker';
 
 describe('AST Mixin Processor', () => {
   beforeEach(() => {

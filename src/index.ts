@@ -53,9 +53,9 @@ import {
   convertLatexToLegalMarkdownSync,
   convertLatexToLegalMarkdown,
 } from '@extensions/latex-parser';
-import { fieldTracker } from './tracking/field-tracker';
-import { htmlGenerator } from './generators/html-generator';
-import { pdfGenerator } from './generators/pdf-generator';
+import { fieldTracker } from '@extensions/tracking/field-tracker';
+import { htmlGenerator } from '@extensions/generators/html-generator';
+import { pdfGenerator } from '@extensions/generators/pdf-generator';
 import { LegalMarkdownOptions } from '@types';
 import { RESOLVED_PATHS } from '@constants';
 import { createDefaultPipeline, createHtmlPipeline } from '@extensions/pipeline/pipeline-config';
@@ -627,6 +627,8 @@ export * from '@errors';
 export * from '@constants';
 export * from '@lib';
 export * from '@extensions';
-export { fieldTracker } from './tracking/field-tracker';
-export { htmlGenerator } from './generators/html-generator';
-export { pdfGenerator } from './generators/pdf-generator';
+
+// Specific re-exports to avoid conflicts (extensions take precedence)
+export { fieldTracker } from '@extensions/tracking/field-tracker';
+export { htmlGenerator } from '@extensions/generators/html-generator';
+export { pdfGenerator } from '@extensions/generators/pdf-generator';

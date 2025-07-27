@@ -1,4 +1,4 @@
-import { ContentDetector } from '../../../src/parsers/content-detector';
+import { ContentDetector } from '../../../../src/extensions/parsers/content-detector';
 
 describe('ContentDetector', () => {
   describe('needsRstParser', () => {

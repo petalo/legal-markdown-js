@@ -39,9 +39,9 @@
  * ```
  */
 
-import { LegalMarkdownOptions } from '@types';
-import { fieldTracker } from '../tracking/field-tracker';
-import { helpers } from '../helpers';
+import { LegalMarkdownOptions } from '../types';
+import { fieldTracker } from './tracking/field-tracker';
+import { extensionHelpers as helpers } from './helpers';
 
 /**
  * Represents a single node in the parsed AST
@@ -168,7 +168,7 @@ function isInsideTemplateLoop(
  */
 function cleanCache(): void {
   const now = Date.now();
-  for (const [key, entry] of parseCache.entries()) {
+  for (const [key, entry] of Array.from(parseCache.entries())) {
     if (now - entry.timestamp > CACHE_TTL) {
       parseCache.delete(key);
     }

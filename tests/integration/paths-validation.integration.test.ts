@@ -10,7 +10,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { htmlGenerator } from '../../src/generators/html-generator';
+import { htmlGenerator } from '../../src/extensions/generators/html-generator';
 import { CliService } from '../../src/cli/service';
 import { RESOLVED_PATHS } from '../../src/constants/paths';
 
@@ -24,8 +24,30 @@ describe('Path Validation Integration Tests', () => {
   });
 
   afterAll(async () => {
-    // Cleanup test directory
-    await fs.rm(testDir, { recursive: true, force: true });
+    // Cleanup test directory - first restore permissions to allow deletion
+    try {
+      // Find all directories and make them writable
+      const restorePermissions = async (dirPath: string) => {
+        try {
+          const stats = await fs.stat(dirPath);
+          if (stats.isDirectory()) {
+            await fs.chmod(dirPath, 0o755);
+            const items = await fs.readdir(dirPath);
+            for (const item of items) {
+              const itemPath = path.join(dirPath, item);
+              await restorePermissions(itemPath);
+            }
+          }
+        } catch {
+          // Ignore permission errors during cleanup
+        }
+      };
+      
+      await restorePermissions(testDir);
+      await fs.rm(testDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
     process.env = originalEnv;
   });
 
@@ -41,9 +63,9 @@ describe('Path Validation Integration Tests', () => {
       
       // Re-import modules to pick up new environment
       delete require.cache[require.resolve('../../src/constants/paths')];
-      delete require.cache[require.resolve('../../src/generators/html-generator')];
+      delete require.cache[require.resolve('../../src/extensions/generators/html-generator')];
       
-      const { htmlGenerator: freshHtmlGenerator } = require('../../src/generators/html-generator');
+      const { htmlGenerator: freshHtmlGenerator } = require('../../src/extensions/generators/html-generator');
       
       const markdown = '# Test Document\n\nThis is a test.';
       
@@ -98,6 +120,15 @@ describe('Path Validation Integration Tests', () => {
   describe('Permission issues', () => {
     it('should handle read-only directories appropriately', async () => {
       const readOnlyDir = path.join(testDir, 'readonly-styles');
+      
+      // Clean up any existing directory first
+      try {
+        await fs.chmod(readOnlyDir, 0o755);
+        await fs.rm(readOnlyDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+      
       await fs.mkdir(readOnlyDir, { recursive: true });
       
       // Create a CSS file
@@ -113,9 +144,9 @@ describe('Path Validation Integration Tests', () => {
       
       // Re-import modules
       delete require.cache[require.resolve('../../src/constants/paths')];
-      delete require.cache[require.resolve('../../src/generators/html-generator')];
+      delete require.cache[require.resolve('../../src/extensions/generators/html-generator')];
       
-      const { htmlGenerator: freshHtmlGenerator } = require('../../src/generators/html-generator');
+      const { htmlGenerator: freshHtmlGenerator } = require('../../src/extensions/generators/html-generator');
       
       // Should be able to read CSS file even from read-only directory
       await expect(freshHtmlGenerator.generateHtml('# Test', {

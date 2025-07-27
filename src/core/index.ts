@@ -57,4 +57,7 @@ export * from './exporters/metadata-exporter';
 
 // Core infrastructure for pipeline management
 export * from './processors/base-processor';
-export * from './tracking/field-state';
+export { FieldState, CoreFieldState } from './tracking/field-state';
+
+// Core helpers (Ruby compatible)
+export * from './helpers';

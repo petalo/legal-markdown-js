@@ -31,7 +31,7 @@ import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { html as beautifyHtml } from 'js-beautify';
-import { logger } from '../utils/logger';
+import { logger } from '../../utils/logger';
 import { RESOLVED_PATHS } from '@constants';
 
 /**

@@ -7,8 +7,8 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { PdfGenerator } from '../../../src/generators/pdf-generator';
-import { PdfTemplates } from '../../../src/generators/pdf-templates';
+import { PdfGenerator } from '../../../../src/extensions/generators/pdf-generator';
+import { PdfTemplates } from '../../../../src/extensions/generators/pdf-templates';
 
 // Mock modules
 jest.mock('fs/promises');
@@ -225,7 +225,7 @@ describe('PDF Logo Detection System', () => {
 
     it('should generate PDF without logo when no cssPath provided', async () => {
       // Mock HTML generator
-      jest.doMock('../../../src/generators/html-generator', () => ({
+      jest.doMock('../../../../src/extensions/generators/html-generator', () => ({
         htmlGenerator: {
           generateHtml: jest.fn().mockResolvedValue('<html><body>Test</body></html>')
         }
@@ -258,7 +258,7 @@ describe('PDF Logo Detection System', () => {
       mockedFs.stat.mockResolvedValue({ size: 1000 } as any);
 
       // Mock HTML generator
-      jest.doMock('../../../src/generators/html-generator', () => ({
+      jest.doMock('../../../../src/extensions/generators/html-generator', () => ({
         htmlGenerator: {
           generateHtml: jest.fn().mockResolvedValue('<html><body>Test</body></html>')
         }
@@ -278,7 +278,7 @@ describe('PDF Logo Detection System', () => {
       mockedFs.readFile.mockRejectedValue(new Error('CSS file not found'));
 
       // Mock HTML generator
-      jest.doMock('../../../src/generators/html-generator', () => ({
+      jest.doMock('../../../../src/extensions/generators/html-generator', () => ({
         htmlGenerator: {
           generateHtml: jest.fn().mockResolvedValue('<html><body>Test</body></html>')
         }
@@ -298,7 +298,7 @@ describe('PDF Logo Detection System', () => {
       const customFooter = '<div>Custom Footer</div>';
 
       // Mock HTML generator
-      jest.doMock('../../../src/generators/html-generator', () => ({
+      jest.doMock('../../../../src/extensions/generators/html-generator', () => ({
         htmlGenerator: {
           generateHtml: jest.fn().mockResolvedValue('<html><body>Test</body></html>')
         }
@@ -319,7 +319,7 @@ describe('PDF Logo Detection System', () => {
 
   describe('Constants and Configuration', () => {
     it('should have correct template constants', () => {
-      const { PDF_TEMPLATE_CONSTANTS } = require('../../../src/constants/pdf');
+      const { PDF_TEMPLATE_CONSTANTS } = require('../../../../src/constants/pdf');
       
       expect(PDF_TEMPLATE_CONSTANTS.MAX_LOGO_SIZE).toBe(500 * 1024);
       expect(PDF_TEMPLATE_CONSTANTS.LOGO_HEIGHT).toBe('40px');

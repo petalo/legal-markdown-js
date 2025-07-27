@@ -24,8 +24,9 @@ imports `@import`, and generate professional PDFs ready to be shared.
 ## Goals
 
 - **Core Parity**: 1:1 compatibility with the original Ruby legal-markdown tool
+  in `src/core/`
 - **Node.js Extensions**: Additional functionality leveraging the Node.js
-  ecosystem
+  ecosystem in `src/extensions/`
 - **Type Safety**: Full TypeScript implementation with comprehensive type
   definitions
 - **Modern Tooling**: Built with modern development practices and tooling

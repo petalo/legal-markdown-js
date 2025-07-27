@@ -5,7 +5,7 @@
  * It handles logo integration, positioning, and consistent styling across all PDF documents.
  */
 
-import { PDF_TEMPLATE_CONSTANTS } from '../constants';
+import { PDF_TEMPLATE_CONSTANTS } from '@constants';
 
 /**
  * PDF Templates utility class for generating header and footer HTML templates

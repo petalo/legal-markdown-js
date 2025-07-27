@@ -35,7 +35,8 @@
  * ```
  */
 
-import { BaseProcessor, TrackedField } from '@core';
+import { BaseProcessor } from '@core';
+import { TrackedField } from '../tracking/field-tracker';
 import { LegalMarkdownOptions } from '@types';
 
 /**

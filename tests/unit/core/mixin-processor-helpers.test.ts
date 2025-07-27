@@ -16,7 +16,7 @@ describe('Mixin Processor - Helpers', () => {
    */
   beforeEach(() => {
     // Clear field tracker before each test
-    const { fieldTracker } = require('../../../src/tracking/field-tracker');
+    const { fieldTracker } = require('../../../src/extensions/tracking/field-tracker');
     fieldTracker.clear();
   });
 

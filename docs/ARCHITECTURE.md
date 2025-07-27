@@ -145,38 +145,50 @@ flowchart TD
 ### Core Module (`src/core/`)
 
 The core module maintains parity with the original Ruby Legal Markdown
-implementation:
+implementation with minimal, Ruby-compatible functionality:
 
 ```mermaid
 graph TB
     subgraph "Core Module Structure"
         CORE[core/index.ts]
 
-        subgraph "Parsers"
-            YAML_P[yaml-parser.ts]
+        subgraph "Helpers (Ruby Compatible)"
+            DATE_H[helpers/date-helpers.ts]
+            HELP_IDX[helpers/index.ts]
         end
 
-        subgraph "Processors"
-            HEADER_P[header-processor.ts]
-            CLAUSE_P[clause-processor.ts]
-            REF_P[reference-processor.ts]
-            IMPORT_P[import-processor.ts]
-            MIXIN_P[mixin-processor.ts]
-            DATE_P[date-processor.ts]
+        subgraph "Tracking Interfaces"
+            FIELD_STATE[tracking/field-state.ts]
+        end
+
+        subgraph "Processors (Legacy)"
+            HEADER_P[../processors/header-processor.ts]
+            CLAUSE_P[../processors/clause-processor.ts]
+            REF_P[../processors/reference-processor.ts]
+            IMPORT_P[../processors/import-processor.ts]
+            MIXIN_P[../processors/mixin-processor.ts]
+            DATE_P[../processors/date-processor.ts]
+        end
+
+        subgraph "Parsers"
+            YAML_P[../parsers/yaml-parser.ts]
         end
 
         subgraph "Exporters"
-            META_E[metadata-exporter.ts]
+            META_E[../exporters/metadata-exporter.ts]
         end
     end
 
-    CORE --> YAML_P
+    CORE --> DATE_H
+    CORE --> HELP_IDX
+    CORE --> FIELD_STATE
     CORE --> HEADER_P
     CORE --> CLAUSE_P
     CORE --> REF_P
     CORE --> IMPORT_P
     CORE --> MIXIN_P
     CORE --> DATE_P
+    CORE --> YAML_P
     CORE --> META_E
 ```
 
@@ -189,20 +201,82 @@ graph TB
     subgraph "Extensions Module"
         EXT[extensions/index.ts]
 
-        VALID[validators/]
-        FORMAT[formatters/]
-        UTIL[utilities/]
-        BATCH[batch-processor.ts]
-        RST[rst-parser.ts]
-        LATEX[latex-parser.ts]
+        subgraph "Advanced Helpers"
+            ADV_DATE[helpers/advanced-date-helpers.ts]
+            NUM_H[helpers/number-helpers.ts]
+            STR_H[helpers/string-helpers.ts]
+            HELP_IDX[helpers/index.ts]
+        end
+
+        subgraph "Generators"
+            HTML_G[generators/html-generator.ts]
+            PDF_G[generators/pdf-generator.ts]
+            PDF_T[generators/pdf-templates.ts]
+            GEN_IDX[generators/index.ts]
+        end
+
+        subgraph "Parsers"
+            CONTENT_D[parsers/content-detector.ts]
+            FALLBACK_P[parsers/fallback-parsers.ts]
+            PANDOC_L[parsers/pandoc-loader.ts]
+            PANDOC_P[parsers/pandoc-parser.ts]
+            PANDOC_F[parsers/pandoc-factory.ts]
+            PARS_IDX[parsers/index.ts]
+        end
+
+        subgraph "Field Tracking"
+            FIELD_T[tracking/field-tracker.ts]
+        end
+
+        subgraph "Pipeline System"
+            PIPELINE_M[pipeline/pipeline-manager.ts]
+            PIPELINE_C[pipeline/pipeline-config.ts]
+            PIPELINE_L[pipeline/pipeline-logger.ts]
+            PIPELINE_T[pipeline/types.ts]
+        end
+
+        subgraph "Advanced Processing"
+            AST_MIXIN[ast-mixin-processor.ts]
+            TEMPLATE_L[template-loops.ts]
+            BATCH[batch-processor.ts]
+            RST[rst-parser.ts]
+            LATEX[latex-parser.ts]
+        end
+
+        subgraph "Utilities"
+            VALID[validators/]
+            FORMAT[formatters/]
+            UTIL[utilities/]
+        end
     end
 
-    EXT --> VALID
-    EXT --> FORMAT
-    EXT --> UTIL
+    EXT --> ADV_DATE
+    EXT --> NUM_H
+    EXT --> STR_H
+    EXT --> HELP_IDX
+    EXT --> HTML_G
+    EXT --> PDF_G
+    EXT --> PDF_T
+    EXT --> GEN_IDX
+    EXT --> CONTENT_D
+    EXT --> FALLBACK_P
+    EXT --> PANDOC_L
+    EXT --> PANDOC_P
+    EXT --> PANDOC_F
+    EXT --> PARS_IDX
+    EXT --> FIELD_T
+    EXT --> PIPELINE_M
+    EXT --> PIPELINE_C
+    EXT --> PIPELINE_L
+    EXT --> PIPELINE_T
+    EXT --> AST_MIXIN
+    EXT --> TEMPLATE_L
     EXT --> BATCH
     EXT --> RST
     EXT --> LATEX
+    EXT --> VALID
+    EXT --> FORMAT
+    EXT --> UTIL
 ```
 
 ## Processing Details

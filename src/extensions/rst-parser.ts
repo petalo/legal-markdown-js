@@ -41,9 +41,9 @@
  * ```
  */
 
-import { ContentDetector } from '../parsers/content-detector';
-import { PandocFactory } from '../parsers/pandoc-factory';
-import { FallbackParsers } from '../parsers/fallback-parsers';
+import { ContentDetector } from './parsers/content-detector';
+import { PandocFactory } from './parsers/pandoc-factory';
+import { FallbackParsers } from './parsers/fallback-parsers';
 
 /**
  * Convert RST AST node to markdown

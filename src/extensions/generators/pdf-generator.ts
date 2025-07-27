@@ -34,10 +34,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as https from 'https';
 import * as http from 'http';
-import { logger } from '../utils/logger';
+import { logger } from '../../utils/logger';
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
 import { PdfTemplates } from './pdf-templates';
-import { PDF_TEMPLATE_CONSTANTS } from '../constants';
+import { PDF_TEMPLATE_CONSTANTS } from '@constants';
 
 /**
  * Configuration options for PDF generation

@@ -1,4 +1,4 @@
-import { FallbackParsers } from '../../../src/parsers/fallback-parsers';
+import { FallbackParsers } from '../../../../src/extensions/parsers/fallback-parsers';
 
 describe('FallbackParsers', () => {
   describe('convertRstBasic', () => {

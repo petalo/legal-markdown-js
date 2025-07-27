@@ -26,15 +26,12 @@ This separation ensures:
 
 ```text
 src/
-├── core/                    # 🎯 Core functionality (modern pipeline architecture)
-│   ├── processors/         # Base processor interfaces and core types
-│   │   └── base-processor.ts       # BaseProcessor interface for pipeline
+├── core/                    # 🎯 Core functionality (Ruby-compatible only)
+│   ├── helpers/            # Basic Ruby-compatible helpers only
+│   │   ├── date-helpers.ts         # Only @today basic functionality
+│   │   └── index.ts                # Core helper exports
 │   ├── tracking/           # Core field tracking interfaces
 │   │   └── field-state.ts          # FieldState and CoreFieldState types
-│   ├── parsers/            # YAML front matter parsing
-│   │   └── yaml-parser.ts          # YAML delimiter and content parsing
-│   ├── exporters/          # Metadata export functionality
-│   │   └── metadata-exporter.ts    # YAML/JSON metadata export
 │   └── index.ts            # Core module exports
 ├── processors/             # 🔄 Document processing components (legacy structure)
 │   ├── header-processor.ts         # l., ll., lll. header numbering
@@ -44,28 +41,42 @@ src/
 │   ├── mixin-processor.ts          # {{variable}} template substitution (legacy)
 │   └── date-processor.ts           # @today date processing
 ├── extensions/             # 🚀 Modern Node.js enhancements
+│   ├── helpers/            # Advanced helper functions (Node.js only)
+│   │   ├── advanced-date-helpers.ts  # Complex date operations
+│   │   ├── number-helpers.ts         # Currency, formatting
+│   │   ├── string-helpers.ts         # String manipulation
+│   │   └── index.ts                  # Extension helper exports
+│   ├── generators/         # Output generation (Node.js only)
+│   │   ├── html-generator.ts         # HTML output generation
+│   │   ├── pdf-generator.ts          # PDF generation
+│   │   ├── pdf-templates.ts          # PDF template system
+│   │   └── index.ts                  # Generator exports
+│   ├── parsers/            # Advanced format parsers (Node.js only)
+│   │   ├── content-detector.ts       # Auto-detect file formats
+│   │   ├── fallback-parsers.ts       # Fallback conversion
+│   │   ├── pandoc-loader.ts          # Pandoc integration
+│   │   ├── pandoc-parser.ts          # Pandoc processing
+│   │   ├── pandoc-factory.ts         # Pandoc factory
+│   │   └── index.ts                  # Parser exports
+│   ├── tracking/           # Enhanced field tracking (Node.js only)
+│   │   └── field-tracker.ts          # Advanced field tracking
 │   ├── pipeline/           # 🎯 Modern Pipeline System (v2.4.0+)
-│   │   ├── types.ts                # Pipeline interfaces and types
-│   │   ├── pipeline-manager.ts     # Core pipeline orchestration
-│   │   ├── pipeline-logger.ts      # Performance monitoring and logging
-│   │   └── pipeline-config.ts      # Default pipeline configurations
-│   ├── ast-mixin-processor.ts      # 🔬 AST-based mixin processing
-│   ├── template-loops.ts           # {{#items}}...{{/items}} loop processing
-│   ├── batch-processor.ts          # Multi-file processing
+│   │   ├── types.ts                  # Pipeline interfaces and types
+│   │   ├── pipeline-manager.ts       # Core pipeline orchestration
+│   │   ├── pipeline-logger.ts        # Performance monitoring and logging
+│   │   └── pipeline-config.ts        # Default pipeline configurations
+│   ├── ast-mixin-processor.ts        # 🔬 AST-based mixin processing
+│   ├── template-loops.ts             # {{#items}}...{{/items}} loop processing
+│   ├── batch-processor.ts            # Multi-file processing
+│   ├── rst-parser.ts                 # reStructuredText support
+│   ├── latex-parser.ts               # LaTeX document support
 │   ├── validators/         # Document validation utilities
-│   │   └── index.ts                # Document structure validation
+│   │   └── index.ts                  # Document structure validation
 │   ├── formatters/         # Advanced output formatting
-│   │   └── index.ts                # HTML/PDF output generation
+│   │   └── index.ts                  # HTML/PDF output generation
 │   ├── utilities/          # Analysis and utility functions
-│   │   └── index.ts                # Document analysis utilities
-│   ├── parsers/            # Additional format parsers
-│   │   ├── rst-parser.ts           # reStructuredText support
-│   │   └── latex-parser.ts         # LaTeX document support
+│   │   └── index.ts                  # Document analysis utilities
 │   └── index.ts            # Extensions module exports
-├── helpers/                # Helper function system
-│   ├── date-helpers.ts     # Date formatting and manipulation
-│   ├── number-helpers.ts   # Number and currency formatting
-│   └── string-helpers.ts   # String manipulation and formatting
 ├── cli/                    # Command-line interface
 │   ├── index.ts           # CLI entry point
 │   └── commands/          # Individual CLI commands
@@ -80,35 +91,51 @@ src/
 │   ├── extensions.ts      # Extension-specific types
 │   └── index.ts           # Type exports
 ├── index.ts                # Main entry point
-└── types.ts                # Legacy type definitions (deprecated)
-
-├── tracking/               # Field tracking functionality
-│   └── field-tracker.ts           # Enhanced field tracking system
-├── generators/             # Output generators
-│   ├── html-generator.ts           # HTML output generation
-│   └── pdf-generator.ts            # PDF generation utilities
-├── types/                  # TypeScript type definitions
-│   ├── core.ts            # Core types and interfaces
-│   ├── extensions.ts      # Extension-specific types
-│   └── index.ts           # Type exports
-├── index.ts                # Main entry point
 ├── browser.ts              # Browser entry point
 └── types.ts                # Legacy type definitions (deprecated)
 
 tests/
 ├── unit/                   # Unit tests
 │   ├── core/              # Core functionality tests
+│   │   ├── file-formats.unit.test.ts           # Core file format tests
+│   │   ├── yaml-parser.unit.test.ts            # YAML parsing tests
+│   │   ├── advanced-features.unit.test.ts      # Core feature tests
+│   │   ├── force-commands-parser.unit.test.ts  # Force commands tests
+│   │   └── mixin-processor-helpers.test.ts     # Core helper tests
 │   ├── processors/        # Legacy processor unit tests
+│   │   ├── header-processor.unit.test.ts       # Header processing tests
+│   │   ├── clause-processor.unit.test.ts       # Clause processing tests
+│   │   ├── reference-processor.unit.test.ts    # Reference processing tests
+│   │   ├── import-processor.unit.test.ts       # Import processing tests
+│   │   ├── mixin-processor.unit.test.ts        # Legacy mixin tests
+│   │   └── date-processor.unit.test.ts         # Date processing tests
 │   ├── extensions/        # Modern extension tests
-│   │   ├── ast-mixin-processor.unit.test.ts    # AST processing tests
-│   │   ├── pipeline-manager.unit.test.ts       # Pipeline system tests
-│   │   ├── template-loops.unit.test.ts         # Template loop tests
-│   │   └── batch-processor.unit.test.ts        # Batch processing tests
-│   ├── tracking/          # Field tracking tests
-│   │   └── field-tracker.unit.test.ts          # Enhanced tracking tests
-│   ├── helpers/           # Helper function tests
-│   ├── generators/        # Output generator tests
-│   └── parsers/           # Parser unit tests
+│   │   ├── helpers/       # Extension helper tests
+│   │   │   ├── date-helpers.test.ts             # Advanced date helper tests
+│   │   │   ├── number-helpers.test.ts           # Number helper tests
+│   │   │   └── string-helpers.test.ts           # String helper tests
+│   │   ├── generators/    # Generator tests
+│   │   │   ├── html-generator.unit.test.ts      # HTML generation tests
+│   │   │   ├── pdf-templates.unit.test.ts       # PDF template tests
+│   │   │   └── pdf-logo-detection.unit.test.ts # PDF logo tests
+│   │   ├── parsers/       # Parser tests
+│   │   │   ├── content-detector.test.ts         # Content detection tests
+│   │   │   ├── fallback-parsers.test.ts         # Fallback parser tests
+│   │   │   └── pandoc-loader.test.ts            # Pandoc loader tests
+│   │   ├── tracking/      # Field tracking tests
+│   │   │   └── field-tracker.unit.test.ts       # Enhanced tracking tests
+│   │   ├── ast-mixin-processor.unit.test.ts     # AST processing tests
+│   │   ├── pipeline-manager.unit.test.ts        # Pipeline system tests
+│   │   ├── template-loops.unit.test.ts          # Template loop tests
+│   │   ├── batch-processor.unit.test.ts         # Batch processing tests
+│   │   ├── rst-parser.unit.test.ts              # RST parser tests
+│   │   └── latex-parser.unit.test.ts            # LaTeX parser tests
+│   ├── exporters/         # Exporter tests
+│   │   └── metadata-exporter.unit.test.ts       # Metadata export tests
+│   ├── constants/         # Constants tests
+│   │   └── paths.unit.test.ts                   # Path configuration tests
+│   └── cli/               # CLI tests
+│       └── stdin-stdout.unit.test.ts            # CLI input/output tests
 ├── integration/           # Integration tests
 │   ├── core-functionality.test.ts              # Core workflow integration
 │   ├── legal-markdown.integration.test.ts      # Main processing integration
@@ -434,7 +461,18 @@ export class CustomProcessor implements BaseProcessor {
 
 ### Helper System Development
 
-When adding new helpers to the `src/helpers/` system:
+**Core Helpers (`src/core/helpers/`)**
+
+Core helpers should only include basic functionality that exists in the original
+Ruby legal-markdown gem:
+
+- Basic date functionality (@today)
+- Simple formatting that maintains Ruby compatibility
+- No complex Node.js specific features
+
+**Extension Helpers (`src/extensions/helpers/`)**
+
+When adding new helpers to the extensions system:
 
 1. **Pure Functions**: Helpers should be stateless and pure
 2. **Error Handling**: Graceful handling of invalid inputs
