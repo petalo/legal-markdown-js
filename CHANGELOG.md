@@ -1,3 +1,11 @@
+## [2.6.2](https://github.com/petalo/legal-markdown-js/compare/v2.6.1...v2.6.2) (2025-07-27)
+
+### Bug Fixes
+
+- preserve HTML spans in code blocks when field tracking is enabled
+  ([#25](https://github.com/petalo/legal-markdown-js/issues/25))
+  ([8cdec2d](https://github.com/petalo/legal-markdown-js/commit/8cdec2da7033cb06f601cbd4dea9478a83b3e566))
+
 ## [2.6.1](https://github.com/petalo/legal-markdown-js/compare/v2.6.0...v2.6.1) (2025-07-27)
 
 ### Bug Fixes
