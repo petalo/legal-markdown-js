@@ -199,7 +199,7 @@ program
         exportMetadata: options.exportYaml || options.exportJson,
         exportFormat: options.exportYaml ? 'yaml' : 'json',
         exportPath: options.outputPath,
-        basePath: process.cwd(),
+        basePath: RESOLVED_PATHS.DEFAULT_INPUT_DIR,
         verbose: options.debug,
         pdf: options.pdf,
         html: options.html,

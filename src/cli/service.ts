@@ -38,6 +38,7 @@ import {
   applyForceCommands,
 } from '../core/parsers/force-commands-parser';
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
+import { RESOLVED_PATHS } from '@constants';
 import chalk from 'chalk';
 import * as path from 'path';
 
@@ -95,6 +96,36 @@ export class CliService {
   }
 
   /**
+   * Resolves output file path using environment variables for relative paths
+   *
+   * @param {string} outputPath - The output path to resolve
+   * @returns {string} The resolved absolute output path
+   * @private
+   */
+  private resolveOutputPath(outputPath: string): string {
+    if (path.isAbsolute(outputPath)) {
+      return outputPath;
+    }
+
+    return resolveFilePath(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, outputPath);
+  }
+
+  /**
+   * Determines the output directory for generated files
+   *
+   * @param {string | undefined} outputPath - The output path (if provided)
+   * @returns {string} The directory to use for output files
+   * @private
+   */
+  private getOutputDirectory(outputPath: string | undefined): string {
+    if (outputPath && path.isAbsolute(outputPath)) {
+      return path.dirname(outputPath);
+    }
+
+    return RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+  }
+
+  /**
    * Processes a file from input path to output path
    *
    * @async
@@ -140,7 +171,7 @@ export class CliService {
         const result = processLegalMarkdown(content, effectiveOptions);
 
         if (outputPath) {
-          const resolvedOutputPath = resolveFilePath(this.options.basePath, outputPath);
+          const resolvedOutputPath = this.resolveOutputPath(outputPath);
           writeFileSync(resolvedOutputPath, result.content);
           this.log(`Output written to: ${resolvedOutputPath}`, 'success');
           console.log('Successfully processed');
@@ -233,7 +264,7 @@ export class CliService {
   ): Promise<void> {
     const baseOutputPath = outputPath || inputPath;
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
-    const dirName = path.dirname(baseOutputPath);
+    const dirName = this.getOutputDirectory(outputPath);
 
     // Get the directory of the input file for imports
     const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
