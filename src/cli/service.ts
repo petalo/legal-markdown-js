@@ -270,12 +270,19 @@ export class CliService {
     const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
     const inputDir = path.dirname(resolvedInputPath);
 
+    // Resolve CSS path if provided
+    let cssPath = (options as any).cssPath || options.css;
+    if (cssPath && !path.isAbsolute(cssPath)) {
+      // If CSS path is relative, resolve it against STYLES_DIR
+      cssPath = path.resolve(RESOLVED_PATHS.STYLES_DIR, cssPath);
+    }
+
     // Use the passed options (already processed for force commands)
     const generateOptions = {
       ...options,
       basePath: inputDir,
       includeHighlighting: options.highlight,
-      cssPath: (options as any).cssPath || options.css,
+      cssPath,
       title: options.title || baseName,
     };
 
