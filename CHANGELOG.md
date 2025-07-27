@@ -1,3 +1,15 @@
+## 2.7.0 (2025-07-27)
+
+- Merge branch 'main' into docs/playground-styles
+  ([6c2cc3e](https://github.com/petalo/legal-markdown-js/commit/6c2cc3e))
+- Merge pull request #28 from petalo/docs/playground-styles
+  ([70c3016](https://github.com/petalo/legal-markdown-js/commit/70c3016)),
+  closes [#28](https://github.com/petalo/legal-markdown-js/issues/28)
+- feat: include all commit types in changelog when version bumps
+  ([ced8181](https://github.com/petalo/legal-markdown-js/commit/ced8181))
+- docs(build): improve build script logging for deployment status
+  ([168ddd8](https://github.com/petalo/legal-markdown-js/commit/168ddd8))
+
 ## [2.6.4](https://github.com/petalo/legal-markdown-js/compare/v2.6.3...v2.6.4) (2025-07-27)
 
 ### Bug Fixes
