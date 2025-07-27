@@ -1,3 +1,21 @@
+## [2.6.2](https://github.com/petalo/legal-markdown-js/compare/v2.6.1...v2.6.2) (2025-07-27)
+
+### Bug Fixes
+
+- preserve HTML spans in code blocks when field tracking is enabled
+  ([#25](https://github.com/petalo/legal-markdown-js/issues/25))
+  ([8cdec2d](https://github.com/petalo/legal-markdown-js/commit/8cdec2da7033cb06f601cbd4dea9478a83b3e566))
+
+## [2.6.1](https://github.com/petalo/legal-markdown-js/compare/v2.6.0...v2.6.1) (2025-07-27)
+
+### Bug Fixes
+
+- use DEFAULT_INPUT_DIR and DEFAULT_OUTPUT_DIR environment variables in CLI
+  ([f625ebc](https://github.com/petalo/legal-markdown-js/commit/f625ebc8ae89dcea2ee0a9d43f0eaf473afc6452))
+- use DEFAULT_INPUT_DIR and DEFAULT_OUTPUT_DIR environment vars
+  ([5009627](https://github.com/petalo/legal-markdown-js/commit/500962716b640577555ff6eb3f9b376c27c1677a)),
+  closes [#24](https://github.com/petalo/legal-markdown-js/issues/24)
+
 # [2.6.0](https://github.com/petalo/legal-markdown-js/compare/v2.5.0...v2.6.0) (2025-07-27)
 
 ### Features

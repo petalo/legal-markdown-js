@@ -93,8 +93,22 @@ export class HtmlGenerator {
       pedantic: false,
     });
 
-    // Note: In modern marked versions, HTML is preserved by default
-    // Our inline spans should be maintained during parsing
+    // Create custom renderer to preserve HTML in code blocks
+    const renderer = new marked.Renderer();
+
+    // Override code block renderer to preserve HTML spans
+    renderer.code = function (args: { text: string; lang?: string; escaped?: boolean }) {
+      // Don't escape HTML tags - let them render as actual HTML
+      const { text, lang } = args;
+      const language = lang || '';
+      const className = language ? ` class="language-${language}"` : '';
+
+      // Return the code with HTML preserved (not escaped)
+      return `<pre><code${className}>${text}</code></pre>\n`;
+    };
+
+    // Set the custom renderer
+    marked.setOptions({ renderer });
   }
 
   /**
