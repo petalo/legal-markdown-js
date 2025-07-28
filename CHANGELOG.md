@@ -1,3 +1,15 @@
+## 2.8.0 (2025-07-28)
+
+- Merge branch 'main' into feat/interactive-cli
+  ([63a9e81](https://github.com/petalo/legal-markdown-js/commit/63a9e81))
+- Merge pull request #29 from petalo/feat/interactive-cli
+  ([424d932](https://github.com/petalo/legal-markdown-js/commit/424d932)),
+  closes [#29](https://github.com/petalo/legal-markdown-js/issues/29)
+- refactor: address Copilot review suggestions
+  ([c209f73](https://github.com/petalo/legal-markdown-js/commit/c209f73))
+- feat: add interactive CLI with guided prompts and comprehensive testing
+  ([d471ede](https://github.com/petalo/legal-markdown-js/commit/d471ede))
+
 ## 2.7.0 (2025-07-27)
 
 - Merge branch 'main' into docs/playground-styles
