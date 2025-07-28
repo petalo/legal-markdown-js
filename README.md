@@ -41,6 +41,7 @@ After installation, you'll have access to these commands:
 
 - **`legal-md`** - Standard command-line interface with options and flags
 - **`legal-md-ui`** - Interactive CLI with guided prompts and smart defaults
+- **`legal-md-setup`** - Configuration setup script for easy environment setup
 - **`legal2md`** - Alias for `legal-md` (for compatibility)
 
 ## 🚀 Try it Online
@@ -50,6 +51,22 @@ Markdown JS directly in your browser with live examples and real-time
 processing.
 
 ## Quick Start
+
+### Initial Setup (Optional)
+
+For the best experience, especially if you're new to Legal Markdown JS, run the
+setup script to configure your environment:
+
+```bash
+# Configure paths and directories (when installed globally)
+legal-md-setup
+
+# Or if installed locally in a project
+npm run setup-config
+```
+
+This creates a personalized configuration file that the tool will automatically
+find and use.
 
 ### Command Line Usage
 
@@ -250,9 +267,33 @@ npm run test:coverage
 Legal Markdown JS supports environment-based configuration for customizing file
 paths and directories.
 
-### Environment Variables
+### Quick Setup (Recommended)
 
-Create a `.env` file in your project root to customize default paths:
+For easy configuration setup, especially for non-technical users:
+
+```bash
+# Run the setup script (when installed globally)
+legal-md-setup
+
+# Or if installed locally in a project
+npm run setup-config
+```
+
+This script will:
+
+- Create a configuration directory at `~/.config/legal-markdown-js/`
+- Copy the configuration template with helpful comments
+- Provide clear instructions on how to customize your paths
+- Show you exactly where to edit your settings
+
+### Manual Configuration
+
+If you prefer manual setup, create a `.env` file in one of these locations (in
+order of precedence):
+
+1. **Current working directory**: `./.env`
+2. **Your home directory**: `~/.env`
+3. **Config directory**: `~/.config/legal-markdown-js/.env`
 
 ```bash
 # Copy the example configuration

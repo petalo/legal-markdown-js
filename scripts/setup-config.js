@@ -2,11 +2,11 @@
 
 /**
  * Setup Configuration Script
- * 
+ *
  * This script helps users set up their environment configuration by copying
  * the .env.example file to the user's config directory and providing clear
  * instructions on how to customize it.
- * 
+ *
  * Usage:
  *   npm run setup-config
  *   npx legal-markdown-js setup-config
@@ -24,7 +24,7 @@ const colors = {
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
   reset: '\x1b[0m',
-  bold: '\x1b[1m'
+  bold: '\x1b[1m',
 };
 
 function log(message, color = colors.reset) {
@@ -65,14 +65,16 @@ function setupUserConfig() {
     // Copy .env.example to user config directory
     log('📋 Copying configuration template...', colors.cyan);
     const envContent = fs.readFileSync(envExamplePath, 'utf8');
-    
+
     // Customize the content with a user-friendly header
-    const userEnvContent = `# Legal Markdown - Personal Configuration
-# This file was created by the setup script
+    const userEnvContent = `# This file was created by the setup script
 # Edit the paths below according to your needs
 #
 # Generated on: ${new Date().toLocaleString()}
 # Location: ${userEnvPath}
+#
+#
+#
 #
 
 ${envContent}`;
@@ -83,7 +85,7 @@ ${envContent}`;
     log('\n✅ Configuration setup completed successfully!', colors.bold + colors.green);
     log('\n📍 Your configuration file is located at:', colors.cyan);
     log(`   ${colors.bold}${userEnvPath}${colors.reset}`, colors.cyan);
-    
+
     log('\n📝 Next steps:', colors.bold + colors.blue);
     log('   1. Open the configuration file in your text editor', colors.blue);
     log('   2. Edit the paths to match your file locations', colors.blue);
@@ -98,7 +100,6 @@ ${envContent}`;
     log('\n🚀 You can now run:', colors.bold + colors.green);
     log('   legal-md-ui', colors.green);
     log('   (or npx legal-markdown-js legal-md-ui if installed locally)', colors.green);
-
   } catch (error) {
     log('\n❌ Error setting up configuration:', colors.red);
     log(`   ${error.message}`, colors.red);
