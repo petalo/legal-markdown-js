@@ -99,8 +99,11 @@ legal-md input.md output.md
 # Generate PDF with highlighting
 legal-md document.md --pdf --highlight
 
-# Process with custom CSS
-legal-md document.md --html --css styles.css
+# Process with custom CSS and archive source
+legal-md document.md --html --css styles.css --archive-source
+
+# Archive to custom directory
+legal-md document.md --archive-source ./processed
 ```
 
 #### Interactive CLI
@@ -122,6 +125,8 @@ The interactive CLI provides:
   formats
 - **🎨 CSS selection**: Choose from available stylesheets or proceed without
   custom styling
+- **📦 Source archiving**: Configure automatic archiving of source files after
+  successful processing
 - **📋 Configuration summary**: Review all settings before processing
 - **✅ Clear results**: See exactly which files were generated
 
@@ -190,6 +195,8 @@ Additional features available only in the Node.js version:
 - **Batch Processing**: Multi-file processing with concurrency control
 - **Field Tracking**: Enhanced field tracking with proper categorization for
   document review
+- **Source File Archiving**: Automatic archiving of source files after
+  successful processing with conflict resolution
 
 ## Architecture & Performance
 
@@ -333,10 +340,12 @@ STYLES_DIR=assets/css
 # Separate project structure
 DEFAULT_INPUT_DIR=documents/source
 DEFAULT_OUTPUT_DIR=documents/generated
+ARCHIVE_DIR=documents/archive
 
 # Absolute paths (useful for CI/CD)
 IMAGES_DIR=/var/lib/legal-markdown/images
 DEFAULT_OUTPUT_DIR=/var/lib/legal-markdown/output
+ARCHIVE_DIR=/var/lib/legal-markdown/archive
 ```
 
 ### Using Custom Paths in Code

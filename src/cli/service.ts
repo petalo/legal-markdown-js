@@ -38,7 +38,9 @@ import {
   applyForceCommands,
 } from '../core/parsers/force-commands-parser';
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS, PATHS } from '@constants';
+import { ArchiveManager } from '../utils/archive-manager';
+import { generateHighlightPath } from '../utils/file-naming';
 import chalk from 'chalk';
 import * as path from 'path';
 
@@ -65,6 +67,8 @@ export interface CliOptions extends LegalMarkdownOptions {
   css?: string;
   /** Document title */
   title?: string;
+  /** Archive source file after successful processing */
+  archiveSource?: string | boolean;
 }
 
 /**
@@ -187,6 +191,9 @@ export class CliService {
           this.log('Metadata:', 'info');
           console.log(JSON.stringify(result.metadata, null, 2));
         }
+
+        // Archive source file if requested
+        await this.handleArchiving(resolvedInputPath, content, result.content);
       }
     } catch (error) {
       this.handleError(error);
@@ -291,7 +298,7 @@ export class CliService {
       if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
         const normalHtmlPath = path.join(dirName, `${baseName}.html`);
-        const highlightedHtmlPath = path.join(dirName, `${baseName}.HIGHLIGHT.html`);
+        const highlightedHtmlPath = generateHighlightPath(path.join(dirName, `${baseName}.html`));
 
         const normalHtmlContent = await generateHtml(content, {
           ...generateOptions,
@@ -321,7 +328,7 @@ export class CliService {
       if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
         const normalPdfPath = path.join(dirName, `${baseName}.pdf`);
-        const highlightedPdfPath = path.join(dirName, `${baseName}.HIGHLIGHT.pdf`);
+        const highlightedPdfPath = generateHighlightPath(path.join(dirName, `${baseName}.pdf`));
 
         await generatePdfVersions(content, normalPdfPath, generateOptions);
 
@@ -333,6 +340,70 @@ export class CliService {
         await generatePdf(content, pdfPath, generateOptions);
         this.log(`PDF output written to: ${pdfPath}`, 'success');
       }
+    }
+
+    // Process markdown to get processed content for archiving
+    const markdownResult = processLegalMarkdown(content, generateOptions);
+
+    // Archive source file if requested
+    await this.handleArchiving(resolvedInputPath, content, markdownResult.content);
+  }
+
+  /**
+   * Handle archiving of source file after successful processing
+   *
+   * @private
+   * @param {string} inputPath - Path to the source file to archive
+   * @param {string} originalContent - Original file content
+   * @param {string} processedContent - Processed file content
+   * @returns {Promise<void>}
+   */
+  private async handleArchiving(
+    inputPath: string,
+    originalContent: string,
+    processedContent: string
+  ): Promise<void> {
+    // Only archive if the option is enabled
+    if (!this.options.archiveSource) {
+      return;
+    }
+
+    try {
+      const archiveManager = new ArchiveManager();
+
+      // Determine archive directory
+      let archiveDir: string;
+      if (typeof this.options.archiveSource === 'string') {
+        // Custom directory provided
+        archiveDir = this.options.archiveSource;
+      } else {
+        // Use default from environment/config
+        archiveDir = RESOLVED_PATHS.ARCHIVE_DIR;
+      }
+
+      // Use smart archiving that compares original vs processed content
+      const result = await archiveManager.smartArchiveFile(inputPath, {
+        archiveDir,
+        createDirectory: true,
+        conflictResolution: 'rename',
+        originalContent,
+        processedContent,
+      });
+
+      if (result.success) {
+        if (result.contentsIdentical) {
+          this.log(`Source file archived to: ${result.archivedPath}`, 'success');
+        } else {
+          this.log(`Original archived to: ${result.archivedOriginalPath}`, 'success');
+          this.log(`Processed archived to: ${result.archivedProcessedPath}`, 'success');
+        }
+      } else {
+        this.log(`Warning: Failed to archive source file: ${result.error}`, 'warn');
+      }
+    } catch (error) {
+      // Don't fail the entire operation if archiving fails
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.log(`Warning: Archive operation failed: ${errorMessage}`, 'warn');
     }
   }
 

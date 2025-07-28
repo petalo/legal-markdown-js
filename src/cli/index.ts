@@ -101,6 +101,7 @@ program
   .option('--enable-field-tracking', 'Add field tracking spans to markdown output')
   .option('--css <path>', 'Path to custom CSS file for HTML/PDF')
   .option('--title <title>', 'Document title for HTML/PDF')
+  .option('--archive-source [dir]', 'Archive source file after successful processing to directory')
   .action(async (input, output, options) => {
     try {
       // Handle stdin input
@@ -113,6 +114,7 @@ program
           highlight?: boolean;
           css?: string;
           title?: string;
+          archiveSource?: string | boolean;
         } = {
           debug: options.debug,
           yamlOnly: options.yaml,
@@ -136,6 +138,7 @@ program
           enableFieldTrackingInMarkdown: options.enableFieldTracking,
           css: options.css,
           title: options.title,
+          archiveSource: options.archiveSource,
         };
 
         const cliService = new CliService(cliOptions);
@@ -184,6 +187,7 @@ program
         highlight?: boolean;
         css?: string;
         title?: string;
+        archiveSource?: string | boolean;
       } = {
         debug: options.debug,
         yamlOnly: options.yaml,
@@ -207,6 +211,7 @@ program
         enableFieldTrackingInMarkdown: options.enableFieldTracking,
         css: options.css,
         title: options.title,
+        archiveSource: options.archiveSource,
       };
 
       const cliService = new CliService(cliOptions);

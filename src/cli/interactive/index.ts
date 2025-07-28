@@ -29,6 +29,7 @@ import { selectOutputFormats } from './prompts/output-format';
 import { promptProcessingOptions } from './prompts/processing-options';
 import { selectCssFile } from './prompts/css-selector';
 import { promptOutputFilename } from './prompts/filename';
+import { promptArchiveOptions } from './prompts/archive-options';
 import { confirmConfiguration } from './prompts/confirmation';
 import { InteractiveService } from './service';
 import { InteractiveConfig } from './types';
@@ -44,7 +45,8 @@ import { formatSuccessMessage, formatErrorMessage } from './utils/format-helpers
  * 4. Gathering processing options based on selected formats
  * 5. Optional CSS file selection for styling
  * 6. Output filename specification
- * 7. Configuration confirmation and processing execution
+ * 7. Archive options configuration
+ * 8. Configuration confirmation and processing execution
  *
  * @returns Promise that resolves when the interactive flow completes
  * @throws Error when processing fails or user cancels operation
@@ -69,16 +71,24 @@ async function runInteractiveMode(): Promise<void> {
     // Step 5: Enter output filename
     const outputFilename = await promptOutputFilename(inputFile);
 
+    // Step 6: Configure archive options
+    const archiveResult = await promptArchiveOptions();
+    const archiveOptions = {
+      enabled: archiveResult.enableArchiving,
+      directory: archiveResult.archiveDirectory,
+    };
+
     // Build configuration
     const config: InteractiveConfig = {
       inputFile,
       outputFilename,
       outputFormats,
       processingOptions,
+      archiveOptions,
       cssFile,
     };
 
-    // Step 6: Confirm configuration
+    // Step 7: Confirm configuration
     const confirmed = await confirmConfiguration(config);
 
     if (!confirmed) {
@@ -86,14 +96,14 @@ async function runInteractiveMode(): Promise<void> {
       return;
     }
 
-    // Step 7: Process files
+    // Step 8: Process files
     console.log(chalk.cyan('\n⏳ Processing files...\n'));
 
     const service = new InteractiveService(config);
-    const outputFiles = await service.processFile(inputFile);
+    const result = await service.processFile(inputFile);
 
-    // Step 8: Show results
-    console.log(formatSuccessMessage(outputFiles));
+    // Step 9: Show results
+    console.log(formatSuccessMessage(result.outputFiles, result.archiveResult));
   } catch (error) {
     if (error instanceof Error && error.message.includes('User force closed')) {
       console.log(chalk.yellow('\n👋 Goodbye!\n'));
