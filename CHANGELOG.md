@@ -1,3 +1,11 @@
+## <small>2.8.1 (2025-07-28)</small>
+
+- Merge pull request #30 from petalo/hotfix/dotenv-dependency
+  ([5d22ef6](https://github.com/petalo/legal-markdown-js/commit/5d22ef6)),
+  closes [#30](https://github.com/petalo/legal-markdown-js/issues/30)
+- fix: move dotenv from devDependencies to dependencies
+  ([9b515b6](https://github.com/petalo/legal-markdown-js/commit/9b515b6))
+
 ## 2.8.0 (2025-07-28)
 
 - Merge branch 'main' into feat/interactive-cli
