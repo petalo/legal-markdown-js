@@ -248,51 +248,16 @@ export function mergeFlattened(
       }
     } else {
       // Check for nested conflicts in both directions
-      let hasNestedConflict = false;
-      if (validateTypes) {
-        // Case 1: current has 'config.debug' but import has 'config'
-        // Import would overwrite nested structure with primitive
-        for (const currentKey of Object.keys(currentFlat)) {
-          if (currentKey.startsWith(key + '.')) {
-            try {
-              validateMergeCompatibility({}, importedValue, key);
-            } catch (error) {
-              if (logOperations) {
-                console.warn(
-                  `Type conflict for '${key}': ${error instanceof Error ? error.message : String(error)}`
-                );
-              }
-              hasNestedConflict = true;
-              stats.conflictsResolved++;
-              stats.conflictedFields.push(key);
-              break;
-            }
-          }
-        }
+      const nestedConflictResult = validateTypes
+        ? checkNestedConflicts(key, importedValue, currentFlat, logOperations)
+        : { hasConflict: false, conflictedField: '' };
 
-        // Case 2: current has 'enabled' but import has 'enabled.not'
-        // Import would overwrite primitive with nested structure
-        if (!hasNestedConflict) {
-          const baseKey = key.split('.')[0];
-          const hasBaseKey = Object.prototype.hasOwnProperty.call(currentFlat, baseKey);
-          if (hasBaseKey && baseKey !== key) {
-            const currentValue = currentFlat[baseKey];
-            try {
-              validateMergeCompatibility(currentValue, {}, baseKey);
-            } catch (error) {
-              if (logOperations) {
-                const message = error instanceof Error ? error.message : String(error);
-                console.warn(`Type conflict for '${baseKey}': ${message}`);
-              }
-              hasNestedConflict = true;
-              stats.conflictsResolved++;
-              stats.conflictedFields.push(baseKey);
-            }
-          }
-        }
+      if (nestedConflictResult.hasConflict) {
+        stats.conflictsResolved++;
+        stats.conflictedFields.push(nestedConflictResult.conflictedField);
       }
 
-      if (!hasNestedConflict) {
+      if (!nestedConflictResult.hasConflict) {
         // No conflict: add imported value
         mergedFlat[key] = importedValue;
         stats.propertiesAdded++;
@@ -509,4 +474,56 @@ export function mergeSequentially(
     metadata: currentMetadata,
     stats: cumulativeStats,
   };
+}
+
+/**
+ * Helper function to check for nested conflicts between current and imported fields
+ *
+ * @param key - The imported field key to check
+ * @param importedValue - The value being imported
+ * @param currentFlat - The flattened current metadata
+ * @param logOperations - Whether to log conflict details
+ * @returns Object indicating if there's a conflict and which field caused it
+ */
+function checkNestedConflicts(
+  key: string,
+  importedValue: any,
+  currentFlat: Record<string, any>,
+  logOperations: boolean
+): { hasConflict: boolean; conflictedField: string } {
+  // Case 1: current has 'config.debug' but import has 'config'
+  // Import would overwrite nested structure with primitive
+  for (const currentKey of Object.keys(currentFlat)) {
+    if (currentKey.startsWith(key + '.')) {
+      try {
+        validateMergeCompatibility({}, importedValue, key);
+      } catch (error) {
+        if (logOperations) {
+          console.warn(
+            `Type conflict for '${key}': ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+        return { hasConflict: true, conflictedField: key };
+      }
+    }
+  }
+
+  // Case 2: current has 'enabled' but import has 'enabled.not'
+  // Import would overwrite primitive with nested structure
+  const baseKey = key.split('.')[0];
+  const hasBaseKey = Object.prototype.hasOwnProperty.call(currentFlat, baseKey);
+  if (hasBaseKey && baseKey !== key) {
+    const currentValue = currentFlat[baseKey];
+    try {
+      validateMergeCompatibility(currentValue, {}, baseKey);
+    } catch (error) {
+      if (logOperations) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`Type conflict for '${baseKey}': ${message}`);
+      }
+      return { hasConflict: true, conflictedField: baseKey };
+    }
+  }
+
+  return { hasConflict: false, conflictedField: '' };
 }

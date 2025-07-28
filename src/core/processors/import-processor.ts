@@ -200,9 +200,16 @@ export function processPartialImports(
       );
     }
 
+    // Calculate remaining time and allocate granular timeouts
+    const remainingTime = timeoutMs - (Date.now() - startTime);
+    if (remainingTime < 1000) {
+      throw new Error('Insufficient time remaining for metadata merging.');
+    }
+
+    const perImportTimeout = Math.max(500, Math.floor(remainingTime / importedMetadataList.length));
     const mergeResult = mergeSequentially(initialMetadata, importedMetadataList, {
       ...mergeOptions,
-      timeoutMs: Math.max(1000, timeoutMs - (Date.now() - startTime)),
+      timeoutMs: perImportTimeout,
     });
     mergedMetadata = mergeResult.metadata;
 

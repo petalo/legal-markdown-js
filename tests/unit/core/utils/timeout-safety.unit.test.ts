@@ -131,8 +131,7 @@ describe('Timeout Safety Tests', () => {
       const expiredStartTime = Date.now() - 20; // 20ms ago
       
       expect(() => {
-        // Access the flattening function with expired time directly
-        const { flattenObject } = require('../../../../src/core/utils/object-flattener');
+        // Use the imported flattenObject function directly with expired time
         flattenObject(current, '', new WeakSet(), expiredStartTime, 10);
       }).toThrow(/timed out after 10ms/);
     });
