@@ -1,3 +1,15 @@
+## 2.10.0 (2025-07-28)
+
+- Merge pull request #32 from petalo/feat/store-processed-documents
+  ([282fe4c](https://github.com/petalo/legal-markdown-js/commit/282fe4c)),
+  closes [#32](https://github.com/petalo/legal-markdown-js/issues/32)
+- fix: add null safety checks for archive result paths
+  ([dcf0640](https://github.com/petalo/legal-markdown-js/commit/dcf0640))
+- fix: remove PDF/HTML generation from archive integration tests
+  ([f7f0652](https://github.com/petalo/legal-markdown-js/commit/f7f0652))
+- feat: implement smart archiving system for source files
+  ([50a6232](https://github.com/petalo/legal-markdown-js/commit/50a6232))
+
 ## 2.9.0 (2025-07-28)
 
 - feat: improve .env discovery and add user-friendly setup tools (#31)
