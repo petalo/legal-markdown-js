@@ -475,14 +475,12 @@ export function createHtmlPipeline(
   const pipeline = createDefaultPipeline();
 
   // Add HTML-specific configuration
-  if (options.includeHighlighting) {
-    // Force enable field tracking in markdown for HTML highlighting
-    pipeline.addListener({
-      onPipelineStart: config => {
-        config.fieldTrackingMode = 'distributed';
-      },
-    });
-  }
+  // Always enable field tracking for HTML generation (headers, mixins, etc.)
+  pipeline.addListener({
+    onPipelineStart: config => {
+      config.fieldTrackingMode = 'distributed';
+    },
+  });
 
   return pipeline;
 }
