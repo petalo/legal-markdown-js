@@ -15,6 +15,7 @@
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist coverage .turbo && tsc --build --clean",
     "cli": "ts-node -r tsconfig-paths/register src/cli/index.ts",
+    "cli:ui": "ts-node -r tsconfig-paths/register src/cli/interactive/index.ts",
     "commit": "cz",
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn src/cli/index.ts",
     "docs": "typedoc src --out docs/api",
@@ -70,6 +71,7 @@
   "jsdelivr": "dist/legal-markdown.umd.min.js",
   "unpkg": "dist/legal-markdown.umd.min.js",
   "dependencies": {
+    "@inquirer/prompts": "^7.7.1",
     "@types/js-beautify": "^1.14.3",
     "chalk": "^4.1.2",
     "cheerio": "^1.1.0",
@@ -118,7 +120,8 @@
   },
   "bin": {
     "legal-md": "./dist/cli/index.js",
-    "legal2md": "./dist/cli/index.js"
+    "legal2md": "./dist/cli/index.js",
+    "legal-md-ui": "./dist/cli/interactive/index.js"
   },
   "files": ["dist", "README.md", "LICENSE"],
   "engines": {

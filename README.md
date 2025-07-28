@@ -37,6 +37,12 @@ imports `@import`, and generate professional PDFs ready to be shared.
 npm install legal-markdown-js
 ```
 
+After installation, you'll have access to these commands:
+
+- **`legal-md`** - Standard command-line interface with options and flags
+- **`legal-md-ui`** - Interactive CLI with guided prompts and smart defaults
+- **`legal2md`** - Alias for `legal-md` (for compatibility)
+
 ## 🚀 Try it Online
 
 **[Live Playground](https://petalo.github.io/legal-markdown-js/)** - Try Legal
@@ -46,6 +52,8 @@ processing.
 ## Quick Start
 
 ### Command Line Usage
+
+#### Standard CLI
 
 ```bash
 # Basic document processing
@@ -57,6 +65,28 @@ legal-md document.md --pdf --highlight
 # Process with custom CSS
 legal-md document.md --html --css styles.css
 ```
+
+#### Interactive CLI
+
+For a guided, user-friendly experience, use the interactive CLI:
+
+```bash
+# Launch interactive mode
+legal-md-ui
+```
+
+The interactive CLI provides:
+
+- **📁 Smart file discovery**: Automatically scans your input directory for
+  supported files (`.md`, `.markdown`, `.rst`, `.tex`, `.latex`, `.txt`)
+- **🎯 Multiple output formats**: Select any combination of PDF, HTML, Markdown,
+  and metadata export
+- **⚙️ Conditional options**: Processing options adapt based on your selected
+  formats
+- **🎨 CSS selection**: Choose from available stylesheets or proceed without
+  custom styling
+- **📋 Configuration summary**: Review all settings before processing
+- **✅ Clear results**: See exactly which files were generated
 
 ### Programmatic Usage
 
@@ -106,6 +136,8 @@ All original Legal Markdown features are fully implemented:
 
 Additional features available only in the Node.js version:
 
+- **Interactive CLI**: User-friendly guided interface with smart file discovery
+  and configuration management
 - **Mixins System**: Template substitution and helpers with `{{variable}}`
   syntax
 - **AST-Based Processing**: Modern AST-based mixin processing to prevent text

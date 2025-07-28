@@ -1,5 +1,5 @@
 /**
- * @fileoverview PDF Generation Module for Legal Markdown Documents
+ * PDF Generation Module for Legal Markdown Documents
  *
  * This module provides functionality to convert processed Legal Markdown content
  * into professional PDF documents using Puppeteer for HTML-to-PDF conversion.
@@ -37,7 +37,7 @@ import * as http from 'http';
 import { logger } from '../../utils/logger';
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
 import { PdfTemplates } from './pdf-templates';
-import { PDF_TEMPLATE_CONSTANTS } from '@constants';
+import { PDF_TEMPLATE_CONSTANTS, RESOLVED_PATHS } from '@constants';
 
 /**
  * Configuration options for PDF generation
@@ -441,7 +441,7 @@ export class PdfGenerator {
               logoBase64 = await downloadAndEncodeImage(logoFilename);
             } else {
               // Handle local file
-              const logoPath = path.join(__dirname, '../assets/images', logoFilename);
+              const logoPath = path.join(RESOLVED_PATHS.IMAGES_DIR, logoFilename);
               logoBase64 = await loadAndEncodeImage(logoPath);
             }
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Path Constants from Environment Variables
+ * Path Constants from Environment Variables
  *
  * This module provides centralized access to path constants loaded from
  * environment variables via dotenv. It ensures consistent path usage
@@ -10,7 +10,7 @@ import { config } from 'dotenv';
 import * as path from 'path';
 
 // Load environment variables from .env file
-config();
+config({ debug: false });
 
 /**
  * Path constants loaded from environment variables
