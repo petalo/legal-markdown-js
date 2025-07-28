@@ -49,6 +49,12 @@ export const PATHS = {
    * @default "output"
    */
   DEFAULT_OUTPUT_DIR: (process.env.DEFAULT_OUTPUT_DIR || '').trim() || 'output',
+
+  /**
+   * Directory for archiving processed input files
+   * @default "processed"
+   */
+  ARCHIVE_DIR: (process.env.ARCHIVE_DIR || '').trim() || 'processed',
 } as const;
 
 /**
@@ -59,4 +65,5 @@ export const RESOLVED_PATHS = {
   STYLES_DIR: path.resolve(process.cwd(), PATHS.STYLES_DIR),
   DEFAULT_INPUT_DIR: path.resolve(process.cwd(), PATHS.DEFAULT_INPUT_DIR),
   DEFAULT_OUTPUT_DIR: path.resolve(process.cwd(), PATHS.DEFAULT_OUTPUT_DIR),
+  ARCHIVE_DIR: path.resolve(process.cwd(), PATHS.ARCHIVE_DIR),
 } as const;

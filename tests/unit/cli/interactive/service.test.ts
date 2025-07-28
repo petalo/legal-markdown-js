@@ -47,6 +47,9 @@ describe('InteractiveService', () => {
         fieldTracking: false,
         highlight: true,
       },
+      archiveOptions: {
+        enabled: false,
+      },
       cssFile: 'contract.petalo.css',
     };
   });
@@ -77,6 +80,7 @@ describe('InteractiveService', () => {
         enableFieldTrackingInMarkdown: false,
         css: '/test/styles/contract.petalo.css',
         title: 'processed-contract',
+        archiveSource: false,
       });
     });
 
@@ -156,10 +160,13 @@ describe('InteractiveService', () => {
         '/test/output/processed-contract.html'
       );
 
-      expect(result).toEqual([
-        '/test/output/processed-contract.pdf',
-        '/test/output/processed-contract.html',
-      ]);
+      expect(result).toEqual({
+        outputFiles: [
+          '/test/output/processed-contract.pdf',
+          '/test/output/processed-contract.html',
+        ],
+        archiveResult: undefined,
+      });
     });
 
     it('should process markdown output when selected', async () => {
@@ -178,7 +185,7 @@ describe('InteractiveService', () => {
         '/test/output/processed-contract.md'
       );
 
-      expect(result).toContain('/test/output/processed-contract.md');
+      expect(result.outputFiles).toContain('/test/output/processed-contract.md');
     });
 
     it('should process metadata export when selected', async () => {
@@ -192,9 +199,9 @@ describe('InteractiveService', () => {
       const service = new InteractiveService(configWithMetadata);
       const result = await service.processFile('/test/input/contract.md');
 
-      // Should create a new service instance for metadata export
-      expect(MockedCliService).toHaveBeenCalledTimes(2); // Original + metadata service
-      expect(result).toContain('/test/output/processed-contract-metadata.yaml');
+      // Should create a new service instance for metadata export  
+      expect(MockedCliService).toHaveBeenCalledTimes(3); // Non-archiving service + metadata service + constructor
+      expect(result.outputFiles).toContain('/test/output/processed-contract-metadata.yaml');
     });
 
     it('should handle processing errors', async () => {

@@ -262,8 +262,15 @@ describe('Path Validation Integration Tests', () => {
 
   describe('Environment variable precedence', () => {
     it('should prioritize environment variables over defaults', async () => {
+      // Mock env-discovery to not load any .env file
+      jest.doMock('../../src/utils/env-discovery', () => ({
+        discoverAndLoadEnv: jest.fn(() => null)
+      }));
+      
       process.env.IMAGES_DIR = 'env-images';
       process.env.STYLES_DIR = 'env-styles';
+      delete process.env.DEFAULT_INPUT_DIR; // Ensure it uses default
+      delete process.env.DEFAULT_OUTPUT_DIR; // Ensure it uses default
       
       // Re-import modules
       delete require.cache[require.resolve('../../src/constants/paths')];
@@ -273,9 +280,16 @@ describe('Path Validation Integration Tests', () => {
       expect(PATHS.STYLES_DIR).toBe('env-styles');
       expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Should use default
       expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('output'); // Should use default
+      
+      jest.dontMock('../../src/utils/env-discovery');
     });
 
     it('should handle mixed environment and default values', async () => {
+      // Mock env-discovery to not load any .env file
+      jest.doMock('../../src/utils/env-discovery', () => ({
+        discoverAndLoadEnv: jest.fn(() => null)
+      }));
+      
       process.env.IMAGES_DIR = 'custom-images';
       delete process.env.STYLES_DIR;
       process.env.DEFAULT_OUTPUT_DIR = 'custom-output';
@@ -289,6 +303,8 @@ describe('Path Validation Integration Tests', () => {
       expect(PATHS.STYLES_DIR).toBe('src/styles'); // Default
       expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Default
       expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('custom-output');
+      
+      jest.dontMock('../../src/utils/env-discovery');
     });
   });
 

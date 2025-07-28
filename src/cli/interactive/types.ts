@@ -38,6 +38,18 @@ export interface ProcessingOptions {
 }
 
 /**
+ * Archive options configuration
+ *
+ * Defines settings for archiving source files after successful processing.
+ */
+export interface ArchiveOptions {
+  /** Whether to enable archiving of source files */
+  enabled: boolean;
+  /** Custom archive directory (if specified) */
+  directory?: string;
+}
+
+/**
  * Complete interactive configuration
  *
  * Represents the full configuration collected from the user during
@@ -52,6 +64,8 @@ export interface InteractiveConfig {
   outputFormats: OutputFormat;
   /** Processing options configuration */
   processingOptions: ProcessingOptions;
+  /** Archive options configuration */
+  archiveOptions: ArchiveOptions;
   /** Optional path to CSS file for styling HTML/PDF output */
   cssFile?: string;
 }
@@ -69,4 +83,30 @@ export interface FileItem {
   path: string;
   /** Type indicator for menu rendering and behavior */
   type: 'file' | 'directory';
+}
+
+/**
+ * Processing result information
+ *
+ * Contains details about the processing operation including generated files
+ * and archiving results for display in success messages.
+ */
+export interface ProcessingResult {
+  /** Array of generated output file paths */
+  outputFiles: string[];
+  /** Archive operation results (if archiving was enabled) */
+  archiveResult?: {
+    /** Whether archiving was successful */
+    success: boolean;
+    /** Whether content was identical (single file archived) */
+    contentsIdentical?: boolean;
+    /** Path to archived file (for identical content) */
+    archivedPath?: string;
+    /** Path to archived original file (for different content) */
+    archivedOriginalPath?: string;
+    /** Path to archived processed file (for different content) */
+    archivedProcessedPath?: string;
+    /** Error message if archiving failed */
+    error?: string;
+  };
 }

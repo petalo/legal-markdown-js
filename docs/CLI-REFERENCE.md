@@ -10,6 +10,7 @@ Complete command-line interface documentation for Legal Markdown JS.
 - [Processing Options](#processing-options)
 - [Output Options](#output-options)
 - [Format Options](#format-options)
+- [Source File Archiving](#source-file-archiving)
 - [Advanced Options](#advanced-options)
 - [Input/Output Methods](#inputoutput-methods)
 - [Examples](#examples)
@@ -80,13 +81,14 @@ legal-md --version
 
 ### Format Generation
 
-| Option            | Description                           |
-| ----------------- | ------------------------------------- |
-| `--pdf`           | Generate PDF output                   |
-| `--html`          | Generate HTML output                  |
-| `--highlight`     | Enable field highlighting in HTML/PDF |
-| `--css <path>`    | Path to custom CSS file               |
-| `--title <title>` | Document title for HTML/PDF           |
+| Option                   | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| `--pdf`                  | Generate PDF output                                          |
+| `--html`                 | Generate HTML output                                         |
+| `--highlight`            | Enable field highlighting in HTML/PDF                        |
+| `--css <path>`           | Path to custom CSS file                                      |
+| `--title <title>`        | Document title for HTML/PDF                                  |
+| `--archive-source [dir]` | Archive source file after successful processing to directory |
 
 ### Advanced Processing
 
@@ -228,6 +230,89 @@ legal-md input.md --html --title "Legal Document"
 # Generate both PDF and HTML
 legal-md input.md --pdf --html --highlight --title "Contract"
 ```
+
+### Source File Archiving
+
+Legal Markdown JS features **smart archiving** that automatically moves source
+files to a specified directory after successful processing. The system
+intelligently handles different content scenarios to optimize file management.
+
+```bash
+# Archive to default directory (from ARCHIVE_DIR env var or 'processed')
+legal-md input.md --archive-source
+
+# Archive to custom directory
+legal-md input.md --archive-source ./completed
+
+# Archive with PDF generation
+legal-md input.md --pdf --archive-source ./processed-pdfs
+
+# Archive with custom directory path
+legal-md input.md --archive-source "/path/to/archive"
+```
+
+#### Smart Archiving Logic
+
+The archiving system compares the original file content with the processed
+content to determine the optimal archiving strategy:
+
+**Identical Content** (static documents):
+
+```bash
+# Original document with only metadata changes
+document.md → archive/document.md
+```
+
+When the processed content is identical to the original (e.g., documents with
+only frontmatter differences), only the original file is archived. This
+preserves reusable template files.
+
+**Different Content** (documents with imports/processing):
+
+```bash
+# Document with imports, mixins, or template processing
+document.md → archive/document.ORIGINAL.md   # Template file
+            → archive/document.PROCESSED.md  # Processed result
+```
+
+When processing changes the content (e.g., resolving imports, applying mixins),
+both versions are archived with clear suffixes:
+
+- `.ORIGINAL` - The source template file
+- `.PROCESSED` - The fully processed content
+
+#### Archive Features
+
+- **Smart Content Comparison**: Automatically detects whether content changed
+  during processing
+- **Dual Archiving**: Preserves both template and processed versions when
+  content differs
+- **Template Preservation**: Keeps reusable templates intact for static
+  documents
+- **Content Normalization**: Handles line ending and whitespace differences
+  intelligently
+- **Automatic Directory Creation**: Archive directories are created if they
+  don't exist
+- **Conflict Resolution**: If files with the same name exist, they are
+  automatically renamed (e.g., `document_1.md`, `document.ORIGINAL_1.md`)
+- **Error Handling**: Processing continues even if archiving fails (with
+  warnings)
+- **Path Resolution**: Supports both relative and absolute archive paths
+
+#### Configuration
+
+The default archive directory can be configured via environment variables:
+
+```bash
+# Set default archive directory
+export ARCHIVE_DIR="./processed"
+
+# Use in command
+legal-md input.md --archive-source  # Uses ./processed
+```
+
+See [Configuration Files](#configuration-files) for more details on environment
+setup.
 
 ## Force Commands
 
@@ -436,6 +521,45 @@ legal-md contract.md --pdf --css ./styles/contract.css --title "Service Agreemen
 legal-md contract.md --pdf --highlight --title "Contract Review"
 ```
 
+### Source File Archiving
+
+```bash
+# Archive source after processing (smart archiving)
+legal-md contract.md --archive-source
+
+# Archive to custom directory
+legal-md contract.md --archive-source ./completed-contracts
+
+# Process to PDF and archive source
+legal-md contract.md --pdf --highlight --archive-source ./processed
+
+# Archive with conflict resolution (automatic renaming)
+legal-md duplicate.md --archive-source ./archive  # Creates duplicate_1.md if duplicate.md exists
+```
+
+#### Smart Archiving Examples
+
+```bash
+# Static document (only frontmatter changes)
+legal-md static-template.md --archive-source ./archive
+# Result: archive/static-template.md (single file)
+
+# Document with imports and mixins
+legal-md contract-template.md --archive-source ./archive
+# Result: archive/contract-template.ORIGINAL.md (template)
+#         archive/contract-template.PROCESSED.md (processed)
+
+# PDF generation with smart archiving
+legal-md complex-document.md --pdf --highlight --archive-source ./processed
+# Archives both template and processed versions if content differs
+
+# Batch processing with smart archiving
+for file in templates/*.md; do
+  legal-md "$file" --pdf --archive-source ./archive
+done
+# Each file is intelligently archived based on content changes
+```
+
 ### Batch Processing
 
 ```bash
@@ -444,8 +568,13 @@ for file in *.md; do
   legal-md "$file" "processed-$file"
 done
 
-# Process with consistent options
-find ./documents -name "*.md" -exec legal-md --pdf --highlight {} \;
+# Process with consistent options and archive sources
+for file in *.md; do
+  legal-md "$file" --pdf --highlight --archive-source ./processed
+done
+
+# Process with find and archive
+find ./documents -name "*.md" -exec legal-md --pdf --highlight --archive-source ./archive {} \;
 ```
 
 ### Metadata Export

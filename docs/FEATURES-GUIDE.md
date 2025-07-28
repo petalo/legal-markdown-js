@@ -34,6 +34,11 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [PDF with Custom CSS](#pdf-with-custom-css)
   - [PDF Options](#pdf-options)
   - [PDF with Logo Headers/Footers](#pdf-with-logo-headersfooters)
+    - [Automatic Logo Detection](#automatic-logo-detection)
+    - [Manual Header/Footer Templates](#manual-headerfooter-templates)
+    - [Using Template Helpers](#using-template-helpers)
+    - [Logo Requirements](#logo-requirements)
+    - [Logo Integration Process](#logo-integration-process)
   - [Generate Both Versions](#generate-both-versions)
 - [HTML Generation](#html-generation)
   - [Basic HTML Generation](#basic-html-generation)
@@ -46,10 +51,27 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
 - [Batch Processing](#batch-processing)
   - [Batch Options](#batch-options)
 - [Force Commands](#force-commands)
-  - [Basic Usage](#basic-usage-2)
+  - [Basic Usage](#basic-usage)
   - [Template Variables in Commands](#template-variables-in-commands)
+  - [Available Commands](#available-commands)
+  - [Alternative Field Names](#alternative-field-names)
   - [Security and Validation](#security-and-validation)
   - [Command Priority](#command-priority)
+  - [Multi-line Commands](#multi-line-commands)
+  - [Use Cases](#use-cases)
+- [Smart File Archiving](#smart-file-archiving)
+  - [Archive Logic](#archive-logic)
+  - [Content Comparison](#content-comparison)
+  - [Archive Scenarios](#archive-scenarios)
+    - [Scenario 1: Static Documents](#scenario-1-static-documents)
+    - [Scenario 2: Template Documents](#scenario-2-template-documents)
+    - [Scenario 3: Conflict Resolution](#scenario-3-conflict-resolution)
+  - [Configuration and Usage](#configuration-and-usage)
+    - [Archiving: Basic Usage](#archiving-basic-usage)
+    - [Environment Configuration](#environment-configuration)
+    - [Programmatic Usage](#programmatic-usage)
+    - [Archive Features](#archive-features)
+    - [Archiving: Use Cases](#archiving-use-cases)
 - [Advanced Features](#advanced-features)
   - [Custom Header Formats](#custom-header-formats)
   - [Multi-language Support](#multi-language-support)
@@ -780,7 +802,7 @@ For complex configurations, use YAML multi-line syntax:
 force_commands: |
   --css corporate-theme.css
   --pdf --highlight --format A4
-  --export-yaml --export-json  
+  --export-yaml --export-json
   --title "{{document_type}} - Generated {{formatDate(today, "YYYY-MM-DD")}}"
   --output-name {{document_type}}_{{client}}_Final.pdf
 ---
@@ -815,6 +837,200 @@ force_commands: --export-json --export-yaml --pdf --highlight
 force_commands:
   --css {{client_code}}-theme.css --title "{{client_name}} - {{document_type}}"
 ```
+
+## Smart File Archiving
+
+Legal Markdown JS features an intelligent archiving system that automatically
+organizes processed files based on content analysis. The system compares
+original and processed content to determine the optimal archiving strategy,
+ensuring both templates and results are preserved appropriately.
+
+### Archive Logic
+
+The smart archiving system makes decisions based on content comparison:
+
+```typescript
+// Smart archiving workflow
+const originalContent = readFile('document.md');
+const processedContent = processLegalMarkdown(originalContent);
+
+if (contentsAreIdentical(originalContent, processedContent)) {
+  // Archive only the original file
+  archive('document.md' → 'archive/document.md');
+} else {
+  // Archive both versions with clear suffixes
+  archive('document.md' → 'archive/document.ORIGINAL.md');   // Template
+  writeFile('archive/document.PROCESSED.md', processedContent); // Result
+}
+```
+
+### Content Comparison
+
+The system performs intelligent content comparison that:
+
+- **Normalizes line endings** (handles Windows/Unix differences)
+- **Trims whitespace** (ignores formatting differences)
+- **Compares actual content** (focuses on meaningful changes)
+
+```typescript
+// Content normalization for comparison
+function areContentsIdentical(content1: string, content2: string): boolean {
+  const normalize = (content: string) => content.replace(/\r\n/g, '\n').trim();
+  return normalize(content1) === normalize(content2);
+}
+```
+
+### Archive Scenarios
+
+#### Scenario 1: Static Documents
+
+For documents where processing doesn't change the content (e.g., documents with
+only frontmatter):
+
+```yaml
+---
+title: Legal Notice
+client: Acme Corp
+date: 2024-01-01
+---
+# Legal Notice
+
+This is a static legal notice.
+```
+
+**Archive Result**:
+
+```bash
+archive/legal-notice.md  # Single file - template is preserved
+```
+
+#### Scenario 2: Template Documents
+
+For documents with imports, mixins, or variable substitution:
+
+```yaml
+---
+title: Service Agreement
+client: Acme Corp
+effective_date: 2024-01-01
+---
+# {{title}}
+
+@import clauses/standard-terms.md
+
+This agreement between Legal Services Inc. and {{client}}
+is effective {{formatDate(effective_date, "MMMM Do, YYYY")}}.
+
+[Confidentiality clause applies]{client.confidentiality_required}
+```
+
+**Archive Result**:
+
+```bash
+archive/service-agreement.ORIGINAL.md   # Template file
+archive/service-agreement.PROCESSED.md  # Processed result
+```
+
+#### Scenario 3: Conflict Resolution
+
+When files with the same name already exist in the archive:
+
+```bash
+# First document
+legal-md contract.md --archive-source ./archive
+# Creates: archive/contract.md
+
+# Second document with same name
+legal-md contract.md --archive-source ./archive
+# Creates: archive/contract_1.md (automatic renaming)
+
+# With different content (template processing)
+legal-md template.md --archive-source ./archive
+# Creates: archive/template.ORIGINAL_1.md
+#          archive/template.PROCESSED_1.md
+```
+
+### Configuration and Usage
+
+#### Archiving: Basic Usage
+
+```bash
+# Enable smart archiving with default directory
+legal-md document.md --archive-source
+
+# Custom archive directory
+legal-md document.md --archive-source ./completed
+
+# With PDF generation
+legal-md document.md --pdf --highlight --archive-source ./processed
+```
+
+#### Environment Configuration
+
+```bash
+# Set default archive directory
+export ARCHIVE_DIR="./processed-documents"
+
+# Use default directory
+legal-md document.md --archive-source
+```
+
+#### Programmatic Usage
+
+```typescript
+import { CliService } from 'legal-markdown-js';
+
+const cliService = new CliService({
+  archiveSource: './archive',
+});
+
+// Smart archiving happens automatically
+await cliService.processFile('template.md', 'output.md');
+```
+
+#### Archive Features
+
+- **Intelligent Decision Making**: Automatically determines whether to archive
+  one or two files
+- **Template Preservation**: Keeps original templates intact for reuse
+- **Result Preservation**: Saves processed content for reference
+- **Clear Naming**: Uses `.ORIGINAL` and `.PROCESSED` suffixes for clarity
+- **Conflict Resolution**: Automatic renaming when files already exist
+- **Error Handling**: Graceful handling of archive failures
+- **Cross-Platform**: Works consistently across different operating systems
+
+#### Archiving: Use Cases
+
+**Document Template Management**:
+
+```bash
+# Process multiple templates
+for template in templates/*.md; do
+  legal-md "$template" --pdf --archive-source ./completed
+done
+# Templates with imports → dual archiving
+# Static templates → single archiving
+```
+
+**Workflow Integration**:
+
+```bash
+# Process and archive in production pipeline
+legal-md contract-template.md --pdf --highlight --archive-source ./production-archive
+# Preserves both template (for future use) and result (for records)
+```
+
+**Quality Assurance**:
+
+```bash
+# Archive for review and compliance
+legal-md legal-document.md --pdf --export-json --archive-source ./compliance
+# Smart archiving helps maintain audit trail
+```
+
+The smart archiving system ensures that your document workflow maintains both
+the flexibility of templates and the integrity of processed results,
+automatically organizing files based on their actual content changes.
 
 ## Advanced Features
 
