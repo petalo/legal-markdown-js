@@ -1,3 +1,9 @@
+## 2.11.0 (2025-07-28)
+
+- feat: implement frontmatter merging system for imports (#33)
+  ([2cdaefe](https://github.com/petalo/legal-markdown-js/commit/2cdaefe)),
+  closes [#33](https://github.com/petalo/legal-markdown-js/issues/33)
+
 ## 2.10.0 (2025-07-28)
 
 - Merge pull request #32 from petalo/feat/store-processed-documents
