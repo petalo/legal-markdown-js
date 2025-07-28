@@ -109,7 +109,7 @@ export function processHeaders(
   const alternativeHeaderPattern = /^l(\d+)\.\s+(.*?)$/gm;
 
   // Track header numbering state
-  const headerNumbers: number[] = [0, 0, 0, 0, 0];
+  const headerNumbers: number[] = [0, 0, 0, 0, 0, 0];
 
   // Process all headers in a single pass to maintain correct numbering
   const matches: Array<{
@@ -255,6 +255,7 @@ function extractHeaderOptions(
     levelThree: metadata['level-three'] || '(%n)',
     levelFour: metadata['level-four'] || '(%n%c)',
     levelFive: metadata['level-five'] || '(%n%c%r)',
+    levelSix: metadata['level-six'] || 'Annex %r -',
     levelIndent: parseFloat(metadata['level-indent'] || '1.5'),
     noReset: processingOptions.noReset || metadata['no-reset'] || false,
     noIndent: processingOptions.noIndent || metadata['no-indent'] || false,
@@ -271,7 +272,7 @@ function extractHeaderOptions(
  * hierarchical numbering patterns.
  *
  * @private
- * @param {number} level - Header level (1-5)
+ * @param {number} level - Header level (1-6)
  * @param {string} text - Header text content
  * @param {number[]} headerNumbers - Array tracking header numbering state for all levels
  * @param {HeaderOptions} options - Header formatting options and templates
@@ -300,7 +301,7 @@ function formatHeader(
   previousLevel: number = 0
 ): string {
   // Validate level
-  if (level < 1 || level > 5) {
+  if (level < 1 || level > 6) {
     return `l${level}. ${text}`;
   }
 
@@ -489,7 +490,7 @@ function formatHeader(
  * or are invalid.
  *
  * @private
- * @param {number} level - Header level (1-5)
+ * @param {number} level - Header level (1-6)
  * @param {HeaderOptions} options - Header formatting options containing level templates
  * @returns {string} Format template string with placeholders
  * @example
@@ -526,6 +527,9 @@ function getFormatTemplate(level: number, options: HeaderOptions): string {
     case 5:
       template = options.levelFive;
       break;
+    case 6:
+      template = options.levelSix;
+      break;
     default:
       template = '%n.';
   }
@@ -543,6 +547,8 @@ function getFormatTemplate(level: number, options: HeaderOptions): string {
         return '(%n%c)';
       case 5:
         return '(%n%c%r)';
+      case 6:
+        return 'Annex %r -';
       default:
         return '%n.';
     }
@@ -645,7 +651,7 @@ function getRomanNumeral(num: number, lowercase: boolean = false): string {
  * Used when field tracking is enabled to provide consistent styling hooks.
  *
  * @private
- * @param {number} level - Header level (1-5)
+ * @param {number} level - Header level (1-6)
  * @returns {string} CSS class name for the level
  */
 function getLevelCssClass(level: number): string {
@@ -660,6 +666,8 @@ function getLevelCssClass(level: number): string {
       return 'legal-sub-subsection';
     case 5:
       return 'legal-paragraph';
+    case 6:
+      return 'legal-annex';
     default:
       return 'legal-header-unknown';
   }

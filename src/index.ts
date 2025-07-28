@@ -405,8 +405,9 @@ export async function generateHtml(
 ): Promise<string> {
   try {
     // Use HTML-optimized pipeline for better performance and field tracking
+    // Field tracking is always enabled for HTML generation
     const pipeline = createHtmlPipeline({
-      enableFieldTracking: options.includeHighlighting,
+      enableFieldTracking: true,
       includeHighlighting: options.includeHighlighting,
     });
 
@@ -415,8 +416,9 @@ export async function generateHtml(
     const pipelineOptions = {
       legalMarkdownOptions: {
         ...options,
-        enableFieldTracking: options.includeHighlighting,
-        enableFieldTrackingInMarkdown: options.includeHighlighting,
+        enableFieldTracking: true,
+        enableFieldTrackingInMarkdown: true, // Always enabled for HTML generation (structure)
+        _htmlGeneration: true, // Flag to indicate HTML generation context
       },
       enableStepProfiling: process.env.NODE_ENV === 'development',
     };
@@ -457,8 +459,8 @@ async function generateHtmlLegacy(
   // Process the legal markdown first (use async version for better RST/LaTeX support)
   const processed = await processLegalMarkdownAsync(content, {
     ...options,
-    enableFieldTracking: options.includeHighlighting,
-    enableFieldTrackingInMarkdown: options.includeHighlighting,
+    enableFieldTracking: true,
+    enableFieldTrackingInMarkdown: true, // Always enabled for HTML legacy generation (structure)
   });
 
   // Generate HTML
@@ -514,8 +516,9 @@ export async function generatePdf(
 ): Promise<Buffer> {
   try {
     // Use PDF-optimized pipeline (same as HTML pipeline for now)
+    // Field tracking is always enabled for PDF generation
     const pipeline = createHtmlPipeline({
-      enableFieldTracking: options.includeHighlighting,
+      enableFieldTracking: true,
       includeHighlighting: options.includeHighlighting,
     });
 
@@ -524,8 +527,9 @@ export async function generatePdf(
     const pipelineOptions = {
       legalMarkdownOptions: {
         ...options,
-        enableFieldTracking: options.includeHighlighting,
-        enableFieldTrackingInMarkdown: options.includeHighlighting,
+        enableFieldTracking: true,
+        enableFieldTrackingInMarkdown: true, // Always enabled for PDF generation (structure)
+        _htmlGeneration: true, // Flag to indicate PDF generation context
       },
       enableStepProfiling: process.env.NODE_ENV === 'development',
     };
@@ -571,8 +575,8 @@ async function generatePdfLegacy(
   // Process the legal markdown first (use async version for better RST/LaTeX support)
   const processed = await processLegalMarkdownAsync(content, {
     ...options,
-    enableFieldTracking: options.includeHighlighting,
-    enableFieldTrackingInMarkdown: options.includeHighlighting,
+    enableFieldTracking: true,
+    enableFieldTrackingInMarkdown: true, // Always enabled for PDF legacy generation (structure)
   });
 
   // Generate PDF

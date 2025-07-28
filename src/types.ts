@@ -199,6 +199,11 @@ export interface HeaderOptions {
   levelFive?: string;
 
   /**
+   * Format for level six headers
+   */
+  levelSix?: string;
+
+  /**
    * Indentation level for headers
    */
   levelIndent?: number;

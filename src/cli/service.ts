@@ -28,7 +28,7 @@
  * ```
  */
 
-import { processLegalMarkdown, generateHtml, generatePdf, generatePdfVersions } from '../index';
+import { processLegalMarkdown, generateHtml, generatePdf } from '../index';
 import { LegalMarkdownOptions } from '@types';
 import { readFileSync, writeFileSync, resolveFilePath } from '@lib';
 import { LegalMarkdownError, FileNotFoundError } from '@errors';
@@ -40,7 +40,6 @@ import {
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
 import { RESOLVED_PATHS, PATHS } from '@constants';
 import { ArchiveManager } from '../utils/archive-manager';
-import { generateHighlightPath } from '../utils/file-naming';
 import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -160,7 +159,7 @@ export class CliService {
       const effectiveOptions = this.processForceCommands(content, {
         ...this.options,
         basePath: inputDir,
-        enableFieldTracking: this.options.highlight,
+        enableFieldTracking: this.options.enableFieldTracking,
       });
 
       // Determine output format using effective options (after force commands)
@@ -215,7 +214,7 @@ export class CliService {
       // Process force commands and update options
       const effectiveOptions = this.processForceCommands(content, {
         ...this.options,
-        enableFieldTracking: this.options.highlight,
+        enableFieldTracking: this.options.enableFieldTracking,
       });
 
       const result = processLegalMarkdown(content, effectiveOptions);
@@ -298,27 +297,31 @@ export class CliService {
     if (generateOptions.html) {
       if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
-        const normalHtmlPath = path.join(dirName, `${baseName}.html`);
-        const highlightedHtmlPath = generateHighlightPath(path.join(dirName, `${baseName}.html`));
+        const htmlPath = path.join(dirName, `${baseName}.html`);
+        const highlightHtmlPath = path.join(dirName, `${baseName}.HIGHLIGHT.html`);
 
+        // Normal version (without highlight CSS)
         const normalHtmlContent = await generateHtml(content, {
           ...generateOptions,
           includeHighlighting: false,
         });
-        const highlightedHtmlContent = await generateHtml(content, {
+        writeFileSync(htmlPath, normalHtmlContent);
+        this.log(`HTML output written to: ${htmlPath}`, 'success');
+
+        // Highlighted version (with highlight CSS)
+        const highlightHtmlContent = await generateHtml(content, {
           ...generateOptions,
           includeHighlighting: true,
         });
-
-        writeFileSync(normalHtmlPath, normalHtmlContent);
-        writeFileSync(highlightedHtmlPath, highlightedHtmlContent);
-
-        this.log(`HTML output written to: ${normalHtmlPath}`, 'success');
-        this.log(`Highlighted HTML output written to: ${highlightedHtmlPath}`, 'success');
+        writeFileSync(highlightHtmlPath, highlightHtmlContent);
+        this.log(`Highlighted HTML output written to: ${highlightHtmlPath}`, 'success');
       } else {
-        // Generate single HTML
+        // Generate single HTML without highlighting
         const htmlPath = path.join(dirName, `${baseName}.html`);
-        const htmlContent = await generateHtml(content, generateOptions);
+        const htmlContent = await generateHtml(content, {
+          ...generateOptions,
+          includeHighlighting: false,
+        });
         writeFileSync(htmlPath, htmlContent);
         this.log(`HTML output written to: ${htmlPath}`, 'success');
       }
@@ -328,17 +331,29 @@ export class CliService {
     if (generateOptions.pdf) {
       if (generateOptions.highlight) {
         // Generate both normal and highlighted versions
-        const normalPdfPath = path.join(dirName, `${baseName}.pdf`);
-        const highlightedPdfPath = generateHighlightPath(path.join(dirName, `${baseName}.pdf`));
-
-        await generatePdfVersions(content, normalPdfPath, generateOptions);
-
-        this.log(`PDF output written to: ${normalPdfPath}`, 'success');
-        this.log(`Highlighted PDF output written to: ${highlightedPdfPath}`, 'success');
-      } else {
-        // Generate single PDF
         const pdfPath = path.join(dirName, `${baseName}.pdf`);
-        await generatePdf(content, pdfPath, generateOptions);
+        const highlightPdfPath = path.join(dirName, `${baseName}.HIGHLIGHT.pdf`);
+
+        // Normal version (without highlight CSS)
+        await generatePdf(content, pdfPath, {
+          ...generateOptions,
+          includeHighlighting: false,
+        });
+        this.log(`PDF output written to: ${pdfPath}`, 'success');
+
+        // Highlighted version (with highlight CSS)
+        await generatePdf(content, highlightPdfPath, {
+          ...generateOptions,
+          includeHighlighting: true,
+        });
+        this.log(`Highlighted PDF output written to: ${highlightPdfPath}`, 'success');
+      } else {
+        // Generate single PDF without highlighting
+        const pdfPath = path.join(dirName, `${baseName}.pdf`);
+        await generatePdf(content, pdfPath, {
+          ...generateOptions,
+          includeHighlighting: false,
+        });
         this.log(`PDF output written to: ${pdfPath}`, 'success');
       }
     }
