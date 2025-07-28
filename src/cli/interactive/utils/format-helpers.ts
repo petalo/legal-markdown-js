@@ -25,7 +25,7 @@ export function formatConfigSummary(config: InteractiveConfig): string {
   let summary = chalk.bold.cyan('\n📋 Configuration Summary:\n\n');
 
   // Input file
-  summary += `📁 ${chalk.bold('Input file:')} ${inputFile}\n`;
+  summary += `📄 ${chalk.bold('Input file:')} ${inputFile}\n`;
 
   // Output filename
   summary += `📝 ${chalk.bold('Output filename:')} ${outputFilename}\n`;

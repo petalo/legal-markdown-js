@@ -44,7 +44,8 @@
     "validate": "npm run typecheck && npm run lint && npm run test",
     "web": "node scripts/web-serve.js",
     "web:serve": "node scripts/web-serve.js",
-    "build:packages": "node scripts/build-packages.js"
+    "build:packages": "node scripts/build-packages.js",
+    "setup-config": "node scripts/setup-config.js"
   },
   "keywords": [
     "legal",
@@ -121,9 +122,11 @@
   "bin": {
     "legal-md": "./dist/cli/index.js",
     "legal2md": "./dist/cli/index.js",
-    "legal-md-ui": "./dist/cli/interactive/index.js"
+    "legal-md-ui": "./dist/cli/interactive/index.js",
+    "legal-md-setup": "./scripts/setup-config.js",
+    "legal-md-playground": "./scripts/web-serve.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "scripts", "README.md", "LICENSE"],
   "engines": {
     "node": ">=18.0.0"
   },
