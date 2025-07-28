@@ -100,13 +100,21 @@ export function formatSuccessMessage(
       message += chalk.bold('📦 Source file archiving:\n');
       if (archiveResult.contentsIdentical) {
         // Single file archived (content identical)
-        message += `   ${chalk.green('✓')} Source archived to: ${chalk.cyan(archiveResult.archivedPath!)}\n`;
-        message += `   ${chalk.gray('(Content unchanged - template preserved)')}\n`;
+        if (archiveResult.archivedPath) {
+          message += `   ${chalk.green('✓')} Source archived to: ${chalk.cyan(archiveResult.archivedPath)}\n`;
+          message += `   ${chalk.gray('(Content unchanged - template preserved)')}\n`;
+        }
       } else {
         // Two files archived (content different)
-        message += `   ${chalk.green('✓')} Template archived to: ${chalk.cyan(archiveResult.archivedOriginalPath!)}\n`;
-        message += `   ${chalk.green('✓')} Processed archived to: ${chalk.cyan(archiveResult.archivedProcessedPath!)}\n`;
-        message += `   ${chalk.gray('(Content changed - both versions preserved)')}\n`;
+        if (archiveResult.archivedOriginalPath) {
+          message += `   ${chalk.green('✓')} Template archived to: ${chalk.cyan(archiveResult.archivedOriginalPath)}\n`;
+        }
+        if (archiveResult.archivedProcessedPath) {
+          message += `   ${chalk.green('✓')} Processed archived to: ${chalk.cyan(archiveResult.archivedProcessedPath)}\n`;
+        }
+        if (archiveResult.archivedOriginalPath && archiveResult.archivedProcessedPath) {
+          message += `   ${chalk.gray('(Content changed - both versions preserved)')}\n`;
+        }
       }
     } else {
       message += chalk.bold('📦 Source file archiving:\n');
