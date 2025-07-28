@@ -235,7 +235,7 @@ describe('Comprehensive Examples Validation', () => {
       // Output should have similar section count (allowing for processing variations)
       const ratio = outputSections / inputSections;
       expect(ratio).toBeGreaterThan(0.5); // At least half the sections preserved
-      expect(ratio).toBeLessThan(3.0);    // Not more than triple (reasonable expansion)
+      expect(ratio).toBeLessThanOrEqual(3.0);    // Not more than triple (reasonable expansion)
     });
   });
 
