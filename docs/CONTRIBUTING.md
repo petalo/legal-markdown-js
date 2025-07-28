@@ -30,6 +30,10 @@ src/
 │   ├── helpers/            # Basic Ruby-compatible helpers only
 │   │   ├── date-helpers.ts         # Only @today basic functionality
 │   │   └── index.ts                # Core helper exports
+│   ├── utils/              # Core utility functions
+│   │   ├── object-flattener.ts     # Object flattening for granular merging
+│   │   ├── frontmatter-merger.ts   # YAML frontmatter merging logic
+│   │   └── reserved-fields-filter.ts # Security filtering for imports
 │   ├── tracking/           # Core field tracking interfaces
 │   │   └── field-state.ts          # FieldState and CoreFieldState types
 │   └── index.ts            # Core module exports
@@ -37,7 +41,7 @@ src/
 │   ├── header-processor.ts         # l., ll., lll. header numbering
 │   ├── clause-processor.ts         # [text]{condition} optional clauses
 │   ├── reference-processor.ts      # |reference| cross-references
-│   ├── import-processor.ts         # @import file inclusion
+│   ├── import-processor.ts         # @import file inclusion with frontmatter merging
 │   ├── mixin-processor.ts          # {{variable}} template substitution (legacy)
 │   └── date-processor.ts           # @today date processing
 ├── extensions/             # 🚀 Modern Node.js enhancements
@@ -101,6 +105,10 @@ tests/
 │   │   ├── yaml-parser.unit.test.ts            # YAML parsing tests
 │   │   ├── advanced-features.unit.test.ts      # Core feature tests
 │   │   ├── force-commands-parser.unit.test.ts  # Force commands tests
+│   │   ├── utils/          # Core utility tests
+│   │   │   ├── object-flattener.unit.test.ts   # Object flattening tests
+│   │   │   ├── frontmatter-merger.unit.test.ts # Frontmatter merging tests
+│   │   │   └── reserved-fields-filter.unit.test.ts # Security filtering tests
 │   │   └── mixin-processor-helpers.test.ts     # Core helper tests
 │   ├── processors/        # Legacy processor unit tests
 │   │   ├── header-processor.unit.test.ts       # Header processing tests
@@ -139,6 +147,7 @@ tests/
 ├── integration/           # Integration tests
 │   ├── core-functionality.test.ts              # Core workflow integration
 │   ├── legal-markdown.integration.test.ts      # Main processing integration
+│   ├── frontmatter-merge.integration.test.ts   # Frontmatter merging integration
 │   ├── template-loops.integration.test.ts      # Template loop integration
 │   ├── pdf-generation.integration.test.ts      # PDF generation integration
 │   ├── examples-validation.integration.test.ts # Example validation
@@ -618,6 +627,7 @@ Unit tests should:
 - Test pipeline components thoroughly
 - Verify AST processing correctness
 - Validate field tracking integration
+- Test frontmatter merging scenarios (conflicts, security, types)
 
 **Example Pipeline Component Test**:
 
@@ -689,6 +699,85 @@ describe('AST Mixin Processor', () => {
 });
 ```
 
+**Example Frontmatter Merging Test**:
+
+```typescript
+describe('Frontmatter Merger', () => {
+  it('should merge frontmatter with source always wins strategy', () => {
+    const current = {
+      title: 'Main Document',
+      client: { name: 'Main Client' },
+      liability_cap: 500000,
+    };
+    const imported = {
+      client: {
+        name: 'Imported Client', // Conflict - current wins
+        industry: 'Manufacturing', // New field - added
+      },
+      liability_cap: 1000000, // Conflict - current wins
+      payment_terms: 'Net 30', // New field - added
+    };
+
+    const result = mergeFlattened(current, imported);
+
+    expect(result.client.name).toBe('Main Client'); // Current wins
+    expect(result.client.industry).toBe('Manufacturing'); // Added from import
+    expect(result.liability_cap).toBe(500000); // Current wins
+    expect(result.payment_terms).toBe('Net 30'); // Added from import
+  });
+
+  it('should filter reserved fields for security', () => {
+    const current = { title: 'Document' };
+    const imported = {
+      title: 'Imported Title',
+      'level-one': 'HACKED %n', // Should be filtered
+      force_commands: 'rm -rf /', // Should be filtered
+      'meta-yaml-output': '/etc/passwd', // Should be filtered
+      legitimate_field: 'safe value', // Should be allowed
+    };
+
+    const result = mergeFlattened(current, imported);
+
+    expect(result.title).toBe('Document'); // Current wins
+    expect(result['level-one']).toBeUndefined(); // Filtered out
+    expect(result['force_commands']).toBeUndefined(); // Filtered out
+    expect(result['meta-yaml-output']).toBeUndefined(); // Filtered out
+    expect(result.legitimate_field).toBe('safe value'); // Allowed through
+  });
+
+  it('should handle type conflicts with validation', () => {
+    const current = {
+      count: 42,
+      config: { debug: true },
+    };
+    const imported = {
+      count: 'not a number', // Type conflict
+      config: 'not an object', // Type conflict
+      valid_field: 'string value', // No conflict
+    };
+
+    const result = mergeFlattened(current, imported, {
+      validateTypes: true,
+      returnStatistics: true,
+    });
+
+    expect(result.merged.count).toBe(42); // Original preserved
+    expect(result.merged.config.debug).toBe(true); // Original preserved
+    expect(result.merged.valid_field).toBe('string value'); // Added
+    expect(result.statistics.typeConflicts).toHaveLength(2); // Two conflicts logged
+  });
+
+  it('should handle timeout protection', () => {
+    const circularObj: any = { name: 'test' };
+    circularObj.self = circularObj; // Create circular reference
+
+    expect(() => {
+      mergeFlattened({}, { circular: circularObj }, { timeoutMs: 100 });
+    }).not.toThrow(); // Should handle gracefully with timeout
+  });
+});
+```
+
 ### Integration Testing
 
 Integration tests should:
@@ -727,6 +816,57 @@ This agreement is between |parties.0.name|.
     expect(result.metadata).toHaveProperty('title', 'Test Agreement');
     expect(result.exportedFiles).toHaveLength(1);
   });
+
+  it('should process documents with frontmatter merging', async () => {
+    // Create test files
+    const mainContent = `
+---
+title: "Enterprise Agreement"
+client:
+  name: "Default Client"    # Will be overridden
+liability_cap: 500000       # Main document wins
+---
+
+# {{title}}
+Client: {{client.name}}
+
+@import components/client-info.md
+@import components/standard-terms.md
+    `;
+
+    const clientInfoContent = `
+---
+client:
+  name: "Acme Corporation"  # Overrides main
+  industry: "Manufacturing" # Added to metadata
+liability_cap: 2000000      # Loses to main document
+payment_terms: "Net 15"    # Added to metadata
+---
+
+**Industry:** {{client.industry}}
+    `;
+
+    // Write test files
+    await fs.writeFile('./test-main.md', mainContent);
+    await fs.writeFile('./components/client-info.md', clientInfoContent);
+
+    const result = await processLegalMarkdown('./test-main.md', {
+      basePath: './',
+      exportMetadata: true,
+    });
+
+    // Verify frontmatter merging
+    expect(result.content).toContain('Enterprise Agreement');
+    expect(result.content).toContain('Acme Corporation'); // From import
+    expect(result.content).toContain('Manufacturing'); // From import
+    expect(result.metadata.liability_cap).toBe(500000); // Main wins
+    expect(result.metadata.client.name).toBe('Acme Corporation'); // Import wins
+    expect(result.metadata.payment_terms).toBe('Net 15'); // From import
+
+    // Cleanup
+    await fs.unlink('./test-main.md');
+    await fs.unlink('./components/client-info.md');
+  });
 });
 ```
 
@@ -745,6 +885,192 @@ End-to-end tests should:
 - **Snapshots**: Use Jest snapshots for complex output verification
 - **Mocking**: Mock external dependencies appropriately
 - **Cleanup**: Ensure tests clean up temporary files
+
+## 🔍 Logging and Debugging
+
+### Logging Levels
+
+Legal Markdown JS uses a comprehensive logging system with configurable levels
+to provide the right amount of information for different environments and use
+cases.
+
+#### Available Log Levels
+
+The system supports the following log levels (from most verbose to least
+verbose):
+
+1. **`debug`** - Detailed debugging information including:
+   - Pipeline step execution details
+   - Field tracking operations
+   - AST processing steps
+   - Template variable resolution
+   - Performance metrics for each processing step
+
+2. **`info`** - General informational messages including:
+   - Pipeline execution summaries
+   - Document processing completion
+   - File generation notifications
+   - Configuration loading status
+
+3. **`warn`** - Warning messages for non-critical issues:
+   - Missing optional fields
+   - Import file resolution issues
+   - Type conflicts in frontmatter merging
+   - Performance warnings
+
+4. **`error`** - Error messages for critical issues:
+   - Processing failures
+   - File system errors
+   - Invalid document structure
+   - Unrecoverable parsing errors
+
+5. **`none`** - Completely silent operation (no log output)
+
+#### Default Behavior
+
+- **Production/CLI**: Default to `error` level for quiet operation
+- **Development**: Use `debug` level when `NODE_ENV=development`
+- **Testing**: Use `none` level to avoid test output pollution
+
+#### Configuring Log Levels
+
+**Environment Variables:**
+
+```bash
+# Set general logging level
+export LOG_LEVEL=info
+
+# Enable development mode with debug logging
+export NODE_ENV=development
+
+# For completely silent operation
+export LOG_LEVEL=none
+```
+
+**Programmatic Configuration:**
+
+```typescript
+import { logger } from './src/utils/logger';
+import {
+  ConsolePipelineLogger,
+  LogLevel,
+} from './src/extensions/pipeline/pipeline-logger';
+
+// Configure general logger
+logger.setLogLevel('warn'); // Only warnings and errors
+
+// Configure pipeline logger
+const pipelineLogger = new ConsolePipelineLogger({
+  level: LogLevel.INFO,
+  enableMetrics: true,
+  enableColors: true,
+});
+```
+
+#### Logger Components
+
+**1. General Logger (`src/utils/logger.ts`)**
+
+- Handles application-wide logging
+- Used by generators, parsers, and utilities
+- Controlled by `LOG_LEVEL` environment variable
+
+**2. Pipeline Logger (`src/extensions/pipeline/pipeline-logger.ts`)**
+
+- Specialized for pipeline system logging
+- Provides detailed execution metrics
+- Includes performance profiling and step timing
+
+#### Development Guidelines
+
+**When to Use Each Level:**
+
+```typescript
+// DEBUG: Detailed processing information
+logger.debug('Processing mixin node', {
+  variable: 'client.name',
+  resolvedValue: 'Acme Corp',
+});
+
+// INFO: Important operation completion
+logger.info('PDF generated successfully', {
+  outputPath: './contract.pdf',
+  size: 207760,
+});
+
+// WARN: Non-critical issues that should be noted
+logger.warn('Missing optional field', {
+  field: 'client.phone',
+  document: 'contract.md',
+});
+
+// ERROR: Critical failures
+logger.error('Failed to parse YAML frontmatter', {
+  error: 'Invalid syntax at line 5',
+  file: 'document.md',
+});
+```
+
+**Pipeline Logging Example:**
+
+```typescript
+// Pipeline logs automatically include timing and metrics
+const pipeline = createDefaultPipeline();
+const result = await pipeline.execute(content, metadata, {
+  legalMarkdownOptions: { enableFieldTracking: true },
+  enableStepProfiling: true, // Enable detailed step timing
+});
+```
+
+**Log Output Examples:**
+
+```bash
+# ERROR level (default) - Only critical issues
+[ERROR] Failed to parse document: Invalid YAML syntax
+
+# INFO level - Operation summaries
+[INFO] PDF generated successfully { outputPath: "./contract.pdf", size: 207760 }
+
+# DEBUG level - Detailed pipeline information
+2025-07-28T18:56:15.901Z [PIPELINE] DEBUG Step 'mixins' starting { inputSize: "23.6 KB" }
+2025-07-28T18:56:15.902Z [PIPELINE] INFO Step 'mixins' completed {
+  "duration": "1ms",
+  "fieldsTracked": 12,
+  "success": true
+}
+```
+
+#### Testing with Logging
+
+**Disable logging in tests:**
+
+```typescript
+beforeEach(() => {
+  logger.setLogLevel('none');
+});
+```
+
+**Test log output:**
+
+```typescript
+it('should log processing errors', () => {
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+  // Code that should log an error
+  processInvalidDocument();
+
+  expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[ERROR]'));
+
+  consoleSpy.mockRestore();
+});
+```
+
+#### Performance Considerations
+
+- **Production**: Use `error` level to minimize I/O overhead
+- **Development**: Use `debug` level for comprehensive debugging
+- **CI/CD**: Use `warn` level to catch issues without excessive output
+- **Metrics**: Pipeline metrics can be disabled with `enableMetrics: false`
 
 ## 📝 Code Style and Standards
 

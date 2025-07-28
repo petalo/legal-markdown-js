@@ -48,6 +48,8 @@
  */
 // Global debug state for browser compatibility
 let debugEnabled = false;
+// Set log level based on environment - default to 'error' for quiet operation
+let logLevel = (typeof process !== 'undefined' && process.env && process.env.LOG_LEVEL) || 'error';
 
 export const logger = {
   /**
@@ -56,6 +58,14 @@ export const logger = {
    */
   setDebugEnabled: (enabled: boolean) => {
     debugEnabled = enabled;
+  },
+
+  /**
+   * Set the logging level
+   * @param {string} level - The log level ('debug', 'info', 'warn', 'error', 'none')
+   */
+  setLogLevel: (level: 'debug' | 'info' | 'warn' | 'error' | 'none') => {
+    logLevel = level;
   },
 
   /**
@@ -95,6 +105,7 @@ export const logger = {
    * ```
    */
   info: (message: string, data?: any) => {
+    if (logLevel === 'none' || logLevel === 'warn' || logLevel === 'error') return;
     console.info(`[INFO] ${message}`, data || '');
   },
 
@@ -112,6 +123,7 @@ export const logger = {
    * ```
    */
   warn: (message: string, data?: any) => {
+    if (logLevel === 'none' || logLevel === 'error') return;
     console.warn(`[WARN] ${message}`, data || '');
   },
 
@@ -129,6 +141,7 @@ export const logger = {
    * ```
    */
   error: (message: string, data?: any) => {
+    if (logLevel === 'none') return;
     console.error(`[ERROR] ${message}`, data || '');
   },
 };

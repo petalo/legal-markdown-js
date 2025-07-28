@@ -127,7 +127,7 @@ class YamlProcessor extends AbstractProcessor {
 }
 
 /**
- * Wrapper for partial imports processor
+ * Wrapper for partial imports processor with frontmatter merge support
  */
 class ImportsProcessor extends AbstractProcessor {
   readonly name = 'imports';
@@ -141,11 +141,27 @@ class ImportsProcessor extends AbstractProcessor {
     metadata: Record<string, any>,
     options: LegalMarkdownOptions
   ): string {
-    const result = processPartialImports(content, options.basePath);
+    // Use enhanced import processor with frontmatter merge support
+    const result = processPartialImports(content, options.basePath, metadata, options);
 
     // Store imported files in metadata for later reporting
     if (result.importedFiles && result.importedFiles.length > 0) {
       metadata._importedFiles = (metadata._importedFiles || []).concat(result.importedFiles);
+    }
+
+    // Merge imported frontmatter unless explicitly disabled
+    if (options.disableFrontmatterMerge !== true && result.mergedMetadata) {
+      // Merge the imported metadata into the current metadata
+      // The processPartialImports function already applies "source wins" strategy,
+      // so we can safely assign the merged metadata
+      Object.assign(metadata, result.mergedMetadata);
+
+      if (options.logImportOperations) {
+        this.debug(
+          'Pipeline: Integrated merged frontmatter',
+          `Added ${Object.keys(result.mergedMetadata).length} metadata fields from imports`
+        );
+      }
     }
 
     return result.content;
@@ -350,8 +366,8 @@ export function createDefaultPipeline(logger?: ConsolePipelineLogger): PipelineM
   const pipelineLogger =
     logger ||
     new ConsolePipelineLogger({
-      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO,
-      enableMetrics: true,
+      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR,
+      enableMetrics: process.env.NODE_ENV === 'development',
       enableColors: true,
     });
 

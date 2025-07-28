@@ -13,6 +13,8 @@
  * - Comprehensive processing options and flags
  * - Field highlighting and styling options
  * - Metadata export capabilities
+ * - Frontmatter merging from imported files
+ * - Import tracing and debugging options
  * - Error handling and user feedback
  * - Debug mode support
  *
@@ -34,6 +36,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import * as fs from 'fs';
 import { LegalMarkdownOptions } from '@types';
 import { CliService } from './service';
 import { FileNotFoundError } from '@errors';
@@ -99,6 +102,13 @@ program
   .option('--html', 'Generate HTML output')
   .option('--highlight', 'Enable field highlighting in HTML/PDF output')
   .option('--enable-field-tracking', 'Add field tracking spans to markdown output')
+  .option(
+    '--disable-frontmatter-merge',
+    'Disable automatic frontmatter merging from imported files (enabled by default)'
+  )
+  .option('--import-tracing', 'Add HTML comments showing imported content boundaries')
+  .option('--validate-import-types', 'Validate type compatibility during frontmatter merging')
+  .option('--log-import-operations', 'Log detailed frontmatter merge operations')
   .option('--css <path>', 'Path to custom CSS file for HTML/PDF')
   .option('--title <title>', 'Document title for HTML/PDF')
   .option('--archive-source [dir]', 'Archive source file after successful processing to directory')
@@ -136,6 +146,10 @@ program
           html: options.html,
           highlight: options.highlight,
           enableFieldTrackingInMarkdown: options.enableFieldTracking,
+          disableFrontmatterMerge: options.disableFrontmatterMerge,
+          importTracing: options.importTracing,
+          validateImportTypes: options.validateImportTypes,
+          logImportOperations: options.logImportOperations,
           css: options.css,
           title: options.title,
           archiveSource: options.archiveSource,
@@ -150,7 +164,7 @@ program
         if (options.stdout || !outputFile) {
           console.log(result);
         } else {
-          require('fs').writeFileSync(outputFile, result);
+          fs.writeFileSync(outputFile, result);
           console.error(`✅ Output written to: ${outputFile}`);
         }
         return;
@@ -170,6 +184,10 @@ program
         console.error(
           chalk.cyan('  legal-md document.md --html --highlight  ') +
             '# Generate HTML with highlighting'
+        );
+        console.error(
+          chalk.cyan('  legal-md doc.md --disable-frontmatter-merge') +
+            '# Disable imported frontmatter merging'
         );
         console.error(
           chalk.cyan('  cat document.md | legal-md --stdin       ') + '# Process from stdin'
@@ -209,6 +227,10 @@ program
         html: options.html,
         highlight: options.highlight,
         enableFieldTrackingInMarkdown: options.enableFieldTracking,
+        disableFrontmatterMerge: options.disableFrontmatterMerge,
+        importTracing: options.importTracing,
+        validateImportTypes: options.validateImportTypes,
+        logImportOperations: options.logImportOperations,
         css: options.css,
         title: options.title,
         archiveSource: options.archiveSource,

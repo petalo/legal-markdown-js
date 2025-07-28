@@ -43,6 +43,7 @@ import { ArchiveManager } from '../utils/archive-manager';
 import { generateHighlightPath } from '../utils/file-naming';
 import chalk from 'chalk';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Extended options interface for CLI operations
@@ -146,7 +147,7 @@ export class CliService {
       const resolvedInputPath = resolveFilePath(this.options.basePath, inputPath);
 
       // Check if file exists before trying to read it
-      if (!require('fs').existsSync(resolvedInputPath)) {
+      if (!fs.existsSync(resolvedInputPath)) {
         throw new FileNotFoundError(resolvedInputPath);
       }
 
