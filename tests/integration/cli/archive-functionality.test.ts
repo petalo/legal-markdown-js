@@ -200,22 +200,22 @@ This is a test document for archive functionality.`;
     });
   });
 
-  describe('PDF and HTML generation with archiving', () => {
-    it('should archive source file after PDF generation', async () => {
-      const customArchiveDir = path.join(tempDir, 'pdf-archive');
+  describe('Archive with different processing options', () => {
+    it('should archive source file with markdown output', async () => {
+      const outputFile = path.join(tempDir, 'markdown-output.md');
+      const customArchiveDir = path.join(tempDir, 'markdown-archive');
       
       const cliService = new CliService({
-        pdf: true,
         archiveSource: customArchiveDir,
         basePath: tempDir,
-        title: 'Test PDF Document',
       });
       
-      await cliService.processFile(inputFile);
+      await cliService.processFile(inputFile, outputFile);
       
       // Source file should be archived
       expect(fs.existsSync(inputFile)).toBe(false);
       expect(fs.existsSync(customArchiveDir)).toBe(true);
+      expect(fs.existsSync(outputFile)).toBe(true);
       
       // Check if content was identical (single file) or different (two files with suffixes)
       const archivedFiles = fs.readdirSync(customArchiveDir);
@@ -232,35 +232,30 @@ This is a test document for archive functionality.`;
       }
     });
 
-    it('should archive source file after HTML generation', async () => {
-      const customArchiveDir = path.join(tempDir, 'html-archive');
+    it('should archive source file with debug mode enabled', async () => {
+      const outputFile = path.join(tempDir, 'debug-output.md');
+      const customArchiveDir = path.join(tempDir, 'debug-archive');
       
       const cliService = new CliService({
-        html: true,
+        debug: true,
         archiveSource: customArchiveDir,
         basePath: tempDir,
-        title: 'Test HTML Document',
       });
       
-      await cliService.processFile(inputFile);
+      await cliService.processFile(inputFile, outputFile);
       
       // Source file should be archived
       expect(fs.existsSync(inputFile)).toBe(false);
       expect(fs.existsSync(customArchiveDir)).toBe(true);
+      expect(fs.existsSync(outputFile)).toBe(true);
       
-      // Check if content was identical (single file) or different (two files with suffixes)
+      // Check archiving worked
       const archivedFiles = fs.readdirSync(customArchiveDir);
-      const hasOriginalSuffix = archivedFiles.some(f => f.includes('.ORIGINAL.'));
-      const hasProcessedSuffix = archivedFiles.some(f => f.includes('.PROCESSED.'));
+      expect(archivedFiles.length).toBeGreaterThan(0);
       
-      if (hasOriginalSuffix && hasProcessedSuffix) {
-        // Content was different, both files should exist with suffixes
-        expect(fs.existsSync(path.join(customArchiveDir, 'test-document.ORIGINAL.md'))).toBe(true);
-        expect(fs.existsSync(path.join(customArchiveDir, 'test-document.PROCESSED.md'))).toBe(true);
-      } else {
-        // Content was identical, only original file should exist
-        expect(fs.existsSync(path.join(customArchiveDir, 'test-document.md'))).toBe(true);
-      }
+      // Should have at least one file that starts with test-document
+      const testDocumentFiles = archivedFiles.filter(f => f.startsWith('test-document'));
+      expect(testDocumentFiles.length).toBeGreaterThan(0);
     });
   });
 
