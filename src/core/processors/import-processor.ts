@@ -40,7 +40,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ImportProcessingResult } from '@types';
+import { ImportProcessingResult, LegalMarkdownOptions } from '../../types';
+import { parseYamlFrontMatter } from '../parsers/yaml-parser';
+import { mergeSequentially, MergeOptions } from '../utils/frontmatter-merger';
 
 /**
  * Processes partial imports in a LegalMarkdown document
@@ -49,9 +51,15 @@ import { ImportProcessingResult } from '@types';
  * It recursively resolves and includes external files, tracking all imported files
  * and handling errors gracefully when files cannot be found or loaded.
  *
+ * By default, it also extracts YAML frontmatter from imported files and merges it using
+ * the "source always wins" strategy with flattened granular merging. This can be disabled
+ * with the disableFrontmatterMerge option.
+ *
  * @param {string} content - The document content containing import statements
  * @param {string} [basePath] - Optional base path for resolving relative imports
- * @returns {ImportProcessingResult} Object containing processed content and list of imported files
+ * @param {Record<string, any>} [currentMetadata] - Current document metadata for merging
+ * @param {LegalMarkdownOptions} [options] - Processing options including frontmatter merge settings
+ * @returns {ImportProcessingResult} Object containing processed content, list of imported files, and merged metadata
  * @example
  * ```typescript
  * // Basic import processing
@@ -82,13 +90,39 @@ import { ImportProcessingResult } from '@types';
  * // Result will include content from existing.md and error comment for missing.md
  * ```
  */
-export function processPartialImports(content: string, basePath?: string): ImportProcessingResult {
+export function processPartialImports(
+  content: string,
+  basePath?: string,
+  currentMetadata?: Record<string, any>,
+  options?: LegalMarkdownOptions
+): ImportProcessingResult {
+  const startTime = Date.now();
+  const timeoutMs = 30000; // 30 seconds for complete import processing
   // Regular expression to match import statements
   // Format: @import [filename]
   const importPattern = /@import\s+(.+?)(?:\s|$)/g;
 
   const importedFiles: string[] = [];
+  const importedMetadataList: Record<string, any>[] = [];
+
+  // Configure merge options based on processing options
+  const mergeOptions: MergeOptions = {
+    filterReserved: true,
+    validateTypes: options?.validateImportTypes ?? true,
+    logOperations: options?.logImportOperations ?? false,
+    includeStats: options?.logImportOperations ?? false,
+    timeoutMs: Math.max(2000, timeoutMs - (Date.now() - startTime)), // Allocate remaining time for merge
+  };
+
   const processedContent = content.replace(importPattern, (match, filename) => {
+    // Timeout safety check during import processing
+    if (Date.now() - startTime > timeoutMs) {
+      const message =
+        `Import processing timed out after ${timeoutMs}ms. ` +
+        'This may indicate complex nested imports or circular references.';
+      throw new Error(message);
+    }
+
     // Clean up filename (remove quotes, etc.)
     const cleanFilename = filename.trim().replace(/['"]/g, '');
 
@@ -102,20 +136,96 @@ export function processPartialImports(content: string, basePath?: string): Impor
       // Track imported files
       importedFiles.push(importPath);
 
-      // Process nested imports
-      const nestedResult = processPartialImports(importedContent, path.dirname(importPath));
+      let processedImportContent = importedContent;
+      let importedMetadata: Record<string, any> = {};
+
+      // Extract frontmatter unless merging is explicitly disabled
+      if (options?.disableFrontmatterMerge !== true) {
+        const yamlResult = parseYamlFrontMatter(importedContent, false);
+        processedImportContent = yamlResult.content;
+        importedMetadata = yamlResult.metadata;
+
+        // Store metadata for later merging
+        if (Object.keys(importedMetadata).length > 0) {
+          importedMetadataList.push(importedMetadata);
+
+          if (options?.logImportOperations) {
+            const fieldCount = Object.keys(importedMetadata).length;
+            console.log(`Extracted ${fieldCount} metadata fields from ${cleanFilename}`);
+          }
+        }
+      }
+
+      // Process nested imports (pass along metadata and options)
+      const nestedResult = processPartialImports(
+        processedImportContent,
+        path.dirname(importPath),
+        importedMetadata,
+        options
+      );
+
       importedFiles.push(...nestedResult.importedFiles);
 
-      return nestedResult.content;
+      // Collect nested metadata if available
+      if (nestedResult.mergedMetadata && Object.keys(nestedResult.mergedMetadata).length > 0) {
+        importedMetadataList.push(nestedResult.mergedMetadata);
+      }
+
+      // Add import tracing comments if enabled
+      let tracedContent = nestedResult.content;
+      if (options?.importTracing) {
+        const relativeImportPath = path.relative(basePath || process.cwd(), importPath);
+        const startComment = `<!-- start import: ${relativeImportPath} -->`;
+        const endComment = `<!-- end import: ${relativeImportPath} -->`;
+        tracedContent = `${startComment}\n${tracedContent}\n${endComment}`;
+      }
+
+      return tracedContent;
     } catch (error) {
       console.error(`Error importing file ${cleanFilename}:`, error);
       return `<!-- Error importing ${cleanFilename} -->`;
     }
   });
 
+  // Merge all collected metadata unless explicitly disabled
+  let mergedMetadata: Record<string, any> | undefined;
+  const shouldMerge = options?.disableFrontmatterMerge !== true && importedMetadataList.length > 0;
+  if (shouldMerge) {
+    const initialMetadata = currentMetadata || {};
+
+    if (options?.logImportOperations) {
+      const currentFieldCount = Object.keys(initialMetadata).length;
+      console.log(
+        `Merging metadata from ${importedMetadataList.length} imports with ${currentFieldCount} current fields`
+      );
+    }
+
+    const mergeResult = mergeSequentially(initialMetadata, importedMetadataList, {
+      ...mergeOptions,
+      timeoutMs: Math.max(1000, timeoutMs - (Date.now() - startTime)),
+    });
+    mergedMetadata = mergeResult.metadata;
+
+    if (options?.logImportOperations && mergeResult.stats) {
+      console.log('Frontmatter merge completed:');
+      console.log(`  - Properties added: ${mergeResult.stats.propertiesAdded}`);
+      console.log(`  - Conflicts resolved: ${mergeResult.stats.conflictsResolved}`);
+      console.log(`  - Reserved fields filtered: ${mergeResult.stats.reservedFieldsFiltered}`);
+      if (mergeResult.stats.addedFields.length > 0) {
+        console.log(`  - Added fields: ${mergeResult.stats.addedFields.join(', ')}`);
+      }
+      if (mergeResult.stats.conflictedFields.length > 0) {
+        console.log(
+          `  - Conflicted fields (source wins): ${mergeResult.stats.conflictedFields.join(', ')}`
+        );
+      }
+    }
+  }
+
   return {
     content: processedContent,
     importedFiles,
+    mergedMetadata,
   };
 }
 

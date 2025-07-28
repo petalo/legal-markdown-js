@@ -161,6 +161,12 @@ graph TB
             FIELD_STATE[tracking/field-state.ts]
         end
 
+        subgraph "Frontmatter Utilities"
+            OBJ_FLATTENER[utils/object-flattener.ts]
+            FRONTMATTER_MERGER[utils/frontmatter-merger.ts]
+            RESERVED_FILTER[utils/reserved-fields-filter.ts]
+        end
+
         subgraph "Processors (Legacy)"
             HEADER_P[../processors/header-processor.ts]
             CLAUSE_P[../processors/clause-processor.ts]
@@ -182,6 +188,9 @@ graph TB
     CORE --> DATE_H
     CORE --> HELP_IDX
     CORE --> FIELD_STATE
+    CORE --> OBJ_FLATTENER
+    CORE --> FRONTMATTER_MERGER
+    CORE --> RESERVED_FILTER
     CORE --> HEADER_P
     CORE --> CLAUSE_P
     CORE --> REF_P
@@ -281,12 +290,14 @@ graph TB
 
 ## Processing Details
 
-### 1. YAML Front Matter Processing
+### 1. YAML Front Matter Processing with Frontmatter Merging
 
 ```mermaid
 sequenceDiagram
     participant Input
     participant Parser
+    participant ImportProcessor
+    participant FrontmatterMerger
     participant Validator
     participant Metadata
 
@@ -295,15 +306,119 @@ sequenceDiagram
     alt YAML Found
         Parser->>Parser: Extract YAML content
         Parser->>Validator: Validate YAML syntax
-        Validator->>Metadata: Return parsed metadata
+        Validator->>Metadata: Return main metadata
         Parser->>Parser: Extract remaining content
     else No YAML
         Parser->>Metadata: Return empty metadata
     end
-    Parser->>Input: {content, metadata}
+
+    Parser->>ImportProcessor: Process imports
+    alt Has Imports
+        ImportProcessor->>ImportProcessor: Extract imported frontmatter
+        ImportProcessor->>FrontmatterMerger: Merge with main metadata
+        FrontmatterMerger->>FrontmatterMerger: Apply "source always wins"
+        FrontmatterMerger->>FrontmatterMerger: Filter reserved fields
+        FrontmatterMerger->>Metadata: Return merged metadata
+    end
+
+    Parser->>Input: {content, merged_metadata}
 ```
 
-### 2. Header Processing Workflow
+### 2. Frontmatter Merging System
+
+The frontmatter merging system allows imported files to contribute YAML metadata
+to the main document using a "source always wins" strategy with granular
+object-level merging.
+
+```mermaid
+flowchart TD
+    START([Import Processing]) --> EXTRACT[Extract Imported Frontmatter]
+
+    EXTRACT --> SECURITY[Apply Security Filtering]
+    SECURITY --> RESERVED_FILTER[Filter Reserved Fields]
+    RESERVED_FILTER --> TYPE_VALIDATE[Optional Type Validation]
+
+    TYPE_VALIDATE --> FLATTEN[Flatten Objects to Dot Notation]
+    FLATTEN --> MERGE[Apply Granular Merge Strategy]
+
+    MERGE --> SOURCE_WINS{Conflict Detected?}
+    SOURCE_WINS -->|Yes| KEEP_SOURCE[Keep Main Document Value]
+    SOURCE_WINS -->|No| ADD_FIELD[Add Imported Field]
+
+    KEEP_SOURCE --> UNFLATTEN[Unflatten to Object Structure]
+    ADD_FIELD --> UNFLATTEN
+
+    UNFLATTEN --> TIMEOUT_CHECK[Timeout Safety Check]
+    TIMEOUT_CHECK --> COMPLETE[Return Merged Metadata]
+
+    subgraph "Security Layer"
+        RESERVED[Reserved Fields]
+        RESERVED --> LEVEL_HEADERS[level-one, level-two, etc.]
+        RESERVED --> FORCE_COMMANDS[force_commands, commands]
+        RESERVED --> META_OUTPUTS[meta-yaml-output, etc.]
+        RESERVED --> PIPELINE_CONFIG[pipeline-config]
+    end
+
+    subgraph "Merge Strategy"
+        STRATEGY[Source Always Wins Strategy]
+        STRATEGY --> MAIN_PRIORITY[Main document highest priority]
+        STRATEGY --> SEQUENTIAL[Sequential import processing]
+        STRATEGY --> GRANULAR[Property-level granular merging]
+    end
+
+    SECURITY --> RESERVED
+    MERGE --> STRATEGY
+```
+
+#### Frontmatter Security Architecture
+
+```mermaid
+classDiagram
+    class FrontmatterMerger {
+        +mergeFlattened(current, imported, options)
+        +mergeSequential(sources, options)
+        -applySecurityFiltering(metadata)
+        -validateTypes(current, imported)
+        -generateMergeStatistics()
+    }
+
+    class ObjectFlattener {
+        +flattenObject(obj, prefix, visited, startTime, timeout)
+        +unflattenObject(flattened, timeout)
+        +isReversible(obj)
+        -checkCircularReference(obj, visited)
+        -enforceTimeout(startTime, timeout)
+    }
+
+    class ReservedFieldsFilter {
+        +RESERVED_FIELDS: string[]
+        +filterReservedFields(metadata)
+        +isReservedField(fieldName)
+        -logFilteredFields(fields)
+    }
+
+    class MergeOptions {
+        +timeoutMs?: number
+        +validateTypes?: boolean
+        +logOperations?: boolean
+        +returnStatistics?: boolean
+    }
+
+    class MergeResult {
+        +merged: Record~string, any~
+        +statistics: MergeStatistics
+        +conflicts: ConflictInfo[]
+        +filtered: string[]
+        +typeConflicts: TypeConflict[]
+    }
+
+    FrontmatterMerger --> ObjectFlattener
+    FrontmatterMerger --> ReservedFieldsFilter
+    FrontmatterMerger --> MergeOptions
+    FrontmatterMerger --> MergeResult
+```
+
+### 3. Header Processing Workflow
 
 ```mermaid
 flowchart TD
@@ -606,6 +721,9 @@ graph TB
             NO_CLAUSES[--no-clauses]
             NO_REFS[--no-references]
             NO_IMPORTS[--no-imports]
+            DISABLE_FRONTMATTER[--disable-frontmatter-merge]
+            VALIDATE_TYPES[--validate-import-types]
+            LOG_IMPORTS[--log-import-operations]
             HTML_OUT[--html]
             PDF_OUT[--pdf]
             HIGHLIGHT[--highlight]
@@ -626,6 +744,9 @@ classDiagram
         +noReferences?: boolean
         +noImports?: boolean
         +noMixins?: boolean
+        +disableFrontmatterMerge?: boolean
+        +validateImportTypes?: boolean
+        +logImportOperations?: boolean
         +toMarkdown?: boolean
         +exportMetadata?: boolean
         +exportFormat?: 'yaml' | 'json'
@@ -656,6 +777,8 @@ classDiagram
     class ImportProcessingResult {
         +content: string
         +importedFiles: string[]
+        +mergedMetadata?: Record<string, any>
+        +frontmatterConflicts?: ConflictInfo[]
     }
 
     class MetadataExportResult {
@@ -814,12 +937,16 @@ flowchart TD
         XSS[XSS Prevention]
         INJECTION[Injection Prevention]
         FILE_ACCESS[Restricted File Access]
+        FRONTMATTER_SEC[Frontmatter Security Filtering]
+        TIMEOUT_PROTECTION[Timeout Protection]
         AUDIT[Dependency Auditing]
     end
 
     SAFE_EXEC --> XSS
     SAFE_EXEC --> INJECTION
     SAFE_EXEC --> FILE_ACCESS
+    SAFE_EXEC --> FRONTMATTER_SEC
+    SAFE_EXEC --> TIMEOUT_PROTECTION
     SAFE_EXEC --> AUDIT
 ```
 

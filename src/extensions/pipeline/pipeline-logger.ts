@@ -214,8 +214,12 @@ export class ConsolePipelineLogger implements PipelineLogger {
   };
 
   constructor(config: PipelineLoggerConfig = {}) {
+    // Default to ERROR level for quiet operation, can be overridden with LOG_LEVEL env var
+    const envLogLevel = typeof process !== 'undefined' && process.env && process.env.LOG_LEVEL;
+    const defaultLevel = (envLogLevel as LogLevel) || LogLevel.ERROR;
+
     this.config = {
-      level: config.level || LogLevel.INFO,
+      level: config.level || defaultLevel,
       enableMetrics: config.enableMetrics ?? true,
       enableColors: config.enableColors ?? (process.stdout.isTTY || false),
       enableTimestamps: config.enableTimestamps ?? true,

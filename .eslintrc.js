@@ -6,6 +6,7 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
   ],
   plugins: ['@typescript-eslint'],
   env: {
@@ -23,6 +24,12 @@ module.exports = {
     'prefer-const': 'error',
     'no-var': 'error',
     'no-unused-vars': 'off',
+    
+    // TypeScript specific rules
+    'no-redeclare': 'off', // Disable base rule for TypeScript
+    '@typescript-eslint/no-redeclare': 'error', // Use TypeScript version that understands overloads
+    '@typescript-eslint/no-unused-vars': 'warn',
+    '@typescript-eslint/no-explicit-any': 'warn', // Allow any but warn about it
     
     // Code style
     'max-len': ['warn', { code: 100, ignoreComments: true }],

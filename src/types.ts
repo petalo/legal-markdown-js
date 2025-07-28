@@ -122,6 +122,32 @@ export interface LegalMarkdownOptions {
    * When true, adds HTML spans for field tracking in markdown
    */
   enableFieldTrackingInMarkdown?: boolean;
+
+  /**
+   * Disable automatic frontmatter merging from imported files
+   * When true, prevents frontmatter from imported files being merged into the main document's metadata
+   * By default, frontmatter merging is enabled with "source always wins" strategy
+   */
+  disableFrontmatterMerge?: boolean;
+
+  /**
+   * Add import tracing comments to processed content
+   * When true, adds HTML comments indicating the start/end of imported content
+   * Useful for debugging import processing
+   */
+  importTracing?: boolean;
+
+  /**
+   * Validate type compatibility during frontmatter merging
+   * When true, logs warnings for type conflicts between current and imported metadata
+   */
+  validateImportTypes?: boolean;
+
+  /**
+   * Log detailed information about frontmatter merge operations
+   * When true, outputs detailed merge statistics and field tracking information
+   */
+  logImportOperations?: boolean;
 }
 
 /**
@@ -216,6 +242,12 @@ export interface ImportProcessingResult {
    * List of imported files
    */
   importedFiles: string[];
+
+  /**
+   * Merged metadata from all imported files
+   * Available when frontmatter merging is enabled
+   */
+  mergedMetadata?: Record<string, any>;
 }
 
 /**

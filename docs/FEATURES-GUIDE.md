@@ -10,6 +10,7 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [Cross-References](#cross-references)
   - [Optional Clauses](#optional-clauses)
   - [Partial Imports](#partial-imports)
+  - [Frontmatter Merging](#frontmatter-merging)
 - [Mixins System](#mixins-system)
   - [Basic Variable Substitution](#basic-variable-substitution)
   - [Nested Object Access](#nested-object-access)
@@ -167,6 +168,209 @@ l. Terms and Conditions
 
 @import boilerplate/footer.md
 ```
+
+### Frontmatter Merging
+
+Legal Markdown JS automatically merges YAML frontmatter from imported files into
+the main document's metadata using a "source always wins" strategy. This enables
+modular document composition with metadata inheritance.
+
+#### Basic Frontmatter Merging
+
+**Main Document** (`contract.md`):
+
+```yaml
+---
+title: "Professional Services Agreement"
+client:
+  name: "Default Client"  # Will be overridden by import
+liability_cap: 500000     # Main document wins over imports
+payment_terms: "Net 45"  # Main document preference
+---
+
+# {{title}}
+
+@import components/client-info.md
+@import components/standard-terms.md
+```
+
+**Component** (`components/client-info.md`):
+
+```yaml
+---
+client:
+  name: "Acme Corporation"     # Overrides main document
+  industry: "Manufacturing"   # New field, added to metadata
+  contact: "legal@acme.com"   # New nested field
+liability_cap: 2000000        # Loses to main document
+payment_terms: "Net 15"      # Loses to main document
+---
+
+**Client:** {{client.name}} ({{client.industry}})
+**Contact:** {{client.contact}}
+```
+
+**Result**: The main document's values for `liability_cap` and `payment_terms`
+are preserved, while `client.name`, `client.industry`, and `client.contact` are
+merged from the imported file.
+
+#### Granular Property-Level Merging
+
+Frontmatter merging works at the property level for nested objects:
+
+```yaml
+# Main document
+config:
+  debug: true
+  server: "production"
+  database:
+    host: "main-db"
+
+# Import
+config:
+  debug: false           # Conflict - main wins
+  timeout: 30           # New field - added
+  database:
+    host: "import-db"   # Conflict - main wins
+    port: 5432          # New field - added
+
+# Merged result
+config:
+  debug: true           # From main (wins conflict)
+  server: "production"  # From main (preserved)
+  timeout: 30           # From import (added)
+  database:
+    host: "main-db"     # From main (wins conflict)
+    port: 5432          # From import (added)
+```
+
+#### Sequential Import Processing
+
+When multiple imports have conflicting metadata, the first import wins over
+subsequent imports (but main document always wins over all imports):
+
+```yaml
+# main.md
+shared_field: "main_value"
+
+# First import
+shared_field: "first_value"  # Loses to main
+unique_field: "from_first"
+
+# Second import
+shared_field: "second_value" # Loses to main
+unique_field: "from_second"  # Loses to first import
+
+# Final result
+shared_field: "main_value"   # Main document wins
+unique_field: "from_first"   # First import wins
+```
+
+#### Reserved Fields Security
+
+For security, certain fields are automatically filtered and cannot be overridden
+by imports:
+
+```yaml
+# Malicious import attempt (automatically filtered)
+level-one: 'HACKED %n' # Header configuration (filtered)
+force_commands: 'rm -rf /' # Command injection (filtered)
+meta-yaml-output: '/etc/passwd' # Path traversal (filtered)
+pipeline-config: { ... } # System configuration (filtered)
+
+# Only safe fields are merged
+legitimate_field: 'safe value' # Allowed through
+```
+
+Reserved fields include:
+
+- `level-one`, `level-two`, etc. (header configuration)
+- `force_commands`, `commands` (command injection prevention)
+- `meta-yaml-output`, `meta-json-output` (path traversal prevention)
+- `pipeline-config` (system configuration protection)
+
+#### Advanced Frontmatter Features
+
+**Type Validation**: Enable strict type checking during merge operations:
+
+```bash
+# Validate types during frontmatter merging
+legal-markdown contract.md --validate-import-types
+```
+
+If enabled, type conflicts are detected and logged:
+
+```yaml
+# Main document
+count: 42
+
+# Import with type conflict
+count: "not a number"    # Type conflict - main value preserved
+
+# Result with type validation
+count: 42                # Preserved with warning logged
+```
+
+**Import Operation Logging**: Track detailed merge operations:
+
+```bash
+# Log detailed frontmatter merge operations
+legal-markdown contract.md --log-import-operations
+```
+
+**Disable Frontmatter Merging**: Turn off automatic merging:
+
+```bash
+# Process without frontmatter merging
+legal-markdown contract.md --disable-frontmatter-merge
+```
+
+#### Practical Use Cases
+
+**Legal Document Assembly**:
+
+- **Standard Terms**: Common clauses with default values
+- **Client Terms**: Client-specific overrides and additions
+- **Project Terms**: Project-specific parameters
+- **Regulatory Terms**: Jurisdiction-specific requirements
+
+**Template Composition**:
+
+- **Base Templates**: Core document structure with defaults
+- **Component Library**: Reusable sections with metadata
+- **Customization Layers**: Client/project specific modifications
+- **Compliance Overlays**: Industry-specific requirements
+
+**Example: Enterprise Contract Assembly**:
+
+```yaml
+# Main enterprise contract
+---
+title: "Enterprise Master Agreement"
+liability_cap: 10000000  # Enterprise-level protection
+payment_terms: "Net 15"  # Fast payment for enterprise
+---
+
+@import components/client-specific-terms.md  # Override defaults
+@import components/standard-legal-terms.md   # Base legal framework
+@import components/enterprise-sla.md         # Performance requirements
+```
+
+Each imported component contributes its metadata while the main document's
+preferences take precedence for any conflicts.
+
+#### Security and Best Practices
+
+1. **Structure Hierarchy**: Put most general settings in main document
+2. **Use Descriptive Names**: Name import files by their purpose
+3. **Document Precedence**: Comment which fields should win conflicts
+4. **Validate Types**: Use `--validate-import-types` in CI/CD
+5. **Security First**: Never import untrusted content without validation
+6. **Test Thoroughly**: Verify merged metadata matches expectations
+
+The frontmatter merging system includes timeout protection to prevent infinite
+loops from circular references and comprehensive security filtering to prevent
+system configuration override.
 
 ## Mixins System
 
@@ -737,12 +941,13 @@ This generates:
 
 All CLI options are supported in force_commands:
 
-| Category     | Commands                                                  | Description            |
-| ------------ | --------------------------------------------------------- | ---------------------- |
-| **Output**   | `--css <file>`, `--output-name <name>`, `--title <title>` | Styling and naming     |
-| **Formats**  | `--pdf`, `--html`, `--format <format>`, `--landscape`     | Output format control  |
-| **Features** | `--highlight`, `--export-yaml`, `--export-json`           | Enhanced functionality |
-| **Debug**    | `--debug`                                                 | Troubleshooting        |
+| Category     | Commands                                                                            | Description                 |
+| ------------ | ----------------------------------------------------------------------------------- | --------------------------- |
+| **Output**   | `--css <file>`, `--output-name <name>`, `--title <title>`                           | Styling and naming          |
+| **Formats**  | `--pdf`, `--html`, `--format <format>`, `--landscape`                               | Output format control       |
+| **Features** | `--highlight`, `--export-yaml`, `--export-json`                                     | Enhanced functionality      |
+| **Imports**  | `--disable-frontmatter-merge`, `--validate-import-types`, `--log-import-operations` | Frontmatter merging control |
+| **Debug**    | `--debug`                                                                           | Troubleshooting             |
 
 ### Alternative Field Names
 
@@ -1180,6 +1385,13 @@ module.exports = {
 2. **Sanitization**: Sanitize user-provided content
 3. **Access control**: Restrict template and data access
 4. **Audit logging**: Log document processing activities
+5. **Frontmatter security**: Reserved fields are automatically filtered in
+   imports
+   - System configuration fields (`level-one`, `meta-yaml-output`, etc.)
+   - Command injection fields (`force_commands`, `commands`)
+   - Use `--validate-import-types` to detect type confusion attacks
+6. **Timeout protection**: Automatic timeout prevents infinite loops from
+   circular references
 
 For more detailed examples and use cases, see the [examples](../examples/)
 directory.

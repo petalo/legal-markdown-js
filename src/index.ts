@@ -165,9 +165,19 @@ async function processLegalMarkdownLegacy(
   let exportedFiles: string[] = [];
 
   if (!options.noImports) {
-    const importResult = processPartialImports(processedContent, options.basePath);
+    const importResult = processPartialImports(
+      processedContent,
+      options.basePath,
+      metadata,
+      options
+    );
     processedContent = importResult.content;
     exportedFiles = importResult.importedFiles;
+
+    // Merge imported frontmatter unless explicitly disabled
+    if (options.disableFrontmatterMerge !== true && importResult.mergedMetadata) {
+      Object.assign(metadata, importResult.mergedMetadata);
+    }
   }
 
   // Process optional clauses
@@ -287,9 +297,19 @@ export function processLegalMarkdown(
   let exportedFiles: string[] = [];
 
   if (!options.noImports) {
-    const importResult = processPartialImports(processedContent, options.basePath);
+    const importResult = processPartialImports(
+      processedContent,
+      options.basePath,
+      metadata,
+      options
+    );
     processedContent = importResult.content;
     exportedFiles = importResult.importedFiles;
+
+    // Merge imported frontmatter unless explicitly disabled
+    if (options.disableFrontmatterMerge !== true && importResult.mergedMetadata) {
+      Object.assign(metadata, importResult.mergedMetadata);
+    }
   }
 
   // Process optional clauses
@@ -326,7 +346,9 @@ export function processLegalMarkdown(
 
   // Export metadata if requested or specified in metadata
   if (options.exportMetadata || metadata['meta-yaml-output'] || metadata['meta-json-output']) {
-    const exportResult = exportMetadata(metadata, options.exportFormat, options.exportPath);
+    // Use exportPath if specified, otherwise fall back to basePath for better relative path resolution
+    const effectiveExportPath = options.exportPath || options.basePath;
+    const exportResult = exportMetadata(metadata, options.exportFormat, effectiveExportPath);
     exportedFiles = [...exportedFiles, ...exportResult.exportedFiles];
   }
 
