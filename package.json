@@ -32,7 +32,7 @@
     "test:changed": "jest --onlyChanged",
     "test:changed-since": "jest --changedSince=HEAD~1",
     "test:related": "jest --findRelatedTests",
-    "test:staged": "jest --findRelatedTests $(git diff --cached --name-only --diff-filter=ACMR | grep -E '\\.(ts|js)$' | tr '\\n' ' ')",
+    "test:staged": "bash -c 'FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E \"\\.(ts|js)$\" | tr \"\\n\" \" \"); if [ -n \"$FILES\" ]; then jest --findRelatedTests $FILES --passWithNoTests; else echo \"No staged TypeScript/JavaScript files to test\"; fi'",
     "test:e2e": "jest tests/e2e",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
@@ -131,7 +131,7 @@
     "node": ">=18.0.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "src/**/*.{ts,tsx}": ["eslint --fix", "prettier --write", "npm run test:staged"],
     "*.{md,json,yaml,yml}": ["prettier --write"]
   },
   "config": {
