@@ -6,7 +6,6 @@
  * across the application and provides sensible defaults.
  */
 
-import { debug } from 'console';
 import { config } from 'dotenv';
 import * as path from 'path';
 

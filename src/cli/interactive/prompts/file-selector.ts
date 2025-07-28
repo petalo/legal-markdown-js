@@ -63,7 +63,7 @@ export async function selectInputFile(): Promise<string> {
     case EXIT_OPTION:
       console.log(chalk.yellow('👋 Goodbye!'));
       process.exit(0);
-    // eslint-disable-next-line no-fallthrough
+      break;
     default:
       return selectedFile;
   }
