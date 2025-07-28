@@ -4,13 +4,23 @@
  * This module provides centralized access to path constants loaded from
  * environment variables via dotenv. It ensures consistent path usage
  * across the application and provides sensible defaults.
+ *
+ * The .env file is discovered from multiple locations in order of precedence:
+ * 1. Current working directory
+ * 2. User's home directory
+ * 3. User's config directory (~/.config/legal-markdown-js/)
  */
 
-import { config } from 'dotenv';
 import * as path from 'path';
+import { discoverAndLoadEnv } from '../utils/env-discovery';
 
-// Load environment variables from .env file
-config({ debug: false });
+// Discover and load environment variables from .env file
+const loadedEnvPath = discoverAndLoadEnv();
+
+// Optional: Log which .env file was loaded for debugging
+if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'ci' && loadedEnvPath) {
+  console.log(`Loaded environment configuration from: ${loadedEnvPath}`);
+}
 
 /**
  * Path constants loaded from environment variables
