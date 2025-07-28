@@ -5,6 +5,20 @@
 import { formatConfigSummary, formatSuccessMessage, formatErrorMessage, formatWarningMessage } from '../../../../../src/cli/interactive/utils/format-helpers';
 import { InteractiveConfig } from '../../../../../src/cli/interactive/types';
 
+// Mock chalk to disable colors in tests
+jest.mock('chalk', () => {
+  const mockFn = (str: string) => str;
+  return {
+    bold: Object.assign(mockFn, {
+      cyan: mockFn,
+      green: mockFn,
+      red: mockFn,
+      yellow: mockFn,
+    }),
+    cyan: mockFn,
+  };
+});
+
 describe('Format Helper Utilities', () => {
   describe('formatConfigSummary', () => {
     it('should format complete configuration summary', () => {
