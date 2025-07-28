@@ -123,7 +123,8 @@
     "legal-md": "./dist/cli/index.js",
     "legal2md": "./dist/cli/index.js",
     "legal-md-ui": "./dist/cli/interactive/index.js",
-    "legal-md-setup": "./scripts/setup-config.js"
+    "legal-md-setup": "./scripts/setup-config.js",
+    "legal-md-playground": "./scripts/web-serve.js"
   },
   "files": ["dist", "scripts", "README.md", "LICENSE"],
   "engines": {

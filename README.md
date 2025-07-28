@@ -42,6 +42,8 @@ After installation, you'll have access to these commands:
 - **`legal-md`** - Standard command-line interface with options and flags
 - **`legal-md-ui`** - Interactive CLI with guided prompts and smart defaults
 - **`legal-md-setup`** - Configuration setup script for easy environment setup
+- **`legal-md-playground`** - Local playground server for testing and
+  exploration
 - **`legal2md`** - Alias for `legal-md` (for compatibility)
 
 ## 🚀 Try it Online
@@ -49,6 +51,24 @@ After installation, you'll have access to these commands:
 **[Live Playground](https://petalo.github.io/legal-markdown-js/)** - Try Legal
 Markdown JS directly in your browser with live examples and real-time
 processing.
+
+### Local Playground
+
+You can also run the playground locally for offline use or testing:
+
+```bash
+# Start local playground server (when installed globally)
+legal-md-playground
+
+# Or with custom port
+legal-md-playground --port=3000
+
+# Or if installed locally in a project
+npm run web:serve
+```
+
+The playground provides the same interactive experience as the online version,
+including real-time processing, syntax highlighting, and example templates.
 
 ## Quick Start
 
