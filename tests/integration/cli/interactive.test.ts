@@ -1,0 +1,247 @@
+/**
+ * @fileoverview Integration tests for Interactive CLI
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import { spawn } from 'child_process';
+
+describe('Interactive CLI Integration', () => {
+  const testInputDir = path.join(__dirname, '../../../test-fixtures/interactive-input');
+  const testOutputDir = path.join(__dirname, '../../../test-fixtures/interactive-output');
+  const cliPath = path.join(__dirname, '../../../dist/cli/interactive/index.js');
+  const activeProcesses: Set<any> = new Set();
+
+  beforeAll(() => {
+    // Ensure test directories exist
+    if (!fs.existsSync(testInputDir)) {
+      fs.mkdirSync(testInputDir, { recursive: true });
+    }
+    if (!fs.existsSync(testOutputDir)) {
+      fs.mkdirSync(testOutputDir, { recursive: true });
+    }
+
+    // Create test input file
+    const testContent = `---
+title: Integration Test Document
+author: Test Suite
+date: 2024-07-28
+---
+
+# {{title}}
+
+By: {{author}}
+Date: {{date}}
+
+This is a test document for integration testing.`;
+
+    fs.writeFileSync(path.join(testInputDir, 'integration-test.md'), testContent);
+  });
+
+  afterAll(async () => {
+    // Kill any remaining processes
+    for (const process of activeProcesses) {
+      if (!process.killed) {
+        process.kill('SIGKILL');
+      }
+    }
+    activeProcesses.clear();
+
+    // Clean up test files
+    try {
+      fs.rmSync(testInputDir, { recursive: true, force: true });
+      fs.rmSync(testOutputDir, { recursive: true, force: true });
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+
+    // Give processes time to cleanup
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+
+  it('should display file selection prompt when started', (done) => {
+    const child = spawn('node', [cliPath], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        DEFAULT_INPUT_DIR: testInputDir,
+        DEFAULT_OUTPUT_DIR: testOutputDir,
+      },
+    });
+    
+    activeProcesses.add(child);
+
+    let output = '';
+    let foundExpectedOutput = false;
+
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      
+      // Check if we see the expected prompts (without emojis to avoid encoding issues)
+      if (output.includes('Legal Markdown Interactive CLI') && 
+          output.includes('Searching for files in:')) {
+        foundExpectedOutput = true;
+        child.kill('SIGTERM');
+      }
+    });
+
+    child.on('exit', () => {
+      activeProcesses.delete(child);
+      if (foundExpectedOutput) {
+        expect(output).toContain('Legal Markdown Interactive CLI');
+        expect(output).toContain('Searching for files in:');
+        done();
+      } else {
+        done(new Error('Expected output not found'));
+      }
+    });
+
+    child.on('error', (error) => {
+      done(error);
+    });
+
+    // Shorter timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      if (!child.killed) {
+        child.kill('SIGTERM');
+      }
+      if (!foundExpectedOutput) {
+        done(new Error('Test timed out'));
+      }
+    }, 7000);
+    
+    // Clear timeout if test completes early
+    child.on('exit', () => {
+      clearTimeout(timeout);
+    });
+  }, 10000);
+
+  it('should handle graceful exit when user cancels', (done) => {
+    const child = spawn('node', [cliPath], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        DEFAULT_INPUT_DIR: testInputDir,
+        DEFAULT_OUTPUT_DIR: testOutputDir,
+      },
+    });
+    
+    activeProcesses.add(child);
+
+    let output = '';
+    let cancelled = false;
+
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      
+      // Wait for the file selection prompt, then simulate cancellation
+      if (output.includes('Select an input file:') && !cancelled) {
+        cancelled = true;
+        child.kill('SIGINT');
+      }
+    });
+
+    child.on('exit', (code, signal) => {
+      activeProcesses.delete(child);
+      if ((signal === 'SIGINT' || code === 0) && cancelled) {
+        done();
+      } else if (!cancelled) {
+        done(new Error('Process exited before cancellation could be tested'));
+      } else {
+        done(new Error(`Unexpected exit: code=${code}, signal=${signal}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      done(error);
+    });
+
+    // Shorter timeout
+    const timeout = setTimeout(() => {
+      if (!child.killed) {
+        child.kill('SIGTERM');
+      }
+      done(new Error('Test timed out'));
+    }, 7000);
+    
+    // Clear timeout if test completes early
+    child.on('exit', () => {
+      clearTimeout(timeout);
+    });
+  }, 10000);
+
+  it('should handle empty input directory gracefully', (done) => {
+    const emptyDir = path.join(__dirname, '../../../test-fixtures/empty-interactive');
+    
+    // Create empty directory
+    if (!fs.existsSync(emptyDir)) {
+      fs.mkdirSync(emptyDir, { recursive: true });
+    }
+
+    const child = spawn('node', [cliPath], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        DEFAULT_INPUT_DIR: emptyDir,
+        DEFAULT_OUTPUT_DIR: testOutputDir,
+      },
+    });
+    
+    activeProcesses.add(child);
+
+    let output = '';
+    let foundWarning = false;
+
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      
+      // Should show warning about no files found
+      if (output.includes('No supported files found')) {
+        foundWarning = true;
+        child.kill('SIGTERM');
+      }
+    });
+
+    child.on('exit', () => {
+      activeProcesses.delete(child);
+      
+      // Clean up empty directory
+      try {
+        fs.rmSync(emptyDir, { recursive: true, force: true });
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+
+      if (foundWarning) {
+        expect(output).toContain('No supported files found');
+        done();
+      } else {
+        done(new Error('Expected warning message not found'));
+      }
+    });
+
+    child.on('error', (error) => {
+      done(error);
+    });
+
+    // Shorter timeout
+    const timeout = setTimeout(() => {
+      if (!child.killed) {
+        child.kill('SIGTERM');
+      }
+      try {
+        fs.rmSync(emptyDir, { recursive: true, force: true });
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+      if (!foundWarning) {
+        done(new Error('Test timed out'));
+      }
+    }, 7000);
+    
+    // Clear timeout if test completes early
+    child.on('exit', () => {
+      clearTimeout(timeout);
+    });
+  }, 10000);
+});
