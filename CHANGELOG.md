@@ -1,3 +1,9 @@
+## 2.9.0 (2025-07-28)
+
+- feat: improve .env discovery and add user-friendly setup tools (#31)
+  ([06d632b](https://github.com/petalo/legal-markdown-js/commit/06d632b)),
+  closes [#31](https://github.com/petalo/legal-markdown-js/issues/31)
+
 ## <small>2.8.1 (2025-07-28)</small>
 
 - Merge pull request #30 from petalo/hotfix/dotenv-dependency
