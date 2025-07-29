@@ -457,7 +457,7 @@ function formatHeader(
       getRomanNumeral(headerNumbers[level - 1], true)
     );
   }
-  
+
   // Replace %R (uppercase roman) for levels 1-5
   // Special handling for hierarchical formats like %R.%n where %R refers to level 1
   const isHierarchicalUppercaseRoman = formatTemplate.includes('%R.%n');
