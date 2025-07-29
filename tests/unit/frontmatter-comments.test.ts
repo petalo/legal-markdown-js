@@ -66,8 +66,9 @@ Fin del documento.
     const hasCommentsAsHeaders = result.content.includes('# Definición y cálculo');
     
     // Escribir el resultado a un archivo para debugging
-    fs.writeFileSync(path.join(testDir, 'debug-output.md'), result.content);
-    fs.writeFileSync(path.join(testDir, 'debug-metadata.json'), JSON.stringify(result.metadata, null, 2));
+    // Eliminamos la escritura de archivos de depuración innecesarios
+    // fs.writeFileSync(path.join(testDir, 'debug-output.md'), result.content);
+    // fs.writeFileSync(path.join(testDir, 'debug-metadata.json'), JSON.stringify(result.metadata, null, 2));
 
     // Verificar que los comentarios no aparecen como H1 en el contenido
     expect(result.content).not.toContain('# Definición y cálculo');
