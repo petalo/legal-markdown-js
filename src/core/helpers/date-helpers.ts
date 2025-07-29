@@ -6,7 +6,7 @@
  * maintain 1:1 compatibility with the Ruby implementation.
  *
  * Features (Ruby compatible):
- * - @today functionality for current date insertion
+ * - `@today` functionality for current date insertion
  * - Basic date formatting compatible with Ruby output
  * - Simple date string handling
  *
@@ -17,7 +17,7 @@
  * ```typescript
  * import { today, formatBasicDate } from '@core/helpers';
  *
- * // Basic @today functionality from Ruby legal-markdown
+ * // Basic `@today` functionality from Ruby legal-markdown
  * const currentDate = today();
  *
  * // Basic formatting compatible with Ruby output
@@ -26,22 +26,22 @@
  */
 
 /**
- * Returns the current date - implements @today functionality from Ruby legal-markdown
+ * Returns the current date - implements `@today` functionality from Ruby legal-markdown
  *
- * This function provides the core @today substitution that was available
- * in the original Ruby implementation. When users include "date: @today" in
- * their YAML front matter or use @today in template expressions, this function
+ * This function provides the core `@today` substitution that was available
+ * in the original Ruby implementation. When users include "date: `@today`" in
+ * their YAML front matter or use `@today` in template expressions, this function
  * provides the current date.
  *
  * @returns {Date} The current date as a Date object
  *
  * @example
  * ```typescript
- * // Equivalent to Ruby's @today functionality
+ * // Equivalent to Ruby's `@today` functionality
  * const currentDate = today();
  *
- * // Used in template processing for @today substitution
- * if (dateValue === '@today') {
+ * // Used in template processing for `@today` substitution
+ * if (dateValue === '`@today`') {
  *   return today();
  * }
  * ```
@@ -111,19 +111,19 @@ export function formatBasicDate(date: Date | string, format: string = 'YYYY-MM-D
 }
 
 /**
- * Parse @today token and return current date
+ * Parse `@today` token and return current date
  *
- * Helper function specifically for processing the @today token that appears
+ * Helper function specifically for processing the `@today` token that appears
  * in Ruby legal-markdown documents. This maintains exact compatibility with
  * the Ruby implementation's behavior.
  *
- * @param {string} token - The token to check (should be '@today')
- * @returns {Date | null} Current date if token is '@today', null otherwise
+ * @param {string} token - The token to check (should be '`@today`')
+ * @returns {Date | null} Current date if token is '`@today`', null otherwise
  *
  * @example
  * ```typescript
- * // Process @today tokens from YAML front matter or mixins
- * const result = parseToday('@today');  // Returns current Date
+ * // Process `@today` tokens from YAML front matter or mixins
+ * const result = parseToday('`@today`');  // Returns current Date
  * const result2 = parseToday('other');  // Returns null
  * ```
  */

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Field Tracking System for Legal Markdown Processing
+ * Field Tracking System for Legal Markdown Processing
  *
  * This module provides comprehensive field tracking functionality for Legal Markdown
  * documents, including field status monitoring, highlighting support, and reporting
@@ -34,64 +34,10 @@
  */
 
 import { logger } from '../../utils/logger';
+import { FieldStatus, TrackedField } from '../../core/tracking/field-state';
 
-/**
- * Enumeration of possible field statuses during processing
- *
- * @enum {string} FieldStatus
- * @example
- * ```typescript
- * import { FieldStatus } from './field-tracker';
- *
- * // Check field status
- * if (field.status === FieldStatus.FILLED) {
- *   console.log('Field has a value');
- * } else if (field.status === FieldStatus.EMPTY) {
- *   console.log('Field needs a value');
- * } else if (field.status === FieldStatus.LOGIC) {
- *   console.log('Field uses conditional logic');
- * }
- * ```
- */
-export enum FieldStatus {
-  /** Field has been filled with a value */
-  FILLED = 'filled',
-  /** Field is empty or missing a value */
-  EMPTY = 'empty',
-  /** Field contains logic or uses mixins */
-  LOGIC = 'logic',
-}
-
-/**
- * Interface representing a tracked field in the Legal Markdown system
- *
- * @interface TrackedField
- * @example
- * ```typescript
- * const field: TrackedField = {
- *   name: 'client.name',
- *   status: FieldStatus.FILLED,
- *   value: 'Acme Corporation',
- *   originalValue: '{{client.name}}',
- *   hasLogic: false,
- *   mixinUsed: undefined
- * };
- * ```
- */
-export interface TrackedField {
-  /** The name/identifier of the field */
-  name: string;
-  /** The current status of the field */
-  status: FieldStatus;
-  /** The processed value of the field */
-  value?: any;
-  /** The original unprocessed value of the field */
-  originalValue?: any;
-  /** Whether the field contains logical operations */
-  hasLogic: boolean;
-  /** Name of mixin used for processing this field */
-  mixinUsed?: string;
-}
+// Re-export for compatibility
+export { FieldStatus, TrackedField };
 
 /**
  * Field tracking system for Legal Markdown processing
@@ -126,8 +72,6 @@ export class FieldTracker {
 
   /**
    * Creates a new FieldTracker instance
-   *
-   * @constructor
    */
   constructor() {}
 
@@ -137,7 +81,6 @@ export class FieldTracker {
    * Registers a field with the tracking system, determining its status based on
    * the provided options and storing relevant metadata for later use.
    *
-   * @method trackField
    * @param {string} fieldName - The name/identifier of the field to track
    * @param {Object} options - Options for field tracking
    * @param {any} [options.value] - The processed value of the field

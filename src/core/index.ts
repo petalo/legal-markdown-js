@@ -1,5 +1,5 @@
 /**
- * @fileoverview Core Legal Markdown Processing Module
+ * Core Legal Markdown Processing Module
  *
  * This module provides the core functionality for Legal Markdown processing,
  * maintaining parity with the original legal-markdown implementation. It exports
@@ -57,7 +57,13 @@ export * from './exporters/metadata-exporter';
 
 // Core infrastructure for pipeline management
 export * from './processors/base-processor';
-export { FieldState, CoreFieldState } from './tracking/field-state';
+export {
+  FieldState,
+  CoreFieldState,
+  FieldStatus,
+  TrackedField,
+  FieldTrackingOptions,
+} from './tracking/field-state';
 
 // Core helpers (Ruby compatible)
 export * from './helpers';

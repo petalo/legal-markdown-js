@@ -1,5 +1,5 @@
 /**
- * @fileoverview Extensions Module - Enhanced Legal Markdown Functionality
+ * Extensions Module - Enhanced Legal Markdown Functionality
  *
  * This module provides additional functionality beyond the original legal-markdown
  * specification. It includes Node.js specific enhancements, utilities, and tools

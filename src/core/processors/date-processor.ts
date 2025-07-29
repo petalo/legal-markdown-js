@@ -1,14 +1,14 @@
 /**
- * @fileoverview Date Processing Module for Legal Markdown Documents
+ * Date Processing Module for Legal Markdown Documents
  *
  * This module provides comprehensive date processing functionality for Legal Markdown
- * documents, supporting the @today syntax with various formatting options. It handles
+ * documents, supporting the `@today` syntax with various formatting options. It handles
  * different date formats, timezones, locales, and provides specialized formatting
  * for legal documents including ordinal suffixes and custom format patterns.
  *
  * Features:
- * - @today syntax for current date insertion
- * - Format override support: @today[format]
+ * - `@today` syntax for current date insertion
+ * - Format override support: `@today[format]`
  * - Multiple predefined formats (ISO, US, European, legal, etc.)
  * - Custom format pattern parsing (YYYY-MM-DD, etc.)
  * - Timezone and locale support
@@ -62,42 +62,37 @@ export interface DateFormatOptions {
 /**
  * Processes special date references in legal documents
  *
- * This is the main function that processes @today references in Legal Markdown
+ * This is the main function that processes `@today` references in Legal Markdown
  * documents. It supports format overrides and uses metadata settings for
  * default formatting, timezone, and locale preferences.
  *
- * @param {string} content - The document content containing @today references
+ * @param {string} content - The document content containing `@today` references
  * @param {Record<string, any>} metadata - Document metadata with date formatting options
- * @param {LegalMarkdownOptions} [options={}] - Additional processing options
- * @returns {string} Processed content with @today references replaced by formatted dates
+ * @returns {string} Processed content with `@today` references replaced by formatted dates
  * @example
  * ```typescript
  * // Basic usage with default format
- * const content1 = "Document dated @today";
+ * const content1 = "Document dated `@today`";
  * const result1 = processDateReferences(content1, {});
  * // Output: "Document dated 2024-01-15"
  *
  * // Format override
- * const content2 = "Contract effective @today[long]";
+ * const content2 = "Contract effective `@today[long]`";
  * const result2 = processDateReferences(content2, {});
  * // Output: "Contract effective January 15, 2024"
  *
  * // Using metadata settings
- * const content3 = "Generated @today";
+ * const content3 = "Generated `@today`";
  * const metadata = { 'date-format': 'legal', 'timezone': 'America/New_York' };
  * const result3 = processDateReferences(content3, metadata);
  * // Output: "Generated January 15th, 2024"
  * ```
  */
-export function processDateReferences(
-  content: string,
-  metadata: Record<string, any>,
-  options: LegalMarkdownOptions = {}
-): string {
+export function processDateReferences(content: string, metadata: Record<string, any>): string {
   // Extract date format options from metadata
   const dateOptions = extractDateOptions(metadata);
 
-  // Regular expression to match @today references
+  // Regular expression to match `@today` references
   const todayPattern = /@today(?:\[([^\]]+)\])?/g;
 
   return content.replace(todayPattern, (match, formatOverride) => {

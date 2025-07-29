@@ -114,7 +114,6 @@ export interface BaseProcessor {
  *
  * @abstract
  * @class AbstractProcessor
- * @implements {BaseProcessor}
  * @example
  * ```typescript
  * class MyProcessor extends AbstractProcessor {
