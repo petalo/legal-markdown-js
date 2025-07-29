@@ -1,3 +1,9 @@
+## <small>2.14.2 (2025-07-29)</small>
+
+- fix: prevent malformed frontmatter comments from appearing as H1 headers (#40)
+  ([e54125c](https://github.com/petalo/legal-markdown-js/commit/e54125c)),
+  closes [#40](https://github.com/petalo/legal-markdown-js/issues/40)
+
 ## <small>2.14.1 (2025-07-29)</small>
 
 - fix: prevent duplicate success messages in interactive CLI (#39)
