@@ -126,9 +126,13 @@ export function parseYamlFrontMatter(
         `Invalid YAML Front Matter: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     } else {
-      // Return original content if YAML parsing fails (graceful handling)
-      // Silently ignore YAML parsing errors unless throwOnError is true
-      return defaultResult;
+      // Even if YAML parsing fails, if we detected frontmatter structure,
+      // we should still extract the content that comes after it to avoid
+      // treating malformed frontmatter as content
+      return {
+        content: remainingContent,
+        metadata: {},
+      };
     }
   }
 }

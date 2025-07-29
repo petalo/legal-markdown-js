@@ -300,7 +300,9 @@ Content`;
 
       const result = parseYamlFrontMatter(content);
       
-      expect(result.content).toBe(content);
+      // With the fix, even if YAML is invalid, we should extract just the content part
+      // and not include the malformed frontmatter as content
+      expect(result.content).toBe('Content');
       expect(result.metadata).toEqual({});
     });
 
