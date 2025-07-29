@@ -23,7 +23,6 @@ import { processLegalMarkdown } from '../../index';
  * ensuring seamless integration with the established processing pipeline.
  */
 export class InteractiveService {
-  private cliService: CliService;
   private config: InteractiveConfig;
 
   /**
@@ -33,8 +32,6 @@ export class InteractiveService {
    */
   constructor(config: InteractiveConfig) {
     this.config = config;
-    const options = this.mapToCliOptions(config);
-    this.cliService = new CliService(options);
   }
 
   /**
@@ -105,6 +102,7 @@ export class InteractiveService {
       const nonArchivingService = new CliService({
         ...processingOptions,
         archiveSource: false, // Disable archiving during format processing
+        silent: true, // Suppress success messages to prevent duplication
       });
 
       // Process for each selected format
@@ -153,6 +151,7 @@ export class InteractiveService {
         const metadataService = new CliService({
           ...processingOptions,
           archiveSource: false, // Disable archiving for metadata export
+          silent: true, // Suppress success messages to prevent duplication
           exportMetadata: true,
           exportFormat: 'yaml',
           exportPath: yamlOutput,

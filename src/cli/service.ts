@@ -57,6 +57,8 @@ export interface CliOptions extends LegalMarkdownOptions {
   output?: string;
   /** Enable verbose logging */
   verbose?: boolean;
+  /** Suppress success output messages */
+  silent?: boolean;
   /** Generate PDF output */
   pdf?: boolean;
   /** Generate HTML output */
@@ -378,7 +380,7 @@ export class CliService {
    * @param {boolean} hasHighlight - Whether highlight versions were generated
    */
   private showGeneratedFiles(files: string[], hasHighlight?: boolean): void {
-    if (files.length === 0) {
+    if (files.length === 0 || this.options.silent) {
       return;
     }
 
