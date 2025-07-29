@@ -25,6 +25,7 @@ The following terms apply:
     expect(result.content).toContain('John Doe');
     expect(result.content).toContain('Jane Smith');
     expect(result.metadata).toEqual({
+      _cross_references: [],
       title: 'Test Agreement',
       party1: 'John Doe',
       party2: 'Jane Smith'
@@ -134,7 +135,7 @@ This is regular markdown content.
   it('should handle empty content gracefully', () => {
     const result = processLegalMarkdown('');
     expect(result.content).toBe('');
-    expect(result.metadata).toEqual({});
+    expect(result.metadata).toEqual({ _cross_references: [] });
   });
 
   it('should handle content without YAML frontmatter', () => {
@@ -146,7 +147,7 @@ This is a simple document without YAML frontmatter.
 
     const result = processLegalMarkdown(content);
     expect(result.content).toContain('Simple Document');
-    expect(result.metadata).toEqual({});
+    expect(result.metadata).toEqual({ _cross_references: [] });
   });
 
   it('should handle malformed YAML frontmatter gracefully', () => {

@@ -207,14 +207,14 @@ l. Text file header`;
       const result = processLegalMarkdown('');
       
       expect(result.content).toBe('');
-      expect(result.metadata).toEqual({});
+      expect(result.metadata).toEqual({ _cross_references: [] });
     });
 
     it('should handle files with only whitespace', () => {
       const result = processLegalMarkdown('   \n\n  \t  \n  ');
       
       expect(result.content.trim()).toBe('');
-      expect(result.metadata).toEqual({});
+      expect(result.metadata).toEqual({ _cross_references: [] });
     });
 
     it('should handle files without YAML front matter', () => {
@@ -227,7 +227,7 @@ ll. Subsection`;
       
       expect(result.content).toContain('# Regular Document');
       expect(result.content).toContain('Article 1. Header without YAML');
-      expect(result.metadata).toEqual({});
+      expect(result.metadata).toEqual({ _cross_references: [] });
     });
   });
 });

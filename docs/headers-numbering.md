@@ -364,6 +364,57 @@ All obligations in |terms|, including |payment| and |delivery|, must comply with
 - **Fallback**: If a reference key is not found as an internal section, the
   system falls back to metadata variables
 
+### Automatic Cross-References Metadata
+
+When processing documents with cross-references, Legal Markdown automatically
+generates metadata containing all internal section references found in the
+document. This metadata is stored in the protected field `_cross_references`.
+
+#### Metadata Structure
+
+Each cross-reference entry contains:
+
+- `key`: The reference key used in the document
+- `sectionNumber`: The formatted section number (e.g., "Article 1.")
+- `sectionText`: The complete section text including number and title
+
+#### Example Metadata Output
+
+For a document with cross-references:
+
+```markdown
+l. **Definitions** |definitions| l. **Payment Terms** |payment| l.
+**Termination** |termination|
+```
+
+The generated metadata will be:
+
+```yaml
+_cross_references:
+  - key: 'definitions'
+    sectionNumber: 'Article 1.'
+    sectionText: 'Article 1. **Definitions**'
+  - key: 'payment'
+    sectionNumber: 'Article 2.'
+    sectionText: 'Article 2. **Payment Terms**'
+  - key: 'termination'
+    sectionNumber: 'Article 3.'
+    sectionText: 'Article 3. **Termination**'
+```
+
+#### Usage
+
+This metadata is useful for:
+
+- **Document analysis**: Understanding the structure and references in legal
+  documents
+- **Export integration**: Accessing cross-references data in YAML/JSON exports
+- **External systems**: Integrating with document management or analysis tools
+- **Validation**: Ensuring all references are properly defined and used
+
+The `_cross_references` field is automatically included when exporting metadata
+using `meta-yaml-output` or `meta-json-output` configuration options.
+
 ### Cross-References vs Mixins
 
 Legal Markdown uses two distinct syntaxes for different purposes:
