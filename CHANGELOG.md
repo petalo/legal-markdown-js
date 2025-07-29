@@ -1,3 +1,9 @@
+## 2.14.0 (2025-07-29)
+
+- feat: add automatic cross-references metadata generation (#38)
+  ([0286339](https://github.com/petalo/legal-markdown-js/commit/0286339)),
+  closes [#38](https://github.com/petalo/legal-markdown-js/issues/38)
+
 ## 2.13.0 (2025-07-29)
 
 - feat: add support for uppercase Roman numerals (%R) (#37)
