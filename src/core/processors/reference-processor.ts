@@ -79,6 +79,15 @@ export function processCrossReferences(content: string, metadata: Record<string,
   // First, extract all cross-reference definitions from headers
   const crossReferences = extractCrossReferences(content, metadata);
 
+  // Store cross-references metadata in protected field
+  if (crossReferences.length > 0) {
+    metadata['_cross_references'] = crossReferences.map(ref => ({
+      key: ref.key,
+      sectionNumber: ref.sectionNumber,
+      sectionText: ref.sectionText,
+    }));
+  }
+
   // Then replace all cross-reference usage with section numbers or metadata
   return replaceCrossReferences(content, crossReferences, metadata);
 }

@@ -79,6 +79,9 @@ export const RESERVED_FIELDS = [
   // Field tracking configuration
   'enable-field-tracking',
   'field-tracking-mode',
+
+  // Cross-references metadata (internal)
+  '_cross_references',
 ] as const;
 
 /**
@@ -228,6 +231,7 @@ export function getReservedFieldsByCategory(): Record<string, string[]> {
       'processing-options',
       'enable-field-tracking',
       'field-tracking-mode',
+      '_cross_references',
     ],
   };
 }

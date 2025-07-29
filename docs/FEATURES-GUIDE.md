@@ -130,6 +130,36 @@ Software.
 
 ### Cross-References
 
+Legal Markdown supports two types of cross-references:
+
+#### Internal Section References
+
+Reference numbered sections within the same document:
+
+```markdown
+l. **Definitions** |definitions|
+
+Terms defined in this agreement...
+
+l. **Payment Terms** |payment|
+
+As outlined in |definitions|, payment is due within 30 days.
+```
+
+**Output:**
+
+```markdown
+Article 1. **Definitions**
+
+Terms defined in this agreement...
+
+Article 2. **Payment Terms**
+
+As outlined in Article 1., payment is due within 30 days.
+```
+
+#### Variable References
+
 Reference variables defined in YAML front matter:
 
 ```markdown
@@ -139,6 +169,31 @@ The effective date is |effective_date|.
 
 Payment terms are |payment_terms| days.
 ```
+
+#### Automatic Cross-References Metadata
+
+When processing documents with internal cross-references, Legal Markdown
+automatically generates a `_cross_references` field in the document metadata
+containing all section references:
+
+```yaml
+_cross_references:
+  - key: 'definitions'
+    sectionNumber: 'Article 1.'
+    sectionText: 'Article 1. **Definitions**'
+  - key: 'payment'
+    sectionNumber: 'Article 2.'
+    sectionText: 'Article 2. **Payment Terms**'
+```
+
+This metadata is available for:
+
+- Export to YAML/JSON files with `meta-yaml-output` or `meta-json-output`
+- Integration with external systems
+- Document analysis and validation
+
+**Note:** The `_cross_references` field is a protected field that cannot be
+overridden by imports.
 
 ### Optional Clauses
 
