@@ -308,19 +308,16 @@ export class CliService {
           includeHighlighting: false,
         });
         writeFileSync(htmlPath, normalHtmlContent);
-        this.log(`HTML output written to: ${htmlPath}`, 'success');
 
         // Highlighted version (with highlight CSS)
         const highlightHtmlContent = await generateHtml(content, {
           ...generateOptions,
           includeHighlighting: true,
         });
-        
-        writeFileSync(normalHtmlPath, normalHtmlContent);
-        writeFileSync(highlightedHtmlPath, highlightedHtmlContent);
 
-        generatedFiles.push(normalHtmlPath, highlightedHtmlPath);
+        writeFileSync(highlightHtmlPath, highlightHtmlContent);
 
+        generatedFiles.push(htmlPath, highlightHtmlPath);
       } else {
         // Generate single HTML without highlighting
         const htmlPath = path.join(dirName, `${baseName}.html`);
@@ -345,16 +342,19 @@ export class CliService {
           ...generateOptions,
           includeHighlighting: false,
         });
-        this.log(`PDF output written to: ${pdfPath}`, 'success');
 
-        generatedFiles.push(normalPdfPath, highlightedPdfPath);
+        // Highlighted version (with highlight CSS)
+        await generatePdf(content, highlightPdfPath, {
+          ...generateOptions,
+          includeHighlighting: true,
+        });
 
+        generatedFiles.push(pdfPath, highlightPdfPath);
       } else {
         // Generate single PDF without highlighting
         const pdfPath = path.join(dirName, `${baseName}.pdf`);
         await generatePdf(content, pdfPath, generateOptions);
         generatedFiles.push(pdfPath);
-
       }
     }
 
