@@ -105,6 +105,7 @@ export class InteractiveService {
       const nonArchivingService = new CliService({
         ...processingOptions,
         archiveSource: false, // Disable archiving during format processing
+        exportMetadata: false, // Disable metadata export to prevent duplications
       });
 
       // Process for each selected format
@@ -149,15 +150,17 @@ export class InteractiveService {
           RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
           `${outputFilename}-metadata.yaml`
         );
-        // Create a separate service instance for metadata export
-        const metadataService = new CliService({
+        // Process the file to get metadata only, without going through full pipeline
+        const content = readFileSync(inputFile);
+        const inputDir = path.dirname(inputFile);
+        const metadataOptions = {
           ...processingOptions,
-          archiveSource: false, // Disable archiving for metadata export
+          basePath: inputDir,
           exportMetadata: true,
-          exportFormat: 'yaml',
+          exportFormat: 'yaml' as const,
           exportPath: yamlOutput,
-        });
-        await metadataService.processFile(inputFile);
+        };
+        const result = processLegalMarkdown(content, metadataOptions);
         outputFiles.push(yamlOutput);
       }
 

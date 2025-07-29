@@ -544,6 +544,20 @@ classDiagram
 6. **Error Recovery**: Pipeline continues processing other steps when
    non-critical errors occur
 
+#### Pipeline Processing Modes
+
+The pipeline system supports different processing contexts with optimizations:
+
+1. **Standard Processing**: Full pipeline execution with all enabled processors
+2. **Interactive CLI Optimization**:
+   - **Format Processing**: `exportMetadata: false` to prevent duplicate exports
+     during PDF/HTML/MD generation
+   - **Metadata Processing**: Direct `processLegalMarkdown` call for
+     metadata-only operations
+   - **Consistency**: Follows the same API pattern used by HTML and PDF
+     generators
+3. **Batch Processing**: Parallel execution with concurrency controls
+
 ### 4. Legacy Mixin Processing (v2.3.x and earlier)
 
 The original mixin processing system (still available as fallback):
@@ -645,6 +659,65 @@ classDiagram
 
 ## Output Generation
 
+### Metadata Export System
+
+The metadata export system provides enhanced path handling and flexible output
+configuration:
+
+```mermaid
+flowchart TD
+    METADATA[Document Metadata] --> EXPORT_CONFIG{Export Configuration}
+
+    EXPORT_CONFIG -->|Custom Output Path| CUSTOM_PATH[Use Custom Path]
+    EXPORT_CONFIG -->|Output Path Provided| PATH_DETECTION{Path Type Detection}
+    EXPORT_CONFIG -->|No Path| DEFAULT_PATH[Use Current Directory]
+
+    PATH_DETECTION -->|Has Extension| FILE_PATH[Treat as Complete File Path]
+    PATH_DETECTION -->|No Extension| DIR_PATH[Treat as Directory Path]
+
+    CUSTOM_PATH --> CREATE_DIR[Create Directory if Needed]
+    FILE_PATH --> USE_DIRECT[Use Path Directly]
+    DIR_PATH --> APPEND_FILENAME[Append Default Filename]
+    DEFAULT_PATH --> APPEND_FILENAME
+
+    CREATE_DIR --> WRITE_FILE[Write Metadata File]
+    USE_DIRECT --> WRITE_FILE
+    APPEND_FILENAME --> WRITE_FILE
+
+    WRITE_FILE --> FILTER_METADATA[Filter Internal Keys]
+    FILTER_METADATA --> FORMAT_OUTPUT{Output Format}
+
+    FORMAT_OUTPUT -->|YAML| YAML_EXPORT[Export as YAML]
+    FORMAT_OUTPUT -->|JSON| JSON_EXPORT[Export as JSON]
+
+    YAML_EXPORT --> SUCCESS[Export Complete]
+    JSON_EXPORT --> SUCCESS
+```
+
+#### Metadata Export Path Resolution
+
+1. **Custom Output Path Priority**: `meta-output-path` from document metadata
+   takes highest precedence
+2. **Intelligent Path Detection**: Automatically distinguishes between complete
+   file paths and directory paths based on file extensions
+3. **Direct File Path Usage**: When a complete file path is provided (e.g.,
+   `/output/document-metadata.yaml`), it's used directly
+4. **Directory Path Processing**: When a directory path is provided, default
+   filenames are appended
+5. **Automatic Directory Creation**: Creates necessary directories recursively
+   if they don't exist
+
+#### Key Improvements
+
+- **Path Correctness**: Eliminates incorrect metadata file placement in wrong
+  directories
+- **Flexible Configuration**: Supports both complete file paths and
+  directory-based configuration
+- **Consistent Behavior**: Predictable path resolution across different usage
+  scenarios
+- **Backward Compatibility**: Maintains compatibility with existing metadata
+  export configurations
+
 ### HTML Generation Pipeline
 
 ```mermaid
@@ -714,6 +787,13 @@ graph TB
         SERVICE --> PROC_CALL[Processing Call]
         SERVICE --> OUTPUT_GEN[Output Generation]
 
+        subgraph "Interactive CLI Layer"
+            INTERACTIVE[Interactive CLI] --> PROMPTS[User Prompts]
+            PROMPTS --> CONFIG[Configuration Builder]
+            CONFIG --> INTERACTIVE_SERVICE[Interactive Service]
+            INTERACTIVE_SERVICE --> OPTIMIZED_PROCESSING[Optimized Processing Flow]
+        end
+
         subgraph "Supported Options"
             DEBUG[--debug]
             YAML_ONLY[--yaml]
@@ -729,7 +809,92 @@ graph TB
             HIGHLIGHT[--highlight]
             CSS_PATH[--css]
         end
+
+        ENTRY --> INTERACTIVE
     end
+```
+
+## Interactive CLI Architecture
+
+The Interactive CLI provides an optimized processing flow that ensures efficient
+resource usage and prevents duplicate operations while maintaining architectural
+consistency.
+
+```mermaid
+graph TB
+    subgraph "Interactive CLI Processing Flow"
+        USER[User Selection] --> FORMAT_SELECTION{Format Selection}
+
+        FORMAT_SELECTION -->|PDF/HTML/MD| STANDARD_FLOW[Standard Format Processing]
+        FORMAT_SELECTION -->|Metadata| METADATA_FLOW[Metadata Processing]
+
+        subgraph "Standard Format Processing"
+            STANDARD_FLOW --> NONARCHIVING_SERVICE[NonArchiving CliService]
+            NONARCHIVING_SERVICE --> DISABLE_META[exportMetadata: false]
+            DISABLE_META --> PIPELINE_EXEC[Execute Full Pipeline]
+            PIPELINE_EXEC --> FORMAT_OUTPUT[Format Output Files]
+        end
+
+        subgraph "Metadata Processing"
+            METADATA_FLOW --> READ_FILE[readFileSync]
+            READ_FILE --> PROCESS_DIRECT[processLegalMarkdown]
+            PROCESS_DIRECT --> PIPELINE_META[Pipeline with MetadataExportProcessor]
+            PIPELINE_META --> YAML_OUTPUT[YAML Metadata File]
+        end
+
+        FORMAT_OUTPUT --> COMBINE[Combine All Results]
+        YAML_OUTPUT --> COMBINE
+        COMBINE --> FINAL_OUTPUT[Final Output Collection]
+    end
+```
+
+### Key Interactive CLI Optimizations
+
+1. **Pipeline Metadata Suppression**: For PDF/HTML/MD processing,
+   `exportMetadata: false` is set in the nonArchivingService to prevent
+   duplicate metadata exports during pipeline execution
+
+2. **Direct API Usage**: Metadata export uses `processLegalMarkdown` directly
+   (following the same pattern as HTML/PDF generators) rather than wrapping it
+   in additional CliService layers
+
+3. **Single Execution Principle**: Each format processes independently without
+   cross-contamination or duplicate operations
+
+4. **Architectural Consistency**: Uses the same core `processLegalMarkdown` API
+   that other system components use, maintaining consistency with HTML and PDF
+   generation approaches
+
+5. **Performance Optimization**: Avoids unnecessary CliService overhead for
+   metadata-only operations while preserving full pipeline functionality
+
+### Interactive Processing Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant InteractiveService
+    participant NonArchivingService
+    participant ProcessLegalMarkdown
+    participant Pipeline
+    participant MetadataExporter
+
+    User->>InteractiveService: Select Formats (PDF + Metadata)
+
+    Note over InteractiveService: Process PDF with metadata disabled
+    InteractiveService->>NonArchivingService: processFile(exportMetadata: false)
+    NonArchivingService->>ProcessLegalMarkdown: Process with pipeline
+    ProcessLegalMarkdown->>Pipeline: Execute full pipeline
+    Note over Pipeline: MetadataExportProcessor skipped (disabled)
+    Pipeline->>NonArchivingService: PDF generated
+
+    Note over InteractiveService: Process metadata separately
+    InteractiveService->>ProcessLegalMarkdown: Direct call (exportMetadata: true)
+    ProcessLegalMarkdown->>Pipeline: Execute pipeline for metadata
+    Pipeline->>MetadataExporter: Export metadata once
+    MetadataExporter->>InteractiveService: YAML file created
+
+    InteractiveService->>User: All files generated (PDF + YAML)
 ```
 
 ## Type System

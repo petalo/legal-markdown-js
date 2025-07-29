@@ -87,8 +87,16 @@ export function exportMetadata(
   const jsonOutput = metadata['meta-json-output'] as string;
   const customOutputPath = metadata['meta-output-path'] as string;
 
-  // Determine output directory (customOutputPath from metadata takes precedence)
-  const outputDir = customOutputPath || outputPath || process.cwd();
+  // Determine output directory - if outputPath is a file, use its directory
+  let outputDir: string;
+  if (customOutputPath) {
+    outputDir = customOutputPath;
+  } else if (outputPath) {
+    // Check if outputPath looks like a file (has extension) or directory
+    outputDir = path.extname(outputPath) ? path.dirname(outputPath) : outputPath;
+  } else {
+    outputDir = process.cwd();
+  }
 
   // Create output directory if it doesn't exist
   if (!fs.existsSync(outputDir)) {
@@ -100,9 +108,15 @@ export function exportMetadata(
 
   // Process YAML output if specified
   if (yamlOutput || format === 'yaml') {
-    const yamlPath = yamlOutput
-      ? path.resolve(outputDir, yamlOutput)
-      : path.resolve(outputDir, 'metadata.yaml');
+    let yamlPath: string;
+    if (yamlOutput) {
+      yamlPath = path.resolve(outputDir, yamlOutput);
+    } else if (outputPath && path.extname(outputPath)) {
+      // If outputPath is a complete file path, use it directly
+      yamlPath = outputPath;
+    } else {
+      yamlPath = path.resolve(outputDir, 'metadata.yaml');
+    }
 
     try {
       const yamlContent = yaml.dump(exportedMetadata);

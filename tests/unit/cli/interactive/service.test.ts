@@ -6,10 +6,21 @@ import { InteractiveService } from '../../../../src/cli/interactive/service';
 import { CliService } from '../../../../src/cli/service';
 import { InteractiveConfig } from '../../../../src/cli/interactive/types';
 import { RESOLVED_PATHS } from '@constants';
+import { readFileSync } from '@lib';
+import { processLegalMarkdown } from '../../../../src/index';
 
 // Mock the CliService
 jest.mock('../../../../src/cli/service');
 const MockedCliService = CliService as jest.MockedClass<typeof CliService>;
+
+// Mock the readFileSync and processLegalMarkdown functions
+jest.mock('@lib', () => ({
+  readFileSync: jest.fn(),
+}));
+
+jest.mock('../../../../src/index', () => ({
+  processLegalMarkdown: jest.fn(),
+}));
 
 // Mock constants
 jest.mock('@constants', () => ({
@@ -20,6 +31,9 @@ jest.mock('@constants', () => ({
     IMAGES_DIR: '/test/images',
   },
 }));
+
+const mockedReadFileSync = readFileSync as jest.MockedFunction<typeof readFileSync>;
+const mockedProcessLegalMarkdown = processLegalMarkdown as jest.MockedFunction<typeof processLegalMarkdown>;
 
 describe('InteractiveService', () => {
   let mockCliService: jest.Mocked<CliService>;
@@ -32,6 +46,14 @@ describe('InteractiveService', () => {
       processFile: jest.fn(),
     } as any;
     MockedCliService.mockImplementation(() => mockCliService);
+
+    // Setup mocks
+    mockedReadFileSync.mockReturnValue('# Test content');
+    mockedProcessLegalMarkdown.mockReturnValue({ 
+      content: '# Test content',
+      metadata: {},
+      exportedFiles: []
+    });
 
     sampleConfig = {
       inputFile: '/test/input/contract.md',
@@ -201,8 +223,17 @@ describe('InteractiveService', () => {
       const service = new InteractiveService(configWithMetadata);
       const result = await service.processFile('/test/input/contract.md');
 
-      // Should create a new service instance for metadata export  
-      expect(MockedCliService).toHaveBeenCalledTimes(3); // Non-archiving service + metadata service + constructor
+      // Should only create nonArchivingService (constructor + nonArchivingService)
+      expect(MockedCliService).toHaveBeenCalledTimes(2);
+      // Should call processLegalMarkdown directly for metadata
+      expect(mockedProcessLegalMarkdown).toHaveBeenCalledWith(
+        '# Test content',
+        expect.objectContaining({
+          exportMetadata: true,
+          exportFormat: 'yaml',
+          exportPath: '/test/output/processed-contract-metadata.yaml'
+        })
+      );
       expect(result.outputFiles).toContain('/test/output/processed-contract-metadata.yaml');
     });
 
