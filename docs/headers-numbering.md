@@ -23,8 +23,8 @@ standards.
 
 ### Key Features
 
-- **5 hierarchy levels** (Articles, Sections, Subsections, Sub-subsections,
-  Paragraphs)
+- **6 hierarchy levels** (Articles, Sections, Subsections, Sub-subsections,
+  Paragraphs, Annexes)
 - **Automatic numbering** with intelligent reset
 - **Configurable indentation** for each level
 - **Customizable templates** for each format
@@ -36,14 +36,14 @@ standards.
 
 ```markdown
 l. Level 1 - Article ll. Level 2 - Section lll. Level 3 - Subsection llll. Level
-4 - Sub-subsection lllll. Level 5 - Paragraph
+4 - Sub-subsection lllll. Level 5 - Paragraph llllll. Level 6 - Annex
 ```
 
 ### Alternative Notation
 
 ```markdown
 l1. Level 1 - Article l2. Level 2 - Section l3. Level 3 - Subsection l4. Level
-4 - Sub-subsection l5. Level 5 - Paragraph
+4 - Sub-subsection l5. Level 5 - Paragraph l6. Level 6 - Annex
 ```
 
 ### Input Example
@@ -84,13 +84,14 @@ the invoice.
 
 ## Default Formats
 
-| Level | Notation          | Default Format | Output Example |
-| ----- | ----------------- | -------------- | -------------- |
-| 1     | `l.` or `l1.`     | `Article %n.`  | `Article 1.`   |
-| 2     | `ll.` or `l2.`    | `Section %n.`  | `Section 1.`   |
-| 3     | `lll.` or `l3.`   | `(%n)`         | `(1)`          |
-| 4     | `llll.` or `l4.`  | `(%n%c)`       | `(1a)`         |
-| 5     | `lllll.` or `l5.` | `(%n%c%r)`     | `(1ai)`        |
+| Level | Notation            | Default Format | Output Example |
+| ----- | ------------------- | -------------- | -------------- |
+| 1     | `l.` or `l1.`       | `Article %n.`  | `Article 1.`   |
+| 2     | `ll.` or `l2.`      | `Section %n.`  | `Section 1.`   |
+| 3     | `lll.` or `l3.`     | `(%n)`         | `(1)`          |
+| 4     | `llll.` or `l4.`    | `(%n%c)`       | `(1a)`         |
+| 5     | `lllll.` or `l5.`   | `(%n%c%r)`     | `(1ai)`        |
+| 6     | `llllll.` or `l6.`  | `Annex %r -`   | `Annex i -`   |
 
 ### Default Indentation
 
@@ -99,6 +100,7 @@ the invoice.
 - **Level 3**: 6 spaces (3.0 × 2)
 - **Level 4**: 9 spaces (4.5 × 2)
 - **Level 5**: 12 spaces (6.0 × 2)
+- **Level 6**: 15 spaces (7.5 × 2)
 
 > Indentation is calculated as: `(level - 1) × level-indent × 2` spaces
 
@@ -110,7 +112,8 @@ the invoice.
 | -------- | ---------------------------------------------------------- | ---------------- |
 | `%n`     | Number of current level OR level 1 in hierarchical formats | `1`, `2`, `3`    |
 | `%c`     | Alphabetic letter of current level OR level 1 reference    | `a`, `b`, `c`    |
-| `%r`     | Roman numeral (lowercase for level 5)                      | `i`, `ii`, `iii` |
+| `%r`     | Roman numeral (lowercase)                                   | `i`, `ii`, `iii` |
+| `%R`     | Roman numeral (uppercase)                                   | `I`, `II`, `III` |
 
 ### Variable Behavior by Context
 
@@ -168,6 +171,7 @@ level-two: 'Section %n.%s'
 level-three: 'Subsection (%n)'
 level-four: 'Part %n%c'
 level-five: 'Item %n%c%r'
+level-six: 'Annex %R -'
 # Custom indentation (em)
 level-indent: 2.0
 ---
@@ -183,6 +187,7 @@ level-two: '%n.%s'
 level-three: '%n.%s.%t'
 level-four: '%n.%s.%t.%f'
 level-five: '%n.%s.%t.%f.%i'
+level-six: 'Annex %R -'
 ```
 
 **Example Output:**
@@ -197,7 +202,7 @@ level-five: '%n.%s.%t.%f.%i'
          2.1.1.1 Statistical Tests
 ```
 
-#### Roman Numeral Hierarchical Format
+#### Roman Numeral Hierarchical Format (Lowercase)
 
 ```yaml
 level-one: '%r.'
@@ -217,6 +222,30 @@ iii. Third Main
       (1) Sub-sub
          (1a) Deep level
             (1ai) Deepest level
+```
+
+#### Roman Numeral Hierarchical Format (Uppercase)
+
+```yaml
+level-one: '%R.'
+level-two: '%R.%n'
+level-three: '(%n)'
+level-four: '(%n%c)'
+level-five: '(%n%c%R)'
+level-six: 'Annex %R -'
+```
+
+**Example Output:**
+
+```text
+I. First Main
+II. Second Main
+III. Third Main
+   III.1 Sub under third
+      (1) Sub-sub
+         (1a) Deep level
+            (1aI) Deepest level
+               Annex I - Annex content
 ```
 
 #### Alphabetic Hierarchical Format
@@ -717,7 +746,8 @@ level-five: '(%n%c%r)'
 | -------- | -------------------- | ---------------------------------- | ------------------- |
 | `%n`     | Current level number | Level 1 number (in dotted formats) | `1`, `2`            |
 | `%c`     | Current level letter | Level 1 letter (before dots)       | `a`, `b`            |
-| `%r`     | Current level roman  | Level 1 roman (before dots)        | `i`, `ii`           |
+| `%r`     | Current level roman (lowercase)  | Level 1 roman (before dots)        | `i`, `ii`           |
+| `%R`     | Current level roman (uppercase)  | Level 1 roman (before dots)        | `I`, `II`           |
 | `%s`     | -                    | Level 2 number                     | In `%n.%s`          |
 | `%t`     | -                    | Level 3 number                     | In `%n.%s.%t`       |
 | `%f`     | -                    | Level 4 number                     | In `%n.%s.%t.%f`    |
@@ -727,9 +757,9 @@ level-five: '(%n%c%r)'
 
 - **Dotted with references** (`%n.%s`, `%n.%s.%t`): Academic/hierarchical
   numbering
-- **Variable + dot + n** (`%r.%n`, `%c.%n`): Mixed hierarchical (level 1
+- **Variable + dot + n** (`%r.%n`, `%R.%n`, `%c.%n`): Mixed hierarchical (level 1
   reference + current number)
-- **Combined variables** (`%n%c`, `%n%c%r`): Standard legal format
+- **Combined variables** (`%n%c`, `%n%c%r`, `%n%c%R`): Standard legal format
 
 ---
 
