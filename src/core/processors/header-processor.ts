@@ -317,7 +317,7 @@ function formatHeader(
   let formattedHeader = formatTemplate;
 
   // Detect hierarchical patterns BEFORE any variable replacement
-  const isHierarchicalRoman = formatTemplate.includes('%r.%n');
+  const isHierarchicalRoman = formatTemplate.includes('%r.%n') || formatTemplate.includes('%R.%n');
   const isHierarchicalAlpha = formatTemplate.includes('%c.%n');
 
   // Detect broader hierarchical alphabetic context
@@ -402,6 +402,7 @@ function formatHeader(
       formattedHeader.includes('.%f.%i') ||
       (formattedHeader.includes('.%s') && hasAcademicContext)) &&
     !formattedHeader.includes('%r.') &&
+    !formattedHeader.includes('%R.') &&
     !formattedHeader.includes('%c.');
 
   if (isAcademicHierarchical) {
@@ -454,6 +455,19 @@ function formatHeader(
     formattedHeader = formattedHeader.replace(
       /%r/g,
       getRomanNumeral(headerNumbers[level - 1], true)
+    );
+  }
+  
+  // Replace %R (uppercase roman) for levels 1-5
+  // Special handling for hierarchical formats like %R.%n where %R refers to level 1
+  const isHierarchicalUppercaseRoman = formatTemplate.includes('%R.%n');
+  if (isHierarchicalUppercaseRoman && level > 1) {
+    // In hierarchical formats with %R.%n pattern, %R before dot refers to level 1
+    formattedHeader = formattedHeader.replace(/%R/g, getRomanNumeral(headerNumbers[0], false));
+  } else if (level <= 3 || (level >= 4 && formattedHeader.includes('%R'))) {
+    formattedHeader = formattedHeader.replace(
+      /%R/g,
+      getRomanNumeral(headerNumbers[level - 1], false)
     );
   }
 
