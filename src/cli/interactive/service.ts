@@ -112,12 +112,30 @@ export class InteractiveService {
         const pdfOutput = path.join(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, `${outputFilename}.pdf`);
         await nonArchivingService.processFile(inputFile, pdfOutput);
         outputFiles.push(pdfOutput);
+
+        // Add highlight version if highlight is enabled
+        if (processingOptions.highlight) {
+          const highlightPdfOutput = path.join(
+            RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
+            `${outputFilename}.HIGHLIGHT.pdf`
+          );
+          outputFiles.push(highlightPdfOutput);
+        }
       }
 
       if (outputFormats.html) {
         const htmlOutput = path.join(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, `${outputFilename}.html`);
         await nonArchivingService.processFile(inputFile, htmlOutput);
         outputFiles.push(htmlOutput);
+
+        // Add highlight version if highlight is enabled
+        if (processingOptions.highlight) {
+          const highlightHtmlOutput = path.join(
+            RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
+            `${outputFilename}.HIGHLIGHT.html`
+          );
+          outputFiles.push(highlightHtmlOutput);
+        }
       }
 
       if (outputFormats.markdown) {

@@ -163,7 +163,9 @@ describe('InteractiveService', () => {
       expect(result).toEqual({
         outputFiles: [
           '/test/output/processed-contract.pdf',
+          '/test/output/processed-contract.HIGHLIGHT.pdf',
           '/test/output/processed-contract.html',
+          '/test/output/processed-contract.HIGHLIGHT.html',
         ],
         archiveResult: undefined,
       });

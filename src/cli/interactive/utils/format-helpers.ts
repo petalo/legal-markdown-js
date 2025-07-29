@@ -7,6 +7,7 @@
  */
 
 import chalk from 'chalk';
+import * as path from 'path';
 import { InteractiveConfig, ProcessingResult } from '../types';
 
 /**
@@ -89,8 +90,59 @@ export function formatSuccessMessage(
 
   // Show generated files
   message += chalk.bold('📄 Generated files:\n');
-  for (const file of outputFiles) {
-    message += `   ${chalk.cyan(file)}\n`;
+
+  // Check if there are any highlight files
+  const hasHighlight = outputFiles.some(file => file.includes('.HIGHLIGHT.'));
+
+  if (hasHighlight) {
+    // Group files by extension
+    const grouped = new Map<string, { normal?: string; highlight?: string }>();
+
+    for (const file of outputFiles) {
+      const ext = path.extname(file);
+      const basename = path.basename(file, ext);
+      const isHighlight = basename.includes('.HIGHLIGHT');
+
+      if (isHighlight) {
+        const normalBasename = basename.replace('.HIGHLIGHT', '');
+        const key = `${normalBasename}${ext}`;
+        const existing = grouped.get(key) || {};
+        existing.highlight = file;
+        grouped.set(key, existing);
+      } else {
+        const key = `${basename}${ext}`;
+        const existing = grouped.get(key) || {};
+        existing.normal = file;
+        grouped.set(key, existing);
+      }
+    }
+
+    // Show grouped files by extension
+    const extensions = new Set(
+      Array.from(grouped.keys()).map(key => key.split('.').pop()?.toLowerCase())
+    );
+
+    for (const ext of ['md', 'html', 'pdf']) {
+      if (!extensions.has(ext)) continue;
+
+      message += chalk.gray(`\n   ${ext.toUpperCase()}:\n`);
+
+      for (const [key, fileGroup] of grouped) {
+        if (!key.endsWith(`.${ext}`)) continue;
+
+        if (fileGroup.normal) {
+          message += `   ${chalk.cyan(fileGroup.normal)}\n`;
+        }
+        if (fileGroup.highlight) {
+          message += `   ${chalk.cyan(fileGroup.highlight)}\n`;
+        }
+      }
+    }
+  } else {
+    // Simple list when no highlight
+    for (const file of outputFiles) {
+      message += `   ${chalk.cyan(file)}\n`;
+    }
   }
 
   // Show archiving results if archiving was enabled
