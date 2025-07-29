@@ -1,3 +1,12 @@
+## 2.13.0 (2025-07-29)
+
+- feat: add support for uppercase Roman numerals (%R) (#37)
+  ([5031f59](https://github.com/petalo/legal-markdown-js/commit/5031f59)),
+  closes [#37](https://github.com/petalo/legal-markdown-js/issues/37)
+- docs: improve JSDoc documentation and eliminate TypeDoc warnings (#36)
+  ([efa46b8](https://github.com/petalo/legal-markdown-js/commit/efa46b8)),
+  closes [#36](https://github.com/petalo/legal-markdown-js/issues/36)
+
 ## <small>2.12.1 (2025-07-29)</small>
 
 - fix: improve CLI console output formatting and eliminate duplicates (#35)
