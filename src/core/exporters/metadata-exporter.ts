@@ -44,7 +44,6 @@ import { MetadataExportResult } from '@types';
  * with support for custom output paths and metadata filtering. Handles directory
  * creation and provides comprehensive error handling.
  *
- * @async
  * @function exportMetadata
  * @param {Record<string, any>} metadata - Document metadata to export
  * @param {'yaml' | 'json'} [format] - Export format (yaml or json)

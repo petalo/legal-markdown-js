@@ -1,5 +1,5 @@
 /**
- * @fileoverview Core Field State Management for Legal Markdown Processing
+ * Core Field State Management for Legal Markdown Processing
  *
  * This module provides the fundamental field tracking interfaces and basic implementation
  * that form the foundation for field tracking throughout the Legal Markdown processing
@@ -30,7 +30,6 @@
 /**
  * Enumeration of possible field statuses during processing
  *
- * @enum {string} FieldStatus
  * @example
  * ```typescript
  * import { FieldStatus } from './field-state';
@@ -56,8 +55,6 @@ export enum FieldStatus {
 
 /**
  * Options for tracking a field in the system
- *
- * @interface FieldTrackingOptions
  * @example
  * ```typescript
  * const options: FieldTrackingOptions = {
@@ -81,8 +78,6 @@ export interface FieldTrackingOptions {
 
 /**
  * Interface representing a tracked field in the Legal Markdown system
- *
- * @interface TrackedField
  * @example
  * ```typescript
  * const field: TrackedField = {
@@ -224,7 +219,6 @@ export interface FieldState {
  * that can be used as a foundation for more advanced field tracking systems.
  *
  * @class CoreFieldState
- * @implements {FieldState}
  * @example
  * ```typescript
  * const fieldState = new CoreFieldState();

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Constants and Configuration for Legal Markdown Processing
+ * Constants and Configuration for Legal Markdown Processing
  *
  * This module provides centralized access to all constants used throughout
  * the Legal Markdown processing system. It re-exports constants from

@@ -63,7 +63,6 @@ export class ContentDetector {
    * directives, header underlines, reference links, code blocks, and other
    * RST constructs. Avoids false positives with YAML frontmatter content.
    *
-   * @static
    * @param {string} content - The content to analyze for RST patterns
    * @returns {boolean} True if content appears to be reStructuredText, false otherwise
    * @example
@@ -135,7 +134,6 @@ export class ContentDetector {
    * commands, and environments. Requires multiple pattern matches to avoid
    * false positives.
    *
-   * @static
    * @param {string} content - The content to analyze for LaTeX patterns
    * @returns {boolean} True if content appears to be LaTeX, false otherwise
    * @example
@@ -211,7 +209,6 @@ export class ContentDetector {
    * determine if content needs any form of Pandoc processing for conversion
    * to Legal Markdown format.
    *
-   * @static
    * @param {string} content - The content to analyze for format patterns
    * @returns {boolean} True if content needs Pandoc processing, false otherwise
    * @example

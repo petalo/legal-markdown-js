@@ -1,5 +1,5 @@
 /**
- * @fileoverview Regular expression patterns for Legal Markdown parsing
+ * Regular expression patterns for Legal Markdown parsing
  *
  * This module contains all the regex patterns used throughout the system
  * for parsing different markdown elements like headers, imports, clauses, and references.
@@ -7,8 +7,6 @@
 
 /**
  * Regular expression patterns for parsing header structures
- *
- * @constant {Object} HEADER_PATTERNS
  * @example
  * ```typescript
  * import { HEADER_PATTERNS } from './constants';
@@ -29,8 +27,6 @@ export const HEADER_PATTERNS = {
 
 /**
  * Regular expression patterns for parsing import statements
- *
- * @constant {Object} IMPORT_PATTERNS
  * @example
  * ```typescript
  * import { IMPORT_PATTERNS } from './constants';
@@ -51,8 +47,6 @@ export const IMPORT_PATTERNS = {
 
 /**
  * Regular expression patterns for parsing optional and conditional clauses
- *
- * @constant {Object} CLAUSE_PATTERNS
  * @example
  * ```typescript
  * import { CLAUSE_PATTERNS } from './constants';
@@ -73,8 +67,6 @@ export const CLAUSE_PATTERNS = {
 
 /**
  * Regular expression patterns for parsing cross-references
- *
- * @constant {Object} REFERENCE_PATTERNS
  * @example
  * ```typescript
  * import { REFERENCE_PATTERNS } from './constants';
