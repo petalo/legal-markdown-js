@@ -1,3 +1,9 @@
+## <small>2.12.1 (2025-07-29)</small>
+
+- fix: improve CLI console output formatting and eliminate duplicates (#35)
+  ([68bb465](https://github.com/petalo/legal-markdown-js/commit/68bb465)),
+  closes [#35](https://github.com/petalo/legal-markdown-js/issues/35)
+
 ## 2.12.0 (2025-07-28)
 
 - feat: separate field tracking from highlighting and restore dual output
