@@ -154,7 +154,6 @@ export interface BatchProcessingResult {
  * for recursive directory traversal, concurrent processing, and progress tracking.
  * It automatically handles file discovery, directory creation, and error management.
  *
- * @async
  * @function processBatch
  * @param {BatchProcessingOptions} options - Configuration options for batch processing
  * @returns {Promise<BatchProcessingResult>} A promise that resolves to the processing result
@@ -263,7 +262,6 @@ export async function processBatch(
  * Recursively searches through directories to find files matching the specified
  * extensions while respecting exclusion patterns and recursive settings.
  *
- * @async
  * @function findFilesToProcess
  * @param {string} dir - Directory to search in
  * @param {string[]} extensions - File extensions to include (e.g., ['.md', '.txt'])
@@ -315,7 +313,6 @@ async function findFilesToProcess(
  * the source file, processing it through the Legal Markdown system, determining
  * the output path, and writing the processed content and any exported files.
  *
- * @async
  * @function processFile
  * @param {string} filePath - Path to the input file to process
  * @param {string} inputDir - Base input directory path
@@ -442,8 +439,7 @@ class Semaphore {
   /**
    * Acquires a permit, waiting if necessary
    *
-   * @async
-   * @method acquire
+   * acquire
    * @returns {Promise<void>} Promise that resolves when a permit is acquired
    */
   async acquire(): Promise<void> {
@@ -460,7 +456,7 @@ class Semaphore {
   /**
    * Releases a permit, allowing waiting operations to proceed
    *
-   * @method release
+   * release
    * @returns {void}
    */
   release(): void {

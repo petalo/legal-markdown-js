@@ -1,5 +1,5 @@
 /**
- * @fileoverview Core constants for Legal Markdown processing
+ * Core constants for Legal Markdown processing
  *
  * This module contains fundamental constants for document processing,
  * including default options, supported formats, and error codes.
@@ -7,8 +7,6 @@
 
 /**
  * Default options for Legal Markdown processing
- *
- * @constant {Object} DEFAULT_OPTIONS
  * @example
  * ```typescript
  * import { DEFAULT_OPTIONS } from './constants';
@@ -48,8 +46,6 @@ export const DEFAULT_OPTIONS = {
 
 /**
  * Supported file formats for input and export operations
- *
- * @constant {Object} SUPPORTED_FORMATS
  * @example
  * ```typescript
  * import { SUPPORTED_FORMATS } from './constants';
@@ -70,8 +66,6 @@ export const SUPPORTED_FORMATS = {
 
 /**
  * File extensions for different document types
- *
- * @constant {Object} FILE_EXTENSIONS
  * @example
  * ```typescript
  * import { FILE_EXTENSIONS } from './constants';
@@ -94,8 +88,6 @@ export const FILE_EXTENSIONS = {
 
 /**
  * Error codes for consistent error handling throughout the system
- *
- * @constant {Object} ERROR_CODES
  * @example
  * ```typescript
  * import { ERROR_CODES } from './constants';

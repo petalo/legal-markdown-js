@@ -38,7 +38,7 @@ import {
   applyForceCommands,
 } from '../core/parsers/force-commands-parser';
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
-import { RESOLVED_PATHS, PATHS } from '@constants';
+import { RESOLVED_PATHS } from '@constants';
 import { ArchiveManager } from '../utils/archive-manager';
 import chalk from 'chalk';
 import * as path from 'path';
@@ -132,7 +132,6 @@ export class CliService {
   /**
    * Processes a file from input path to output path
    *
-   * @async
    * @param {string} inputPath - Path to the input file
    * @param {string} [outputPath] - Path for output file (optional for stdout)
    * @returns {Promise<void>}
@@ -204,7 +203,6 @@ export class CliService {
   /**
    * Processes content directly without file I/O
    *
-   * @async
    * @param {string} content - The content to process
    * @returns {Promise<string>} The processed content
    * @throws {LegalMarkdownError} When processing fails
@@ -257,7 +255,6 @@ export class CliService {
    * Generates formatted output (HTML/PDF) from processed content
    *
    * @private
-   * @async
    * @param {string} content - The content to format
    * @param {string} inputPath - Original input path for naming
    * @param {string} [outputPath] - Output path override

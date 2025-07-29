@@ -234,7 +234,6 @@ export function isRestructuredText(content: string): boolean {
  * Markdown format using Pandoc when available. It automatically detects RST content
  * and only performs conversion when necessary, preserving non-RST content unchanged.
  *
- * @async
  * @param {string} content - The input content that may contain reStructuredText
  * @returns {Promise<string>} A promise that resolves to Legal Markdown formatted content
  * @example

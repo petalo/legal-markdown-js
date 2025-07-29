@@ -34,7 +34,7 @@
  * Provides structured logging with different levels and optional context data.
  * Debug logging is only enabled when DEBUG environment variable is set.
  *
- * @constant {Object} logger
+ * {Object} logger
  * @example
  * ```typescript
  * import { logger } from './logger';
@@ -71,7 +71,7 @@ export const logger = {
   /**
    * Log debug messages (only shown when DEBUG environment variable is set or debug is enabled)
    *
-   * @method debug
+   * debug
    * @param {string} message - The debug message to log
    * @param {any} [data] - Optional contextual data to include with the log
    * @returns {void}
@@ -94,7 +94,7 @@ export const logger = {
   /**
    * Log informational messages
    *
-   * @method info
+   * info
    * @param {string} message - The informational message to log
    * @param {any} [data] - Optional contextual data to include with the log
    * @returns {void}
@@ -112,7 +112,7 @@ export const logger = {
   /**
    * Log warning messages
    *
-   * @method warn
+   * warn
    * @param {string} message - The warning message to log
    * @param {any} [data] - Optional contextual data to include with the log
    * @returns {void}
@@ -130,7 +130,7 @@ export const logger = {
   /**
    * Log error messages
    *
-   * @method error
+   * error
    * @param {string} message - The error message to log
    * @param {any} [data] - Optional contextual data to include with the log
    * @returns {void}

@@ -61,8 +61,6 @@ export class PandocFactory {
    * - Browser: Uses Pandoc WASM module for client-side processing
    * Returns null if no suitable parser can be created.
    *
-   * @static
-   * @async
    * @param {PandocOptions} [options={}] - Configuration options for the parser
    * @returns {Promise<PandocParser | null>} A promise that resolves to a parser instance or null
    * @example

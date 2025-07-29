@@ -27,7 +27,6 @@ export class PdfTemplates {
    * Creates a right-aligned header with logo support. The template uses flexbox
    * for proper positioning and maintains consistent spacing with document margins.
    *
-   * @static
    * @param {string} [logoBase64] - Optional base64 encoded logo image
    * @returns {string} HTML template string for the header
    * @example
@@ -68,7 +67,6 @@ export class PdfTemplates {
    * Creates a right-aligned footer with "Page X / Y" format using Puppeteer's
    * special classes for dynamic page numbering.
    *
-   * @static
    * @returns {string} HTML template string for the footer
    * @example
    * ```typescript
@@ -96,7 +94,6 @@ export class PdfTemplates {
    * Creates a header with both text content and logo, useful for documents
    * that need title information in addition to branding.
    *
-   * @static
    * @param {string} headerText - Text to display in the header
    * @param {string} [logoBase64] - Optional base64 encoded logo image
    * @returns {string} HTML template string for the custom header
@@ -135,7 +132,6 @@ export class PdfTemplates {
    *
    * Creates a footer with custom text on the left and page numbers on the right.
    *
-   * @static
    * @param {string} footerText - Text to display in the footer
    * @returns {string} HTML template string for the custom footer
    * @example

@@ -45,7 +45,6 @@ import { RESOLVED_PATHS } from '@constants';
 /**
  * Helper function to read content from standard input
  *
- * @async
  * @returns {Promise<string>} A promise that resolves to the stdin content
  * @throws {Error} When stdin reading fails
  */

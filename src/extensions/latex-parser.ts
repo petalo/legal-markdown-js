@@ -558,7 +558,6 @@ export function isLatex(content: string): boolean {
  * format using Pandoc when available. It automatically detects LaTeX content
  * and only performs conversion when necessary, preserving non-LaTeX content unchanged.
  *
- * @async
  * @param {string} content - The input content that may contain LaTeX
  * @returns {Promise<string>} A promise that resolves to Legal Markdown formatted content
  * @example

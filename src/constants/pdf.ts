@@ -1,5 +1,5 @@
 /**
- * @fileoverview PDF generation constants and configuration
+ * PDF generation constants and configuration
  *
  * This module contains all constants related to PDF generation,
  * including template styling, logo constraints, and layout specifications.
@@ -7,8 +7,6 @@
 
 /**
  * Configuration constants for PDF generation and template styling
- *
- * @constant {Object} PDF_TEMPLATE_CONSTANTS
  * @example
  * ```typescript
  * import { PDF_TEMPLATE_CONSTANTS } from './constants';

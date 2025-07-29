@@ -178,7 +178,6 @@ export interface PipelineLogger {
  * Console-based pipeline logger with rich formatting
  *
  * @class ConsolePipelineLogger
- * @implements {PipelineLogger}
  * @example
  * ```typescript
  * const logger = new ConsolePipelineLogger({
@@ -497,7 +496,6 @@ export class ConsolePipelineLogger implements PipelineLogger {
  * Null logger that discards all log messages (useful for testing)
  *
  * @class NullPipelineLogger
- * @implements {PipelineLogger}
  */
 export class NullPipelineLogger implements PipelineLogger {
   startPipeline(): void {}

@@ -41,6 +41,7 @@ let convertRstToLegalMarkdownSync: (content: string) => string;
 let convertLatexToLegalMarkdownSync: (content: string) => string;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const rstParser = require('@extensions/rst-parser');
   convertRstToLegalMarkdownSync = rstParser.convertRstToLegalMarkdownSync;
 } catch (error) {
@@ -49,6 +50,7 @@ try {
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const latexParser = require('@extensions/latex-parser');
   convertLatexToLegalMarkdownSync = latexParser.convertLatexToLegalMarkdownSync;
 } catch (error) {
@@ -191,7 +193,7 @@ export function processLegalMarkdown(
  * and script tag implementations, making the library accessible through
  * global window object or module systems.
  *
- * @constant {Object} LegalMarkdown
+ * {Object} LegalMarkdown
  * @example
  * ```typescript
  * // ES6 import

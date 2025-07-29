@@ -318,7 +318,7 @@ function addOrdinalSuffix(num: number): string {
  * These formats provide standardized date formatting for different types
  * of legal documents and jurisdictions.
  *
- * @constant {Object} DateFormats
+ * {Object} DateFormats
  * @example
  * ```typescript
  * import { formatDate, DateFormats } from './advanced-date-helpers';

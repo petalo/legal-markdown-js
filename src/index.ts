@@ -1,5 +1,5 @@
 /**
- * @fileoverview Main Entry Point for Legal Markdown Processing Library
+ * Main Entry Point for Legal Markdown Processing Library
  *
  * This module provides the primary API for processing Legal Markdown documents
  * with support for YAML front matter, cross-references, optional clauses, mixins,
@@ -57,7 +57,6 @@ import { fieldTracker } from '@extensions/tracking/field-tracker';
 import { htmlGenerator } from '@extensions/generators/html-generator';
 import { pdfGenerator } from '@extensions/generators/pdf-generator';
 import { LegalMarkdownOptions } from '@types';
-import { RESOLVED_PATHS } from '@constants';
 import { createDefaultPipeline, createHtmlPipeline } from '@extensions/pipeline/pipeline-config';
 import path from 'path';
 
@@ -375,7 +374,6 @@ export function processLegalMarkdown(
  * document with styling, field highlighting, and responsive design features.
  * It combines the Legal Markdown processing pipeline with HTML generation.
  *
- * @async
  * @param {string} content - The raw Legal Markdown content to convert
  * @param {LegalMarkdownOptions & Object} [options={}] - Configuration options
  * @param {string} [options.cssPath] - Path to custom CSS file
@@ -480,7 +478,6 @@ async function generateHtmlLegacy(
  * with professional styling, field highlighting, and customizable page formatting.
  * It combines the Legal Markdown processing pipeline with PDF generation.
  *
- * @async
  * @param {string} content - The raw Legal Markdown content to convert
  * @param {string} outputPath - File path where the PDF will be saved
  * @param {LegalMarkdownOptions & Object} [options={}] - Configuration options
@@ -599,7 +596,6 @@ async function generatePdfLegacy(
  * This is useful for document review processes where both clean and annotated
  * versions are needed.
  *
- * @async
  * @param {string} content - The raw Legal Markdown content to convert
  * @param {string} outputPath - Base file path for PDFs (will be modified for each version)
  * @param {LegalMarkdownOptions & Object} [options={}] - Configuration options
