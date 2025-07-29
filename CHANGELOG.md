@@ -1,3 +1,9 @@
+## <small>2.14.1 (2025-07-29)</small>
+
+- fix: prevent duplicate success messages in interactive CLI (#39)
+  ([7bf6253](https://github.com/petalo/legal-markdown-js/commit/7bf6253)),
+  closes [#39](https://github.com/petalo/legal-markdown-js/issues/39)
+
 ## 2.14.0 (2025-07-29)
 
 - feat: add automatic cross-references metadata generation (#38)
