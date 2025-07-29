@@ -80,12 +80,15 @@ export function processCrossReferences(content: string, metadata: Record<string,
   const crossReferences = extractCrossReferences(content, metadata);
 
   // Store cross-references metadata in protected field
-  if (crossReferences.length > 0) {
-    metadata['_cross_references'] = crossReferences.map(ref => ({
-      key: ref.key,
-      sectionNumber: ref.sectionNumber,
-      sectionText: ref.sectionText,
-    }));
+  metadata['_cross_references'] = crossReferences.map(ref => ({
+    key: ref.key,
+    sectionNumber: ref.sectionNumber,
+    sectionText: ref.sectionText,
+  }));
+
+  // Ensure the field is always set, even if no cross-references exist
+  if (crossReferences.length === 0) {
+    metadata['_cross_references'] = [];
   }
 
   // Then replace all cross-reference usage with section numbers or metadata
