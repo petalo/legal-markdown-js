@@ -468,6 +468,7 @@ End of document.`;
       
       // Only main document frontmatter should be present
       expect(result.metadata).toEqual({
+        _cross_references: [],
         main_field: 'main document',
         shared_field: 'main value'
       });
@@ -509,6 +510,7 @@ config:
 
       // Main document values should be preserved due to type conflicts
       expect(result.metadata).toEqual({
+        _cross_references: [],
         count: 42,
         config: {
           debug: true,
@@ -560,6 +562,7 @@ End of main content.`;
 
       // Verify frontmatter is still merged
       expect(result.metadata).toEqual({
+        _cross_references: [],
         main_field: 'main value',
         traced_field: 'traced value'
       });
@@ -603,6 +606,7 @@ End of document.`;
         
         // Only main document metadata should be present
         expect(result.metadata).toEqual({
+          _cross_references: [],
           main_field: 'main value'
         });
       }).not.toThrow();
@@ -632,6 +636,7 @@ End of document.`;
 
       // Only main document metadata should be present
       expect(result.metadata).toEqual({
+        _cross_references: [],
         main_field: 'main value'
       });
     });
@@ -662,6 +667,7 @@ main_field: "main"
         });
         
         expect(result.metadata).toEqual({
+          _cross_references: [],
           main_field: 'main',
           field: 'value'
         });
@@ -713,6 +719,7 @@ This document should be safe.`;
 
       // Verify only safe fields are merged
       expect(result.metadata).toEqual({
+        _cross_references: [],
         title: 'Safe Document',        // Main document wins
         document_type: 'Service Agreement',
         'level-one': 'Article %n.',    // Main document preserved

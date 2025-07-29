@@ -4,5 +4,6 @@
   "include_advanced": true,
   "level-one": "Article %n.",
   "level-two": "Section %n.%s",
-  "level-three": "(%n)"
+  "level-three": "(%n)",
+  "_cross_references": []
 }
