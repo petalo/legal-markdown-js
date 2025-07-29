@@ -293,6 +293,8 @@ export class CliService {
       title: options.title || baseName,
     };
 
+    const generatedFiles: string[] = [];
+
     // Generate HTML if requested
     if (generateOptions.html) {
       if (generateOptions.highlight) {
@@ -306,15 +308,16 @@ export class CliService {
           includeHighlighting: false,
         });
         writeFileSync(htmlPath, normalHtmlContent);
-        this.log(`HTML output written to: ${htmlPath}`, 'success');
 
         // Highlighted version (with highlight CSS)
         const highlightHtmlContent = await generateHtml(content, {
           ...generateOptions,
           includeHighlighting: true,
         });
+
         writeFileSync(highlightHtmlPath, highlightHtmlContent);
-        this.log(`Highlighted HTML output written to: ${highlightHtmlPath}`, 'success');
+
+        generatedFiles.push(htmlPath, highlightHtmlPath);
       } else {
         // Generate single HTML without highlighting
         const htmlPath = path.join(dirName, `${baseName}.html`);
@@ -323,7 +326,7 @@ export class CliService {
           includeHighlighting: false,
         });
         writeFileSync(htmlPath, htmlContent);
-        this.log(`HTML output written to: ${htmlPath}`, 'success');
+        generatedFiles.push(htmlPath);
       }
     }
 
@@ -339,30 +342,102 @@ export class CliService {
           ...generateOptions,
           includeHighlighting: false,
         });
-        this.log(`PDF output written to: ${pdfPath}`, 'success');
 
         // Highlighted version (with highlight CSS)
         await generatePdf(content, highlightPdfPath, {
           ...generateOptions,
           includeHighlighting: true,
         });
-        this.log(`Highlighted PDF output written to: ${highlightPdfPath}`, 'success');
+
+        generatedFiles.push(pdfPath, highlightPdfPath);
       } else {
         // Generate single PDF without highlighting
         const pdfPath = path.join(dirName, `${baseName}.pdf`);
-        await generatePdf(content, pdfPath, {
-          ...generateOptions,
-          includeHighlighting: false,
-        });
-        this.log(`PDF output written to: ${pdfPath}`, 'success');
+        await generatePdf(content, pdfPath, generateOptions);
+        generatedFiles.push(pdfPath);
       }
     }
 
-    // Process markdown to get processed content for archiving
+    // Process markdown if requested (toMarkdown option exists)
     const markdownResult = processLegalMarkdown(content, generateOptions);
+    if (options.toMarkdown || (!generateOptions.html && !generateOptions.pdf)) {
+      const mdPath = path.join(dirName, `${baseName}.md`);
+      writeFileSync(mdPath, markdownResult.content);
+      generatedFiles.push(mdPath);
+    }
+
+    // Show generated files
+    this.showGeneratedFiles(generatedFiles, generateOptions.highlight);
 
     // Archive source file if requested
     await this.handleArchiving(resolvedInputPath, content, markdownResult.content);
+  }
+
+  /**
+   * Show generated files with proper grouping and formatting
+   *
+   * @private
+   * @param {string[]} files - Array of generated file paths
+   * @param {boolean} hasHighlight - Whether highlight versions were generated
+   */
+  private showGeneratedFiles(files: string[], hasHighlight?: boolean): void {
+    if (files.length === 0) {
+      return;
+    }
+
+    this.log('Files generated successfully!', 'success');
+    console.log(chalk.bold('\n📄 Generated files:'));
+
+    if (hasHighlight) {
+      // Group files by extension
+      const grouped = new Map<string, { normal: string; highlight?: string }>();
+
+      for (const file of files) {
+        const ext = path.extname(file);
+        const basename = path.basename(file, ext);
+        const isHighlight = basename.includes('.HIGHLIGHT');
+
+        if (isHighlight) {
+          const normalBasename = basename.replace('.HIGHLIGHT', '');
+          const key = `${normalBasename}${ext}`;
+          const existing = grouped.get(key) || { normal: '' };
+          existing.highlight = file;
+          grouped.set(key, existing);
+        } else {
+          const key = `${basename}${ext}`;
+          const existing = grouped.get(key) || { normal: file };
+          existing.normal = file;
+          grouped.set(key, existing);
+        }
+      }
+
+      // Show grouped files by extension
+      const extensions = new Set(
+        Array.from(grouped.keys()).map(key => key.split('.').pop()?.toLowerCase())
+      );
+
+      for (const ext of ['md', 'html', 'pdf']) {
+        if (!extensions.has(ext)) continue;
+
+        console.log(chalk.gray(`\n   ${ext.toUpperCase()}:`));
+
+        for (const [key, fileGroup] of grouped) {
+          if (!key.endsWith(`.${ext}`)) continue;
+
+          if (fileGroup.normal) {
+            console.log(`   ${chalk.cyan(fileGroup.normal)}`);
+          }
+          if (fileGroup.highlight) {
+            console.log(`   ${chalk.cyan(fileGroup.highlight)}`);
+          }
+        }
+      }
+    } else {
+      // Simple list when no highlight
+      for (const file of files) {
+        console.log(`   ${chalk.cyan(file)}`);
+      }
+    }
   }
 
   /**

@@ -97,8 +97,6 @@ async function runInteractiveMode(): Promise<void> {
     }
 
     // Step 8: Process files
-    console.log(chalk.cyan('\n⏳ Processing files...\n'));
-
     const service = new InteractiveService(config);
     const result = await service.processFile(inputFile);
 
