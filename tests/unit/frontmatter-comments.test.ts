@@ -16,10 +16,9 @@ describe('Frontmatter Comments Bug', () => {
   });
 
   afterEach(() => {
-    // Comentamos la limpieza para poder inspeccionar los archivos
-    // if (fs.existsSync(testDir)) {
-    //   fs.rmSync(testDir, { recursive: true, force: true });
-    // }
+    if (fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    }
   });
 
   it('should not process frontmatter comments as markdown headers', () => {
