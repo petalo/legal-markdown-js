@@ -71,8 +71,6 @@ export interface HtmlGeneratorOptions {
 export class HtmlGenerator {
   /**
    * Creates a new HTML generator instance and configures the markdown parser
-   *
-   * @constructor
    */
   constructor() {
     this.configureMarked();
@@ -82,8 +80,6 @@ export class HtmlGenerator {
    * Configures the marked markdown parser with options optimized for legal documents
    *
    * @private
-   * @method configureMarked
-   * @returns {void}
    */
   private configureMarked(): void {
     // Configure marked options
@@ -115,7 +111,6 @@ export class HtmlGenerator {
    * Removes YAML frontmatter from markdown content if present
    *
    * @private
-   * @method removeYamlFrontmatter
    * @param {string} content - The markdown content that may contain YAML frontmatter
    * @returns {string} Content with YAML frontmatter removed
    * @example
@@ -163,8 +158,6 @@ export class HtmlGenerator {
    * 4. Injects custom CSS and styling
    * 5. Builds a complete HTML document
    *
-   * @async
-   * @method generateHtml
    * @param {string} markdownContent - The processed Legal Markdown content to convert
    * @param {HtmlGeneratorOptions} [options={}] - Configuration options for HTML generation
    * @returns {Promise<string>} A promise that resolves to the complete HTML document
@@ -261,7 +254,6 @@ export class HtmlGenerator {
    * - Cleaning up paragraph tags in list items
    *
    * @private
-   * @method applyDomTransformations
    * @param {cheerio.CheerioAPI} $ - The cheerio instance with loaded HTML
    * @returns {void}
    */
@@ -301,8 +293,6 @@ export class HtmlGenerator {
    * Loads CSS content from a file path
    *
    * @private
-   * @async
-   * @method loadCss
    * @param {string} cssPath - Path to the CSS file to load
    * @returns {Promise<string>} A promise that resolves to the CSS content, or empty string on error
    */
@@ -328,7 +318,6 @@ export class HtmlGenerator {
    * - Print-optimized styling
    *
    * @private
-   * @method buildHtmlDocument
    * @param {Object} options - Configuration for building the HTML document
    * @param {string} options.body - The HTML body content
    * @param {string} options.css - Custom CSS to embed
@@ -380,8 +369,6 @@ ${body}
 
 /**
  * Singleton instance of HtmlGenerator for convenient importing
- *
- * @constant {HtmlGenerator} htmlGenerator
  * @example
  * ```typescript
  * import { htmlGenerator } from './html-generator';

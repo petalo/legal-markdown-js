@@ -36,7 +36,7 @@ import { today, formatBasicDate, parseToday } from './date-helpers';
  * in the original Ruby legal-markdown implementation. It serves as the
  * foundation for template processing and mixin resolution.
  *
- * @constant {Object} coreHelpers
+ * {Object} coreHelpers
  * @example
  * ```typescript
  * import { coreHelpers } from '@core/helpers';
@@ -63,7 +63,7 @@ export const coreHelpers = {
  * functionality. Used for validating template expressions and determining
  * which helpers are available in core processing.
  *
- * @constant {string[]} CORE_HELPER_NAMES
+ * {string[]} CORE_HELPER_NAMES
  */
 export const CORE_HELPER_NAMES = [
   'today',

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Template Loop Processing Extension for Legal Markdown
+ * Template Loop Processing Extension for Legal Markdown
  *
  * This extension adds support for template loops and conditional blocks using
  * the {{#variable}}...{{/variable}} syntax. It enables iteration over arrays
@@ -53,7 +53,7 @@ function escapeHtmlAttribute(value: string): string {
 /**
  * Interface for loop context during template processing
  */
-interface LoopContext {
+export interface LoopContext {
   /** Current loop variable name */
   variable: string;
   /** Current item being processed */

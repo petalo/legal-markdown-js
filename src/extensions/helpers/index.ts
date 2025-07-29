@@ -70,7 +70,7 @@ import {
  * beyond the Ruby legal-markdown capabilities. It includes the complete
  * set of Node.js specific enhancements for document processing.
  *
- * @constant {Object} extensionHelpers
+ * {Object} extensionHelpers
  * @example
  * ```typescript
  * import { extensionHelpers } from '@extensions/helpers';
@@ -126,7 +126,7 @@ export const extensionHelpers = {
  * the Ruby-compatible core helpers with the Node.js extension helpers.
  * Extension helpers take precedence over core helpers when there are conflicts.
  *
- * @constant {Object} allHelpers
+ * {Object} allHelpers
  * @example
  * ```typescript
  * import { allHelpers } from '@extensions/helpers';
@@ -152,7 +152,7 @@ export const allHelpers = {
  * functionality. Used for validating template expressions and determining
  * which helpers are available in extension processing.
  *
- * @constant {string[]} EXTENSION_HELPER_NAMES
+ * {string[]} EXTENSION_HELPER_NAMES
  */
 export const EXTENSION_HELPER_NAMES = [
   // Advanced date helpers

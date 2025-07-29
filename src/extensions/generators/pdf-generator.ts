@@ -81,7 +81,6 @@ export interface PdfGeneratorOptions extends HtmlGeneratorOptions {
  * Searches for CSS custom property `--logo-filename` and extracts the filename value.
  * Handles quoted and unquoted values, removing whitespace and quotes as needed.
  *
- * @async
  * @param {string} cssPath - Path to the CSS file to parse
  * @returns {Promise<string | null>} Logo filename or null if not found
  * @example
@@ -125,7 +124,6 @@ async function detectLogoFromCSS(cssPath: string): Promise<string | null> {
  * - PNG format validation using magic numbers
  * - Base64 encoding for embedding
  *
- * @async
  * @param {string} logoPath - Absolute path to the logo image file
  * @returns {Promise<string>} Base64 encoded image string
  * @throws {Error} When file validation fails
@@ -187,7 +185,6 @@ async function loadAndEncodeImage(logoPath: string): Promise<string> {
  * - PNG format validation using magic numbers
  * - Base64 encoding for embedding
  *
- * @async
  * @param {string} logoUrl - URL to the logo image
  * @returns {Promise<string>} Base64 encoded image string
  * @throws {Error} When download or validation fails
@@ -342,7 +339,6 @@ export class PdfGenerator {
   /**
    * Creates a new PDF generator instance
    *
-   * @constructor
    */
   constructor() {}
 
@@ -356,7 +352,6 @@ export class PdfGenerator {
    * 4. Loads the HTML and generates PDF with specified options
    * 5. Cleans up temporary files and browser resources
    *
-   * @async
    * @param {string} markdownContent - The processed Legal Markdown content
    * @param {string} outputPath - Path where the PDF will be saved
    * @param {PdfGeneratorOptions} [options={}] - Configuration options for PDF generation
@@ -537,7 +532,6 @@ export class PdfGenerator {
    * This is useful for document review processes where both clean and
    * annotated versions are needed for different purposes.
    *
-   * @async
    * @param {string} markdownContent - The processed Legal Markdown content
    * @param {string} outputPath - Base path for PDF files (will be modified for each version)
    * @param {PdfGeneratorOptions} [options={}] - Configuration options for PDF generation
@@ -587,7 +581,7 @@ export class PdfGenerator {
 /**
  * Singleton instance of PdfGenerator for convenient importing
  *
- * @constant {PdfGenerator} pdfGenerator
+ * {PdfGenerator} pdfGenerator
  * @example
  * ```typescript
  * import { pdfGenerator } from './pdf-generator';
