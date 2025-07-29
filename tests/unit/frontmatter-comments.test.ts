@@ -62,16 +62,8 @@ Fin del documento.
       noImports: false
     });
 
-    // Log para debugging
-    console.log('=== CONTENIDO PROCESADO ===');
-    console.log(result.content);
-
-    console.log('=== METADATA RESULTANTE ===');
-    console.log(JSON.stringify(result.metadata, null, 2));
-
     // Verificar si realmente hay comentarios que se procesen mal
     const hasCommentsAsHeaders = result.content.includes('# Definición y cálculo');
-    console.log('¿Los comentarios aparecen como headers?', hasCommentsAsHeaders);
     
     // Escribir el resultado a un archivo para debugging
     fs.writeFileSync(path.join(testDir, 'debug-output.md'), result.content);
