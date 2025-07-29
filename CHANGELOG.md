@@ -1,3 +1,12 @@
+## 2.12.0 (2025-07-28)
+
+- feat: separate field tracking from highlighting and restore dual output
+  generation (#34)
+  ([79fe2cd](https://github.com/petalo/legal-markdown-js/commit/79fe2cd)),
+  closes [#34](https://github.com/petalo/legal-markdown-js/issues/34)
+- test: add smart test execution to pre-commit hooks
+  ([cd619d1](https://github.com/petalo/legal-markdown-js/commit/cd619d1))
+
 ## 2.11.0 (2025-07-28)
 
 - feat: implement frontmatter merging system for imports (#33)
