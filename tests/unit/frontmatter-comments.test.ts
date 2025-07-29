@@ -33,6 +33,7 @@ descuento:
   comercial_porcentaje:
     texto: "cincuenta"
     numero: 0.5
+# The following duplicate 'descuento' key is intentional to test malformed YAML handling.
 descuento:
   pagos_recurrentes_maximo:
     porcentaje: 0.50
