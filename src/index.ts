@@ -57,7 +57,6 @@ import { fieldTracker } from '@extensions/tracking/field-tracker';
 import { htmlGenerator } from '@extensions/generators/html-generator';
 import { pdfGenerator } from '@extensions/generators/pdf-generator';
 import { LegalMarkdownOptions } from '@types';
-// import { RESOLVED_PATHS } from '@constants';
 import { createDefaultPipeline, createHtmlPipeline } from '@extensions/pipeline/pipeline-config';
 import path from 'path';
 
