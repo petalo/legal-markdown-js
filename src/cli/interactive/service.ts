@@ -161,7 +161,13 @@ export class InteractiveService {
           exportPath: yamlOutput,
         };
         const result = processLegalMarkdown(content, metadataOptions);
-        outputFiles.push(yamlOutput);
+
+        // Validate that metadata was actually exported
+        if (result.exportedFiles && result.exportedFiles.length > 0) {
+          outputFiles.push(...result.exportedFiles);
+        } else {
+          throw new Error(`Failed to export metadata to: ${yamlOutput}`);
+        }
       }
 
       // Handle archiving separately after all processing is complete

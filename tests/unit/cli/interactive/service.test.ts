@@ -52,7 +52,7 @@ describe('InteractiveService', () => {
     mockedProcessLegalMarkdown.mockReturnValue({ 
       content: '# Test content',
       metadata: {},
-      exportedFiles: []
+      exportedFiles: ['/test/output/processed-contract-metadata.yaml']
     });
 
     sampleConfig = {
@@ -235,6 +235,27 @@ describe('InteractiveService', () => {
         })
       );
       expect(result.outputFiles).toContain('/test/output/processed-contract-metadata.yaml');
+    });
+
+    it('should handle metadata export failure', async () => {
+      const configWithMetadata = {
+        ...sampleConfig,
+        outputFormats: { ...sampleConfig.outputFormats, metadata: true },
+      };
+
+      mockCliService.processFile.mockResolvedValue(undefined);
+      // Mock metadata export failure
+      mockedProcessLegalMarkdown.mockReturnValue({
+        content: '# Test content',
+        metadata: {},
+        exportedFiles: [] // No exported files indicates failure
+      });
+
+      const service = new InteractiveService(configWithMetadata);
+
+      await expect(service.processFile('/test/input/contract.md')).rejects.toThrow(
+        'Failed to export metadata to: /test/output/processed-contract-metadata.yaml'
+      );
     });
 
     it('should handle processing errors', async () => {
