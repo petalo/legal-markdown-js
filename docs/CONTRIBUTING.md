@@ -1274,7 +1274,7 @@ test(integration): add comprehensive workflow tests
 ### Documentation Resources
 
 - **[API Reference](docs/api-reference.md)**: Complete API documentation
-- **[Architecture Guide](ARCHITECTURE.md)**: System architecture overview
+- **[Architecture Guide](architecture.md)**: System architecture overview
 - **[Compatibility Guide](COMPATIBILITY.md)**: Feature compatibility tracking
 - **[Examples](examples/)**: Practical usage examples
 

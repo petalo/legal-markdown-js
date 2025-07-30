@@ -84,14 +84,14 @@ the invoice.
 
 ## Default Formats
 
-| Level | Notation            | Default Format | Output Example |
-| ----- | ------------------- | -------------- | -------------- |
-| 1     | `l.` or `l1.`       | `Article %n.`  | `Article 1.`   |
-| 2     | `ll.` or `l2.`      | `Section %n.`  | `Section 1.`   |
-| 3     | `lll.` or `l3.`     | `(%n)`         | `(1)`          |
-| 4     | `llll.` or `l4.`    | `(%n%c)`       | `(1a)`         |
-| 5     | `lllll.` or `l5.`   | `(%n%c%r)`     | `(1ai)`        |
-| 6     | `llllll.` or `l6.`  | `Annex %r -`   | `Annex i -`   |
+| Level | Notation           | Default Format | Output Example |
+| ----- | ------------------ | -------------- | -------------- |
+| 1     | `l.` or `l1.`      | `Article %n.`  | `Article 1.`   |
+| 2     | `ll.` or `l2.`     | `Section %n.`  | `Section 1.`   |
+| 3     | `lll.` or `l3.`    | `(%n)`         | `(1)`          |
+| 4     | `llll.` or `l4.`   | `(%n%c)`       | `(1a)`         |
+| 5     | `lllll.` or `l5.`  | `(%n%c%r)`     | `(1ai)`        |
+| 6     | `llllll.` or `l6.` | `Annex %r -`   | `Annex i -`    |
 
 ### Default Indentation
 
@@ -112,8 +112,8 @@ the invoice.
 | -------- | ---------------------------------------------------------- | ---------------- |
 | `%n`     | Number of current level OR level 1 in hierarchical formats | `1`, `2`, `3`    |
 | `%c`     | Alphabetic letter of current level OR level 1 reference    | `a`, `b`, `c`    |
-| `%r`     | Roman numeral (lowercase)                                   | `i`, `ii`, `iii` |
-| `%R`     | Roman numeral (uppercase)                                   | `I`, `II`, `III` |
+| `%r`     | Roman numeral (lowercase)                                  | `i`, `ii`, `iii` |
+| `%R`     | Roman numeral (uppercase)                                  | `I`, `II`, `III` |
 
 ### Variable Behavior by Context
 
@@ -742,23 +742,23 @@ level-five: '(%n%c%r)'
 
 ### Essential Variables
 
-| Variable | Standard Use         | Hierarchical Use                   | Example             |
-| -------- | -------------------- | ---------------------------------- | ------------------- |
-| `%n`     | Current level number | Level 1 number (in dotted formats) | `1`, `2`            |
-| `%c`     | Current level letter | Level 1 letter (before dots)       | `a`, `b`            |
-| `%r`     | Current level roman (lowercase)  | Level 1 roman (before dots)        | `i`, `ii`           |
-| `%R`     | Current level roman (uppercase)  | Level 1 roman (before dots)        | `I`, `II`           |
-| `%s`     | -                    | Level 2 number                     | In `%n.%s`          |
-| `%t`     | -                    | Level 3 number                     | In `%n.%s.%t`       |
-| `%f`     | -                    | Level 4 number                     | In `%n.%s.%t.%f`    |
-| `%i`     | -                    | Level 5 number                     | In `%n.%s.%t.%f.%i` |
+| Variable | Standard Use                    | Hierarchical Use                   | Example             |
+| -------- | ------------------------------- | ---------------------------------- | ------------------- |
+| `%n`     | Current level number            | Level 1 number (in dotted formats) | `1`, `2`            |
+| `%c`     | Current level letter            | Level 1 letter (before dots)       | `a`, `b`            |
+| `%r`     | Current level roman (lowercase) | Level 1 roman (before dots)        | `i`, `ii`           |
+| `%R`     | Current level roman (uppercase) | Level 1 roman (before dots)        | `I`, `II`           |
+| `%s`     | -                               | Level 2 number                     | In `%n.%s`          |
+| `%t`     | -                               | Level 3 number                     | In `%n.%s.%t`       |
+| `%f`     | -                               | Level 4 number                     | In `%n.%s.%t.%f`    |
+| `%i`     | -                               | Level 5 number                     | In `%n.%s.%t.%f.%i` |
 
 ### Format Pattern Recognition
 
 - **Dotted with references** (`%n.%s`, `%n.%s.%t`): Academic/hierarchical
   numbering
-- **Variable + dot + n** (`%r.%n`, `%R.%n`, `%c.%n`): Mixed hierarchical (level 1
-  reference + current number)
+- **Variable + dot + n** (`%r.%n`, `%R.%n`, `%c.%n`): Mixed hierarchical (level
+  1 reference + current number)
 - **Combined variables** (`%n%c`, `%n%c%r`, `%n%c%R`): Standard legal format
 
 ---
