@@ -218,9 +218,7 @@ describe('Format Helper Utilities', () => {
       expect(result).toContain('Files generated successfully!');
       expect(result).toContain('Generated files:');
       expect(result).toContain('/output/document.pdf');
-      expect(result).toContain('Source file archiving:');
-      expect(result).toContain('Source archived to: /archive/document.md');
-      expect(result).toContain('Content unchanged - template preserved');
+      expect(result).not.toContain('Source file archiving:');
     });
 
     it('should format success message with archiving (different content)', () => {
@@ -237,10 +235,7 @@ describe('Format Helper Utilities', () => {
       expect(result).toContain('Files generated successfully!');
       expect(result).toContain('Generated files:');
       expect(result).toContain('/output/contract.pdf');
-      expect(result).toContain('Source file archiving:');
-      expect(result).toContain('Template archived to: /archive/contract.ORIGINAL.md');
-      expect(result).toContain('Processed archived to: /archive/contract.PROCESSED.md');
-      expect(result).toContain('Content changed - both versions preserved');
+      expect(result).not.toContain('Source file archiving:');
     });
 
     it('should format success message with failed archiving', () => {

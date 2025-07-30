@@ -305,9 +305,26 @@ This is a test document for archive functionality.`;
         expect(fs.existsSync(path.join(customArchiveDir, 'test-document.md'))).toBe(true);
       }
       
-      // Output file should be generated
-      expect(result.outputFiles).toHaveLength(1);
-      expect(fs.existsSync(result.outputFiles[0])).toBe(true);
+      // Output files should include only archived files (no redundant MD)
+      if (hasOriginalSuffix && hasProcessedSuffix) {
+        // Content was different: only 2 archived files (no redundant normal MD)
+        expect(result.outputFiles).toHaveLength(2);
+        expect(result.outputFiles.some(f => f.endsWith('test-document.ORIGINAL.md'))).toBe(true);
+        expect(result.outputFiles.some(f => f.endsWith('test-document.PROCESSED.md'))).toBe(true);
+        // Should NOT have redundant normal MD file
+        expect(result.outputFiles.some(f => f.endsWith('interactive-output.md'))).toBe(false);
+      } else {
+        // Content was identical: 1 archived file (no redundant normal MD)
+        expect(result.outputFiles).toHaveLength(1);
+        expect(result.outputFiles.some(f => f.endsWith('test-document.md'))).toBe(true);
+        // Should NOT have redundant normal MD file
+        expect(result.outputFiles.some(f => f.endsWith('interactive-output.md'))).toBe(false);
+      }
+      
+      // Verify all output files exist
+      result.outputFiles.forEach(file => {
+        expect(fs.existsSync(file)).toBe(true);
+      });
     });
   });
 });

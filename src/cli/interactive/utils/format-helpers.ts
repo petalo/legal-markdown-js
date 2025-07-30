@@ -145,33 +145,12 @@ export function formatSuccessMessage(
     }
   }
 
-  // Show archiving results if archiving was enabled
-  if (archiveResult) {
+  // Show archiving results only if archiving failed
+  // (Successful archiving is already shown in Generated files section)
+  if (archiveResult && !archiveResult.success) {
     message += '\n';
-    if (archiveResult.success) {
-      message += chalk.bold('📦 Source file archiving:\n');
-      if (archiveResult.contentsIdentical) {
-        // Single file archived (content identical)
-        if (archiveResult.archivedPath) {
-          message += `   ${chalk.green('✓')} Source archived to: ${chalk.cyan(archiveResult.archivedPath)}\n`;
-          message += `   ${chalk.gray('(Content unchanged - template preserved)')}\n`;
-        }
-      } else {
-        // Two files archived (content different)
-        if (archiveResult.archivedOriginalPath) {
-          message += `   ${chalk.green('✓')} Template archived to: ${chalk.cyan(archiveResult.archivedOriginalPath)}\n`;
-        }
-        if (archiveResult.archivedProcessedPath) {
-          message += `   ${chalk.green('✓')} Processed archived to: ${chalk.cyan(archiveResult.archivedProcessedPath)}\n`;
-        }
-        if (archiveResult.archivedOriginalPath && archiveResult.archivedProcessedPath) {
-          message += `   ${chalk.gray('(Content changed - both versions preserved)')}\n`;
-        }
-      }
-    } else {
-      message += chalk.bold('📦 Source file archiving:\n');
-      message += `   ${chalk.red('✗')} Archiving failed: ${archiveResult.error}\n`;
-    }
+    message += chalk.bold('📦 Source file archiving:\n');
+    message += `   ${chalk.red('✗')} Archiving failed: ${archiveResult.error}\n`;
   }
 
   message += '\n';
