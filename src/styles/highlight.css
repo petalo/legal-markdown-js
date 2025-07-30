@@ -8,7 +8,8 @@
  */
 
 /* Imported values - Successfully filled from data */
-.imported-value {
+.imported-value,
+.legal-field.imported-value {
   border: 1px solid #0066cc;
   border-radius: 2px;
   padding: 1px 3px;
@@ -20,7 +21,8 @@
 }
 
 /* Nested elements in imported values */
-.imported-value a {
+.imported-value a,
+.legal-field.imported-value a {
   display: inline;
   white-space: normal;
   line-height: inherit;
@@ -29,7 +31,8 @@
 
 /* Print styles for imported values */
 @media print {
-  .imported-value {
+  .imported-value,
+  .legal-field.imported-value {
     border-color: #0066cc;
     background-color: #e6f3ff;
     color: #004085;
@@ -39,7 +42,8 @@
 }
 
 /* Missing values - Required fields without data */
-.missing-value {
+.missing-value,
+.legal-field.missing-value {
   border: 1px solid #dc3545;
   border-radius: 2px;
   padding: 1px 3px;
@@ -52,7 +56,8 @@
 }
 
 /* Nested elements in missing values */
-.missing-value a {
+.missing-value a,
+.legal-field.missing-value a {
   display: inline;
   white-space: normal;
   line-height: inherit;
@@ -61,7 +66,8 @@
 
 /* Print styles for missing values */
 @media print {
-  .missing-value {
+  .missing-value,
+  .legal-field.missing-value {
     border-color: #dc3545;
     background-color: #fff5f5;
     color: #dc3545;
@@ -71,7 +77,8 @@
 }
 
 /* Logic fields - Fields with conditional logic or mixins */
-.highlight {
+.highlight,
+.legal-field.highlight {
   border: 1px solid #ffc107;
   border-radius: 2px;
   padding: 3px 3px;
@@ -85,7 +92,9 @@
 
 /* Nested highlighting */
 .highlight .imported-value,
-.highlight .missing-value {
+.highlight .missing-value,
+.legal-field.highlight .legal-field.imported-value,
+.legal-field.highlight .legal-field.missing-value {
   margin: 0;
   padding: 0 3px;
   border-radius: 1px;
@@ -93,7 +102,8 @@
 
 /* Print styles for logic fields */
 @media print {
-  .highlight {
+  .highlight,
+  .legal-field.highlight {
     border-color: #ffc107;
     background-color: #f9f3df;
     color: #856404;
@@ -153,19 +163,25 @@
 @media screen {
   .imported-value,
   .missing-value,
-  .highlight {
+  .highlight,
+  .legal-field.imported-value,
+  .legal-field.missing-value,
+  .legal-field.highlight {
     transition: background-color 0.2s ease;
   }
   
-  .imported-value:hover {
+  .imported-value:hover,
+  .legal-field.imported-value:hover {
     background-color: #cce5ff;
   }
   
-  .missing-value:hover {
+  .missing-value:hover,
+  .legal-field.missing-value:hover {
     background-color: #ffe5e5;
   }
   
-  .highlight:hover {
+  .highlight:hover,
+  .legal-field.highlight:hover {
     background-color: #fff3cd;
   }
 }
