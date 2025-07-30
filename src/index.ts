@@ -40,25 +40,49 @@
  * ```
  */
 
-import { parseYamlFrontMatter } from '@core/parsers/yaml-parser';
-import { processHeaders } from '@core/processors/header-processor';
-import { processOptionalClauses } from '@core/processors/clause-processor';
-import { processCrossReferences } from '@core/processors/reference-processor';
-import { processPartialImports } from '@core/processors/import-processor';
-import { processMixins } from '@extensions/ast-mixin-processor';
-import { processTemplateLoops } from '@extensions/template-loops';
-import { exportMetadata } from '@core/exporters/metadata-exporter';
-import { convertRstToLegalMarkdownSync, convertRstToLegalMarkdown } from '@extensions/rst-parser';
+import { parseYamlFrontMatter } from './core/parsers/yaml-parser';
+import { processHeaders } from './core/processors/header-processor';
+import { processOptionalClauses } from './core/processors/clause-processor';
+import { processCrossReferences } from './core/processors/reference-processor';
+import { processPartialImports } from './core/processors/import-processor';
+import { processMixins } from './extensions/ast-mixin-processor';
+import { processTemplateLoops } from './extensions/template-loops';
+import { exportMetadata } from './core/exporters/metadata-exporter';
+import { convertRstToLegalMarkdownSync, convertRstToLegalMarkdown } from './extensions/rst-parser';
 import {
   convertLatexToLegalMarkdownSync,
   convertLatexToLegalMarkdown,
-} from '@extensions/latex-parser';
-import { fieldTracker } from '@extensions/tracking/field-tracker';
-import { htmlGenerator } from '@extensions/generators/html-generator';
-import { pdfGenerator } from '@extensions/generators/pdf-generator';
-import { LegalMarkdownOptions } from '@types';
-import { createDefaultPipeline, createHtmlPipeline } from '@extensions/pipeline/pipeline-config';
+} from './extensions/latex-parser';
+import { fieldTracker } from './extensions/tracking/field-tracker';
+import { htmlGenerator } from './extensions/generators/html-generator';
+import { pdfGenerator } from './extensions/generators/pdf-generator';
+import { LegalMarkdownOptions } from './types';
+import { createDefaultPipeline, createHtmlPipeline } from './extensions/pipeline/pipeline-config';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM/CJS compatible __dirname
+const getDirectoryName = () => {
+  try {
+    // Try CommonJS first
+    if (typeof __dirname !== 'undefined') {
+      return __dirname;
+    }
+  } catch (e) {
+    // Ignore error, try ESM
+  }
+
+  try {
+    // ESM fallback - use eval to avoid TypeScript compilation issues
+    const metaUrl = eval('import.meta.url');
+    const __filename = fileURLToPath(metaUrl);
+    return path.dirname(__filename);
+  } catch (e) {
+    // Final fallback - use process.cwd()
+    return process.cwd();
+  }
+};
+const currentDir = getDirectoryName();
 
 /**
  * Main function to process a Legal Markdown document (async version)
@@ -431,7 +455,8 @@ export async function generateHtml(
     // Generate HTML using the processed content
     return htmlGenerator.generateHtml(result.content, {
       cssPath: options.cssPath,
-      highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+      highlightCssPath:
+        options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
       includeHighlighting: options.includeHighlighting,
       title: options.title,
       metadata: result.metadata,
@@ -464,7 +489,8 @@ async function generateHtmlLegacy(
   // Generate HTML
   return htmlGenerator.generateHtml(processed.content, {
     cssPath: options.cssPath,
-    highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+    highlightCssPath:
+      options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
     includeHighlighting: options.includeHighlighting,
     title: options.title,
     metadata: processed.metadata,
@@ -541,7 +567,8 @@ export async function generatePdf(
     // Generate PDF using the processed content
     return pdfGenerator.generatePdf(result.content, outputPath, {
       cssPath: options.cssPath,
-      highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+      highlightCssPath:
+        options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
       includeHighlighting: options.includeHighlighting,
       title: options.title,
       metadata: result.metadata,
@@ -579,7 +606,8 @@ async function generatePdfLegacy(
   // Generate PDF
   return pdfGenerator.generatePdf(processed.content, outputPath, {
     cssPath: options.cssPath,
-    highlightCssPath: options.highlightCssPath || path.join(__dirname, 'styles/highlight.css'),
+    highlightCssPath:
+      options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
     includeHighlighting: options.includeHighlighting,
     title: options.title,
     metadata: processed.metadata,
@@ -643,14 +671,20 @@ export async function generatePdfVersions(
 }
 
 // Export all sub-modules
-export * from '@types';
-export * from '@core';
-export * from '@errors';
-export * from '@constants';
-export * from '@lib';
-export * from '@extensions';
+export * from './types';
+export * from './core/index';
+export * from './errors/index';
+export * from './constants/index';
+export * from './lib/index';
+export * from './extensions/index';
 
 // Specific re-exports to avoid conflicts (extensions take precedence)
-export { fieldTracker } from '@extensions/tracking/field-tracker';
-export { htmlGenerator } from '@extensions/generators/html-generator';
-export { pdfGenerator } from '@extensions/generators/pdf-generator';
+export { fieldTracker } from './extensions/tracking/field-tracker';
+export { htmlGenerator } from './extensions/generators/html-generator';
+export { pdfGenerator } from './extensions/generators/pdf-generator';
+
+// Remark-based processing functions
+export {
+  processLegalMarkdownWithRemark,
+  processLegalMarkdownWithRemarkSync,
+} from './extensions/remark/legal-markdown-processor';
