@@ -675,7 +675,7 @@ export * from './types';
 export * from './core/index';
 export * from './errors/index';
 export * from './constants/index';
-export * from './lib/index';
+export * from './utils/index';
 export * from './extensions/index';
 
 // Specific re-exports to avoid conflicts (extensions take precedence)

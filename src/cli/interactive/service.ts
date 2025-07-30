@@ -12,7 +12,7 @@ import { CliService } from '../service';
 import { RESOLVED_PATHS } from '../../constants/index';
 import { InteractiveConfig, ProcessingResult } from './types';
 import { ArchiveManager } from '../../utils/archive-manager';
-import { readFileSync } from '../../lib/index';
+import { readFileSync } from '../../utils/index';
 import { processLegalMarkdown } from '../../index';
 
 /**

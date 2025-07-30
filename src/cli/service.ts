@@ -30,7 +30,7 @@
 
 import { processLegalMarkdown, generateHtml, generatePdf } from '../index';
 import { LegalMarkdownOptions } from '../types';
-import { readFileSync, writeFileSync, resolveFilePath } from '../lib/index';
+import { readFileSync, writeFileSync, resolveFilePath } from '../utils/index';
 import { LegalMarkdownError, FileNotFoundError } from '../errors/index';
 import {
   extractForceCommands,

@@ -23,7 +23,6 @@
       "@extensions/*": ["src/extensions/*"],
       "@extensions": ["src/extensions/index.ts"],
       "@cli/*": ["src/cli/*"],
-      "@lib": ["src/lib/index.ts"],
       "@constants": ["src/constants/index.ts"],
       "@errors": ["src/errors/index.ts"],
       "@utils/*": ["src/utils/*"],
