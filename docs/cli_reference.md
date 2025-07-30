@@ -56,17 +56,21 @@ legal-md --version
 
 ### Processing Control
 
-| Option                    | Description                                 |
-| ------------------------- | ------------------------------------------- |
-| `--debug`, `-d`           | Enable debug mode with detailed output      |
-| `--yaml`, `-y`            | Process only YAML front matter              |
-| `--headers`               | Process only headers                        |
-| `--no-headers`            | Skip header processing                      |
-| `--no-clauses`            | Skip optional clause processing             |
-| `--no-references`         | Skip cross-reference processing             |
-| `--no-imports`            | Skip import processing                      |
-| `--no-mixins`             | Skip mixin processing                       |
-| `--enable-field-tracking` | Add field tracking spans to markdown output |
+| Option                        | Description                                               |
+| ----------------------------- | --------------------------------------------------------- |
+| `--debug`, `-d`               | Enable debug mode with detailed output                    |
+| `--yaml`, `-y`                | Process only YAML front matter                            |
+| `--headers`                   | Process only headers                                      |
+| `--no-headers`                | Skip header processing                                    |
+| `--no-clauses`                | Skip optional clause processing                           |
+| `--no-references`             | Skip cross-reference processing                           |
+| `--no-imports`                | Skip import processing                                    |
+| `--no-mixins`                 | Skip mixin processing                                     |
+| `--enable-field-tracking`     | Add field tracking spans to markdown output               |
+| `--disable-frontmatter-merge` | Disable automatic frontmatter merging from imported files |
+| `--import-tracing`            | Add HTML comments showing imported content boundaries     |
+| `--validate-import-types`     | Validate type compatibility during frontmatter merging    |
+| `--log-import-operations`     | Log detailed frontmatter merge operations                 |
 
 ### Output Control
 
@@ -147,6 +151,44 @@ and expressions in the output. This is useful for document review and debugging,
 but may not be desired for clean markdown output. The feature maintains
 compatibility with the original Ruby LegalMarkdown by being disabled by default
 for markdown output.
+
+### Frontmatter Merging Options
+
+Legal Markdown JS automatically merges frontmatter (YAML metadata) from imported
+files into the main document. This powerful feature allows template composition
+and data inheritance.
+
+```bash
+# Default behavior: frontmatter merging enabled
+legal-md contract-template.md output.md
+
+# Disable frontmatter merging
+legal-md contract-template.md --disable-frontmatter-merge output.md
+
+# Enable import tracing for debugging
+legal-md contract-template.md --import-tracing output.md
+
+# Validate type compatibility during merging
+legal-md contract-template.md --validate-import-types output.md
+
+# Log detailed merge operations
+legal-md contract-template.md --log-import-operations output.md
+
+# Combine multiple import options
+legal-md template.md --import-tracing --validate-import-types --log-import-operations output.md
+```
+
+**Frontmatter Merging Features:**
+
+- **Automatic Merging**: Imported files' YAML frontmatter is automatically
+  merged into the main document
+- **Type Validation**: Optional validation ensures compatible data types during
+  merging
+- **Import Tracing**: HTML comments mark imported content boundaries for
+  debugging
+- **Detailed Logging**: Comprehensive logging of merge operations for
+  troubleshooting
+- **Conflict Resolution**: Smart handling of conflicting keys between documents
 
 ### Header Processing Options
 
@@ -601,6 +643,12 @@ legal-md --pdf --highlight contract.md
 
 # Process with field tracking and export metadata
 legal-md --enable-field-tracking --export-json contract.md processed-contract.md
+
+# Process with frontmatter merging disabled
+legal-md --disable-frontmatter-merge contract-template.md processed-contract.md
+
+# Process with import tracing for debugging
+legal-md --import-tracing --validate-import-types contract-template.md debug-contract.md
 ```
 
 ### Pipeline Processing
@@ -756,4 +804,4 @@ node --max-old-space-size=4096 $(which legal-md) input.md output.md
 ```
 
 For more troubleshooting help, see the
-[Getting Started](GETTING-STARTED.md#troubleshooting) guide.
+[Getting Started](getting_started.md#troubleshooting) guide.
