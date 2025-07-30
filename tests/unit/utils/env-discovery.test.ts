@@ -1,5 +1,7 @@
 /**
- * @fileoverview Unit tests for environment file discovery utility
+ * Unit tests for environment file discovery utility
+ *
+ * @module
  */
 
 import * as fs from 'fs';
@@ -30,7 +32,7 @@ describe('Environment Discovery Utility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOs.homedir.mockReturnValue(mockHomedir);
-    
+
     // Mock process.cwd
     originalCwd = process.cwd;
     process.cwd = jest.fn(() => mockCwd);
@@ -44,47 +46,47 @@ describe('Environment Discovery Utility', () => {
   describe('discoverAndLoadEnv', () => {
     it('should load .env from current working directory first', () => {
       const cwdEnvPath = path.join(mockCwd, '.env');
-      
+
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === cwdEnvPath;
       });
-      
+
       mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
       const result = discoverAndLoadEnv();
 
       expect(result).toBe(cwdEnvPath);
-      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: cwdEnvPath, debug: false });
+      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: cwdEnvPath, quiet: true });
     });
 
     it('should load .env from home directory if not found in cwd', () => {
       const homeEnvPath = path.join(mockHomedir, '.env');
-      
+
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === homeEnvPath;
       });
-      
+
       mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
       const result = discoverAndLoadEnv();
 
       expect(result).toBe(homeEnvPath);
-      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: homeEnvPath, debug: false });
+      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: homeEnvPath, quiet: true });
     });
 
     it('should load .env from config directory if not found elsewhere', () => {
       const configEnvPath = path.join(mockHomedir, '.config', 'legal-markdown-js', '.env');
-      
+
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === configEnvPath;
       });
-      
+
       mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
       const result = discoverAndLoadEnv();
 
       expect(result).toBe(configEnvPath);
-      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: configEnvPath, debug: false });
+      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: configEnvPath, quiet: true });
     });
 
     it('should return null if no .env file is found', () => {
@@ -98,7 +100,7 @@ describe('Environment Discovery Utility', () => {
 
     it('should skip files that are not regular files', () => {
       const cwdEnvPath = path.join(mockCwd, '.env');
-      
+
       mockFs.existsSync.mockReturnValue(true);
       mockFs.statSync.mockReturnValue({ isFile: () => false } as any);
 
@@ -122,15 +124,15 @@ describe('Environment Discovery Utility', () => {
     it('should prioritize cwd over home directory', () => {
       const cwdEnvPath = path.join(mockCwd, '.env');
       const homeEnvPath = path.join(mockHomedir, '.env');
-      
+
       mockFs.existsSync.mockReturnValue(true);
       mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
 
       const result = discoverAndLoadEnv();
 
       expect(result).toBe(cwdEnvPath);
-      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: cwdEnvPath, debug: false });
-      expect(mockDotenvConfig).not.toHaveBeenCalledWith({ path: homeEnvPath, debug: false });
+      expect(mockDotenvConfig).toHaveBeenCalledWith({ path: cwdEnvPath, quiet: true });
+      expect(mockDotenvConfig).not.toHaveBeenCalledWith({ path: homeEnvPath, quiet: true });
     });
   });
 
@@ -148,7 +150,7 @@ describe('Environment Discovery Utility', () => {
   describe('ensureConfigDirectory', () => {
     it('should create config directory if it does not exist', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
-      
+
       mockFs.existsSync.mockReturnValue(false);
       mockFs.mkdirSync.mockImplementation();
 
@@ -160,7 +162,7 @@ describe('Environment Discovery Utility', () => {
 
     it('should not create directory if it already exists', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
-      
+
       mockFs.existsSync.mockReturnValue(true);
 
       const result = ensureConfigDirectory();
@@ -171,7 +173,7 @@ describe('Environment Discovery Utility', () => {
 
     it('should handle directory creation errors gracefully', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
-      
+
       mockFs.existsSync.mockReturnValue(false);
       mockFs.mkdirSync.mockImplementation(() => {
         throw new Error('Permission denied');
@@ -188,12 +190,12 @@ describe('Environment Discovery Utility', () => {
     it('should create sample .env file in config directory', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
       const samplePath = path.join(configDir, '.env');
-      
+
       mockFs.existsSync.mockImplementation((filePath) => {
         if (filePath === samplePath) return false; // .env doesn't exist
         return true; // config directory exists
       });
-      
+
       mockFs.mkdirSync.mockImplementation();
       mockFs.writeFileSync.mockImplementation();
 
@@ -210,7 +212,7 @@ describe('Environment Discovery Utility', () => {
     it('should not overwrite existing .env file', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
       const samplePath = path.join(configDir, '.env');
-      
+
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === samplePath; // .env already exists
       });
