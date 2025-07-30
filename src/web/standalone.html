@@ -251,7 +251,7 @@
     </div>
 
     <!-- Include the bundled legal-markdown library -->
-    <script src="./legal-markdown-bundle.js"></script>
+    <script src="./legal-markdown.umd.js"></script>
     <script>
         // Check if the library loaded correctly
         if (typeof window.LegalMarkdown === 'undefined') {
@@ -267,6 +267,9 @@
         // Use the real library
         const LegalMarkdown = window.LegalMarkdown || {
             processLegalMarkdown: function() {
+                throw new Error('Legal Markdown library not available');
+            },
+            processLegalMarkdownWithRemark: function() {
                 throw new Error('Legal Markdown library not available');
             }
         };
@@ -320,7 +323,7 @@
             
             try {
                 console.log('Processing with options:', options);
-                processedResult = await LegalMarkdown.processLegalMarkdown(inputText, options);
+                processedResult = await LegalMarkdown.processLegalMarkdownWithRemark(inputText, options);
                 
                 if (options.html) {
                     outputFormat = 'html';

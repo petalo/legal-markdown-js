@@ -3,12 +3,14 @@
  * This file creates a browser-compatible version of the legal-markdown library
  */
 
-// Import the main library
-const { processLegalMarkdown } = require('../index');
+// Import the main library (ESM syntax)
+import { processLegalMarkdown, processLegalMarkdownWithRemark, processLegalMarkdownWithRemarkSync } from '../index.js';
 
 // Create a browser-compatible API
 window.LegalMarkdown = {
-    processLegalMarkdown: processLegalMarkdown
+    processLegalMarkdown: processLegalMarkdown,
+    processLegalMarkdownWithRemark: processLegalMarkdownWithRemark,
+    processLegalMarkdownWithRemarkSync: processLegalMarkdownWithRemarkSync
 };
 
 // Export for CommonJS environments too
