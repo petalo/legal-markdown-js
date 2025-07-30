@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # Features Guide <!-- omit in toc -->
 
 Comprehensive guide to all features and capabilities of Legal Markdown JS.
