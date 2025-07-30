@@ -1,5 +1,5 @@
 /**
- * @fileoverview YAML Front Matter Parser for Legal Markdown Documents
+ * YAML Front Matter Parser for Legal Markdown Documents
  *
  * This module provides functionality to parse YAML front matter from Legal Markdown
  * documents, extracting metadata and configuration options for document processing.
@@ -32,10 +32,12 @@
  * console.log(result.metadata.title); // "Legal Agreement"
  * console.log(result.content); // "# Agreement Content\nThis is the document content."
  * ```
+ *
+ * @module
  */
 
 import * as yaml from 'js-yaml';
-import { YamlParsingResult } from '@types';
+import { YamlParsingResult } from '../../types';
 
 /**
  * Parses YAML Front Matter from a markdown document

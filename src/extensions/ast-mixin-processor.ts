@@ -1,5 +1,5 @@
 /**
- * @fileoverview AST-based Mixin Processor for Legal Markdown Documents
+ * AST-based Mixin Processor for Legal Markdown Documents
  *
  * This module provides a completely rewritten mixin processing system that uses
  * Abstract Syntax Tree (AST) parsing to avoid text contamination issues present
@@ -37,11 +37,13 @@
  * const result = processMixins(content, metadata);
  * // No text contamination - each mixin processed independently
  * ```
+ *
+ * @module
  */
 
 import { LegalMarkdownOptions } from '../types';
 import { fieldTracker } from './tracking/field-tracker';
-import { extensionHelpers as helpers } from './helpers';
+import { extensionHelpers as helpers } from './helpers/index';
 
 /**
  * Represents a single node in the parsed AST

@@ -34,7 +34,7 @@
  */
 
 import { fieldTracker } from './tracking/field-tracker';
-import { extensionHelpers as helpers } from './helpers';
+import { extensionHelpers as helpers } from './helpers/index';
 
 /**
  * Escapes HTML attribute values to prevent breaking HTML structure

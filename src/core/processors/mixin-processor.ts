@@ -1,5 +1,5 @@
 /**
- * @fileoverview Mixin Processing Module for Legal Markdown Documents
+ * Mixin Processing Module for Legal Markdown Documents
  *
  * This module provides comprehensive mixin processing functionality for Legal Markdown
  * documents, supporting variable substitution, helper functions, conditional logic,
@@ -43,11 +43,13 @@
  * // Total amount: $25,000.00
  * // Generated on: January 15, 2024
  * ```
+ *
+ * @module
  */
 
-import { LegalMarkdownOptions } from '@types';
-import { fieldTracker } from '@extensions/tracking/field-tracker';
-import { extensionHelpers as helpers } from '@extensions/helpers';
+import { LegalMarkdownOptions } from '../../types';
+import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { extensionHelpers as helpers } from '../../extensions/helpers/index';
 import { processTemplateLoops } from '../../extensions/template-loops';
 
 /**

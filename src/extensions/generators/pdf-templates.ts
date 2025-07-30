@@ -1,11 +1,13 @@
 /**
- * @fileoverview PDF Template Generation for Headers and Footers
+ * PDF Template Generation for Headers and Footers
  *
  * This module provides reusable templates for PDF headers and footers with logo support.
  * It handles logo integration, positioning, and consistent styling across all PDF documents.
+ *
+ * @module
  */
 
-import { PDF_TEMPLATE_CONSTANTS } from '@constants';
+import { PDF_TEMPLATE_CONSTANTS } from '../../constants/index';
 
 /**
  * PDF Templates utility class for generating header and footer HTML templates

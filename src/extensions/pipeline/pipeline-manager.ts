@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pipeline Manager for Legal Markdown Processing
+ * Pipeline Manager for Legal Markdown Processing
  *
  * This module provides the core pipeline management system for Legal Markdown
  * processing. It orchestrates the execution of multiple processing steps in a
@@ -34,10 +34,12 @@
  * // Execute pipeline
  * const result = await pipeline.execute(content, metadata, options);
  * ```
+ *
+ * @module
  */
 
-import { BaseProcessor } from '@core';
-import { LegalMarkdownOptions } from '@types';
+import { BaseProcessor } from '../../core/index';
+import { LegalMarkdownOptions } from '../../types';
 import { fieldTracker } from '../tracking/field-tracker';
 import {
   PipelineStep,

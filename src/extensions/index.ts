@@ -47,9 +47,9 @@
 // Extensions - Additional functionality beyond original legal-markdown
 // These are Node.js specific enhancements and utilities
 
-export * from './validators';
-export * from './formatters';
-export * from './utilities';
+export * from './validators/index';
+export * from './formatters/index';
+export * from './utilities/index';
 export * from './batch-processor';
 export * from './rst-parser';
 export * from './latex-parser';
@@ -57,11 +57,14 @@ export * from './template-loops';
 export * from './ast-mixin-processor';
 
 // Advanced helpers (Node.js extensions)
-export * from './helpers';
+export * from './helpers/index';
 
 // Enhanced parsers and generators
-export * from './parsers';
-export * from './generators';
+export * from './parsers/index';
+export * from './generators/index';
 
 // Enhanced field tracking
 export * from './tracking/field-tracker';
+
+// Remark-based processors
+export * from './remark/legal-markdown-processor';

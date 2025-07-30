@@ -1,5 +1,5 @@
 /**
- * @fileoverview Metadata Export System for Legal Markdown Documents
+ * Metadata Export System for Legal Markdown Documents
  *
  * This module provides functionality for exporting document metadata to external
  * files in various formats. It supports YAML and JSON export formats with
@@ -30,12 +30,14 @@
  * };
  * const result = exportMetadata(metadata);
  * ```
+ *
+ * @module
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { MetadataExportResult } from '@types';
+import { MetadataExportResult } from '../../types';
 
 /**
  * Exports document metadata to external files

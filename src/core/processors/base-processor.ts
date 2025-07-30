@@ -1,5 +1,5 @@
 /**
- * @fileoverview Base Processor Interface for Legal Markdown Processing Pipeline
+ * Base Processor Interface for Legal Markdown Processing Pipeline
  *
  * This module defines the fundamental interface that all processors in the Legal Markdown
  * pipeline must implement. It provides a standardized contract for processing steps,
@@ -29,9 +29,11 @@
  *   }
  * }
  * ```
+ *
+ * @module
  */
 
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../../types';
 
 /**
  * Base interface that all processors in the Legal Markdown pipeline must implement

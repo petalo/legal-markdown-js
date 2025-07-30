@@ -1,5 +1,5 @@
 /**
- * @fileoverview Batch Processing Module for Legal Markdown Documents
+ * Batch Processing Module for Legal Markdown Documents
  *
  * This module provides functionality for processing multiple Legal Markdown files
  * in batch operations. It supports recursive directory processing, concurrent
@@ -43,12 +43,14 @@
  *   }
  * });
  * ```
+ *
+ * @module
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../types';
 import { processLegalMarkdown } from '../index';
 
 const readdir = promisify(fs.readdir);

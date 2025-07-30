@@ -43,7 +43,7 @@
  * ```
  */
 
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../../types';
 
 /**
  * Date format options that can be specified in YAML front matter

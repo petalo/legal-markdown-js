@@ -1,5 +1,5 @@
 /**
- * @fileoverview Header Processing Module for Legal Markdown Documents
+ * Header Processing Module for Legal Markdown Documents
  *
  * This module provides comprehensive header processing functionality for Legal Markdown
  * documents, supporting both traditional (l., ll., lll.) and alternative (l2., l3.)
@@ -42,7 +42,8 @@
  * ```
  */
 
-import { HeaderOptions } from '@types';
+import { HeaderOptions } from '../../types';
+import { getRomanNumeral, getAlphaLabel } from '../../utils/number-utilities';
 
 /**
  * Processes structured headers in a LegalMarkdown document
@@ -305,12 +306,16 @@ function formatHeader(
     return `l${level}. ${text}`;
   }
 
+  // Remove cross-reference keys from header text
+  // This removes |key| patterns from the header display text
+  const cleanText = text.replace(/\s*\|[\w.-]+\|\s*$/g, '').trim();
+
   // Get format template for this level
   const formatTemplate = getFormatTemplate(level, options);
 
   // Ensure formatTemplate is a string
   if (typeof formatTemplate !== 'string') {
-    return `l${level}. ${text}`;
+    return `l${level}. ${cleanText}`;
   }
 
   // Create formatted header with the right value based on level
@@ -488,12 +493,12 @@ function formatHeader(
     const spanElement =
       `<span class="${headerClasses}" ` +
       `data-level="${level}" data-number="${headerNumbers[level - 1]}">` +
-      `${formattedHeader} ${text}</span>`;
+      `${formattedHeader} ${cleanText}</span>`;
 
     return `${indentation}${spanElement}`;
   }
 
-  return `${indentation}${formattedHeader} ${text}`;
+  return `${indentation}${formattedHeader} ${cleanText}`;
 }
 
 /**
@@ -569,93 +574,6 @@ function getFormatTemplate(level: number, options: HeaderOptions): string {
   }
 
   return template;
-}
-
-/**
- * Converts a number to alphabetic label (a, b, c, ... z, aa, ab, ...)
- *
- * Generates alphabetic labels for header numbering using a base-26 system.
- * Supports extended sequences beyond 'z' using double letters (aa, ab, etc.).
- *
- * @private
- * @param {number} num - Number to convert (1-based)
- * @returns {string} Alphabetic label in lowercase
- * @example
- * ```typescript
- * console.log(getAlphaLabel(1));  // 'a'
- * console.log(getAlphaLabel(26)); // 'z'
- * console.log(getAlphaLabel(27)); // 'aa'
- * console.log(getAlphaLabel(28)); // 'ab'
- * console.log(getAlphaLabel(52)); // 'az'
- * console.log(getAlphaLabel(53)); // 'ba'
- * ```
- */
-function getAlphaLabel(num: number): string {
-  if (num <= 0) return '';
-
-  let label = '';
-  let n = num;
-
-  while (n > 0) {
-    const remainder = (n - 1) % 26;
-    label = String.fromCharCode(97 + remainder) + label;
-    n = Math.floor((n - 1) / 26);
-  }
-
-  return label;
-}
-
-/**
- * Converts a number to Roman numeral
- *
- * Generates Roman numerals for header numbering using standard Roman numeral
- * conversion rules. Supports both uppercase and lowercase output formats.
- *
- * @private
- * @param {number} num - Number to convert (positive integer)
- * @param {boolean} [lowercase=false] - Whether to return lowercase roman numerals
- * @returns {string} Roman numeral string
- * @example
- * ```typescript
- * console.log(getRomanNumeral(1));        // 'I'
- * console.log(getRomanNumeral(4));        // 'IV'
- * console.log(getRomanNumeral(9));        // 'IX'
- * console.log(getRomanNumeral(10));       // 'X'
- * console.log(getRomanNumeral(49));       // 'XLIX'
- * console.log(getRomanNumeral(1994));     // 'MCMXCIV'
- * console.log(getRomanNumeral(5, true));  // 'v'
- * ```
- */
-function getRomanNumeral(num: number, lowercase: boolean = false): string {
-  if (num <= 0) return '';
-
-  const romanNumerals = [
-    { value: 1000, numeral: 'M' },
-    { value: 900, numeral: 'CM' },
-    { value: 500, numeral: 'D' },
-    { value: 400, numeral: 'CD' },
-    { value: 100, numeral: 'C' },
-    { value: 90, numeral: 'XC' },
-    { value: 50, numeral: 'L' },
-    { value: 40, numeral: 'XL' },
-    { value: 10, numeral: 'X' },
-    { value: 9, numeral: 'IX' },
-    { value: 5, numeral: 'V' },
-    { value: 4, numeral: 'IV' },
-    { value: 1, numeral: 'I' },
-  ];
-
-  let roman = '';
-  let n = num;
-
-  for (const { value, numeral } of romanNumerals) {
-    while (n >= value) {
-      roman += numeral;
-      n -= value;
-    }
-  }
-
-  return lowercase ? roman.toLowerCase() : roman;
 }
 
 /**
