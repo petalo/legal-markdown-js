@@ -13,7 +13,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 
 /** Path to the compiled CLI executable */
-const cliPath = path.resolve(__dirname, '..', '..', '..', 'dist', 'cli', 'index.js');
+const cliPath = path.resolve(__dirname, '..', '..', '..', 'dist', 'src', 'cli', 'index.js');
 
 describe('CLI stdin/stdout functionality', () => {
   it('should read from stdin and write to stdout', (done) => {
@@ -42,16 +42,38 @@ This is test content.
       if (code !== 0) {
         console.log('CLI Error:', errorOutput);
         console.log('CLI Output:', output);
+        console.log('CLI Path:', cliPath);
+        done(new Error(`CLI exited with code ${code}. Error: ${errorOutput}`));
+        return;
       }
-      expect(code).toBe(0);
-      expect(output).toContain('First Section');
-      expect(output).toContain('This is test content.');
-      done();
+      
+      try {
+        expect(code).toBe(0);
+        expect(output).toContain('Article 1. First Section');
+        expect(output).toContain('This is test content.');
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+
+    child.on('error', (error) => {
+      done(new Error(`Failed to spawn CLI process: ${error.message}`));
+    });
+
+    // Add timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      done(new Error('Test timed out'));
+    }, 8000);
+
+    child.on('close', () => {
+      clearTimeout(timeout);
     });
 
     child.stdin.write(input);
     child.stdin.end();
-  });
+  }, 10000);
 
   it('should read from stdin and write to file', (done) => {
     const fs = require('fs');
@@ -72,22 +94,59 @@ l. First Section
 This is test content.
 `;
 
+    let errorOutput = '';
+    
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
     child.on('close', (code) => {
-      expect(code).toBe(0);
-      expect(fs.existsSync(outputPath)).toBe(true);
+      if (code !== 0) {
+        console.log('CLI Error:', errorOutput);
+        done(new Error(`CLI exited with code ${code}. Error: ${errorOutput}`));
+        return;
+      }
       
-      const output = fs.readFileSync(outputPath, 'utf8');
-      expect(output).toContain('First Section');
-      expect(output).toContain('This is test content.');
-      
-      // Clean up
-      fs.unlinkSync(outputPath);
-      done();
+      try {
+        expect(code).toBe(0);
+        expect(fs.existsSync(outputPath)).toBe(true);
+        
+        const output = fs.readFileSync(outputPath, 'utf8');
+        expect(output).toContain('Article 1. First Section');
+        expect(output).toContain('This is test content.');
+        
+        // Clean up
+        fs.unlinkSync(outputPath);
+        done();
+      } catch (error) {
+        // Clean up on error
+        if (fs.existsSync(outputPath)) {
+          fs.unlinkSync(outputPath);
+        }
+        done(error);
+      }
+    });
+
+    child.on('error', (error) => {
+      done(new Error(`Failed to spawn CLI process: ${error.message}`));
+    });
+
+    // Add timeout
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+      }
+      done(new Error('Test timed out'));
+    }, 8000);
+
+    child.on('close', () => {
+      clearTimeout(timeout);
     });
 
     child.stdin.write(input);
     child.stdin.end();
-  });
+  }, 10000);
 
   it('should process file and write to stdout', (done) => {
     const fs = require('fs');
@@ -106,20 +165,62 @@ This is test content.
     const child = spawn('node', [cliPath, inputPath, '--stdout']);
 
     let output = '';
+    let errorOutput = '';
+    
     child.stdout.on('data', (data) => {
       output += data.toString();
     });
 
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
     child.on('close', (code) => {
-      expect(code).toBe(0);
-      expect(output).toContain('First Section');
-      expect(output).toContain('This is test content.');
+      if (code !== 0) {
+        console.log('CLI Error:', errorOutput);
+        console.log('CLI Output:', output);
+        done(new Error(`CLI exited with code ${code}. Error: ${errorOutput}`));
+        return;
+      }
       
-      // Clean up
+      try {
+        expect(code).toBe(0);
+        expect(output).toContain('Article 1. First Section');
+        expect(output).toContain('This is test content.');
+        
+        // Clean up
+        if (fs.existsSync(inputPath)) {
+          fs.unlinkSync(inputPath);
+        }
+        done();
+      } catch (error) {
+        // Clean up on error
+        if (fs.existsSync(inputPath)) {
+          fs.unlinkSync(inputPath);
+        }
+        done(error);
+      }
+    });
+
+    child.on('error', (error) => {
+      // Clean up on error
       if (fs.existsSync(inputPath)) {
         fs.unlinkSync(inputPath);
       }
-      done();
+      done(new Error(`Failed to spawn CLI process: ${error.message}`));
     });
-  });
+
+    // Add timeout
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      if (fs.existsSync(inputPath)) {
+        fs.unlinkSync(inputPath);
+      }
+      done(new Error('Test timed out'));
+    }, 8000);
+
+    child.on('close', () => {
+      clearTimeout(timeout);
+    });
+  }, 10000);
 });
