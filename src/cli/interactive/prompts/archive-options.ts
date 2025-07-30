@@ -4,10 +4,12 @@
  * This module handles user interaction for configuring source file archiving
  * in the interactive CLI. It provides prompts for enabling archiving and
  * customizing the archive directory.
+ *
+ * @module
  */
 
 import { confirm, input } from '@inquirer/prompts';
-import { RESOLVED_PATHS } from '../../../constants/paths';
+import { RESOLVED_PATHS } from '../../../constants/index';
 import { ArchiveManager } from '../../../utils/archive-manager';
 import chalk from 'chalk';
 

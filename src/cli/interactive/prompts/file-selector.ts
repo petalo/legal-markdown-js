@@ -4,12 +4,15 @@
  * This module handles the file selection process, providing users with
  * options to select from discovered files, browse directories, or
  * manually enter file paths.
+ *
+ * @module
  */
 
 import { select, input } from '@inquirer/prompts';
 import * as path from 'path';
+import * as fs from 'fs';
 import chalk from 'chalk';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS } from '../../../constants/index';
 import { scanDirectory, isValidFile } from '../utils/file-scanner';
 import { formatWarningMessage } from '../utils/format-helpers';
 
@@ -79,7 +82,6 @@ async function handleBrowseFolder(): Promise<string> {
     validate: (value: string) => {
       const resolvedPath = path.resolve(value);
       try {
-        const fs = require('fs');
         if (!fs.existsSync(resolvedPath)) {
           return 'Folder does not exist';
         }

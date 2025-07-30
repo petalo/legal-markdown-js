@@ -9,6 +9,8 @@
  * 1. Current working directory
  * 2. User's home directory
  * 3. User's config directory (~/.config/legal-markdown-js/)
+ *
+ * @module
  */
 
 import * as path from 'path';
@@ -18,7 +20,12 @@ import { discoverAndLoadEnv } from '../utils/env-discovery';
 const loadedEnvPath = discoverAndLoadEnv();
 
 // Optional: Log which .env file was loaded for debugging
-if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'ci' && loadedEnvPath) {
+if (
+  process.env.NODE_ENV !== 'test' &&
+  process.env.NODE_ENV !== 'ci' &&
+  loadedEnvPath &&
+  process.env.DEBUG_ENV === 'true'
+) {
   console.log(`Loaded environment configuration from: ${loadedEnvPath}`);
 }
 

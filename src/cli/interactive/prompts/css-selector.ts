@@ -1,9 +1,11 @@
 /**
- * @fileoverview CSS file selection prompt for Interactive CLI
+ * CSS file selection prompt for Interactive CLI
+ *
+ * @module
  */
 
 import { select } from '@inquirer/prompts';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS } from '../../../constants/index';
 import { scanCssFiles } from '../utils/file-scanner';
 import { formatWarningMessage } from '../utils/format-helpers';
 import { OutputFormat } from '../types';
