@@ -25,7 +25,7 @@ describe('CLI Interface', () => {
   const testDir = path.join(__dirname, 'temp');
   
   /** Path to compiled CLI executable */
-  const cliPath = path.resolve(__dirname, '..', '..', 'dist', 'src', 'cli', 'index.js');
+  const cliPath = path.resolve(__dirname, '..', '..', 'dist', 'cli', 'index.js');
 
   /**
    * Setup test directory before each test

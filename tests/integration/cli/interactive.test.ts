@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 describe('Interactive CLI Integration', () => {
   const testInputDir = path.join(__dirname, '../../../test-fixtures/interactive-input');
   const testOutputDir = path.join(__dirname, '../../../test-fixtures/interactive-output');
-  const cliPath = path.join(__dirname, '../../../dist/src/cli/interactive/index.js');
+  const cliPath = path.join(__dirname, '../../../dist/cli/interactive/index.js');
   const activeProcesses: Set<any> = new Set();
 
   beforeAll(() => {

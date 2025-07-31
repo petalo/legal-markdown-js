@@ -1,0 +1,1818 @@
+Run npm run test:coverage
+
+> legal-markdown-js@2.14.2 test:coverage
+> vitest run --coverage
+
+
+ RUN  v3.2.4 /home/runner/work/legal-markdown-js/legal-markdown-js
+      Coverage enabled with v8
+
+stdout | tests/unit/extensions/tracking/field-tracker.unit.test.ts
+🚀 Test setup completed in 164ms
+
+stdout | tests/unit/extensions/tracking/field-tracker.unit.test.ts
+🧹 Cleanup completed in 7ms (6 tests)
+
+ ✓ tests/unit/extensions/tracking/field-tracker.unit.test.ts (38 tests | 32 skipped) 37ms
+stdout | tests/unit/plugins/remark/clauses.unit.test.ts
+🚀 Test setup completed in 282ms
+
+stdout | tests/unit/plugins/remark/clauses.unit.test.ts > remarkClauses Plugin > Security and Sanitization > should reject conditions with script tags
+[remarkClauses] Processing clauses with metadata: []
+
+stdout | tests/unit/plugins/remark/clauses.unit.test.ts
+🧹 Cleanup completed in 2ms (58 tests)
+
+ ✓ tests/unit/plugins/remark/clauses.unit.test.ts (58 tests) 136ms
+stdout | tests/unit/core/utils/frontmatter-merger.unit.test.ts
+🚀 Test setup completed in 43ms
+
+stdout | tests/unit/core/utils/frontmatter-merger.unit.test.ts > Frontmatter Merger > mergeFlattened > should validate types when enabled
+Merging frontmatter: 2 current + 2 imported properties
+
+stderr | tests/unit/core/utils/frontmatter-merger.unit.test.ts > Frontmatter Merger > Edge Cases and Error Handling > should handle circular reference attempts gracefully
+Circular reference detected at path 'self.self'. Replacing with placeholder.
+
+stdout | tests/unit/core/utils/frontmatter-merger.unit.test.ts
+🧹 Cleanup completed in 2ms (24 tests)
+
+ ✓ tests/unit/core/utils/frontmatter-merger.unit.test.ts (24 tests) 38ms
+stdout | tests/unit/core/processors/import-processor-frontmatter.unit.test.ts
+🚀 Test setup completed in 47ms
+
+stdout | tests/unit/core/processors/import-processor-frontmatter.unit.test.ts > Import Processor with Frontmatter Merge > Reserved Fields Filtering > should log filtered reserved fields when logging enabled
+Extracted 3 metadata fields from reserved.md
+Merging metadata from 1 imports with 0 current fields
+Merging frontmatter: 0 current + 1 imported properties
+Added 'author' from import
+Merged import 1/1: +1 properties
+Frontmatter merge completed:
+  - Properties added: 1
+  - Conflicts resolved: 0
+  - Reserved fields filtered: 2
+  - Added fields: author
+
+stdout | tests/unit/core/processors/import-processor-frontmatter.unit.test.ts > Import Processor with Frontmatter Merge > Type Validation > should validate type compatibility when enabled
+Extracted 5 metadata fields from types.md
+Merging metadata from 1 imports with 4 current fields
+Merging frontmatter: 4 current + 5 imported properties
+Added 'compatible' from import
+Merged import 1/1: +1 properties
+Frontmatter merge completed:
+  - Properties added: 1
+  - Conflicts resolved: 4
+  - Reserved fields filtered: 0
+  - Added fields: compatible
+  - Conflicted fields (source wins): count, enabled, items, config
+
+stderr | tests/unit/core/processors/import-processor-frontmatter.unit.test.ts > Import Processor with Frontmatter Merge > Detailed Logging and Statistics > should provide detailed merge statistics when logging enabled
+Reserved field 'level-one' ignored from import
+
+stdout | tests/unit/core/processors/import-processor-frontmatter.unit.test.ts
+🧹 Cleanup completed in 11ms (17 tests)
+
+stdout | tests/unit/utils/archive-manager.test.ts
+🚀 Test setup completed in 158ms
+
+ ✓ tests/unit/core/processors/import-processor-frontmatter.unit.test.ts (17 tests) 257ms
+stdout | tests/unit/utils/archive-manager.test.ts
+🧹 Cleanup completed in 8ms (21 tests)
+
+ ✓ tests/unit/utils/archive-manager.test.ts (21 tests) 32ms
+stdout | tests/unit/processors/mixin-processor.unit.test.ts
+🚀 Test setup completed in 48ms
+
+stdout | tests/unit/processors/mixin-processor.unit.test.ts
+🧹 Cleanup completed in 2ms (36 tests)
+
+ ✓ tests/unit/processors/mixin-processor.unit.test.ts (36 tests) 22ms
+stdout | tests/integration/frontmatter-merge.integration.test.ts
+🚀 Test setup completed in 1473ms
+
+stdout | tests/integration/frontmatter-merge.integration.test.ts > Frontmatter Merge Integration > CLI Integration and Options > should validate types when type validation is enabled
+Extracted 3 metadata fields from type-conflicts.md
+Merging metadata from 1 imports with 2 current fields
+Merging frontmatter: 3 current + 3 imported properties
+Added 'valid_field' from import
+Merged import 1/1: +1 properties
+Frontmatter merge completed:
+  - Properties added: 1
+  - Conflicts resolved: 2
+  - Reserved fields filtered: 0
+  - Added fields: valid_field
+  - Conflicted fields (source wins): count, config
+
+stdout | tests/integration/frontmatter-merge.integration.test.ts > Frontmatter Merge Integration > Reserved Fields Security > should filter reserved fields from imports for security
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/integration/temp-frontmatter/safe-metadata.json
+
+stdout | tests/integration/frontmatter-merge.integration.test.ts
+🧹 Cleanup completed in 2ms (9 tests)
+
+ ✓ tests/integration/frontmatter-merge.integration.test.ts (9 tests) 54ms
+stdout | tests/unit/extensions/remark/field-tracking-port.unit.test.ts
+🚀 Test setup completed in 229ms
+
+stdout | tests/unit/extensions/remark/field-tracking-port.unit.test.ts > Remark Field Tracking Port > Basic Field Tracking > should track empty fields correctly
+🔄 Starting Legal Markdown processing with remark pipeline
+📋 Using plugins: remarkParse, remarkStringify, remarkTemplateFields, remarkCrossReferences, remarkFieldTracking
+[remarkImports] Processing imports with options: {
+  basePath: '.',
+  mergeMetadata: true,
+  maxDepth: 10,
+  timeoutMs: 30000,
+  filterReserved: true,
+  validateTypes: true,
+  currentDepth: 0
+}
+[remarkMixins] Processing mixins with options: { basePath: '.', maxDepth: 5, customMixinCount: 0 }
+[remarkClauses] Processing clauses with metadata: [ 'email', 'phone', '_field_mappings' ]
+📝 Processing template fields with remark plugin
+🎯 Field tracking highlighting enabled
+📋 Found 3 template fields in text: "Contact: {{email}}, {{phone}}, {{address}}"
+🔄 Replaced {{address}} with "<span class="legal-field missing-value" data-field="address">{{address}}</span>" (original: {{address}})
+🔄 Replaced {{phone}} with "<span class="legal-field missing-value" data-field="phone">{{phone}}</span>" (original: {{phone}})
+🔄 Replaced {{email}} with "<span class="legal-field missing-value" data-field="email">{{email}}</span>" (original: {{email}})
+✅ Template field processing completed
+🔗 Processing cross-references with remark plugin
+Found 0 cross-reference definitions: []
+✅ Cross-reference processing completed
+[remarkHeaders] Processing headers with options: {
+  metadata: {
+    email: '',
+    phone: null,
+    _field_mappings: Map(0) {},
+    _cross_references: []
+  },
+  noReset: undefined,
+  noIndent: undefined,
+  debug: true
+}
+[remarkHeaders] Final header state: {
+  levelOne: 0,
+  levelTwo: 0,
+  levelThree: 0,
+  levelFour: 0,
+  levelFive: 0,
+  customLevels: Map(0) {}
+}
+
+stdout | tests/unit/extensions/remark/field-tracking-port.unit.test.ts > Remark Field Tracking Port > Basic Field Tracking > should track empty fields correctly
+✅ Processing completed in 7ms
+📊 Cross-references found: 0
+📋 Fields tracked: 3
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts
+🚀 Test setup completed in 43ms
+
+stdout | tests/e2e/pdf-generation.e2e.test.ts
+🚀 Test setup completed in 656ms
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta: key in YAML front matter > should export metadata with meta key
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta: key in YAML front matter > should handle empty meta key
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.yaml
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta: key in YAML front matter > should handle metadata without meta key
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to YAML with meta-yaml-output: > should export to specified YAML file
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/custom-metadata.yaml
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to YAML with meta-yaml-output: > should use default filename when format is yaml
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.yaml
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to YAML with meta-yaml-output: > should handle nested YAML structures
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/nested.yaml
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to JSON with meta-json-output: > should export to specified JSON file
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/custom-metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to JSON with meta-json-output: > should use default filename when format is json
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export to JSON with meta-json-output: > should format JSON with proper indentation
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/formatted.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta-output-path: configuration > should export to specified output path
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/custom/output/test.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta-output-path: configuration > should create output directory if it does not exist
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/very/deep/nested/path/deep.yaml
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta-output-path: configuration > should override parameter path with metadata path
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata/override.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Support meta-include-original: option > should export filtered metadata correctly
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/filtered.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export both YAML and JSON > should export to both formats when both are specified
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/dual.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/dual.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Export both YAML and JSON > should handle complex data in both formats
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/complex.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/complex.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Error handling > should handle empty metadata
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Error handling > should handle metadata with null values
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts > Metadata Export > Error handling > should handle export without output path
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/temp/metadata.json
+
+stdout | tests/unit/exporters/metadata-exporter.unit.test.ts
+🧹 Cleanup completed in 2ms (21 tests)
+
+stdout | tests/unit/extensions/remark/field-tracking-port.unit.test.ts
+🧹 Cleanup completed in 2ms (24 tests)
+
+ ✓ tests/unit/exporters/metadata-exporter.unit.test.ts (21 tests) 44ms
+ ✓ tests/unit/extensions/remark/field-tracking-port.unit.test.ts (24 tests) 110ms
+stdout | tests/e2e/cli.e2e.test.ts
+🚀 Test setup completed in 24ms
+
+stderr | tests/e2e/cli.e2e.test.ts > CLI Interface > Basic command legal2md [input] [output] > should process basic input and output files
+CLI Error: node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+
+stdout | tests/unit/plugins/remark/headers.unit.test.ts
+🚀 Test setup completed in 171ms
+
+stdout | tests/unit/plugins/remark/headers.unit.test.ts
+🧹 Cleanup completed in 2ms (24 tests)
+
+ ✓ tests/unit/plugins/remark/headers.unit.test.ts (24 tests) 142ms
+stdout | tests/unit/processors/reference-processor.unit.test.ts
+🚀 Test setup completed in 28ms
+
+stdout | tests/unit/processors/reference-processor.unit.test.ts
+🧹 Cleanup completed in 1ms (25 tests)
+
+ ✓ tests/unit/processors/reference-processor.unit.test.ts (25 tests) 15ms
+stdout | tests/e2e/cli.e2e.test.ts
+🧹 Cleanup completed in 1ms (18 tests)
+
+ ❯ tests/e2e/cli.e2e.test.ts (18 tests | 17 failed) 790ms
+   × CLI Interface > Basic command legal2md [input] [output] > should process basic input and output files 57ms
+     → CLI command failed: Command failed: node "/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/input.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Basic command legal2md [input] [output] > should handle output to stdout when no output file specified 44ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/stdout-input.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Basic command legal2md [input] [output] > should handle file not found error 76ms
+     → expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file not found'
+   × CLI Interface > --debug flag for debugging information > should show metadata when debug flag is used 59ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/debug-input.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/debug-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --debug flag for debugging information > should show exported files in debug mode 54ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/export-debug.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --yaml flag to process only YAML front matter > should process only YAML when yaml flag is used 40ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --yaml "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-only.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --headers flag to process only headers > should process only headers when headers flag is used 48ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --headers --no-mixins "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/headers-only.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/headers-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --no-headers flag to skip header processing > should skip header processing when no-headers flag is used 72ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --no-headers --no-mixins --no-references "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/no-headers.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/no-headers-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --export-yaml and --export-json output options > should export metadata as YAML when export-yaml flag is used 44ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-yaml --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-export.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --export-yaml and --export-json output options > should export metadata as JSON when export-json flag is used 42ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/json-export.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/json-export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --export-yaml and --export-json output options > should use custom output path for metadata export 37ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/custom-metadata" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/custom-path.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > --version flag to display version information > should display version when version flag is used 33ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --version
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Flag combinations and complex scenarios > should handle multiple flags together 29ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/complex.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/complex-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Flag combinations and complex scenarios > should handle no-flags with all processing enabled 27ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/full-processing.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/full-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Flag combinations and complex scenarios > should handle skip flags correctly 26ms
+     → Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --no-headers --no-clauses --no-references --no-mixins "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp-skip-test/skip-test.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp-skip-test/skip-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+   × CLI Interface > Error handling > should handle missing input file argument 30ms
+     → expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file is required'
+   × CLI Interface > Error handling > should handle invalid file paths gracefully 37ms
+     → expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file not found'
+   ✓ CLI Interface > Error handling > should handle processing errors gracefully 27ms
+stdout | tests/unit/extensions/remark/edge-cases.unit.test.ts
+🚀 Test setup completed in 162ms
+
+stdout | tests/unit/extensions/ast-mixin-processor.unit.test.ts
+🚀 Test setup completed in 29ms
+
+stdout | tests/unit/extensions/remark/edge-cases.unit.test.ts
+🧹 Cleanup completed in 1ms (11 tests)
+
+ ✓ tests/unit/extensions/remark/edge-cases.unit.test.ts (11 tests) 61ms
+stdout | tests/unit/extensions/ast-mixin-processor.unit.test.ts
+🧹 Cleanup completed in 2ms (35 tests)
+
+ ✓ tests/unit/extensions/ast-mixin-processor.unit.test.ts (35 tests) 26ms
+stdout | tests/unit/processors/import-processor.unit.test.ts
+🚀 Test setup completed in 60ms
+
+stdout | tests/unit/processors/import-processor.unit.test.ts
+🧹 Cleanup completed in 1ms (22 tests)
+
+ ✓ tests/unit/processors/import-processor.unit.test.ts (22 tests) 39ms
+stdout | tests/integration/cli/archive-functionality.test.ts
+🚀 Test setup completed in 709ms
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should archive source file after successful processing with boolean flag
+✅ Output written to: /tmp/archive-test-lO5I0n/output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should archive source file after successful processing with boolean flag
+✅ Original archived to: /tmp/archive-test-lO5I0n/archived/test-document.ORIGINAL.md
+✅ Processed archived to: /tmp/archive-test-lO5I0n/archived/test-document.PROCESSED.md
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should archive source file after successful processing with boolean flag
+Archive directory contents: [ 'test-document.ORIGINAL.md', 'test-document.PROCESSED.md' ]
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should archive source file to custom directory when string provided
+✅ Output written to: /tmp/archive-test-S1FAjp/output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should archive source file to custom directory when string provided
+✅ Original archived to: /tmp/archive-test-S1FAjp/custom-archive/test-document.ORIGINAL.md
+✅ Processed archived to: /tmp/archive-test-S1FAjp/custom-archive/test-document.PROCESSED.md
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should not archive source file when archiveSource is false
+✅ Output written to: /tmp/archive-test-UWBM98/output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should handle archiving conflicts with rename strategy
+✅ Output written to: /tmp/archive-test-1r5sCP/output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should handle archiving conflicts with rename strategy
+✅ Original archived to: /tmp/archive-test-1r5sCP/archive/test-document.ORIGINAL.md
+✅ Processed archived to: /tmp/archive-test-1r5sCP/archive/test-document.PROCESSED.md
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should continue processing even if archiving fails
+📝 Processing file: /tmp/archive-test-4AWeaM/test-document.md
+✅ Output written to: /tmp/archive-test-4AWeaM/output.md
+Successfully processed
+📝 Metadata:
+{
+  "title": "Test Document",
+  "_cross_references": []
+}
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > archiveSource option > should continue processing even if archiving fails
+⚠️ Warning: Failed to archive source file: EACCES: permission denied, open '/tmp/archive-test-4AWeaM/readonly-archive/test-document.ORIGINAL.md'
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > Archive with different processing options > should archive source file with markdown output
+✅ Output written to: /tmp/archive-test-xNR0Th/markdown-output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > Archive with different processing options > should archive source file with markdown output
+✅ Original archived to: /tmp/archive-test-xNR0Th/markdown-archive/test-document.ORIGINAL.md
+✅ Processed archived to: /tmp/archive-test-xNR0Th/markdown-archive/test-document.PROCESSED.md
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > Archive with different processing options > should archive source file with debug mode enabled
+✅ Output written to: /tmp/archive-test-NB0Lud/debug-output.md
+Successfully processed
+
+stdout | tests/integration/cli/archive-functionality.test.ts > CLI Archive Functionality Integration > Archive with different processing options > should archive source file with debug mode enabled
+✅ Original archived to: /tmp/archive-test-NB0Lud/debug-archive/test-document.ORIGINAL.md
+✅ Processed archived to: /tmp/archive-test-NB0Lud/debug-archive/test-document.PROCESSED.md
+
+stdout | tests/integration/cli/archive-functionality.test.ts
+🧹 Cleanup completed in 2ms (8 tests)
+
+ ✓ tests/integration/cli/archive-functionality.test.ts (8 tests) 50ms
+stdout | tests/integration/field-tracking-highlighting.integration.test.ts
+🚀 Test setup completed in 585ms
+
+stdout | tests/unit/core/utils/reserved-fields-filter.unit.test.ts
+🚀 Test setup completed in 27ms
+
+stdout | tests/unit/core/utils/reserved-fields-filter.unit.test.ts
+🧹 Cleanup completed in 1ms (28 tests)
+
+ ✓ tests/unit/core/utils/reserved-fields-filter.unit.test.ts (28 tests) 19ms
+stdout | tests/unit/processors/header-processor.unit.test.ts
+🚀 Test setup completed in 32ms
+
+stdout | tests/unit/processors/header-processor.unit.test.ts
+🧹 Cleanup completed in 3ms (24 tests)
+
+ ✓ tests/unit/processors/header-processor.unit.test.ts (24 tests) 27ms
+stdout | tests/e2e/pdf-generation.e2e.test.ts
+🧹 Cleanup completed in 2ms (9 tests)
+
+ ✓ tests/e2e/pdf-generation.e2e.test.ts (9 tests) 3119ms
+   ✓ E2E: PDF Generation with Real Templates > Contract Generation > should generate PDF versions (normal and highlighted)  1643ms
+   ✓ E2E: PDF Generation with Real Templates > Ticket/Receipt Generation > should generate receipt PDF with proper styling  1365ms
+stdout | tests/integration/paths-validation.integration.test.ts
+🚀 Test setup completed in 37ms
+
+stdout | tests/integration/template-loops.integration.test.ts
+🚀 Test setup completed in 577ms
+
+stdout | tests/integration/paths-validation.integration.test.ts > Path Validation Integration Tests > Non-existent directories > should handle missing input directory in CLI service
+# Test
+
+Content
+
+stderr | tests/integration/paths-validation.integration.test.ts > Path Validation Integration Tests > Path resolution edge cases > should handle symlinks correctly
+Skipping symlink test: Cannot find module '../../src/constants/paths'
+Require stack:
+- /home/runner/work/legal-markdown-js/legal-markdown-js/tests/integration/paths-validation.integration.test.ts
+
+stdout | tests/integration/paths-validation.integration.test.ts
+🧹 Cleanup completed in 1ms (12 tests)
+
+ ✓ tests/integration/paths-validation.integration.test.ts (12 tests) 737ms
+   ✓ Path Validation Integration Tests > Non-existent directories > should handle missing input directory in CLI service  401ms
+stdout | tests/integration/examples-validation.integration.test.ts
+🚀 Test setup completed in 507ms
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation
+Found 39 example files to validate
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process optional-clauses/boolean-logic/complex-conditions.md without errors
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process input/example.md without errors
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process imports/frontmatter-merging/main-contract.md without errors
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process imports/frontmatter-merging/templates/complex-enterprise-contract.md without errors
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process basic-processing/simple-document/example.md without errors
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Basic Processing Validation > should process advanced/complex-nda/nda-with-data.md without errors
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in optional-clauses/boolean-logic/complex-conditions.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in input/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in basic-processing/simple-document/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Header Processing > should process headers correctly in advanced/complex-nda/nda-with-data.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in optional-clauses/boolean-logic/complex-conditions.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stderr | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in integration/cli-usage/simple-contract.md
+Unresolved common mixins in integration/cli-usage/simple-contract.md: [ '{{date}}' ]
+
+stderr | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in input/simple-contract.md
+Unresolved common mixins in input/simple-contract.md: [ '{{date}}' ]
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in input/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in basic-processing/simple-document/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Mixin Processing > should process mixins correctly in advanced/complex-nda/nda-with-data.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Cross-Reference Processing > should process cross-references correctly in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Cross-Reference Processing > should process cross-references correctly in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in optional-clauses/boolean-logic/complex-conditions.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in input/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in basic-processing/simple-document/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Optional Clauses Processing > should process optional clauses correctly in advanced/complex-nda/nda-with-data.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Template Loops Processing > should process template loops correctly in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Feature-Specific Validation > Template Loops Processing > should process template loops correctly in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for optional-clauses/boolean-logic/complex-conditions.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for input/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for basic-processing/simple-document/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should produce clean output for advanced/complex-nda/nda-with-data.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in optional-clauses/boolean-logic/complex-conditions.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in input/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in imports/frontmatter-merging/main-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in imports/frontmatter-merging/templates/complex-enterprise-contract.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in basic-processing/simple-document/example.md
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Output Quality Validation > should preserve content structure in advanced/complex-nda/nda-with-data.md
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+
+stdout | tests/integration/examples-validation.integration.test.ts > Comprehensive Examples Validation > Comprehensive Processing Workflow > should process all examples in a batch without conflicts
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/optional-clauses/boolean-logic/examples/output/nda-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/input/examples/output/metadata.json
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/output/contract-metadata.json
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.yaml
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/imports/frontmatter-merging/templates/output/enterprise-contract-metadata.json
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/basic-processing/simple-document/examples/output/metadata.json
+Exported YAML metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/examples/advanced/complex-nda/examples/output/nda-metadata.yaml
+✅ Successfully processed 39 example files
+
+stdout | tests/integration/examples-validation.integration.test.ts
+🧹 Cleanup completed in 4ms (210 tests)
+
+ ✓ tests/integration/examples-validation.integration.test.ts (210 tests) 448ms
+stdout | tests/unit/extensions/generators/pdf-logo-detection.unit.test.ts
+🚀 Test setup completed in 396ms
+
+stdout | tests/unit/extensions/generators/pdf-logo-detection.unit.test.ts
+🧹 Cleanup completed in 2ms (21 tests)
+
+ ✓ tests/unit/extensions/generators/pdf-logo-detection.unit.test.ts (21 tests) 61ms
+stdout | tests/integration/template-loops.integration.test.ts
+🧹 Cleanup completed in 1ms (8 tests)
+
+ ✓ tests/integration/template-loops.integration.test.ts (8 tests) 2602ms
+   ✓ Template Loops Integration > PDF Generation Integration > should generate PDF with processed template loops  1299ms
+   ✓ Template Loops Integration > PDF Generation Integration > should generate larger PDF for complex documents with many template loops  1274ms
+stdout | tests/unit/plugins/remark/custom-formats.unit.test.ts
+🚀 Test setup completed in 183ms
+
+stdout | tests/unit/plugins/remark/custom-formats.unit.test.ts
+🧹 Cleanup completed in 2ms (8 tests)
+
+ ✓ tests/unit/plugins/remark/custom-formats.unit.test.ts (8 tests) 78ms
+stdout | tests/unit/core/advanced-features.unit.test.ts
+🚀 Test setup completed in 677ms
+
+stdout | tests/unit/core/advanced-features.unit.test.ts > Advanced Features > Error handling and validation > should handle processing with all features enabled
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/advanced-metadata.json
+
+stdout | tests/unit/core/advanced-features.unit.test.ts
+🧹 Cleanup completed in 2ms (13 tests)
+
+ ✓ tests/unit/core/advanced-features.unit.test.ts (13 tests) 29ms
+stdout | tests/unit/processors/clause-processor.unit.test.ts
+🚀 Test setup completed in 20ms
+
+stdout | tests/unit/processors/clause-processor.unit.test.ts
+🧹 Cleanup completed in 2ms (34 tests)
+
+ ✓ tests/unit/processors/clause-processor.unit.test.ts (34 tests) 15ms
+stdout | tests/unit/core/yaml-parser.unit.test.ts
+🚀 Test setup completed in 22ms
+
+stdout | tests/unit/core/yaml-parser.unit.test.ts
+🧹 Cleanup completed in 2ms (22 tests)
+
+ ✓ tests/unit/core/yaml-parser.unit.test.ts (22 tests) 25ms
+stdout | tests/unit/extensions/generators/pdf-templates.unit.test.ts
+🚀 Test setup completed in 35ms
+
+stdout | tests/unit/extensions/generators/pdf-templates.unit.test.ts
+🧹 Cleanup completed in 2ms (24 tests)
+
+ ✓ tests/unit/extensions/generators/pdf-templates.unit.test.ts (24 tests) 16ms
+stdout | tests/unit/extensions/latex-parser.unit.test.ts
+🚀 Test setup completed in 22ms
+
+stdout | tests/unit/extensions/latex-parser.unit.test.ts
+🧹 Cleanup completed in 5ms (21 tests)
+
+ ✓ tests/unit/extensions/latex-parser.unit.test.ts (21 tests) 53ms
+stdout | tests/integration/field-tracking-highlighting.integration.test.ts > Field Tracking vs Highlighting Integration > CLI Service Dual Generation > should generate separate normal and highlight versions when highlight flag is used
+✅ Files generated successfully!
+
+📄 Generated files:
+
+   HTML:
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli.html
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli.HIGHLIGHT.html
+
+   PDF:
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli.pdf
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli.HIGHLIGHT.pdf
+
+stdout | tests/unit/plugins/remark/cross-references.unit.test.ts
+🚀 Test setup completed in 184ms
+
+stdout | tests/unit/plugins/remark/cross-references.unit.test.ts
+🧹 Cleanup completed in 3ms (11 tests)
+
+ ✓ tests/unit/plugins/remark/cross-references.unit.test.ts (11 tests) 67ms
+stdout | tests/unit/extensions/batch-processor.unit.test.ts
+🚀 Test setup completed in 655ms
+
+stdout | tests/unit/extensions/batch-processor.unit.test.ts
+🧹 Cleanup completed in 0ms (13 tests)
+
+ ✓ tests/unit/extensions/batch-processor.unit.test.ts (13 tests) 69ms
+stdout | tests/unit/processors/date-processor.unit.test.ts
+🚀 Test setup completed in 20ms
+
+stdout | tests/unit/processors/date-processor.unit.test.ts
+🧹 Cleanup completed in 1ms (30 tests)
+
+ ✓ tests/unit/processors/date-processor.unit.test.ts (30 tests) 56ms
+stdout | tests/unit/extensions/remark/legal-markdown-processor.unit.test.ts
+🚀 Test setup completed in 148ms
+
+stdout | tests/unit/extensions/remark/legal-markdown-processor.unit.test.ts > Legal Markdown Processor with Remark > Cross-References Integration > should process cross-references and track them
+🔄 Starting Legal Markdown processing with remark pipeline
+📋 Using plugins: remarkParse, remarkStringify, remarkTemplateFields, remarkCrossReferences, remarkFieldTracking
+[remarkImports] Processing imports with options: {
+  basePath: '.',
+  mergeMetadata: true,
+  maxDepth: 10,
+  timeoutMs: 30000,
+  filterReserved: true,
+  validateTypes: true,
+  currentDepth: 0
+}
+[remarkMixins] Processing mixins with options: { basePath: '.', maxDepth: 5, customMixinCount: 0 }
+[remarkClauses] Processing clauses with metadata: [ 'level1', '_field_mappings' ]
+📝 Processing template fields with remark plugin
+🎯 Field tracking highlighting enabled
+✅ Template field processing completed
+🔗 Processing cross-references with remark plugin
+Found 1 cross-reference definitions: [ 'payment -> Article 1' ]
+✅ Cross-reference processing completed
+[remarkHeaders] Processing headers with options: {
+  metadata: {
+    level1: 'Article %n',
+    _field_mappings: Map(0) {},
+    _cross_references: [ [Object] ]
+  },
+  noReset: undefined,
+  noIndent: undefined,
+  debug: true
+}
+[remarkHeaders] Processed level 1 header: l. Payment Terms
+[remarkHeaders] Processed level 1 header: l. General Provisions
+[remarkHeaders] Final header state: {
+  levelOne: 2,
+  levelTwo: 0,
+  levelThree: 0,
+  levelFour: 0,
+  levelFive: 0,
+  customLevels: Map(0) {}
+}
+
+stdout | tests/unit/extensions/remark/legal-markdown-processor.unit.test.ts > Legal Markdown Processor with Remark > Cross-References Integration > should process cross-references and track them
+✅ Processing completed in 9ms
+📊 Cross-references found: 1
+📋 Fields tracked: 1
+
+stdout | tests/unit/extensions/rst-parser.unit.test.ts
+🚀 Test setup completed in 28ms
+
+stdout | tests/unit/extensions/remark/legal-markdown-processor.unit.test.ts
+🧹 Cleanup completed in 2ms (14 tests)
+
+ ✓ tests/unit/extensions/remark/legal-markdown-processor.unit.test.ts (14 tests) 68ms
+stdout | tests/unit/extensions/rst-parser.unit.test.ts
+🧹 Cleanup completed in 4ms (25 tests)
+
+ ✓ tests/unit/extensions/rst-parser.unit.test.ts (25 tests) 42ms
+stdout | tests/unit/plugins/remark/cross-references-basic.unit.test.ts
+🚀 Test setup completed in 18ms
+
+stdout | tests/unit/plugins/remark/cross-references-basic.unit.test.ts
+🧹 Cleanup completed in 2ms (5 tests)
+
+ ✓ tests/unit/plugins/remark/cross-references-basic.unit.test.ts (5 tests) 15ms
+stdout | tests/unit/plugins/remark/nested-helpers.unit.test.ts
+🚀 Test setup completed in 143ms
+
+stderr | tests/unit/plugins/remark/nested-helpers.unit.test.ts > Nested Helper Function Support > Error Handling in Nested Calls > should handle errors in nested helper gracefully
+Error calling helper 'formatDate': TypeError: Cannot read properties of undefined (reading 'getTime')
+    at formatDate (/home/runner/work/legal-markdown-js/legal-markdown-js/src/extensions/helpers/advanced-date-helpers.ts:187:15)
+    at resolveFieldValue (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:129:25)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:550:48
+    at overload (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:311:12)
+    at node (text) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:346:27)
+    at node (paragraph) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at node (root) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at visitParents (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:304:31)
+    at visit (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:302:3)
+    at processTemplateFieldsInAST (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:508:3)
+
+stderr | tests/unit/plugins/remark/nested-helpers.unit.test.ts > Nested Helper Function Support > Error Handling in Nested Calls > should handle invalid arguments in nested calls
+Error calling nested helper 'addYears': Error: Invalid date: invalid
+    at addYears (/home/runner/work/legal-markdown-js/legal-markdown-js/src/extensions/helpers/advanced-date-helpers.ts:61:11)
+    at parseHelperArguments (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:476:33)
+    at resolveFieldValue (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:126:22)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:550:48
+    at overload (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:311:12)
+    at node (text) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:346:27)
+    at node (paragraph) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at node (root) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at visitParents (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:304:31)
+    at visit (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:302:3)
+Error calling helper 'formatDate': TypeError: Cannot read properties of undefined (reading 'getTime')
+    at formatDate (/home/runner/work/legal-markdown-js/legal-markdown-js/src/extensions/helpers/advanced-date-helpers.ts:187:15)
+    at resolveFieldValue (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:129:25)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:550:48
+    at overload (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:311:12)
+    at node (text) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:346:27)
+    at node (paragraph) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at node (root) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at visitParents (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:304:31)
+    at visit (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:302:3)
+    at processTemplateFieldsInAST (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:508:3)
+
+stderr | tests/unit/plugins/remark/nested-helpers.unit.test.ts > Nested Helper Function Support > Error Handling in Nested Calls > should handle partial nesting failures
+Error calling helper 'formatDate': TypeError: Cannot read properties of undefined (reading 'getTime')
+    at formatDate (/home/runner/work/legal-markdown-js/legal-markdown-js/src/extensions/helpers/advanced-date-helpers.ts:187:15)
+    at resolveFieldValue (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:129:25)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:550:48
+    at overload (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:311:12)
+    at node (text) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:346:27)
+    at node (paragraph) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at node (root) (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:363:61)
+    at visitParents (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit-parents/lib/index.js:304:31)
+    at visit (file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/unist-util-visit/lib/index.js:302:3)
+    at processTemplateFieldsInAST (/home/runner/work/legal-markdown-js/legal-markdown-js/src/plugins/remark/template-fields.ts:508:3)
+
+stdout | tests/unit/plugins/remark/nested-helpers.unit.test.ts
+🧹 Cleanup completed in 2ms (21 tests)
+
+ ✓ tests/unit/plugins/remark/nested-helpers.unit.test.ts (21 tests) 68ms
+stdout | tests/integration/field-tracking-highlighting.integration.test.ts > Field Tracking vs Highlighting Integration > CLI Service Dual Generation > should generate only normal versions when highlight flag is not used
+✅ Files generated successfully!
+
+📄 Generated files:
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli-no-highlight.html
+   /home/runner/work/legal-markdown-js/legal-markdown-js/tests/output/field-tracking-test-cli-no-highlight.pdf
+
+stdout | tests/integration/field-tracking-highlighting.integration.test.ts
+🧹 Cleanup completed in 0ms (11 tests)
+
+ ✓ tests/integration/field-tracking-highlighting.integration.test.ts (11 tests) 6825ms
+   ✓ Field Tracking vs Highlighting Integration > PDF Generation > should always include field tracking classes for both normal and highlight versions  2703ms
+   ✓ Field Tracking vs Highlighting Integration > CLI Service Dual Generation > should generate separate normal and highlight versions when highlight flag is used  2648ms
+   ✓ Field Tracking vs Highlighting Integration > CLI Service Dual Generation > should generate only normal versions when highlight flag is not used  1344ms
+stdout | tests/unit/plugins/remark/field-tracking.unit.test.ts
+🚀 Test setup completed in 149ms
+
+stdout | tests/unit/plugins/remark/field-tracking.unit.test.ts > Remark Field Tracking Plugin > Edge Cases > should handle malformed field patterns gracefully
+📋 Processing field tracking with remark plugin
+📋 Using patterns: {{(.+?)}}
+📋 Tracked field: incomplete and {{valid_field = "" ({{incomplete and {{valid_field}})
+📋 Tracked field: valid_field = "Valid Value" ({{valid_field}})
+📋 Field tracking completed: 2 fields tracked (2 unique)
+
+stdout | tests/unit/plugins/remark/field-tracking.unit.test.ts
+🧹 Cleanup completed in 2ms (10 tests)
+
+ ✓ tests/unit/plugins/remark/field-tracking.unit.test.ts (10 tests) 50ms
+stdout | tests/unit/constants/paths.unit.test.ts
+🚀 Test setup completed in 38ms
+
+stdout | tests/unit/constants/paths.unit.test.ts
+🧹 Cleanup completed in 2ms (11 tests)
+
+ ✓ tests/unit/constants/paths.unit.test.ts (11 tests) 50ms
+stdout | tests/unit/utils/number-utilities.unit.test.ts
+🚀 Test setup completed in 25ms
+
+stdout | tests/unit/utils/number-utilities.unit.test.ts
+🧹 Cleanup completed in 5ms (21 tests)
+
+ ✓ tests/unit/utils/number-utilities.unit.test.ts (21 tests) 23ms
+stdout | tests/unit/cli/interactive/utils/format-helpers.test.ts
+🚀 Test setup completed in 45ms
+
+stdout | tests/unit/cli/interactive/utils/format-helpers.test.ts
+🧹 Cleanup completed in 2ms (12 tests)
+
+ ✓ tests/unit/cli/interactive/utils/format-helpers.test.ts (12 tests) 12ms
+stdout | tests/unit/core/force-commands-parser.unit.test.ts
+🚀 Test setup completed in 36ms
+
+stdout | tests/unit/core/force-commands-parser.unit.test.ts
+🧹 Cleanup completed in 3ms (18 tests)
+
+ ✓ tests/unit/core/force-commands-parser.unit.test.ts (18 tests) 23ms
+stdout | tests/unit/extensions/template-loops.unit.test.ts
+🚀 Test setup completed in 29ms
+
+stdout | tests/unit/extensions/template-loops.unit.test.ts
+🧹 Cleanup completed in 3ms (18 tests)
+
+ ✓ tests/unit/extensions/template-loops.unit.test.ts (18 tests) 18ms
+stdout | tests/unit/processors/header-advanced-options.unit.test.ts
+🚀 Test setup completed in 26ms
+
+stdout | tests/unit/processors/header-advanced-options.unit.test.ts
+🧹 Cleanup completed in 3ms (15 tests)
+
+ ✓ tests/unit/processors/header-advanced-options.unit.test.ts (15 tests) 22ms
+stdout | tests/unit/core/utils/object-flattener.unit.test.ts
+🚀 Test setup completed in 18ms
+
+stdout | tests/unit/core/utils/object-flattener.unit.test.ts
+🧹 Cleanup completed in 2ms (19 tests)
+
+ ✓ tests/unit/core/utils/object-flattener.unit.test.ts (19 tests) 13ms
+stdout | tests/unit/core/utils/timeout-safety.unit.test.ts
+🚀 Test setup completed in 22ms
+
+stdout | tests/unit/core/utils/timeout-safety.unit.test.ts
+🧹 Cleanup completed in 1ms (8 tests)
+
+ ✓ tests/unit/core/utils/timeout-safety.unit.test.ts (8 tests) 19ms
+stdout | tests/unit/utils/env-discovery.test.ts
+🚀 Test setup completed in 78ms
+
+stdout | tests/unit/utils/env-discovery.test.ts
+🧹 Cleanup completed in 2ms (14 tests)
+
+ ✓ tests/unit/utils/env-discovery.test.ts (14 tests) 23ms
+stdout | tests/integration/legal-markdown.integration.test.ts
+🚀 Test setup completed in 664ms
+
+stdout | tests/integration/legal-markdown.integration.test.ts > Legal Markdown Integration > Complete document processing workflow > should process a complete legal document with all features
+Exported JSON metadata to: /home/runner/work/legal-markdown-js/legal-markdown-js/tests/integration/temp/tests/output/agreement-metadata.json
+
+stdout | tests/integration/legal-markdown.integration.test.ts
+🧹 Cleanup completed in 2ms (4 tests)
+
+ ✓ tests/integration/legal-markdown.integration.test.ts (4 tests) 24ms
+stdout | tests/unit/cli/interactive/service.test.ts
+🚀 Test setup completed in 69ms
+
+stdout | tests/unit/cli/interactive/service.test.ts
+🧹 Cleanup completed in 17ms (8 tests)
+
+ ✓ tests/unit/cli/interactive/service.test.ts (8 tests) 38ms
+stdout | tests/integration/cli/interactive.test.ts
+🚀 Test setup completed in 16ms
+
+stdout | tests/integration/cli/interactive.test.ts
+🧹 Cleanup completed in 1ms (3 tests)
+
+ ❯ tests/integration/cli/interactive.test.ts (3 tests | 3 failed) 230ms
+   × Interactive CLI Integration > should display file selection prompt when started 51ms
+     → Expected output not found
+   × Interactive CLI Integration > should handle graceful exit when user cancels 34ms
+     → Process exited before cancellation could be tested
+   × Interactive CLI Integration > should handle empty input directory gracefully 38ms
+     → Expected warning message not found
+stdout | tests/integration/pdf-generation.integration.test.ts
+🚀 Test setup completed in 643ms
+
+stdout | tests/unit/core/mixin-processor-helpers.test.ts
+🚀 Test setup completed in 34ms
+
+stderr | tests/unit/core/mixin-processor-helpers.test.ts > Mixin Processor - Helpers > Error Handling > should handle helper with invalid arguments
+Error evaluating helper expression: formatDate(invalid_date, "YYYY-MM-DD") Error: Invalid date: not-a-date
+    at formatDate (/home/runner/work/legal-markdown-js/legal-markdown-js/src/extensions/helpers/advanced-date-helpers.ts:188:11)
+    at evaluateHelperExpression (/home/runner/work/legal-markdown-js/legal-markdown-js/src/core/processors/mixin-processor.ts:192:15)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/src/core/processors/mixin-processor.ts:344:24
+    at String.replace (<anonymous>)
+    at replaceMixins (/home/runner/work/legal-markdown-js/legal-markdown-js/src/core/processors/mixin-processor.ts:339:17)
+    at processMixins (/home/runner/work/legal-markdown-js/legal-markdown-js/src/core/processors/mixin-processor.ts:446:10)
+    at /home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/core/mixin-processor-helpers.test.ts:178:22
+    at file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+    at file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+    at file:///home/runner/work/legal-markdown-js/legal-markdown-js/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+
+stdout | tests/unit/core/mixin-processor-helpers.test.ts
+🧹 Cleanup completed in 2ms (17 tests)
+
+ ✓ tests/unit/core/mixin-processor-helpers.test.ts (17 tests) 33ms
+stdout | tests/unit/core/file-formats.unit.test.ts
+🚀 Test setup completed in 651ms
+
+stdout | tests/unit/core/file-formats.unit.test.ts
+🧹 Cleanup completed in 3ms (11 tests)
+
+ ✓ tests/unit/core/file-formats.unit.test.ts (11 tests) 36ms
+stdout | tests/unit/cli/interactive/utils/file-scanner.test.ts
+🚀 Test setup completed in 83ms
+
+stdout | tests/unit/cli/interactive/utils/file-scanner.test.ts
+🧹 Cleanup completed in 2ms (10 tests)
+
+ ✓ tests/unit/cli/interactive/utils/file-scanner.test.ts (10 tests) 39ms
+stdout | tests/unit/cli/stdin-stdout.unit.test.ts
+🚀 Test setup completed in 16ms
+
+stdout | tests/unit/cli/stdin-stdout.unit.test.ts
+🧹 Cleanup completed in 7ms (3 tests)
+
+ ✓ tests/unit/cli/stdin-stdout.unit.test.ts (3 tests) 24ms
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:44:17)
+CLI Error: node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:45:17)
+CLI Output:
+
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:46:17)
+CLI Path: /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js
+
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:106:17)
+CLI Error: node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:181:17)
+CLI Error: node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+
+stdout | ChildProcess.<anonymous> (/home/runner/work/legal-markdown-js/legal-markdown-js/tests/unit/cli/stdin-stdout.unit.test.ts:182:17)
+CLI Output:
+
+stdout | tests/unit/extensions/helpers/string-helpers.test.ts
+🚀 Test setup completed in 16ms
+
+stdout | tests/unit/extensions/helpers/string-helpers.test.ts
+🧹 Cleanup completed in 2ms (21 tests)
+
+ ✓ tests/unit/extensions/helpers/string-helpers.test.ts (21 tests) 17ms
+stdout | tests/unit/extensions/parsers/fallback-parsers.test.ts
+🚀 Test setup completed in 14ms
+
+stdout | tests/unit/extensions/parsers/fallback-parsers.test.ts
+🧹 Cleanup completed in 2ms (15 tests)
+
+ ✓ tests/unit/extensions/parsers/fallback-parsers.test.ts (15 tests) 13ms
+stdout | tests/unit/extensions/pipeline-manager.unit.test.ts
+🚀 Test setup completed in 59ms
+
+stdout | tests/unit/extensions/generators/html-generator.unit.test.ts
+🚀 Test setup completed in 224ms
+
+stdout | tests/unit/extensions/pipeline-manager.unit.test.ts
+🧹 Cleanup completed in 2ms (11 tests)
+
+ ✓ tests/unit/extensions/pipeline-manager.unit.test.ts (11 tests) 28ms
+stdout | tests/unit/extensions/generators/html-generator.unit.test.ts
+🧹 Cleanup completed in 2ms (10 tests)
+
+ ✓ tests/unit/extensions/generators/html-generator.unit.test.ts (10 tests) 80ms
+stdout | tests/unit/extensions/helpers/number-helpers.test.ts
+🚀 Test setup completed in 18ms
+
+stdout | tests/unit/extensions/helpers/number-helpers.test.ts
+🧹 Cleanup completed in 2ms (23 tests)
+
+ ✓ tests/unit/extensions/helpers/number-helpers.test.ts (23 tests) 19ms
+stdout | tests/unit/extensions/parsers/content-detector.test.ts
+🚀 Test setup completed in 16ms
+
+stdout | tests/unit/extensions/parsers/content-detector.test.ts
+🧹 Cleanup completed in 2ms (16 tests)
+
+ ✓ tests/unit/extensions/parsers/content-detector.test.ts (16 tests) 15ms
+stdout | tests/unit/utils/file-naming.test.ts
+🚀 Test setup completed in 13ms
+
+stdout | tests/unit/utils/file-naming.test.ts
+🧹 Cleanup completed in 1ms (15 tests)
+
+ ✓ tests/unit/utils/file-naming.test.ts (15 tests) 11ms
+stdout | tests/unit/extensions/helpers/date-helpers.test.ts
+🚀 Test setup completed in 15ms
+
+stdout | tests/unit/extensions/helpers/date-helpers.test.ts
+🧹 Cleanup completed in 2ms (14 tests)
+
+ ✓ tests/unit/extensions/helpers/date-helpers.test.ts (14 tests) 15ms
+stdout | tests/integration/core-functionality.test.ts
+🚀 Test setup completed in 532ms
+
+stdout | tests/integration/core-functionality.test.ts
+🧹 Cleanup completed in 1ms (9 tests)
+
+ ✓ tests/integration/core-functionality.test.ts (9 tests) 21ms
+stdout | tests/unit/extensions/parsers/pandoc-loader.test.ts
+🚀 Test setup completed in 16ms
+
+stdout | tests/unit/extensions/parsers/pandoc-loader.test.ts
+🧹 Cleanup completed in 2ms (5 tests)
+
+ ✓ tests/unit/extensions/parsers/pandoc-loader.test.ts (5 tests) 12ms
+stdout | tests/unit/frontmatter-comments.test.ts
+🚀 Test setup completed in 662ms
+
+stdout | tests/unit/frontmatter-comments.test.ts
+🧹 Cleanup completed in 2ms (1 tests)
+
+ ✓ tests/unit/frontmatter-comments.test.ts (1 test) 36ms
+stdout | tests/integration/pdf-generation.integration.test.ts
+🧹 Cleanup completed in 0ms (7 tests)
+
+ ✓ tests/integration/pdf-generation.integration.test.ts (7 tests) 5471ms
+   ✓ PDF Generation Integration > PDF Generation > should generate a basic PDF  1296ms
+   ✓ PDF Generation Integration > PDF Generation > should generate PDF with highlighting  1269ms
+   ✓ PDF Generation Integration > PDF Generation > should generate both normal and highlighted PDF versions  1621ms
+   ✓ PDF Generation Integration > PDF Generation > should handle different page formats  1188ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Basic command legal2md [input] [output] > should process basic input and output files
+Error: CLI command failed: Command failed: node "/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/input.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+ ❯ tests/e2e/cli.e2e.test.ts:76:15
+     74|       } catch (error: any) {
+     75|         console.error('CLI Error:', error.stderr);
+     76|         throw new Error(`CLI command failed: ${error.message}`);
+       |               ^
+     77|       }
+     78|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Basic command legal2md [input] [output] > should handle output to stdout when no output file specified
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/stdout-input.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Basic command legal2md [input] [output] > should handle file not found error
+AssertionError: expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file not found'
+
+- Expected
++ Received
+
+- Input file not found
++ node:internal/modules/cjs/loader:1215
++   throw err;
++   ^
++
++ Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
++     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
++     at Module._load (node:internal/modules/cjs/loader:1043:27)
++     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
++     at node:internal/main/run_main_module:28:49 {
++   code: 'MODULE_NOT_FOUND',
++   requireStack: []
++ }
++
++ Node.js v20.19.4
++
+
+ ❯ tests/e2e/cli.e2e.test.ts:106:30
+    104|       } catch (error: any) {
+    105|         expect(error.code).toBe(1);
+    106|         expect(error.stderr).toContain('Input file not found');
+       |                              ^
+    107|       }
+    108|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --debug flag for debugging information > should show metadata when debug flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/debug-input.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/debug-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --debug flag for debugging information > should show exported files in debug mode
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/export-debug.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --yaml flag to process only YAML front matter > should process only YAML when yaml flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --yaml "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-only.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --headers flag to process only headers > should process only headers when headers flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --headers --no-mixins "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/headers-only.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/headers-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --no-headers flag to skip header processing > should skip header processing when no-headers flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --no-headers --no-mixins --no-references "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/no-headers.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/no-headers-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --export-yaml and --export-json output options > should export metadata as YAML when export-yaml flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-yaml --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-export.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/yaml-export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --export-yaml and --export-json output options > should export metadata as JSON when export-json flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/json-export.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/json-export-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --export-yaml and --export-json output options > should use custom output path for metadata export
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/custom-metadata" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/custom-path.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > --version flag to display version information > should display version when version flag is used
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --version
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Flag combinations and complex scenarios > should handle multiple flags together
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --debug --export-json --output-path "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/complex.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/complex-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Flag combinations and complex scenarios > should handle no-flags with all processing enabled
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/full-processing.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp/full-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Flag combinations and complex scenarios > should handle skip flags correctly
+Error: Command failed: node /home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js --no-headers --no-clauses --no-references --no-mixins "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp-skip-test/skip-test.md" "/home/runner/work/legal-markdown-js/legal-markdown-js/tests/e2e/temp-skip-test/skip-output.md"
+node:internal/modules/cjs/loader:1215
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.19.4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Error handling > should handle missing input file argument
+AssertionError: expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file is required'
+
+- Expected
++ Received
+
+- Input file is required
++ node:internal/modules/cjs/loader:1215
++   throw err;
++   ^
++
++ Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
++     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
++     at Module._load (node:internal/modules/cjs/loader:1043:27)
++     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
++     at node:internal/main/run_main_module:28:49 {
++   code: 'MODULE_NOT_FOUND',
++   requireStack: []
++ }
++
++ Node.js v20.19.4
++
+
+ ❯ tests/e2e/cli.e2e.test.ts:430:30
+    428|       } catch (error: any) {
+    429|         expect(error.code).toBe(1);
+    430|         expect(error.stderr).toContain('Input file is required');
+       |                              ^
+    431|       }
+    432|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  tests/e2e/cli.e2e.test.ts > CLI Interface > Error handling > should handle invalid file paths gracefully
+AssertionError: expected 'node:internal/modules/cjs/loader:1215…' to contain 'Input file not found'
+
+- Expected
++ Received
+
+- Input file not found
++ node:internal/modules/cjs/loader:1215
++   throw err;
++   ^
++
++ Error: Cannot find module '/home/runner/work/legal-markdown-js/legal-markdown-js/dist/src/cli/index.js'
++     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
++     at Module._load (node:internal/modules/cjs/loader:1043:27)
++     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
++     at node:internal/main/run_main_module:28:49 {
++   code: 'MODULE_NOT_FOUND',
++   requireStack: []
++ }
++
++ Node.js v20.19.4
++
+
+ ❯ tests/e2e/cli.e2e.test.ts:442:30
+    440|       } catch (error: any) {
+    441|         expect(error.code).toBe(1);
+    442|         expect(error.stderr).toContain('Input file not found');
+       |                              ^
+    443|       }
+    444|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  tests/integration/cli/interactive.test.ts > Interactive CLI Integration > should display file selection prompt when started
+Error: Expected output not found
+ ❯ ChildProcess.<anonymous> tests/integration/cli/interactive.test.ts:101:18
+     99|           resolve(void 0);
+    100|         } else {
+    101|           reject(new Error('Expected output not found'));
+       |                  ^
+    102|         }
+    103|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  tests/integration/cli/interactive.test.ts > Interactive CLI Integration > should handle graceful exit when user cancels
+Error: Process exited before cancellation could be tested
+ ❯ ChildProcess.<anonymous> tests/integration/cli/interactive.test.ts:155:18
+    153|           resolve(void 0);
+    154|         } else if (!cancelled) {
+    155|           reject(new Error('Process exited before cancellation could b…
+       |                  ^
+    156|         } else {
+    157|           reject(new Error(`Unexpected exit: code=${code}, signal=${si…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  tests/integration/cli/interactive.test.ts > Interactive CLI Integration > should handle empty input directory gracefully
+Error: Expected warning message not found
+ ❯ ChildProcess.<anonymous> tests/integration/cli/interactive.test.ts:224:18
+    222|           resolve(void 0);
+    223|         } else {
+    224|           reject(new Error('Expected warning message not found'));
+       |                  ^
+    225|         }
+    226|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 3 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: done() callback is deprecated, use promise instead
+ ❯ context node_modules/@vitest/runner/dist/chunk-hooks.js:1926:9
+ ❯ ChildProcess.<anonymous> tests/unit/cli/stdin-stdout.unit.test.ts:47:9
+     45|         console.log('CLI Output:', output);
+     46|         console.log('CLI Path:', cliPath);
+     47|         done(new Error(`CLI exited with code ${code}. Error: ${errorOu…
+       |         ^
+     48|         return;
+     49|       }
+ ❯ ChildProcess.emit node:events:536:35
+ ❯ maybeClose node:internal/child_process:1104:16
+ ❯ Socket.<anonymous> node:internal/child_process:456:11
+ ❯ Socket.emit node:events:524:28
+ ❯ Pipe.<anonymous> node:net:343:12
+
+This error originated in "tests/unit/cli/stdin-stdout.unit.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: done() callback is deprecated, use promise instead
+ ❯ context node_modules/@vitest/runner/dist/chunk-hooks.js:1926:9
+ ❯ ChildProcess.<anonymous> tests/unit/cli/stdin-stdout.unit.test.ts:107:9
+    105|       if (code !== 0) {
+    106|         console.log('CLI Error:', errorOutput);
+    107|         done(new Error(`CLI exited with code ${code}. Error: ${errorOu…
+       |         ^
+    108|         return;
+    109|       }
+ ❯ ChildProcess.emit node:events:536:35
+ ❯ maybeClose node:internal/child_process:1104:16
+ ❯ Socket.<anonymous> node:internal/child_process:456:11
+ ❯ Socket.emit node:events:524:28
+ ❯ Pipe.<anonymous> node:net:343:12
+
+This error originated in "tests/unit/cli/stdin-stdout.unit.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: done() callback is deprecated, use promise instead
+ ❯ context node_modules/@vitest/runner/dist/chunk-hooks.js:1926:9
+ ❯ ChildProcess.<anonymous> tests/unit/cli/stdin-stdout.unit.test.ts:183:9
+    181|         console.log('CLI Error:', errorOutput);
+    182|         console.log('CLI Output:', output);
+    183|         done(new Error(`CLI exited with code ${code}. Error: ${errorOu…
+       |         ^
+    184|         return;
+    185|       }
+ ❯ ChildProcess.emit node:events:536:35
+ ❯ maybeClose node:internal/child_process:1104:16
+ ❯ Socket.<anonymous> node:internal/child_process:456:11
+ ❯ Socket.emit node:events:524:28
+ ❯ Pipe.<anonymous> node:net:343:12
+
+This error originated in "tests/unit/cli/stdin-stdout.unit.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+This error was caught after test environment was torn down. Make sure to cancel any running tasks before test finishes:
+- cancel timeouts using clearTimeout and clearInterval
+- wait for promises to resolve using the await keyword
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 64 passed (66)
+      Tests  20 failed | 1252 passed | 32 skipped (1304)
+     Errors  3 errors
+   Start at  07:20:27
+   Duration  19.88s (transform 1.53s, setup 335ms, collect 12.51s, tests 22.71s, environment 27ms, prepare 6.53s)
