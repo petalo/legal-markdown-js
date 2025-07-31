@@ -1,3 +1,9 @@
+## 2.16.0 (2025-07-31)
+
+- feat: implement First-Time User Experience (FTUX) for interactive CLI (#43)
+  ([cd6e440](https://github.com/petalo/legal-markdown-js/commit/cd6e440)),
+  closes [#43](https://github.com/petalo/legal-markdown-js/issues/43)
+
 ## 2.15.0 (2025-07-31)
 
 - fix: comprehensive CLI interactive fixes - duplicated output, imports,
