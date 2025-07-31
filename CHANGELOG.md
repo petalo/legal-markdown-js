@@ -1,3 +1,10 @@
+## <small>2.16.2 (2025-07-31)</small>
+
+- Merge branch 'fix/webpack-umd-export-configuration'
+  ([70036a5](https://github.com/petalo/legal-markdown-js/commit/70036a5))
+- fix: resolve webpack UMD export configuration for native browser compatibility
+  ([0f0ab2e](https://github.com/petalo/legal-markdown-js/commit/0f0ab2e))
+
 ## <small>2.16.1 (2025-07-31)</small>
 
 - fix: resolve playground compatibility issues with
