@@ -13,6 +13,7 @@ import { remarkClauses, RemarkClausesOptions } from '../../../../src/plugins/rem
 /**
  * Helper function to process markdown with clauses plugin
  */
+import { vi } from 'vitest';
 async function processMarkdownWithClauses(
   markdown: string,
   options: RemarkClausesOptions
@@ -590,7 +591,7 @@ describe('remarkClauses Plugin', () => {
         metadata: {}
       };
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = await processMarkdownWithClauses(input, options);
 
@@ -678,7 +679,7 @@ describe('remarkClauses Plugin', () => {
         debug: true
       };
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 
@@ -697,7 +698,7 @@ describe('remarkClauses Plugin', () => {
         debug: true
       };
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 
@@ -716,7 +717,7 @@ describe('remarkClauses Plugin', () => {
         debug: false
       };
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 

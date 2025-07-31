@@ -412,7 +412,7 @@ References: |trad1|, |trad2|, |alt4|, |alt6|.`;
   });
 
   describe('Field tracking integration', () => {
-    it('should track cross-references for field highlighting', () => {
+    it('should track cross-references for field highlighting', async () => {
       const content = `l. **Contract Terms** |terms|
 
 As specified in |terms|, this agreement is binding.
@@ -426,7 +426,7 @@ Payment terms are defined in |payment| above.`;
       };
 
       // Import field tracker to verify tracking
-      const { fieldTracker } = require('../../../src/extensions/tracking/field-tracker');
+      const { fieldTracker } = await import('../../../src/extensions/tracking/field-tracker');
       
       // Clear any existing tracked fields
       fieldTracker.clear();
@@ -450,13 +450,13 @@ Payment terms are defined in |payment| above.`;
       expect(highlightedContent).toContain('data-field="crossref.payment"');
     });
 
-    it('should track unresolved cross-references as empty fields', () => {
+    it('should track unresolved cross-references as empty fields', async () => {
       const content = `Reference to |undefined_section| should remain unchanged and be tracked.`;
 
       const metadata = {};
 
       // Import field tracker to verify tracking
-      const { fieldTracker } = require('../../../src/extensions/tracking/field-tracker');
+      const { fieldTracker } = await import('../../../src/extensions/tracking/field-tracker');
       
       // Clear any existing tracked fields
       fieldTracker.clear();
@@ -471,13 +471,13 @@ Payment terms are defined in |payment| above.`;
       expect(report.empty).toBeGreaterThan(0); // Unresolved references should be tracked as empty fields
     });
 
-    it('should track metadata-based cross-references as filled fields', () => {
+    it('should track metadata-based cross-references as filled fields', async () => {
       const content = `Client name is |client_name| as specified in metadata.`;
 
       const metadata = { client_name: 'ACME Corporation' };
 
       // Import field tracker to verify tracking
-      const { fieldTracker } = require('../../../src/extensions/tracking/field-tracker');
+      const { fieldTracker } = await import('../../../src/extensions/tracking/field-tracker');
       
       // Clear any existing tracked fields
       fieldTracker.clear();

@@ -10,25 +10,26 @@ import { InteractiveConfig } from '../../../../src/cli/interactive/types';
 import { RESOLVED_PATHS } from '@constants';
 import { readFileSync } from '@utils';
 import { processLegalMarkdown } from '../../../../src/index';
+import { vi, MockedClass, MockedFunction, Mocked } from 'vitest';
 
 // Mock the CliService
-jest.mock('../../../../src/cli/service');
-const MockedCliService = CliService as jest.MockedClass<typeof CliService>;
+vi.mock('../../../../src/cli/service');
+const MockedCliService = CliService as MockedClass<typeof CliService>;
 
 // Mock the readFileSync and processLegalMarkdown functions
-jest.mock('@utils', () => ({
-  readFileSync: jest.fn(),
+vi.mock('@utils', () => ({
+  readFileSync: vi.fn(),
 }));
 
-jest.mock('../../../../src/index', () => ({
-  processLegalMarkdown: jest.fn(),
+vi.mock('../../../../src/index', () => ({
+  processLegalMarkdown: vi.fn(),
 }));
 
-const mockedReadFileSync = readFileSync as jest.MockedFunction<typeof readFileSync>;
-const mockedProcessLegalMarkdown = processLegalMarkdown as jest.MockedFunction<typeof processLegalMarkdown>;
+const mockedReadFileSync = readFileSync as MockedFunction<typeof readFileSync>;
+const mockedProcessLegalMarkdown = processLegalMarkdown as MockedFunction<typeof processLegalMarkdown>;
 
 // Mock constants
-jest.mock('@constants', () => ({
+vi.mock('@constants', () => ({
   RESOLVED_PATHS: {
     DEFAULT_INPUT_DIR: '/test/input',
     DEFAULT_OUTPUT_DIR: '/test/output',
@@ -38,14 +39,14 @@ jest.mock('@constants', () => ({
 }));
 
 describe('InteractiveService', () => {
-  let mockCliService: jest.Mocked<CliService>;
+  let mockCliService: Mocked<CliService>;
   let sampleConfig: InteractiveConfig;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockCliService = {
-      processFile: jest.fn(),
+      processFile: vi.fn(),
     } as any;
     MockedCliService.mockImplementation(() => mockCliService);
 

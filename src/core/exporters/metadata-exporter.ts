@@ -121,6 +121,12 @@ export function exportMetadata(
     }
 
     try {
+      // Ensure directory exists
+      const yamlDir = path.dirname(yamlPath);
+      if (!fs.existsSync(yamlDir)) {
+        fs.mkdirSync(yamlDir, { recursive: true });
+      }
+
       const yamlContent = yaml.dump(exportedMetadata);
       fs.writeFileSync(yamlPath, yamlContent, 'utf8');
       exportedFiles.push(yamlPath);
@@ -137,6 +143,12 @@ export function exportMetadata(
       : path.resolve(outputDir, 'metadata.json');
 
     try {
+      // Ensure directory exists
+      const jsonDir = path.dirname(jsonPath);
+      if (!fs.existsSync(jsonDir)) {
+        fs.mkdirSync(jsonDir, { recursive: true });
+      }
+
       const jsonContent = JSON.stringify(exportedMetadata, null, 2);
       fs.writeFileSync(jsonPath, jsonContent, 'utf8');
       exportedFiles.push(jsonPath);

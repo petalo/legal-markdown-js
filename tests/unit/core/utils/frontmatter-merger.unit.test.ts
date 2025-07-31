@@ -5,6 +5,12 @@
  * "source always wins" strategy and flattened granular merging.
  */
 
+import { vi } from 'vitest';
+
+// Import fail function from vitest
+const fail = (message: string) => {
+  throw new Error(message);
+};
 import {
   mergeFlattened,
   validateMergeCompatibility,
@@ -144,7 +150,7 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should validate types when enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const current = {
         count: 42,
@@ -197,7 +203,7 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should log operations when enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const current = { title: 'Current' };
       const imported = { title: 'Imported', author: 'John' };
@@ -360,7 +366,7 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should log sequential operations when enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const initial = { title: 'Main' };
       const imports = [

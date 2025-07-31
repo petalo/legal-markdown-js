@@ -381,14 +381,15 @@ jobs:
 
 ## Testing Tools and Configuration
 
-### Jest Configuration
+### Vitest Configuration
 
-```javascript
-// jest.config.js
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    environment: 'node',
+    globals: true,
+    include: ['tests/**/*.test.ts'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/tests/**'],
   coverageReporters: ['text', 'lcov', 'html', 'json'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

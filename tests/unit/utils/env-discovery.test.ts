@@ -7,22 +7,23 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { vi, MockedObject, MockedFunction } from 'vitest';
 
 // Mock modules before importing the module under test
-jest.mock('fs');
-jest.mock('os');
-jest.mock('dotenv', () => ({
-  config: jest.fn(),
+vi.mock('fs');
+vi.mock('os');
+vi.mock('dotenv', () => ({
+  config: vi.fn(),
 }));
 
-const mockFs = fs as jest.Mocked<typeof fs>;
-const mockOs = os as jest.Mocked<typeof os>;
+const mockFs = fs as MockedObject<typeof fs>;
+const mockOs = os as MockedObject<typeof os>;
 
 // Import after mocking
 import { discoverAndLoadEnv, getEnvSearchPaths, ensureConfigDirectory, createSampleEnvFile } from '../../../src/utils/env-discovery';
 import { config as dotenvConfig } from 'dotenv';
 
-const mockDotenvConfig = dotenvConfig as jest.MockedFunction<typeof dotenvConfig>;
+const mockDotenvConfig = dotenvConfig as MockedFunction<typeof dotenvConfig>;
 
 describe('Environment Discovery Utility', () => {
   const mockHomedir = '/home/testuser';
@@ -30,12 +31,12 @@ describe('Environment Discovery Utility', () => {
   let originalCwd: () => string;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockOs.homedir.mockReturnValue(mockHomedir);
 
     // Mock process.cwd
     originalCwd = process.cwd;
-    process.cwd = jest.fn(() => mockCwd);
+    process.cwd = vi.fn(() => mockCwd);
   });
 
   afterEach(() => {
@@ -152,7 +153,7 @@ describe('Environment Discovery Utility', () => {
       const configDir = path.join(mockHomedir, '.config', 'legal-markdown-js');
 
       mockFs.existsSync.mockReturnValue(false);
-      mockFs.mkdirSync.mockImplementation();
+      mockFs.mkdirSync.mockImplementation(() => undefined);
 
       const result = ensureConfigDirectory();
 
@@ -193,11 +194,12 @@ describe('Environment Discovery Utility', () => {
 
       mockFs.existsSync.mockImplementation((filePath) => {
         if (filePath === samplePath) return false; // .env doesn't exist
-        return true; // config directory exists
+        if (filePath === configDir) return true; // config directory exists
+        return false;
       });
 
-      mockFs.mkdirSync.mockImplementation();
-      mockFs.writeFileSync.mockImplementation();
+      mockFs.mkdirSync.mockImplementation(() => undefined);
+      mockFs.writeFileSync.mockImplementation(() => undefined);
 
       const result = createSampleEnvFile();
 
@@ -225,7 +227,7 @@ describe('Environment Discovery Utility', () => {
 
     it('should handle file creation errors gracefully', () => {
       mockFs.existsSync.mockReturnValue(false);
-      mockFs.mkdirSync.mockImplementation();
+      mockFs.mkdirSync.mockImplementation(() => undefined);
       mockFs.writeFileSync.mockImplementation(() => {
         throw new Error('Write error');
       });

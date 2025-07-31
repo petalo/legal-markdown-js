@@ -11,12 +11,13 @@
 
 import { spawn } from 'child_process';
 import * as path from 'path';
+import type { TaskContext } from 'vitest';
 
 /** Path to the compiled CLI executable */
 const cliPath = path.resolve(__dirname, '..', '..', '..', 'dist', 'src', 'cli', 'index.js');
 
 describe('CLI stdin/stdout functionality', () => {
-  it('should read from stdin and write to stdout', (done) => {
+  it('should read from stdin and write to stdout', (done: (error?: any) => void) => {
     const child = spawn('node', [cliPath, '--stdin', '--stdout']);
 
     const input = `---
@@ -75,7 +76,7 @@ This is test content.
     child.stdin.end();
   }, 10000);
 
-  it('should read from stdin and write to file', (done) => {
+  it('should read from stdin and write to file', (done: (error?: any) => void) => {
     const fs = require('fs');
     const outputPath = path.join(__dirname, 'temp-output.md');
 
@@ -148,7 +149,7 @@ This is test content.
     child.stdin.end();
   }, 10000);
 
-  it('should process file and write to stdout', (done) => {
+  it('should process file and write to stdout', (done: (error?: any) => void) => {
     const fs = require('fs');
     const inputPath = path.join(__dirname, 'temp-input.md');
     

@@ -882,7 +882,7 @@ End-to-end tests should:
 ### Test Data Management
 
 - **Fixtures**: Store test data in `tests/fixtures/`
-- **Snapshots**: Use Jest snapshots for complex output verification
+- **Snapshots**: Use Vitest snapshots for complex output verification
 - **Mocking**: Mock external dependencies appropriately
 - **Cleanup**: Ensure tests clean up temporary files
 
@@ -1054,7 +1054,7 @@ beforeEach(() => {
 
 ```typescript
 it('should log processing errors', () => {
-  const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+  const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
 
   // Code that should log an error
   processInvalidDocument();

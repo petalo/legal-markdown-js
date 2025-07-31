@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { processPartialImports, validateImports } from '../../../../src/core/processors/import-processor';
 import { LegalMarkdownOptions } from '../../../../src/types';
+import { vi } from 'vitest';
 
 describe('Import Processor with Frontmatter Merge', () => {
   const testDir = path.join(__dirname, 'temp-frontmatter');
@@ -237,7 +238,7 @@ Legitimate content.`;
     });
 
     it('should log filtered reserved fields when logging enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const importWithReserved = `---
 author: John Doe
@@ -329,7 +330,7 @@ End of parent.`;
 
   describe('Type Validation', () => {
     it('should validate type compatibility when enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const importWithTypeConflicts = `---
 count: [1, 2, 3]
@@ -502,7 +503,7 @@ Mixed content with both frontmatter and text.`;
 
   describe('Detailed Logging and Statistics', () => {
     it('should provide detailed merge statistics when logging enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const importWithStats = `---
 author: John Doe

@@ -7,6 +7,7 @@
 
 import { flattenObject } from '../../../../src/core/utils/object-flattener';
 import { mergeFlattened } from '../../../../src/core/utils/frontmatter-merger';
+import { vi } from 'vitest';
 
 describe('Timeout Safety Tests', () => {
   describe('Object Flattener Timeout', () => {
@@ -20,7 +21,7 @@ describe('Timeout Safety Tests', () => {
       // Mock Date.now to simulate timeout
       const originalDateNow = Date.now;
       let callCount = 0;
-      Date.now = jest.fn(() => {
+      Date.now = vi.fn(() => {
         callCount++;
         // Return increasing time to trigger timeout after a few calls
         return originalDateNow() + (callCount > 3 ? 200 : 0);
@@ -34,7 +35,7 @@ describe('Timeout Safety Tests', () => {
     });
 
     it('should handle circular references with warning', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       
       const circular: any = { name: 'test' };
       circular.self = circular;
@@ -78,7 +79,7 @@ describe('Timeout Safety Tests', () => {
       // Mock Date.now to simulate timeout during merge
       const originalDateNow = Date.now;
       let callCount = 0;
-      Date.now = jest.fn(() => {
+      Date.now = vi.fn(() => {
         callCount++;
         // Simulate timeout after several calls
         return originalDateNow() + (callCount > 5 ? 100 : 0);
@@ -234,7 +235,7 @@ describe('Timeout Safety Tests', () => {
       // Mock Date.now to simulate timeout
       const originalDateNow = Date.now;
       let callCount = 0;
-      Date.now = jest.fn(() => {
+      Date.now = vi.fn(() => {
         callCount++;
         return originalDateNow() + (callCount > 2 ? 150 : 0);
       });

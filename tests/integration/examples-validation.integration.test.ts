@@ -13,7 +13,13 @@
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';
+import { expect } from 'vitest';
 import { processLegalMarkdown } from '../../src/index';
+
+// Import fail function from vitest
+const fail = (message: string) => {
+  throw new Error(message);
+};
 
 // Load example files synchronously for test discovery
 function getExampleFiles(): string[] {

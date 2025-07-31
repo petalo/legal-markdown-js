@@ -2,6 +2,7 @@
  * @fileoverview Unit tests for format helper utilities
  */
 
+import { vi } from 'vitest';
 import {
   formatConfigSummary,
   formatSuccessMessage,
@@ -11,9 +12,21 @@ import {
 import { InteractiveConfig, ProcessingResult } from '../../../../../src/cli/interactive/types';
 
 // Mock chalk to disable colors in tests
-jest.mock('chalk', () => {
+vi.mock('chalk', () => {
   const mockFn = (str: string) => str;
   return {
+    default: {
+      bold: Object.assign(mockFn, {
+        cyan: mockFn,
+        green: mockFn,
+        red: mockFn,
+        yellow: mockFn,
+      }),
+      cyan: mockFn,
+      gray: mockFn,
+      green: mockFn,
+      red: mockFn,
+    },
     bold: Object.assign(mockFn, {
       cyan: mockFn,
       green: mockFn,

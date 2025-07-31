@@ -14,6 +14,7 @@ import { remarkHeaders, RemarkHeadersOptions } from '../../../../src/plugins/rem
 /**
  * Helper function to process markdown with headers plugin
  */
+import { vi } from 'vitest';
 async function processMarkdownWithHeaders(
   markdown: string,
   options: RemarkHeadersOptions
@@ -355,7 +356,7 @@ describe('remarkHeaders Plugin', () => {
       };
 
       // Capture console.log calls
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await processMarkdownWithHeaders(input, options);
 
@@ -376,7 +377,7 @@ describe('remarkHeaders Plugin', () => {
         debug: false
       };
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await processMarkdownWithHeaders(input, options);
 

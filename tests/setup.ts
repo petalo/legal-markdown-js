@@ -1,45 +1,131 @@
 /**
- * @fileoverview Jest test setup and configuration
+ * @fileoverview Optimized Vitest test setup and configuration
  * 
- * This file provides global setup and teardown for all test suites, including:
- * - Temporary directory creation and cleanup
- * - Global test utilities and helpers
- * - Test environment configuration
+ * This file provides fast global setup and teardown for all test suites:
+ * - Lazy temporary directory creation
+ * - Optimized cleanup strategies
+ * - Performance monitoring
+ * - Memory leak prevention
  */
 
-/// <reference types="jest" />
+/// <reference types="vitest/globals" />
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+import { fileURLToPath } from 'url';
+
+// Provide __dirname and __filename for ESM compatibility
+if (typeof globalThis !== 'undefined' && typeof globalThis.__dirname === 'undefined') {
+  // This is for ESM modules - they don't have __dirname by default
+  Object.defineProperty(globalThis, '__dirname', {
+    get() {
+      // This will be overridden by specific test files if needed
+      return process.cwd();
+    },
+    configurable: true,
+  });
+  
+  Object.defineProperty(globalThis, '__filename', {
+    get() {
+      return path.join(process.cwd(), 'vitest-setup.js');
+    },
+    configurable: true,
+  });
+}
 
 /** 
- * Path to temporary directory for test files
- * @type {string}
+ * Optimized path to temporary directory for test files
+ * Uses OS temp directory for better performance
  */
-const testDir = path.join(__dirname, 'temp');
+const testDir = path.join(os.tmpdir(), 'legal-markdown-tests', process.pid.toString());
+
+/**
+ * Performance monitoring
+ */
+const performanceStart = Date.now();
+let testCount = 0;
 
 /**
  * Global setup executed before all tests
- * Creates temporary directory structure for test files
+ * Creates temporary directory structure only when needed
  */
 beforeAll(() => {
+  // Only create directory if it doesn't exist (lazy creation)
   if (!fs.existsSync(testDir)) {
     fs.mkdirSync(testDir, { recursive: true });
   }
+  
+  // Performance tracking
+  console.log(`🚀 Test setup completed in ${Date.now() - performanceStart}ms`);
 });
 
 /**
  * Global teardown executed after all tests
- * Cleans up temporary files and directories created during testing
+ * Optimized cleanup with error handling
  */
-afterAll(() => {
-  // Clean up temporary files
-  if (fs.existsSync(testDir)) {
-    fs.rmSync(testDir, { recursive: true, force: true });
+afterAll(async () => {
+  const cleanupStart = Date.now();
+  
+  try {
+    // Async cleanup for better performance
+    if (fs.existsSync(testDir)) {
+      await fs.promises.rm(testDir, { recursive: true, force: true });
+    }
+    
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
+    
+    console.log(`🧹 Cleanup completed in ${Date.now() - cleanupStart}ms (${testCount} tests)`);
+  } catch (error) {
+    // Don't fail tests due to cleanup issues
+    console.warn('⚠️  Cleanup warning:', error);
   }
 });
 
 /**
+ * Performance tracking for individual tests
+ */
+beforeEach(() => {
+  testCount++;
+});
+
+/**
  * Global test utilities available in all test files
- * Provides access to temporary directory path for file operations
+ * Provides optimized access to temporary directory path
  */
 (global as any).testDir = testDir;
+
+/**
+ * Optimized file creation utility for tests
+ */
+(global as any).createTestFile = (filename: string, content: string): string => {
+  const filePath = path.join(testDir, filename);
+  const dir = path.dirname(filePath);
+  
+  // Ensure directory exists
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  
+  fs.writeFileSync(filePath, content);
+  return filePath;
+};
+
+/**
+ * Fast cleanup utility for individual tests
+ */
+(global as any).cleanupTestFiles = (patterns: string[]): void => {
+  for (const pattern of patterns) {
+    const files = fs.readdirSync(testDir).filter(file => file.includes(pattern));
+    for (const file of files) {
+      const filePath = path.join(testDir, file);
+      try {
+        fs.unlinkSync(filePath);
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+  }
+};

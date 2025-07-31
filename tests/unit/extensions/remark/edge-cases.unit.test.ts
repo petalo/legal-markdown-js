@@ -13,7 +13,7 @@
  * @module
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { processLegalMarkdownWithRemark } from '@extensions/remark/legal-markdown-processor';
 import { fieldTracker } from '@extensions/tracking/field-tracker';
 

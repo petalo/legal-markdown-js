@@ -13,6 +13,10 @@ import * as path from 'path';
 import { htmlGenerator } from '../../src/extensions/generators/html-generator';
 import { CliService } from '../../src/cli/service';
 import { RESOLVED_PATHS } from '../../src/constants/paths';
+import { vi } from 'vitest';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Path Validation Integration Tests', () => {
   const testDir = path.join(__dirname, '../tmp/path-validation');
@@ -52,7 +56,7 @@ describe('Path Validation Integration Tests', () => {
   });
 
   beforeEach(() => {
-    jest.resetModules();
+    vi.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -62,10 +66,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = path.join(testDir, 'non-existent-styles');
       
       // Re-import modules to pick up new environment
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      delete require.cache[require.resolve('../../src/extensions/generators/html-generator')];
-      
-      const { htmlGenerator: freshHtmlGenerator } = require('../../src/extensions/generators/html-generator');
+      vi.resetModules();
+      const { htmlGenerator: freshHtmlGenerator } = await import('../../src/extensions/generators/html-generator');
       
       const markdown = '# Test Document\n\nThis is a test.';
       
@@ -80,10 +82,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.DEFAULT_INPUT_DIR = path.join(testDir, 'non-existent-input');
       
       // Re-import modules to pick up new environment
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      delete require.cache[require.resolve('../../src/cli/service')];
-      
-      const { CliService: FreshCliService } = require('../../src/cli/service');
+      vi.resetModules();
+      const { CliService: FreshCliService } = await import('../../src/cli/service');
       
       const cliService = new FreshCliService({
         basePath: path.join(testDir, 'non-existent-input'),
@@ -104,8 +104,8 @@ describe('Path Validation Integration Tests', () => {
       await fs.rm(outputDir, { recursive: true, force: true });
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { RESOLVED_PATHS: freshResolvedPaths } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { RESOLVED_PATHS: freshResolvedPaths } = await import('../../src/constants/paths');
       
       expect(freshResolvedPaths.DEFAULT_OUTPUT_DIR).toBe(path.resolve(outputDir));
       
@@ -143,10 +143,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = readOnlyDir;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      delete require.cache[require.resolve('../../src/extensions/generators/html-generator')];
-      
-      const { htmlGenerator: freshHtmlGenerator } = require('../../src/extensions/generators/html-generator');
+      vi.resetModules();
+      const { htmlGenerator: freshHtmlGenerator } = await import('../../src/extensions/generators/html-generator');
       
       // Should be able to read CSS file even from read-only directory
       await expect(freshHtmlGenerator.generateHtml('# Test', {
@@ -167,8 +165,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = problematicPath;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS, RESOLVED_PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { PATHS, RESOLVED_PATHS } = await import('../../src/constants/paths');
       
       // Should store the path as-is (validation happens at filesystem level)
       expect(PATHS.STYLES_DIR).toBe(problematicPath);
@@ -199,8 +197,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = problematicPath;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { PATHS } = await import('../../src/constants/paths');
       
       expect(PATHS.STYLES_DIR).toBe(problematicPath);
     });
@@ -210,8 +208,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.IMAGES_DIR = longPath;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS, RESOLVED_PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { PATHS, RESOLVED_PATHS } = await import('../../src/constants/paths');
       
       expect(PATHS.IMAGES_DIR).toBe(longPath);
       expect(RESOLVED_PATHS.IMAGES_DIR).toBe(path.resolve(process.cwd(), longPath));
@@ -224,8 +222,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = circularPath;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { RESOLVED_PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { RESOLVED_PATHS } = await import('../../src/constants/paths');
       
       // path.resolve should normalize the circular reference
       const normalizedPath = path.resolve(process.cwd(), circularPath);
@@ -263,8 +261,8 @@ describe('Path Validation Integration Tests', () => {
   describe('Environment variable precedence', () => {
     it('should prioritize environment variables over defaults', async () => {
       // Mock env-discovery to not load any .env file
-      jest.doMock('../../src/utils/env-discovery', () => ({
-        discoverAndLoadEnv: jest.fn(() => null)
+      vi.doMock('../../src/utils/env-discovery', () => ({
+        discoverAndLoadEnv: vi.fn(() => null)
       }));
       
       process.env.IMAGES_DIR = 'env-images';
@@ -273,21 +271,21 @@ describe('Path Validation Integration Tests', () => {
       delete process.env.DEFAULT_OUTPUT_DIR; // Ensure it uses default
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { PATHS } = await import('../../src/constants/paths');
       
       expect(PATHS.IMAGES_DIR).toBe('env-images');
       expect(PATHS.STYLES_DIR).toBe('env-styles');
       expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Should use default
       expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('output'); // Should use default
       
-      jest.dontMock('../../src/utils/env-discovery');
+      vi.unmock('../../src/utils/env-discovery');
     });
 
     it('should handle mixed environment and default values', async () => {
       // Mock env-discovery to not load any .env file
-      jest.doMock('../../src/utils/env-discovery', () => ({
-        discoverAndLoadEnv: jest.fn(() => null)
+      vi.doMock('../../src/utils/env-discovery', () => ({
+        discoverAndLoadEnv: vi.fn(() => null)
       }));
       
       process.env.IMAGES_DIR = 'custom-images';
@@ -296,15 +294,15 @@ describe('Path Validation Integration Tests', () => {
       delete process.env.DEFAULT_INPUT_DIR;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { PATHS } = await import('../../src/constants/paths');
       
       expect(PATHS.IMAGES_DIR).toBe('custom-images');
       expect(PATHS.STYLES_DIR).toBe('src/styles'); // Default
       expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Default
       expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('custom-output');
       
-      jest.dontMock('../../src/utils/env-discovery');
+      vi.unmock('../../src/utils/env-discovery');
     });
   });
 
@@ -325,8 +323,8 @@ describe('Path Validation Integration Tests', () => {
       process.env.STYLES_DIR = testStylesDir;
       
       // Re-import modules
-      delete require.cache[require.resolve('../../src/constants/paths')];
-      const { RESOLVED_PATHS } = require('../../src/constants/paths');
+      vi.resetModules();
+      const { RESOLVED_PATHS } = await import('../../src/constants/paths');
       
       // Verify paths resolve correctly
       expect(RESOLVED_PATHS.IMAGES_DIR).toBe(path.resolve(testImagesDir));

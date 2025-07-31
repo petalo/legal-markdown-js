@@ -52,7 +52,11 @@ packages/
 # Tool caches
 .eslintcache
 .prettiercache
+# Testing - Jest (legacy)
 .jest-cache/
+
+# Testing - Vitest
+.vitest-cache/
 
 # Temporary directories
 .cache/
