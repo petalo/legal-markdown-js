@@ -235,13 +235,13 @@ export class InteractiveService {
       const archiveManager = new ArchiveManager();
       const { archiveOptions } = this.getConfig();
 
-      // Determine archive directory - should be relative to DEFAULT_OUTPUT_DIR
+      // Determine archive directory - should be relative to project root
       let archiveDir: string;
       if (archiveOptions.directory) {
-        // Custom directory should be relative to DEFAULT_OUTPUT_DIR
+        // Custom directory should be relative to project root (consistent with ARCHIVE_DIR)
         // Ensure directory name doesn't have trailing slash (normalize)
         const customDir = archiveOptions.directory.replace(/\/+$/, '');
-        archiveDir = path.resolve(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, customDir);
+        archiveDir = path.resolve(process.cwd(), customDir);
       } else {
         archiveDir = RESOLVED_PATHS.ARCHIVE_DIR;
       }
