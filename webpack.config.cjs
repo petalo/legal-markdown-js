@@ -6,7 +6,7 @@ module.exports = {
   entry: './src/browser.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'legal-markdown.umd.min.js',
+    filename: 'legal-markdown.umd.debug.js',
     library: 'LegalMarkdown',
     libraryTarget: 'umd',
     libraryExport: 'default',
@@ -52,7 +52,7 @@ module.exports = {
   optimization: {
     usedExports: true,
     sideEffects: false,
-    minimize: true,
+    minimize: false, // Debug: disable minification temporarily
     splitChunks: false // Disable for UMD build
   },
   plugins: [
