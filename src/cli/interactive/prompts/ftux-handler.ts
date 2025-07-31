@@ -1,0 +1,427 @@
+/**
+ * First Time User Experience (FTUX) handler for Interactive CLI
+ *
+ * This module provides an improved onboarding experience for new users
+ * when no files are found in the default directory, offering setup
+ * assistance, demo examples, and guided configuration.
+ *
+ * @module
+ */
+
+import { select, input, confirm } from '@inquirer/prompts';
+import * as path from 'path';
+import * as fs from 'fs';
+import chalk from 'chalk';
+// import { RESOLVED_PATHS } from '../../../constants/index.js';
+import { scanDirectory } from '../utils/file-scanner.js';
+import { formatWarningMessage } from '../utils/format-helpers.js';
+import { handleBrowseFolder, handleManualInput } from '../utils/file-input-helpers.js';
+import { getEnvFilePath, getInstallationDescription } from '../utils/installation-detector.js';
+
+/**
+ * Get current directory path in a way that works for both ESM and CJS
+ * Since we're building from dist, we can use relative paths from the script location
+ */
+function getCurrentDir(): string {
+  // Use process.argv[1] to determine script location - works for both ESM and CJS
+  const scriptPath = process.argv[1] || process.cwd();
+  return path.dirname(scriptPath);
+}
+
+/** Option for setting up configuration */
+const SETUP_CONFIG_OPTION = '🛠️  Setup configuration (.env)';
+
+/** Option for trying a demo example */
+const TRY_DEMO_OPTION = '🎯 Try a demo example';
+
+/** Option for browsing different folder */
+const BROWSE_FOLDER_OPTION = '📁 Browse different folder';
+
+/** Option for manual file input */
+const MANUAL_INPUT_OPTION = '📝 Enter file path manually';
+
+/** Option for getting help/tutorial */
+const GET_HELP_OPTION = '📖 Show help & tutorial';
+
+/** Option for exiting */
+const EXIT_OPTION = '❌ Exit';
+
+/**
+ * Handle first-time user experience when no files are found
+ *
+ * Provides a friendly onboarding flow with multiple options to help
+ * new users get started with Legal Markdown processing.
+ *
+ * @returns Promise resolving to the selected input file path
+ * @throws Error when user cancels or no valid option is selected
+ */
+export async function handleFirstTimeUserExperience(): Promise<string> {
+  console.log(chalk.yellow('\n🌟 Welcome to Legal Markdown!'));
+  console.log(chalk.gray("It looks like you're getting started. Let me help you with that.\n"));
+
+  const choice = await select({
+    message: 'What would you like to do?',
+    choices: [
+      { name: SETUP_CONFIG_OPTION, value: 'setup' },
+      { name: TRY_DEMO_OPTION, value: 'demo' },
+      { name: BROWSE_FOLDER_OPTION, value: 'browse' },
+      { name: MANUAL_INPUT_OPTION, value: 'manual' },
+      { name: GET_HELP_OPTION, value: 'help' },
+      { name: EXIT_OPTION, value: 'exit' },
+    ],
+  });
+
+  switch (choice) {
+    case 'setup':
+      return await handleSetupConfiguration();
+    case 'demo':
+      return await handleDemoExample();
+    case 'browse':
+      return await handleBrowseFolder();
+    case 'manual':
+      return await handleManualInput();
+    case 'help':
+      await showHelpAndTutorial();
+      // After showing help, ask again
+      return await handleFirstTimeUserExperience();
+    case 'exit':
+      console.log(chalk.yellow('\n👋 Thanks for trying Legal Markdown!'));
+      console.log(
+        chalk.gray('Run ') + chalk.cyan('legal-md-ui') + chalk.gray(" again when you're ready.")
+      );
+      process.exit(0);
+      break;
+    default:
+      throw new Error('Invalid option selected');
+  }
+}
+
+/**
+ * Handle setup configuration workflow
+ */
+async function handleSetupConfiguration(): Promise<string> {
+  console.log(chalk.cyan('\n🛠️  Configuration Setup'));
+  console.log(chalk.gray("Let's set up your preferred directories for Legal Markdown processing."));
+  console.log(chalk.gray(getInstallationDescription() + '\n'));
+
+  // Ask for input directory
+  const inputDir = await input({
+    message: 'Where do you keep your markdown files? (input directory)',
+    default: process.cwd(),
+    validate: value => {
+      const resolvedPath = path.resolve(value);
+      if (!fs.existsSync(resolvedPath)) {
+        return 'Directory does not exist. Please enter a valid path.';
+      }
+      if (!fs.statSync(resolvedPath).isDirectory()) {
+        return 'Path is not a directory.';
+      }
+      return true;
+    },
+  });
+
+  // Ask for output directory
+  const outputDir = await input({
+    message: 'Where should processed files be saved? (output directory)',
+    default: path.join(path.resolve(inputDir), 'output'),
+    validate: value => {
+      const resolvedPath = path.resolve(value);
+      const parentDir = path.dirname(resolvedPath);
+      if (!fs.existsSync(parentDir)) {
+        return 'Parent directory does not exist.';
+      }
+      return true;
+    },
+  });
+
+  // Create .env configuration using installation-aware path
+  const envPath = getEnvFilePath();
+  const envContent = `# Legal Markdown Configuration
+# Generated by interactive setup
+
+LEGALMD_INPUT_DIR="${path.resolve(inputDir)}"
+LEGALMD_OUTPUT_DIR="${path.resolve(outputDir)}"
+LEGALMD_STYLES_DIR="${path.resolve(inputDir, 'styles')}"
+LEGALMD_ARCHIVE_DIR="${path.resolve(outputDir, 'archive')}"
+`;
+
+  // Check if .env already exists
+  if (fs.existsSync(envPath)) {
+    const overwrite = await confirm({
+      message: 'A .env file already exists. Overwrite it?',
+      default: false,
+    });
+
+    if (!overwrite) {
+      console.log(chalk.yellow('⚠️  Setup cancelled. Using existing configuration.'));
+    } else {
+      fs.writeFileSync(envPath, envContent);
+      console.log(chalk.green(`✅ Configuration saved to ${envPath}`));
+    }
+  } else {
+    fs.writeFileSync(envPath, envContent);
+    console.log(chalk.green(`✅ Configuration saved to ${envPath}`));
+  }
+
+  // Create output directory if it doesn't exist
+  const resolvedOutputDir = path.resolve(outputDir);
+  if (!fs.existsSync(resolvedOutputDir)) {
+    fs.mkdirSync(resolvedOutputDir, { recursive: true });
+    console.log(chalk.green(`✅ Created output directory: ${resolvedOutputDir}`));
+  }
+
+  // Now scan for files in the configured input directory
+  console.log(chalk.cyan(`\n🔍 Scanning for files in: ${path.resolve(inputDir)}\n`));
+  const files = scanDirectory(path.resolve(inputDir));
+
+  if (files.length === 0) {
+    console.log(formatWarningMessage('No supported files found in the configured directory.'));
+    console.log(
+      chalk.gray('You can add .md, .markdown, .rst, .tex, or .txt files to get started.\n')
+    );
+
+    const nextAction = await select({
+      message: 'What would you like to do next?',
+      choices: [
+        { name: TRY_DEMO_OPTION, value: 'demo' },
+        { name: MANUAL_INPUT_OPTION, value: 'manual' },
+        { name: EXIT_OPTION, value: 'exit' },
+      ],
+    });
+
+    switch (nextAction) {
+      case 'demo':
+        return await handleDemoExample();
+      case 'manual':
+        return await handleManualInput();
+      case 'exit':
+        process.exit(0);
+    }
+  }
+
+  // Show available files
+  const choices = [
+    ...files.map(file => ({
+      name: file.name,
+      value: file.path,
+    })),
+    { name: TRY_DEMO_OPTION, value: 'demo' },
+    { name: EXIT_OPTION, value: 'exit' },
+  ];
+
+  const selectedFile = await select({
+    message: 'Select a file to process:',
+    choices,
+  });
+
+  if (selectedFile === 'demo') {
+    return await handleDemoExample();
+  }
+
+  if (selectedFile === 'exit') {
+    process.exit(0);
+  }
+
+  return selectedFile;
+}
+
+/**
+ * Handle demo example selection
+ */
+async function handleDemoExample(): Promise<string> {
+  console.log(chalk.cyan('\n🎯 Demo Examples'));
+  console.log(chalk.gray('Try Legal Markdown with these built-in examples.\n'));
+
+  // Get examples from the package - try multiple locations
+  const currentDir = getCurrentDir();
+  const possibleExamplesDirs = [
+    // In dist for development or when running from source
+    path.join(currentDir, '../../..', 'dist', 'examples'),
+    // In node_modules for installed package
+    path.join(process.cwd(), 'node_modules', 'legal-markdown-js', 'dist', 'examples'),
+    path.join(process.cwd(), 'node_modules', 'legal-markdown-js', 'examples'),
+    // Global installation paths
+    path.join(path.dirname(process.argv[1] || ''), '..', 'examples'),
+    path.join(path.dirname(process.argv[1] || ''), '..', 'dist', 'examples'),
+  ];
+
+  const availableExamples: Array<{ name: string; path: string; description: string }> = [];
+  let examplesDir = '';
+
+  // Find the first existing examples directory
+  for (const dir of possibleExamplesDirs) {
+    if (fs.existsSync(dir)) {
+      examplesDir = dir;
+      break;
+    }
+  }
+
+  if (examplesDir) {
+    const basicExample = path.join(
+      examplesDir,
+      'basic-processing',
+      'simple-document',
+      'example.md'
+    );
+    const advancedExample = path.join(examplesDir, 'advanced', 'complex-nda', 'nda-with-data.md');
+
+    if (fs.existsSync(basicExample)) {
+      availableExamples.push({
+        name: '📝 Basic Document Processing',
+        path: basicExample,
+        description: 'Simple markdown with template fields',
+      });
+    }
+
+    if (fs.existsSync(advancedExample)) {
+      availableExamples.push({
+        name: '📋 Advanced NDA Contract',
+        path: advancedExample,
+        description: 'Complex contract with conditional clauses',
+      });
+    }
+  }
+
+  // Fallback: create a simple demo file in current directory
+  if (availableExamples.length === 0) {
+    const demoPath = path.join(process.cwd(), 'legal-markdown-demo.md');
+    const demoContent = `---
+title: "Sample Legal Document"
+party1: "Acme Corporation"
+party2: "[Enter Client Name]"
+date: "{{formatDate(today, 'MMMM dd, yyyy')}}"
+jurisdiction: "California"
+---
+
+# {{title}}
+
+This agreement is entered into on {{date}} between {{party1}} and {{party2}}.
+
+## 1. Terms and Conditions
+
+l. **Effective Date**: This agreement becomes effective on {{date}}.
+
+l. **Jurisdiction**: This agreement shall be governed by the laws of {{jurisdiction}}.
+
+{{#if party2}}
+l. **Parties**: The contracting parties are {{party1}} and {{party2}}.
+{{else}}
+l. **Party**: The contracting party is {{party1}}.
+{{/if}}
+
+---
+
+*This is a demo document showing Legal Markdown features:*
+- *Template fields: {{party1}}, {{party2}}*
+- *Date formatting: {{date}}*
+- *Conditional clauses: {{#if party2}}*
+- *Automatic numbering: l.*
+`;
+
+    try {
+      fs.writeFileSync(demoPath, demoContent);
+      availableExamples.push({
+        name: '🎯 Generated Demo Document',
+        path: demoPath,
+        description: 'A sample document created just for you',
+      });
+
+      console.log(chalk.green(`✅ Created demo file: ${demoPath}`));
+    } catch (error) {
+      console.log(
+        chalk.yellow(
+          `⚠️  Could not create demo file: ${error instanceof Error ? error.message : String(error)}`
+        )
+      );
+    }
+  }
+
+  if (availableExamples.length === 0) {
+    console.log(chalk.red('❌ No demo examples available.'));
+    return await handleManualInput();
+  }
+
+  const choices = [
+    ...availableExamples.map(example => ({
+      name: `${example.name}\n   ${chalk.gray(example.description)}`,
+      value: example.path,
+    })),
+    { name: '← Back to main menu', value: 'back' },
+  ];
+
+  const selectedExample = await select({
+    message: 'Choose a demo example:',
+    choices,
+  });
+
+  if (selectedExample === 'back') {
+    return await handleFirstTimeUserExperience();
+  }
+
+  console.log(chalk.green(`\n✅ Selected demo: ${selectedExample}`));
+  console.log(
+    chalk.gray('You can examine this file after processing to see how Legal Markdown works.\n')
+  );
+
+  return selectedExample;
+}
+
+/**
+ * Show help and tutorial information
+ */
+async function showHelpAndTutorial(): Promise<void> {
+  console.log(chalk.cyan('\n📖 Legal Markdown Help & Tutorial\n'));
+
+  console.log(chalk.bold('What is Legal Markdown?'));
+  console.log(
+    chalk.gray('Legal Markdown is a tool for processing legal documents written in Markdown')
+  );
+  console.log(chalk.gray('with YAML metadata and template fields.\n'));
+
+  console.log(chalk.bold('Key Features:'));
+  console.log(chalk.gray('• 📝 Template fields: {{party1}}, {{date}}, etc.'));
+  console.log(chalk.gray('• 🔢 Auto-numbering: l. for numbered clauses'));
+  console.log(chalk.gray('• ❓ Conditional clauses: {{#if condition}}...{{/if}}'));
+  console.log(chalk.gray('• 📅 Date formatting: {{formatDate(date, "MMM dd, yyyy")}}'));
+  console.log(chalk.gray('• 📄 Multiple output formats: HTML, PDF, Markdown'));
+  console.log(chalk.gray('• 🎨 Custom styling with CSS\n'));
+
+  console.log(chalk.bold('Example Document Structure:'));
+  console.log(chalk.gray('```'));
+  console.log(chalk.gray('---'));
+  console.log(chalk.gray('title: "My Contract"'));
+  console.log(chalk.gray('party1: "Company A"'));
+  console.log(chalk.gray('date: "2024-01-15"'));
+  console.log(chalk.gray('---'));
+  console.log(chalk.gray(''));
+  console.log(chalk.gray('# {{title}}'));
+  console.log(chalk.gray(''));
+  console.log(
+    chalk.gray('Agreement between {{party1}} dated {{formatDate(date, "MMMM dd, yyyy")}}.')
+  );
+  console.log(chalk.gray(''));
+  console.log(chalk.gray('l. First clause'));
+  console.log(chalk.gray('l. Second clause'));
+  console.log(chalk.gray('```\n'));
+
+  console.log(chalk.bold('Getting Started:'));
+  console.log(chalk.gray('1. 🛠️  Setup: Configure your input/output directories'));
+  console.log(chalk.gray('2. 📁 Files: Create .md files with YAML frontmatter'));
+  console.log(chalk.gray('3. 🎯 Process: Use this interactive CLI to convert documents'));
+  console.log(chalk.gray('4. 📄 Output: Get HTML, PDF, or processed Markdown\n'));
+
+  console.log(chalk.bold('Useful Commands:'));
+  console.log(
+    chalk.gray('• ') + chalk.cyan('legal-md-ui') + chalk.gray(' - Interactive processing')
+  );
+  console.log(
+    chalk.gray('• ') + chalk.cyan('legal-md input.md') + chalk.gray(' - Direct processing')
+  );
+  console.log(
+    chalk.gray('• ') + chalk.cyan('legal-md --help') + chalk.gray(' - Command line help\n')
+  );
+
+  await input({
+    message: 'Press Enter to continue...',
+  });
+}
