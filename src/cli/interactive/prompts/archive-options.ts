@@ -56,6 +56,9 @@ export async function promptArchiveOptions(): Promise<ArchivePromptResult> {
   if (useCustomDirectory) {
     let validDirectory = false;
 
+    // Show where the custom directory will be created
+    console.log(chalk.gray(`Custom directory will be created relative to: ${process.cwd()}`));
+
     while (!validDirectory) {
       const customDir = await input({
         message: 'Enter custom archive directory:',
