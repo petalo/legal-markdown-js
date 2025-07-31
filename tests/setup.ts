@@ -98,15 +98,23 @@ beforeEach(() => {
 (global as any).testDir = testDir;
 
 /**
- * Optimized file creation utility for tests
+ * Directory existence cache for performance optimization
+ */
+const dirCache = new Set<string>();
+
+/**
+ * Optimized file creation utility for tests with directory caching
  */
 (global as any).createTestFile = (filename: string, content: string): string => {
   const filePath = path.join(testDir, filename);
   const dir = path.dirname(filePath);
   
-  // Ensure directory exists
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  // Use cached directory existence check
+  if (!dirCache.has(dir)) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    dirCache.add(dir);
   }
   
   fs.writeFileSync(filePath, content);

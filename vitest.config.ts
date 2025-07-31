@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import os from 'os';
 
 export default defineConfig({
   test: {
@@ -29,8 +30,20 @@ export default defineConfig({
     // Test patterns
     include: ['tests/**/*.test.ts'],
     
-    // Timeout
-    testTimeout: 45000,
+    // Timeout - Reduced for faster test execution
+    testTimeout: 15000,
+    
+    // Parallelization - Use threads for better performance, single worker for E2E
+    pool: process.env.E2E_TESTS ? 'forks' : 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: Math.min(4, os.cpus().length),
+        minThreads: 2
+      },
+      forks: {
+        maxForks: process.env.E2E_TESTS ? 1 : undefined
+      }
+    },
     
     // Reporter
     reporters: process.env.CI ? ['default', 'json'] : ['default'],
