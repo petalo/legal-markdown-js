@@ -38,6 +38,8 @@
     - [When Legacy is Better](#when-legacy-is-better)
     - [When Remark is Better](#when-remark-is-better)
   - [Scaling Analysis](#scaling-analysis)
+- [📦 Web Distribution Changes](#-web-distribution-changes)
+  - [Bundle.js → UMD.js Migration](#bundlejs--umdjs-migration)
 - [🔧 Technical Implementation Guide](#-technical-implementation-guide)
   - [Plugin Development Architecture](#plugin-development-architecture)
     - [Core Plugin Structure](#core-plugin-structure)
@@ -761,6 +763,64 @@ These remain as preprocessing steps because:
 // Remark: ~41ms total
 // Impact: +39ms for significantly better reliability
 ```
+
+## 📦 Web Distribution Changes
+
+### Bundle.js → UMD.js Migration
+
+As part of the remark migration, the web distribution format has been updated to improve compatibility and performance:
+
+#### 🔄 **Change Summary**
+
+| Before | After | Impact |
+|--------|-------|--------|
+| `bundle.js` | `legal-markdown.umd.min.js` | ✅ Better UMD compliance |
+| Custom bundling | Webpack UMD build | ✅ Improved compatibility |
+| Mixed module format | Consistent UMD format | ✅ Reduced module conflicts |
+
+#### 📋 **Affected Files**
+
+1. **Web Playground (`src/web/standalone.html`)**:
+   ```html
+   <!-- Before -->
+   <script src="bundle.js"></script>
+   
+   <!-- After -->
+   <script src="legal-markdown.umd.min.js"></script>
+   ```
+
+2. **Distribution Build**:
+   - Old: Custom bundle with mixed module approach
+   - New: Standard UMD build with Webpack
+   - Size: Optimized and minified (~70KB minified)
+
+#### ⚡ **Benefits**
+
+- **Better Compatibility**: UMD format works with CommonJS, AMD, and global environments
+- **Reduced Module Conflicts**: Eliminates mixed module approach issues
+- **Standard Distribution**: Follows common JavaScript library distribution patterns
+- **Improved Performance**: Webpack optimization and proper minification
+
+#### 🔧 **Migration for Consumers**
+
+If you're using the web version of Legal Markdown:
+
+```html
+<!-- Old way -->
+<script src="path/to/bundle.js"></script>
+
+<!-- New way -->
+<script src="path/to/legal-markdown.umd.min.js"></script>
+```
+
+#### 📚 **Technical Details**
+
+The new UMD build:
+- Uses Webpack for proper bundling and optimization
+- Includes source maps for debugging
+- Maintains all functionality from the previous bundle
+- Provides better error handling and module resolution
+- Is fully compatible with the remark-based processing pipeline
 
 ## 🔧 Technical Implementation Guide
 

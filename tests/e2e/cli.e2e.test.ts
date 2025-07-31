@@ -16,6 +16,7 @@ import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
+import { getBestCliPath } from '../utils/cli-paths.js';
 
 /** Promisified exec for async/await usage */
 const execAsync = promisify(exec);
@@ -25,7 +26,7 @@ describe('CLI Interface', () => {
   const testDir = path.join(__dirname, 'temp');
   
   /** Path to compiled CLI executable */
-  const cliPath = path.resolve(__dirname, '..', '..', 'dist', 'cli', 'index.js');
+  const cliPath = getBestCliPath();
 
   /**
    * Setup test directory before each test

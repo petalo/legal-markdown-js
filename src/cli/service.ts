@@ -44,29 +44,10 @@ import chalk from 'chalk';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
+import { getCurrentDir } from '../utils/esm-utils.js';
 
-// ESM/CJS compatible __dirname
-const getDirectoryName = () => {
-  try {
-    // Try CommonJS first
-    if (typeof __dirname !== 'undefined') {
-      return __dirname;
-    }
-  } catch (e) {
-    // Ignore error, try ESM
-  }
-
-  try {
-    // ESM fallback - use eval to avoid TypeScript compilation issues
-    const metaUrl = eval('import.meta.url');
-    const __filename = fileURLToPath(metaUrl);
-    return path.dirname(__filename);
-  } catch (e) {
-    // Final fallback - use process.cwd()
-    return process.cwd();
-  }
-};
-const currentDir = getDirectoryName();
+// ESM/CJS compatible directory resolution
+const currentDir = getCurrentDir();
 
 /**
  * Extended options interface for CLI operations

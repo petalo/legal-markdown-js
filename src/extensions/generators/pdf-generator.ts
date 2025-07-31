@@ -36,29 +36,10 @@ import * as https from 'https';
 import * as http from 'http';
 import { fileURLToPath } from 'url';
 import { logger } from '../../utils/logger';
+import { getCurrentDir } from '../../utils/esm-utils.js';
 
-// ESM/CJS compatible __dirname
-const getDirectoryName = () => {
-  try {
-    // Try CommonJS first
-    if (typeof __dirname !== 'undefined') {
-      return __dirname;
-    }
-  } catch (e) {
-    // Ignore error, try ESM
-  }
-
-  try {
-    // ESM fallback - use eval to avoid TypeScript compilation issues
-    const metaUrl = eval('import.meta.url');
-    const __filename = fileURLToPath(metaUrl);
-    return path.dirname(__filename);
-  } catch (e) {
-    // Final fallback - use process.cwd()
-    return process.cwd();
-  }
-};
-const currentDir = getDirectoryName();
+// ESM/CJS compatible directory resolution
+const currentDir = getCurrentDir();
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
 import { PdfTemplates } from './pdf-templates';
 import { PDF_TEMPLATE_CONSTANTS, RESOLVED_PATHS } from '../../constants/index';

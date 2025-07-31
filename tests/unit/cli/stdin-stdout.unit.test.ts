@@ -12,9 +12,10 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import type { TaskContext } from 'vitest';
+import { getBestCliPath } from '../../utils/cli-paths.js';
 
 /** Path to the compiled CLI executable */
-const cliPath = path.resolve(__dirname, '..', '..', '..', 'dist', 'cli', 'index.js');
+const cliPath = getBestCliPath();
 
 describe('CLI stdin/stdout functionality', () => {
   it('should read from stdin and write to stdout', () => {
