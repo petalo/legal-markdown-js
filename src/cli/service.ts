@@ -42,12 +42,7 @@ import { RESOLVED_PATHS } from '../constants/index';
 import { ArchiveManager } from '../utils/archive-manager';
 import chalk from 'chalk';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 import * as fs from 'fs';
-import { getCurrentDir } from '../utils/esm-utils.js';
-
-// ESM/CJS compatible directory resolution
-const currentDir = getCurrentDir();
 
 /**
  * Extended options interface for CLI operations
