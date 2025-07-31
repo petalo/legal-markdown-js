@@ -52,7 +52,7 @@ describe('FTUX Flag Integration', () => {
       });
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output });
         });
@@ -95,7 +95,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -144,7 +144,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -197,7 +197,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -248,7 +248,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -296,7 +296,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -346,7 +346,7 @@ describe('FTUX Flag Integration', () => {
       }, 2000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -398,7 +398,7 @@ describe('FTUX Flag Integration', () => {
       }, 1000);
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, output, stderr });
         });
@@ -429,7 +429,7 @@ describe('FTUX Flag Integration', () => {
       });
 
       // Create a promise that resolves when child closes
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<{ code: number | null; output: string }>((resolve, reject) => {
         child.on('close', (code) => {
           resolve({ code, stderr });
         });

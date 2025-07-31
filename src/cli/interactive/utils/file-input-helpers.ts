@@ -25,6 +25,8 @@ const EXIT_OPTION = '❌ Exit';
 export async function handleBrowseFolder(): Promise<string> {
   const folderPath = await input({
     message: 'Enter folder path to browse:',
+    // Use cwd as default to allow full filesystem navigation flexibility
+    // (differs from RESOLVED_PATHS.DEFAULT_INPUT_DIR to provide broader access)
     default: process.cwd(),
     validate: value => {
       const resolvedPath = path.resolve(value);
