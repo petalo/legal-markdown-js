@@ -1,3 +1,9 @@
+## <small>2.16.1 (2025-07-31)</small>
+
+- fix: resolve playground compatibility issues with
+  processLegalMarkdownWithRemark functions
+  ([5eea375](https://github.com/petalo/legal-markdown-js/commit/5eea375))
+
 ## 2.16.0 (2025-07-31)
 
 - feat: implement First-Time User Experience (FTUX) for interactive CLI (#43)
