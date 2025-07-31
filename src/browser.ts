@@ -79,6 +79,21 @@ if (typeof window === 'undefined') {
 import { fieldTracker } from './extensions/tracking/field-tracker';
 import { logger } from './utils/logger';
 import { LegalMarkdownOptions } from './types';
+// Placeholder functions for Remark processing - will be replaced with actual implementations
+// These are fallback implementations that use the basic processor
+function processLegalMarkdownWithRemark(content: string, options: any = {}): Promise<any> {
+  console.warn(
+    'Using fallback processor - Remark functions not fully implemented in browser bundle'
+  );
+  return Promise.resolve(processLegalMarkdown(content, options));
+}
+
+function processLegalMarkdownWithRemarkSync(content: string, options: any = {}): any {
+  console.warn(
+    'Using fallback processor - Remark functions not fully implemented in browser bundle'
+  );
+  return processLegalMarkdown(content, options);
+}
 
 /**
  * Browser-compatible version of Legal Markdown processing
@@ -232,11 +247,32 @@ export function processLegalMarkdown(
  * ```
  */
 export const LegalMarkdown = {
-  processLegalMarkdown,
+  processLegalMarkdown: processLegalMarkdown,
+  processLegalMarkdownWithRemark: processLegalMarkdownWithRemark,
+  processLegalMarkdownWithRemarkSync: processLegalMarkdownWithRemarkSync,
 };
 
-// Create global window object for script tag usage
+// Create global window object for script tag usage with explicit assignments
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line no-undef
-  (window as any).LegalMarkdown = LegalMarkdown;
+  (window as any).LegalMarkdown = {
+    processLegalMarkdown: processLegalMarkdown,
+    processLegalMarkdownWithRemark: processLegalMarkdownWithRemark,
+    processLegalMarkdownWithRemarkSync: processLegalMarkdownWithRemarkSync,
+  };
+
+  // Debug logging to see what's being assigned
+  console.log('Browser bundle loaded - functions available:');
+  console.log('  processLegalMarkdown:', typeof processLegalMarkdown, processLegalMarkdown);
+  console.log(
+    '  processLegalMarkdownWithRemark:',
+    typeof processLegalMarkdownWithRemark,
+    processLegalMarkdownWithRemark
+  );
+  console.log(
+    '  processLegalMarkdownWithRemarkSync:',
+    typeof processLegalMarkdownWithRemarkSync,
+    processLegalMarkdownWithRemarkSync
+  );
+  console.log('Final window.LegalMarkdown:', (window as any).LegalMarkdown);
 }

@@ -274,8 +274,44 @@ p {
     <div id="messageArea"></div>
   </div>
 
-  <script src="./legal-markdown.umd.js"></script>
+  <script src="./legal-markdown.umd.min.js"></script>
   <script>
+    // Debug: Check what's available in window.LegalMarkdown
+    console.log('window.LegalMarkdown:', window.LegalMarkdown);
+    console.log('Available functions:', Object.keys(window.LegalMarkdown || {}));
+    console.log('LegalMarkdown properties:', Object.getOwnPropertyNames(window.LegalMarkdown || {}));
+    console.log('LegalMarkdown descriptor for processLegalMarkdownWithRemark:', 
+                Object.getOwnPropertyDescriptor(window.LegalMarkdown, 'processLegalMarkdownWithRemark'));
+    
+    if (window.LegalMarkdown) {
+      console.log('processLegalMarkdown:', typeof window.LegalMarkdown.processLegalMarkdown);
+      console.log('processLegalMarkdownWithRemark:', typeof window.LegalMarkdown.processLegalMarkdownWithRemark);
+      console.log('processLegalMarkdownWithRemarkSync:', typeof window.LegalMarkdown.processLegalMarkdownWithRemarkSync);
+      
+      // Check if the functions are actually defined
+      console.log('processLegalMarkdownWithRemark value:', window.LegalMarkdown.processLegalMarkdownWithRemark);
+      console.log('processLegalMarkdownWithRemarkSync value:', window.LegalMarkdown.processLegalMarkdownWithRemarkSync);
+      
+      // Manual assignment as a workaround
+      if (!window.LegalMarkdown.processLegalMarkdownWithRemark) {
+        console.log('Manually creating processLegalMarkdownWithRemark function');
+        window.LegalMarkdown.processLegalMarkdownWithRemark = async function(content, options = {}) {
+          console.warn('Using manually created fallback processor');
+          return window.LegalMarkdown.processLegalMarkdown(content, options);
+        };
+      }
+      
+      if (!window.LegalMarkdown.processLegalMarkdownWithRemarkSync) {
+        console.log('Manually creating processLegalMarkdownWithRemarkSync function');
+        window.LegalMarkdown.processLegalMarkdownWithRemarkSync = function(content, options = {}) {
+          console.warn('Using manually created fallback processor');
+          return window.LegalMarkdown.processLegalMarkdown(content, options);
+        };
+      }
+    }
+  </script>
+  <script>
+    
     class LegalMarkdownApp {
       constructor() {
         this.processedResult = null;
