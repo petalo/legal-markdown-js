@@ -1,6 +1,6 @@
 /**
  * @fileoverview ESM utility functions for safe environment detection
- * 
+ *
  * This module provides safe utilities for working with ESM modules without
  * using eval() or other potentially unsafe patterns.
  */
@@ -87,6 +87,6 @@ export function getModuleInfo(importMetaUrl?: string): {
   return {
     dir: getCurrentDir(importMetaUrl),
     isESM: isESM(),
-    isCommonJS: isCommonJS()
+    isCommonJS: isCommonJS(),
   };
 }
