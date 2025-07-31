@@ -1,3 +1,12 @@
+## <small>2.16.3 (2025-07-31)</small>
+
+- fix: unify archive directory behavior to be project-relative (#46)
+  ([c7db8f5](https://github.com/petalo/legal-markdown-js/commit/c7db8f5)),
+  closes [#46](https://github.com/petalo/legal-markdown-js/issues/46)
+- ⚡ Optimize test performance by 60% with threading and smart timeouts (#44)
+  ([3d0941e](https://github.com/petalo/legal-markdown-js/commit/3d0941e)),
+  closes [#44](https://github.com/petalo/legal-markdown-js/issues/44)
+
 ## <small>2.16.2 (2025-07-31)</small>
 
 - Merge branch 'fix/webpack-umd-export-configuration'

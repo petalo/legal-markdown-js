@@ -1,6 +1,6 @@
 {
   "name": "legal-markdown-js",
-  "version": "2.16.2",
+  "version": "2.16.3",
   "description": "Node.js implementation of LegalMarkdown for processing legal documents with markdown and YAML - Complete feature parity with Ruby version",
   "type": "module",
   "main": "./dist/index.cjs",
