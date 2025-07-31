@@ -51,11 +51,17 @@ field states during document review.
 
 ### Field State Classes
 
+These classes are automatically applied to fields when using the `--highlight`
+flag:
+
 | Class             | Purpose                        | Color     | When Applied                                       |
 | ----------------- | ------------------------------ | --------- | -------------------------------------------------- |
-| `.imported-value` | Successfully populated fields  | 🟢 Blue   | Fields filled from YAML frontmatter or JSON data   |
+| `.imported-value` | Successfully populated fields  | 🔵 Blue   | Fields filled from YAML frontmatter or JSON data   |
 | `.missing-value`  | Required fields without values | 🔴 Red    | Empty or undefined required fields                 |
-| `.highlight`      | Fields with conditional logic  | 🟡 Yellow | Fields with mixins, conditionals, or complex logic |
+| `.highlight`      | Fields with conditional logic  | 🟠 Orange | Fields with mixins, conditionals, or complex logic |
+
+**Additional Classes:** Some processing modes may also add a `.legal-field` base
+class. CSS targeting either pattern will work correctly.
 
 ## 🚀 Usage Examples
 
@@ -90,15 +96,21 @@ field states during document review.
 legal-md contract.md --highlight --html -o review.html
 ```
 
-**Generated HTML:**
+**Generated HTML (v2.14+ with remark-based processing):**
 
 ```html
-<span class="imported-value">John Doe</span>
+<span class="legal-field imported-value" data-field="client_name"
+  >John Doe</span
+>
 <!-- Successfully filled -->
-<span class="missing-value">{{client_address}}</span>
+<span class="legal-field missing-value" data-field="client_address"
+  >{{client_address}}</span
+>
 <!-- Missing required field -->
-<span class="highlight">{{amount | currency}}</span>
-<!-- Field with mixin -->
+<span class="legal-field highlight" data-field="crossref.payment"
+  >Article 1.5</span
+>
+<!-- Cross-reference with logic -->
 ```
 
 ## 🎯 Custom Styling
@@ -126,25 +138,52 @@ legal-md contract.md --highlight --html -o review.html
 ### Review Mode Styling
 
 ```css
-.imported-value {
+/* Universal field styling - works for both systems */
+.imported-value,
+.legal-field.imported-value {
   background-color: #e3f2fd;
   border: 1px solid #2196f3;
+  color: #0d47a1;
   padding: 2px 4px;
   border-radius: 3px;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
 }
 
-.missing-value {
+.missing-value,
+.legal-field.missing-value {
   background-color: #ffebee;
   border: 1px solid #f44336;
+  color: #c62828;
   padding: 2px 4px;
   border-radius: 3px;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+  font-weight: 500;
 }
 
-.highlight {
+.highlight,
+.legal-field.highlight {
   background-color: #fff3e0;
   border: 1px solid #ff9800;
+  color: #e65100;
   padding: 2px 4px;
   border-radius: 3px;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+}
+
+/* Optional: Base class for modern system */
+.legal-field {
+  border-radius: 3px;
+  border: 1px solid transparent;
+  padding: 2px 4px;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
 }
 ```
 
@@ -237,17 +276,18 @@ if (fieldHasValue(field)) {
 
 ### CSS File Locations
 
-| File                           | Purpose                   |
-| ------------------------------ | ------------------------- |
-| `src/styles/default.css`       | Default header styling    |
-| `src/styles/headers.css`       | Enhanced header styles    |
-| `examples/styles/contract.css` | Contract-specific styling |
-| `styles/highlight.css`         | Field highlighting styles |
+| File                           | Purpose                                           |
+| ------------------------------ | ------------------------------------------------- |
+| `src/styles/default.css`       | Default document and header styling               |
+| `src/styles/headers.css`       | Enhanced legal header styles with data attributes |
+| `src/styles/highlight.css`     | Field highlighting and review styles              |
+| `examples/styles/contract.css` | Contract-specific styling example                 |
+| `src/web/styles.css`           | Web interface specific styles                     |
 
 ## 📖 See Also
 
-- [Headers Numbering Guide](HEADERS-NUMBERING.md) - Learn about header numbering
+- [Headers Numbering Guide](headers_numbering.md) - Learn about header numbering
   systems
-- [Features Guide](FEATURES-GUIDE.md) - Complete feature documentation
-- [CLI Reference](CLI-REFERENCE.md) - Command-line options and flags
-- [Getting Started](GETTING-STARTED.md) - Basic usage examples
+- [Features Guide](features_guide.md) - Complete feature documentation
+- [CLI Reference](cli_reference.md) - Command-line options and flags
+- [Getting Started](getting_started.md) - Basic usage examples

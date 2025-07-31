@@ -236,7 +236,7 @@ $CLI input.md --html --css custom-styles.css -o output.html
 
 ## 📚 Documentation
 
-- [Getting Started Guide](../docs/getting-started.md)
+- [Getting Started Guide](../docs/getting_started.md)
 - [API Reference](../docs/api.md)
 - [CLI Reference](../docs/cli.md)
 - [Feature Documentation](../docs/)

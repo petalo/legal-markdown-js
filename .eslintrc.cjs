@@ -37,5 +37,15 @@ module.exports = {
     'quotes': ['error', 'single'],
     'semi': ['error', 'always'],
   },
+  overrides: [
+    {
+      // More permissive rules for test files
+      files: ['**/*.test.ts', '**/tests/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'max-len': 'off',
+      },
+    },
+  ],
   ignorePatterns: ['dist/', 'node_modules/', 'coverage/', '*.js', 'examples/'],
 };

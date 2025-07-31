@@ -1,18 +1,25 @@
-# Dependencies
+# =============================================================================
+# DEPENDENCIES & PACKAGE MANAGERS
+# =============================================================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.tgz
 
-# Build output
+# =============================================================================
+# BUILD OUTPUT & COMPILATION
+# =============================================================================
 dist/
+dist-cjs/
 build/
 packages/
 *.tsbuildinfo
-*.tgz
 
-# Environment variables
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
 .env
 .env.local
 .env.development.local
@@ -21,10 +28,12 @@ packages/
 .env*
 !.env.example
 
-# IDE files
+# =============================================================================
+# IDE & EDITOR FILES
+# =============================================================================
+# General IDE files
 .idea/
 *.sublime-*
-.DS_Store
 
 # VS Code (keep project settings, ignore user settings)
 .vscode/settings.json
@@ -32,57 +41,93 @@ packages/
 .vscode/tasks.json
 !.vscode/extensions.json
 
-# Cache files
+# =============================================================================
+# SYSTEM & OS FILES
+# =============================================================================
+.DS_Store
+
+# =============================================================================
+# CACHE & TEMPORARY FILES
+# =============================================================================
+# Tool caches
 .eslintcache
 .prettiercache
+# Testing - Jest (legacy)
 .jest-cache/
 
-# Test coverage
-coverage/
+# Testing - Vitest
+.vitest-cache/
 
-# Temporary files
+# Temporary directories
+.cache/
+.cache-loader/
 .tmp/
 .temp/
-temp/
-tmp/
+*temp*/
+*tmp*/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*temp*
+*tmp*
+
+# Log files
 *.log
 
-# Generated metadata
-metadata.json
-metadata.yaml
+# =============================================================================
+# TEST & COVERAGE OUTPUT
+# =============================================================================
+coverage/
 
-# Generated output files
-*-output.md
-processed-*.md
-final-output.md
-test-output.md
-temp-*.md
-output-*.md
-output/
-
-# Test output files (but keep reference files)
+# Test output files
 tests/output/e2e/
 tests/output/temp/
 tests/output/*.html
 tests/output/*.css
 tests/output/*.pdf
 tests/output/*.md
-!tests/output/advanced-metadata.json
-!tests/output/agreement-metadata.json
+
+
+# =============================================================================
+# PROJECT-SPECIFIC OUTPUT FILES
+# =============================================================================
+# Generated metadata
+metadata.json
+metadata.yaml
+
+# Generated markdown output files
+*-output.md
+processed-*.md
+final-output.md
+test-output.md
+temp-*.md
+output-*.md
+
+# Output directories
+output/
+benchmarks/
 
 # Examples directory output files
 examples/**/*.html
 examples/**/*.pdf
 examples/**/*output*
 
-# Documentation and coverage
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
 docs/coverage/
 docs/api/
 
-# Configuration directories
+# =============================================================================
+# CONFIGURATION DIRECTORIES
+# =============================================================================
 .claude/
 .repomix/
 
-# Project-specific
+# =============================================================================
+# PROJECT-SPECIFIC IGNORES
+# =============================================================================
 *petalo*
 input/

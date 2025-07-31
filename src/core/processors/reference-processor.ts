@@ -1,5 +1,5 @@
 /**
- * @fileoverview Cross-Reference Processing Module for Legal Markdown Documents
+ * Cross-Reference Processing Module for Legal Markdown Documents
  *
  * This module provides functionality to process internal cross-references in Legal Markdown
  * documents, allowing sections to reference other sections by their keys.
@@ -40,6 +40,9 @@
  * // Reference to Article 1 for term meanings.
  * ```
  */
+
+import { getRomanNumeral, getAlphaLabel } from '../../utils/number-utilities';
+import { fieldTracker } from '../../extensions/tracking/field-tracker';
 
 /**
  * Internal structure to track cross-references and their section numbers
@@ -111,35 +114,73 @@ function extractCrossReferences(content: string, metadata: Record<string, any>):
   const crossReferences: CrossReference[] = [];
   const lines = content.split('\n');
 
-  // Track section counters for each level
-  const sectionCounters = { level1: 0, level2: 0, level3: 0 };
+  // Track section counters for each level (up to 6 levels)
+  const sectionCounters = { level1: 0, level2: 0, level3: 0, level4: 0, level5: 0, level6: 0 };
 
   // Get level formats from metadata
   const levelFormats = {
     level1: metadata['level-one'] || 'Article %n.',
     level2: metadata['level-two'] || 'Section %n.',
     level3: metadata['level-three'] || '(%n)',
+    level4: metadata['level-four'] || '(%n)',
+    level5: metadata['level-five'] || '(%n%c)',
+    level6: metadata['level-six'] || 'Annex %r -',
   };
 
   for (const line of lines) {
     const trimmedLine = line.trim();
 
     // Check for header lines with cross-reference keys
-    const headerMatch = trimmedLine.match(/^(l{1,3})\.\s+(.+?)\s+\|(\w+)\|$/);
+    // Support both traditional (l., ll., lll.) and alternative (l1., l2., l3.) formats
+    const traditionalMatch = trimmedLine.match(/^(l+)\. (.+) \|([\w.-]+)\|$/);
+    const alternativeMatch = trimmedLine.match(/^l(\d+)\. (.+) \|([\w.-]+)\|$/);
+
+    const headerMatch = traditionalMatch || alternativeMatch;
     if (headerMatch) {
-      const [, levelMarker, headerText, key] = headerMatch;
-      const level = levelMarker.length;
+      let level: number;
+      let headerText: string;
+      let key: string;
+
+      if (traditionalMatch) {
+        const [, levelMarker, text, keyName] = traditionalMatch;
+        level = levelMarker.length;
+        headerText = text;
+        key = keyName;
+      } else {
+        const [, levelNumber, text, keyName] = alternativeMatch!;
+        level = parseInt(levelNumber, 10);
+        headerText = text;
+        key = keyName;
+      }
 
       // Update section counters
       if (level === 1) {
         sectionCounters.level1++;
-        sectionCounters.level2 = 0; // Reset level 2 counter
-        sectionCounters.level3 = 0; // Reset level 3 counter
+        sectionCounters.level2 = 0;
+        sectionCounters.level3 = 0;
+        sectionCounters.level4 = 0;
+        sectionCounters.level5 = 0;
+        sectionCounters.level6 = 0;
       } else if (level === 2) {
         sectionCounters.level2++;
-        sectionCounters.level3 = 0; // Reset level 3 counter
+        sectionCounters.level3 = 0;
+        sectionCounters.level4 = 0;
+        sectionCounters.level5 = 0;
+        sectionCounters.level6 = 0;
       } else if (level === 3) {
         sectionCounters.level3++;
+        sectionCounters.level4 = 0;
+        sectionCounters.level5 = 0;
+        sectionCounters.level6 = 0;
+      } else if (level === 4) {
+        sectionCounters.level4++;
+        sectionCounters.level5 = 0;
+        sectionCounters.level6 = 0;
+      } else if (level === 5) {
+        sectionCounters.level5++;
+        sectionCounters.level6 = 0;
+      } else if (level === 6) {
+        sectionCounters.level6++;
       }
 
       // Generate section number based on level
@@ -152,8 +193,32 @@ function extractCrossReferences(content: string, metadata: Record<string, any>):
       } else if (level === 2) {
         sectionNumber = levelFormats.level2.replace(/%n/g, sectionCounters.level2.toString());
         sectionText = `${sectionNumber} ${headerText}`;
-      } else {
+      } else if (level === 3) {
         sectionNumber = levelFormats.level3.replace(/%n/g, sectionCounters.level3.toString());
+        sectionText = `${sectionNumber} ${headerText}`;
+      } else if (level === 4) {
+        sectionNumber = levelFormats.level4
+          .replace(/%n/g, sectionCounters.level4.toString())
+          .replace(/%c/g, getAlphaLabel(sectionCounters.level4))
+          .replace(/%r/g, getRomanNumeral(sectionCounters.level4, true))
+          .replace(/%R/g, getRomanNumeral(sectionCounters.level4, false));
+        sectionText = `${sectionNumber} ${headerText}`;
+      } else if (level === 5) {
+        sectionNumber = levelFormats.level5
+          .replace(/%n/g, sectionCounters.level5.toString())
+          .replace(/%c/g, getAlphaLabel(sectionCounters.level5))
+          .replace(/%r/g, getRomanNumeral(sectionCounters.level5, true))
+          .replace(/%R/g, getRomanNumeral(sectionCounters.level5, false));
+        sectionText = `${sectionNumber} ${headerText}`;
+      } else if (level === 6) {
+        sectionNumber = levelFormats.level6
+          .replace(/%n/g, sectionCounters.level6.toString())
+          .replace(/%r/g, getRomanNumeral(sectionCounters.level6, true))
+          .replace(/%R/g, getRomanNumeral(sectionCounters.level6, false));
+        sectionText = `${sectionNumber} ${headerText}`;
+      } else {
+        // Fallback for unknown levels
+        sectionNumber = `Level ${level}.`;
         sectionText = `${sectionNumber} ${headerText}`;
       }
 
@@ -199,7 +264,11 @@ function replaceCrossReferences(
     const trimmedLine = line.trim();
 
     // Skip lines that define cross-references (headers with |key| syntax)
-    if (trimmedLine.match(/^(l{1,3})\.\s+(.+?)\s+\|(\w+)\|$/)) {
+    // Support both traditional (l., ll., lll.) and alternative (l1., l2., l3.) formats
+    if (
+      trimmedLine.match(/^(l+)\. (.+) \|([\w.-]+)\|$/) ||
+      trimmedLine.match(/^l(\d+)\. (.+) \|([\w.-]+)\|$/)
+    ) {
       return line;
     }
 
@@ -210,14 +279,34 @@ function replaceCrossReferences(
       // First try internal section reference
       const sectionNumber = referenceMap.get(trimmedKey);
       if (sectionNumber) {
+        // Track the cross-reference as a field for highlighting
+        fieldTracker.trackField(`crossref.${trimmedKey}`, {
+          value: sectionNumber,
+          originalValue: match,
+          hasLogic: true,
+        });
         return sectionNumber;
       }
 
       // Fallback to metadata value
       const metadataValue = getNestedValue(metadata, trimmedKey);
       if (metadataValue !== undefined) {
-        return formatMetadataValue(metadataValue, trimmedKey, metadata);
+        const resolvedValue = formatMetadataValue(metadataValue, trimmedKey, metadata);
+        // Track metadata-based cross-reference as a field
+        fieldTracker.trackField(`crossref.${trimmedKey}`, {
+          value: resolvedValue,
+          originalValue: match,
+          hasLogic: false,
+        });
+        return resolvedValue;
       }
+
+      // Track unresolved reference as empty
+      fieldTracker.trackField(`crossref.${trimmedKey}`, {
+        value: '',
+        originalValue: match,
+        hasLogic: false,
+      });
 
       // Return original if no reference found
       return match;

@@ -212,6 +212,7 @@ hr {
   font-style: italic;
 }
 
+
 /* Tables
    ========================================================================== */
 .table-responsive {
@@ -372,6 +373,7 @@ th {
   color: var(--color-muted) !important;
 }
 
+
 /* Print optimizations
    ========================================================================== */
 @media print {
@@ -445,6 +447,7 @@ th {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
 
   /* Remove backgrounds for better printing */
   pre,

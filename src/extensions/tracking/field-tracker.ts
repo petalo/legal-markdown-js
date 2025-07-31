@@ -69,6 +69,7 @@ export { FieldStatus, TrackedField };
 export class FieldTracker {
   private fields: Map<string, TrackedField> = new Map();
   private processedContent: string = '';
+  private totalOccurrences: number = 0;
 
   /**
    * Creates a new FieldTracker instance
@@ -141,6 +142,7 @@ export class FieldTracker {
     };
 
     this.fields.set(fieldName, field);
+    this.totalOccurrences++;
     logger.debug('Field tracked', { fieldName, status, hasLogic });
   }
 
@@ -155,23 +157,76 @@ export class FieldTracker {
 
       // Create regex to find field references in the content
       // This looks for {{fieldName}} patterns that haven't been processed yet
-      const fieldPattern = new RegExp(`\\{\\{\\s*${fieldName}\\s*\\}\\}`, 'g');
+      // Handle Markdown escaped underscores: empty_field becomes empty\_field
+      const escapedFieldName = this.escapeRegex(fieldName).replace(/_/g, '\\\\_?');
+      const fieldPattern = new RegExp(`\\{\\{\\s*${escapedFieldName}\\s*\\}\\}`, 'g');
 
-      // If the field has a value, look for the rendered value in the content
+      // Replace unprocessed field patterns (only if they're not already in spans)
+      processedContent = processedContent.replace(fieldPattern, (match, offset, string) => {
+        // Check if this match is already inside a span tag
+        const beforeMatch = string.substring(0, offset);
+
+        // Look for the last opening span tag before this match
+        const lastSpanOpen = beforeMatch.lastIndexOf('<span');
+        const lastSpanClose = beforeMatch.lastIndexOf('</span>');
+
+        // If there's an unclosed span tag before this match, skip it
+        if (lastSpanOpen > lastSpanClose && lastSpanOpen !== -1) {
+          return match; // Keep original, don't wrap
+        }
+
+        const value =
+          field.value !== undefined && field.value !== null && field.value !== ''
+            ? String(field.value)
+            : match; // Keep the original pattern for empty fields
+        return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${value}</span>`;
+      });
+
+      // For fields with specific values, apply highlighting based on field logic, not value characteristics
       if (field.value !== undefined && field.value !== null && field.value !== '') {
-        const valuePattern = new RegExp(
-          `(?<!<span[^>]*>)${this.escapeRegex(String(field.value))}(?!</span>)`,
-          'g'
-        );
+        const fieldValue = String(field.value);
 
-        processedContent = processedContent.replace(valuePattern, match => {
-          return `<span class="${cssClass}" data-field="${fieldName}">${match}</span>`;
-        });
-      } else {
-        // For empty fields, wrap the placeholder or empty space
-        processedContent = processedContent.replace(fieldPattern, match => {
-          return `<span class="${cssClass}" data-field="${fieldName}">[${fieldName}]</span>`;
-        });
+        // Apply highlighting ONLY for logic fields and cross-references
+        // Do not highlight arbitrary field values in text - only processed template fields
+        const shouldHighlight =
+          field.status === 'logic' || // Always highlight logic fields
+          fieldName.startsWith('crossref.'); // Always highlight cross-references
+        // Removed: general field value highlighting to prevent false positives
+
+        if (shouldHighlight) {
+          // Split content by HTML tags to avoid highlighting inside attributes
+          const parts = processedContent.split(/(<[^>]*>)/);
+
+          for (let i = 0; i < parts.length; i++) {
+            // Only process text parts (even indices), skip HTML tags (odd indices)
+            if (i % 2 === 0 && parts[i] && parts[i].includes(fieldValue)) {
+              const textPart = parts[i];
+
+              // Skip if this text part is already completely inside a highlight span
+              // Check if the previous tag was a highlight span and the next tag closes it
+              const prevTag = i > 0 ? parts[i - 1] : '';
+              const nextTag = i < parts.length - 1 ? parts[i + 1] : '';
+
+              const isInsideHighlightSpan =
+                prevTag.includes('class="highlight"') ||
+                prevTag.includes('class="imported-value"') ||
+                prevTag.includes('class="missing-value"');
+              const isClosedBySpan = nextTag === '</span>';
+
+              if (isInsideHighlightSpan && isClosedBySpan) {
+                continue;
+              }
+
+              // Apply highlighting to this text part
+              const escapedValue = this.escapeRegex(fieldValue);
+              parts[i] = textPart.replace(new RegExp(escapedValue, 'g'), match => {
+                return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${match}</span>`;
+              });
+            }
+          }
+
+          processedContent = parts.join('');
+        }
       }
     });
 
@@ -185,11 +240,11 @@ export class FieldTracker {
   private getFieldCssClass(status: FieldStatus): string {
     switch (status) {
       case FieldStatus.FILLED:
-        return 'imported-value';
+        return 'legal-field imported-value';
       case FieldStatus.EMPTY:
-        return 'missing-value';
+        return 'legal-field missing-value';
       case FieldStatus.LOGIC:
-        return 'highlight';
+        return 'legal-field highlight';
       default:
         return '';
     }
@@ -207,6 +262,13 @@ export class FieldTracker {
    */
   getFields(): Map<string, TrackedField> {
     return new Map(this.fields);
+  }
+
+  /**
+   * Get total number of field occurrences tracked
+   */
+  getTotalOccurrences(): number {
+    return this.totalOccurrences;
   }
 
   /**
@@ -244,6 +306,7 @@ export class FieldTracker {
   clear(): void {
     this.fields.clear();
     this.processedContent = '';
+    this.totalOccurrences = 0;
   }
 }
 

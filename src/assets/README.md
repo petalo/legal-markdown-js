@@ -5,7 +5,7 @@ generation and document styling.
 
 ## Directory Structure
 
-```
+```text
 src/assets/
 ├── images/           # Logo and image files for PDF headers/footers
 │   └── ...              # Additional logos
@@ -29,7 +29,7 @@ when:
 
 Place your PNG logo in the `src/assets/images/` directory:
 
-```
+```text
 src/assets/images/logo.company.png
 ```
 
@@ -188,6 +188,6 @@ Look for log messages like:
 
 ## Related Documentation
 
-- [PDF Generation Features](../../docs/FEATURES-GUIDE.md#pdf-with-logo-headersfooters)
-- [CSS Classes Documentation](../../docs/CSS-CLASSES.md)
-- [Architecture Overview](../../docs/ARCHITECTURE.md)
+- [PDF Generation Features](../../docs/features_guide.md#pdf-with-logo-headersfooters)
+- [CSS Classes Documentation](../../docs/css-classes.md)
+- [Architecture Overview](../../docs/architecture.md)

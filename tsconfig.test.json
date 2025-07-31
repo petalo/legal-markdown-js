@@ -1,0 +1,51 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Base configuration
+    "baseUrl": "./",
+
+    // Speed optimizations for testing
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "node",
+
+    // Performance optimizations
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./.vitest-cache/tsbuildinfo.json",
+
+    // Faster compilation (moved from jest config to fix deprecation warning)
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": false,
+
+    // Test-specific relaxed settings
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+
+    // Path mapping for fast resolution
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@core": ["src/core/index.ts"],
+      "@types": ["src/types.ts"],
+      "@extensions/*": ["src/extensions/*"],
+      "@extensions": ["src/extensions/index.ts"],
+      "@cli/*": ["src/cli/*"],
+      "@lib": ["src/lib/index.ts"],
+      "@constants": ["src/constants/index.ts"],
+      "@errors": ["src/errors/index.ts"],
+      "@utils/*": ["src/utils/*"],
+      "@utils": ["src/utils/index.ts"],
+      "@plugins/*": ["src/plugins/*"],
+      "@plugins": ["src/plugins/index.ts"]
+    },
+
+    // Types for Vitest
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist", "coverage", "examples", "scripts"]
+}

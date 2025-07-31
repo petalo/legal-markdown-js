@@ -1,18 +1,35 @@
 /**
- * @fileoverview Unit tests for Interactive CLI Service
+ * Unit tests for Interactive CLI Service
+ *
+ * @module
  */
 
 import { InteractiveService } from '../../../../src/cli/interactive/service';
 import { CliService } from '../../../../src/cli/service';
 import { InteractiveConfig } from '../../../../src/cli/interactive/types';
 import { RESOLVED_PATHS } from '@constants';
+import { readFileSync } from '@utils';
+import { processLegalMarkdown } from '../../../../src/index';
+import { vi, MockedClass, MockedFunction, Mocked } from 'vitest';
 
 // Mock the CliService
-jest.mock('../../../../src/cli/service');
-const MockedCliService = CliService as jest.MockedClass<typeof CliService>;
+vi.mock('../../../../src/cli/service');
+const MockedCliService = CliService as MockedClass<typeof CliService>;
+
+// Mock the readFileSync and processLegalMarkdown functions
+vi.mock('@utils', () => ({
+  readFileSync: vi.fn(),
+}));
+
+vi.mock('../../../../src/index', () => ({
+  processLegalMarkdown: vi.fn(),
+}));
+
+const mockedReadFileSync = readFileSync as MockedFunction<typeof readFileSync>;
+const mockedProcessLegalMarkdown = processLegalMarkdown as MockedFunction<typeof processLegalMarkdown>;
 
 // Mock constants
-jest.mock('@constants', () => ({
+vi.mock('@constants', () => ({
   RESOLVED_PATHS: {
     DEFAULT_INPUT_DIR: '/test/input',
     DEFAULT_OUTPUT_DIR: '/test/output',
@@ -22,16 +39,24 @@ jest.mock('@constants', () => ({
 }));
 
 describe('InteractiveService', () => {
-  let mockCliService: jest.Mocked<CliService>;
+  let mockCliService: Mocked<CliService>;
   let sampleConfig: InteractiveConfig;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockCliService = {
-      processFile: jest.fn(),
+      processFile: vi.fn(),
     } as any;
     MockedCliService.mockImplementation(() => mockCliService);
+
+    // Setup mocks
+    mockedReadFileSync.mockReturnValue('# Test content');
+    mockedProcessLegalMarkdown.mockReturnValue({
+      content: '# Test content',
+      metadata: {},
+      exportedFiles: ['/test/output/processed-contract-metadata.yaml']
+    });
 
     sampleConfig = {
       inputFile: '/test/input/contract.md',
@@ -141,20 +166,39 @@ describe('InteractiveService', () => {
       const service = new InteractiveService(configWithMetadata);
       const result = await service.processFile('/test/input/contract.md');
 
-      // Should create service instances: non-archiving service + metadata service
-      expect(MockedCliService).toHaveBeenCalledTimes(2);
-      
-      // Check that metadata service was created with correct options
-      expect(MockedCliService).toHaveBeenCalledWith(
+      // Should only create nonArchivingService (constructor)
+      expect(MockedCliService).toHaveBeenCalledTimes(1);
+      // Should call processLegalMarkdown directly for metadata
+      expect(mockedProcessLegalMarkdown).toHaveBeenCalledWith(
+        '# Test content',
         expect.objectContaining({
-          silent: true,
-          archiveSource: false,
           exportMetadata: true,
           exportFormat: 'yaml',
+          exportPath: '/test/output/processed-contract-metadata.yaml'
         })
       );
-      
       expect(result.outputFiles).toContain('/test/output/processed-contract-metadata.yaml');
+    });
+
+    it('should handle metadata export failure', async () => {
+      const configWithMetadata = {
+        ...sampleConfig,
+        outputFormats: { ...sampleConfig.outputFormats, metadata: true },
+      };
+
+      mockCliService.processFile.mockResolvedValue(undefined);
+      // Mock metadata export failure
+      mockedProcessLegalMarkdown.mockReturnValue({
+        content: '# Test content',
+        metadata: {},
+        exportedFiles: [] // No exported files indicates failure
+      });
+
+      const service = new InteractiveService(configWithMetadata);
+
+      await expect(service.processFile('/test/input/contract.md')).rejects.toThrow(
+        'Failed to export metadata to: /test/output/processed-contract-metadata.yaml'
+      );
     });
 
     it('should handle processing errors', async () => {

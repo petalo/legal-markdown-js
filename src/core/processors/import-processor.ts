@@ -182,7 +182,7 @@ export function processPartialImports(
 
       return tracedContent;
     } catch (error) {
-      console.error(`Error importing file ${cleanFilename}:`, error);
+      // Handle import errors gracefully without logging to stderr
       return `<!-- Error importing ${cleanFilename} -->`;
     }
   });

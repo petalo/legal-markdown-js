@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pipeline Management Types for Legal Markdown Processing
+ * Pipeline Management Types for Legal Markdown Processing
  *
  * This module defines the type system for the advanced pipeline management features
  * in Legal Markdown processing. It provides interfaces for pipeline orchestration,
@@ -16,7 +16,7 @@
  * @example
  * ```typescript
  * import { PipelineStep, PipelineResult, PipelineConfig } from './types';
- * import { BaseProcessor } from '@core';
+ * import { BaseProcessor } from '../../core/index';
  *
  * // Define a pipeline step
  * const mixinStep: PipelineStep = {
@@ -33,11 +33,13 @@
  *   enableDebugLogging: true
  * };
  * ```
+ *
+ * @module
  */
 
-import { BaseProcessor } from '@core';
+import { BaseProcessor } from '../../core/index';
 import { TrackedField } from '../tracking/field-tracker';
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../../types';
 
 /**
  * Configuration for a single step in the processing pipeline

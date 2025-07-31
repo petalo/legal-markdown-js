@@ -4,7 +4,7 @@
     "dbaeumer.vscode-eslint",
     "ms-vscode.vscode-typescript-next",
     "ms-vscode.test-adapter-converter",
-    "orta.vscode-jest",
+    "vitest.explorer",
     "redhat.vscode-yaml",
     "yzhang.markdown-all-in-one"
   ]

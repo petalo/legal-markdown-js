@@ -1,5 +1,5 @@
 /**
- * @fileoverview HTML Generation Module for Legal Markdown Documents
+ * HTML Generation Module for Legal Markdown Documents
  *
  * This module provides functionality to convert processed Legal Markdown content
  * into well-formatted HTML documents with CSS styling, accessibility features,
@@ -24,15 +24,18 @@
  *   includeHighlighting: true
  * });
  * ```
+ *
+ * @module
  */
 
 import { marked } from 'marked';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { html as beautifyHtml } from 'js-beautify';
+import beautify from 'js-beautify';
+const { html: beautifyHtml } = beautify;
 import { logger } from '../../utils/logger';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS } from '../../constants/index';
 
 /**
  * Configuration options for HTML generation

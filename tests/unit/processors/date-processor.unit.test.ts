@@ -15,12 +15,12 @@ describe('Date Processor', () => {
   const mockDate = new Date('2024-03-15T10:30:00Z');
   
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(mockDate);
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('processDateReferences', () => {
@@ -221,7 +221,7 @@ describe('Date Processor', () => {
         ];
 
         dates.forEach(({ date, expected }) => {
-          jest.setSystemTime(new Date(date));
+          vi.setSystemTime(new Date(date));
           const content = 'Date: @today[legal]';
           const result = processDateReferences(content, {});
           expect(result).toContain(expected);
@@ -236,7 +236,7 @@ describe('Date Processor', () => {
         ];
 
         dates.forEach(({ date, expected }) => {
-          jest.setSystemTime(new Date(date));
+          vi.setSystemTime(new Date(date));
           const content = 'Date: @today[legal]';
           const result = processDateReferences(content, {});
           expect(result).toContain(expected);
@@ -251,7 +251,7 @@ describe('Date Processor', () => {
         ];
 
         dates.forEach(({ date, expected }) => {
-          jest.setSystemTime(new Date(date));
+          vi.setSystemTime(new Date(date));
           const content = 'Date: @today[legal]';
           const result = processDateReferences(content, {});
           expect(result).toContain(expected);

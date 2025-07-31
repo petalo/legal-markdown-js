@@ -66,4 +66,4 @@ export {
 } from './tracking/field-state';
 
 // Core helpers (Ruby compatible)
-export * from './helpers';
+export * from './helpers/index';

@@ -1,5 +1,44 @@
 #!/usr/bin/env node
 
+/**
+ * README.md Generator for Legal Markdown Examples
+ *
+ * This script automatically generates comprehensive README.md files for all examples
+ * in the examples/ directory. It ensures consistent documentation across all examples
+ * and reduces maintenance overhead by using predefined templates.
+ *
+ * Features:
+ * - Automated README generation for all example directories
+ * - Consistent formatting and structure across examples
+ * - Detailed explanations of what each example demonstrates
+ * - File listings with descriptions
+ * - Usage instructions and learning resources
+ * - Integration with example configuration from migrate-examples.js
+ *
+ * Usage:
+ *   node scripts/generate-readmes.js
+ *   npm run generate:readmes
+ *
+ * The script will:
+ * 1. Read the EXAMPLE_CONFIG from migrate-examples.js
+ * 2. For each configured example, check if the directory exists
+ * 3. Generate a README.md file using the predefined template
+ * 4. Write the file to the example directory
+ *
+ * Templates are stored in README_TEMPLATES object and include:
+ * - Example description and purpose
+ * - File listings with explanations
+ * - Usage instructions
+ * - Key features demonstrated
+ * - Links to relevant documentation
+ *
+ * Adding New Examples:
+ * 1. Add the example path to EXAMPLE_CONFIG in migrate-examples.js
+ * 2. Add a corresponding template in README_TEMPLATES below
+ * 3. Run this script to generate the README.md
+ *
+ */
+
 const fs = require('fs');
 const path = require('path');
 const { EXAMPLE_CONFIG } = require('./migrate-examples');
@@ -13,7 +52,7 @@ Basic Legal Markdown document processing without any special features. This exam
 ## 📋 What this example demonstrates
 
 - Basic markdown processing
-- YAML front matter parsing  
+- YAML front matter parsing
 - Simple text formatting
 - Clean output generation
 
@@ -41,7 +80,7 @@ Basic Legal Markdown document processing without any special features. This exam
 
 ## 💡 Learn more
 
-- [Getting Started Guide](../../../docs/getting-started.md)
+- [Getting Started Guide](../../../docs/getting_started.md)
 - [Basic Processing](../../../docs/basic-processing.md)`,
 
   'basic-processing/yaml-frontmatter': `# YAML Front Matter Processing
@@ -594,39 +633,65 @@ Comprehensive examples demonstrating various command-line interface usage patter
 ## 💡 Learn more
 
 - [CLI Reference](../../../docs/cli-reference.md)
-- [Batch Processing Guide](../../../docs/batch-processing.md)`
+- [Batch Processing Guide](../../../docs/batch-processing.md)`,
 };
 
+/**
+ * Generates README.md files for all configured examples
+ *
+ * This function iterates through all examples defined in EXAMPLE_CONFIG,
+ * checks if the example directory exists, finds the corresponding template,
+ * and writes a comprehensive README.md file to each example directory.
+ *
+ * The process:
+ * 1. Resolves the examples directory path
+ * 2. Iterates through each configured example
+ * 3. Validates that the example directory exists
+ * 4. Retrieves the appropriate README template
+ * 5. Writes the template content to README.md
+ * 6. Reports success/failure for each example
+ *
+ * Error Handling:
+ * - Skips examples with missing directories (with warning)
+ * - Skips examples with missing templates (with warning)
+ * - Continues processing other examples if one fails
+ *
+ * @async
+ * @returns {Promise<void>} Resolves when all README files are generated
+ * @throws {Error} If there are file system errors during writing
+ */
 async function generateReadmes() {
   console.log('📝 Generating README.md files for each example...');
-  
+
   const examplesDir = path.resolve('examples');
-  
+
   for (const [examplePath, config] of Object.entries(EXAMPLE_CONFIG)) {
     const fullPath = path.join(examplesDir, examplePath);
     const readmePath = path.join(fullPath, 'README.md');
-    
+
     if (!fs.existsSync(fullPath)) {
       console.log(`  ⚠️  Directory not found: ${examplePath}`);
       continue;
     }
-    
+
     const readmeContent = README_TEMPLATES[examplePath];
-    
+
     if (!readmeContent) {
       console.log(`  ⚠️  No README template for: ${examplePath}`);
       continue;
     }
-    
+
     fs.writeFileSync(readmePath, readmeContent);
     console.log(`  ✅ Generated: ${examplePath}/README.md`);
   }
-  
+
   console.log('\n✅ All README.md files generated successfully!');
 }
 
+// Execute the script when run directly from command line
 if (require.main === module) {
   generateReadmes().catch(console.error);
 }
 
+// Export for use in other scripts or build processes
 module.exports = { generateReadmes };

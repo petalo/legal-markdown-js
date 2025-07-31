@@ -35,5 +35,5 @@ minimal configuration.
 
 ## 💡 Learn more
 
-- [Getting Started Guide](../../../docs/getting-started.md)
+- [Getting Started Guide](../../../docs/getting_started.md)
 - [Basic Processing](../../../docs/basic-processing.md)

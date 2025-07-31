@@ -5,14 +5,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { scanDirectory, scanCssFiles, isValidFile } from '../../../../../src/cli/interactive/utils/file-scanner';
+import { vi, Mocked } from 'vitest';
 
 // Mock fs module
-jest.mock('fs');
-const mockFs = fs as jest.Mocked<typeof fs>;
+vi.mock('fs');
+const mockFs = fs as Mocked<typeof fs>;
 
 describe('File Scanner Utilities', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('scanDirectory', () => {
@@ -47,7 +48,7 @@ describe('File Scanner Utilities', () => {
 
       // Mock process.cwd() for relative path calculation
       const originalCwd = process.cwd;
-      process.cwd = jest.fn(() => '/base/path');
+      process.cwd = vi.fn(() => '/base/path');
 
       const result = scanDirectory('/test/path');
 
@@ -83,7 +84,7 @@ describe('File Scanner Utilities', () => {
         throw new Error('Permission denied');
       });
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = scanDirectory('/test/path');
 
@@ -133,7 +134,7 @@ describe('File Scanner Utilities', () => {
         throw new Error('Permission denied');
       });
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = scanCssFiles('/test/styles');
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pipeline Configuration for Legal Markdown Processing
+ * Pipeline Configuration for Legal Markdown Processing
  *
  * This module provides the default pipeline configuration and factory functions
  * for creating Legal Markdown processing pipelines. It connects existing processors
@@ -29,23 +29,22 @@
  * // Execute processing
  * const result = await pipeline.execute(content, metadata, options);
  * ```
+ *
+ * @module
  */
 
-import { BaseProcessor, AbstractProcessor } from '@core';
-import { LegalMarkdownOptions } from '@types';
-import { parseYamlFrontMatter } from '@core/parsers/yaml-parser';
-import { processHeaders } from '@core/processors/header-processor';
-import { processOptionalClauses } from '@core/processors/clause-processor';
-import { processCrossReferences } from '@core/processors/reference-processor';
-import { processPartialImports } from '@core/processors/import-processor';
-import { processMixins } from '@extensions/ast-mixin-processor';
-import { processTemplateLoops } from '@extensions/template-loops';
-import { exportMetadata } from '@core/exporters/metadata-exporter';
-import { convertRstToLegalMarkdown, convertRstToLegalMarkdownSync } from '@extensions/rst-parser';
-import {
-  convertLatexToLegalMarkdown,
-  convertLatexToLegalMarkdownSync,
-} from '@extensions/latex-parser';
+import { BaseProcessor, AbstractProcessor } from '../../core/index';
+import { LegalMarkdownOptions } from '../../types';
+import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
+import { processHeaders } from '../../core/processors/header-processor';
+import { processOptionalClauses } from '../../core/processors/clause-processor';
+import { processCrossReferences } from '../../core/processors/reference-processor';
+import { processPartialImports } from '../../core/processors/import-processor';
+import { processMixins } from '../ast-mixin-processor';
+import { processTemplateLoops } from '../template-loops';
+import { exportMetadata } from '../../core/exporters/metadata-exporter';
+import { convertRstToLegalMarkdown, convertRstToLegalMarkdownSync } from '../rst-parser';
+import { convertLatexToLegalMarkdown, convertLatexToLegalMarkdownSync } from '../latex-parser';
 import { fieldTracker } from '../tracking/field-tracker';
 import { PipelineManager } from './pipeline-manager';
 import { PipelineStep, PipelineConfig } from './types';
@@ -326,10 +325,11 @@ class FieldTrackingProcessor extends AbstractProcessor {
   readonly name = 'field-tracking';
 
   isEnabled(options: LegalMarkdownOptions): boolean {
-    // Only apply centralized field tracking if:
-    // 1. Field tracking is enabled
-    // 2. Field tracking in markdown is NOT enabled (to avoid double processing)
-    return !!(options.enableFieldTracking && !options.enableFieldTrackingInMarkdown);
+    // Apply centralized field tracking if:
+    // 1. Field tracking is explicitly enabled (user choice for markdown->markdown), OR
+    // 2. We're generating HTML/PDF (always needed for CSS highlighting classes)
+    //    Note: Both HTML and PDF generation set _htmlGeneration flag
+    return !!(options.enableFieldTracking || options._htmlGeneration);
   }
 
   protected performProcessing(

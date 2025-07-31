@@ -1,5 +1,5 @@
 /**
- * @fileoverview Type Definitions for Legal Markdown Processing
+ * Type Definitions for Legal Markdown Processing
  *
  * This module contains TypeScript interface definitions and type declarations
  * for the Legal Markdown processing system. It defines the structure for
@@ -27,6 +27,8 @@
  *   metadata: { title: 'Document Title' }
  * };
  * ```
+ *
+ * @module
  */
 
 /**
@@ -148,6 +150,12 @@ export interface LegalMarkdownOptions {
    * When true, outputs detailed merge statistics and field tracking information
    */
   logImportOperations?: boolean;
+
+  /**
+   * Internal flag to indicate HTML/PDF generation context
+   * @internal
+   */
+  _htmlGeneration?: boolean;
 }
 
 /**

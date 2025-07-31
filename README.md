@@ -241,25 +241,25 @@ const result = await processLegalMarkdownAsync(content, options);
 
 ### User Documentation
 
-- **[Getting Started](docs/GETTING-STARTED.md)** - Installation and setup guide
-- **[CLI Reference](docs/CLI-REFERENCE.md)** - Complete command-line interface
+- **[Getting Started](docs/getting_started.md)** - Installation and setup guide
+- **[CLI Reference](docs/cli_reference.md)** - Complete command-line interface
   documentation
-- **[Features Guide](docs/FEATURES-GUIDE.md)** - All features, helpers, and
+- **[Features Guide](docs/features_guide.md)** - All features, helpers, and
   advanced usage
-- **[Headers & Numbering](docs/HEADERS-NUMBERING.md)** - Hierarchical numbering
+- **[Headers & Numbering](docs/headers_numbering.md)** - Hierarchical numbering
   system guide
-- **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and
+- **[CSS Classes Reference](docs/css-classes.md)** - CSS classes for styling and
   document review
 - **[Compatibility](docs/COMPATIBILITY.md)** - Ruby version compatibility
   tracking
 
 ### Developer Documentation
 
-- **[Architecture](docs/ARCHITECTURE.md)** - Complete system architecture and
+- **[Architecture](docs/architecture.md)** - Complete system architecture and
   design patterns
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - Development workflow,
   standards, and contribution guidelines
-- **[Helper Functions](docs/HELPERS.md)** - Complete reference for template
+- **[Helper Functions](docs/helpers.md)** - Complete reference for template
   helpers and functions
 - **[Development Guide](docs/DEVELOPMENT-GUIDE.md)** - Complete developer setup
   and workflow

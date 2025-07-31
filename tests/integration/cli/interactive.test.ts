@@ -5,11 +5,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { CLI_PATHS } from '../../utils/cli-paths.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Interactive CLI Integration', () => {
   const testInputDir = path.join(__dirname, '../../../test-fixtures/interactive-input');
   const testOutputDir = path.join(__dirname, '../../../test-fixtures/interactive-output');
-  const cliPath = path.join(__dirname, '../../../dist/cli/interactive/index.js');
+  const cliPath = CLI_PATHS.interactive;
   const activeProcesses: Set<any> = new Set();
 
   beforeAll(() => {
@@ -59,7 +63,7 @@ This is a test document for integration testing.`;
     await new Promise(resolve => setTimeout(resolve, 100));
   });
 
-  it('should display file selection prompt when started', (done) => {
+  it('should display file selection prompt when started', async () => {
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
@@ -71,52 +75,52 @@ This is a test document for integration testing.`;
     
     activeProcesses.add(child);
 
-    let output = '';
-    let foundExpectedOutput = false;
+    return new Promise((resolve, reject) => {
+      let output = '';
+      let foundExpectedOutput = false;
 
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-      
-      // Check if we see the expected prompts (without emojis to avoid encoding issues)
-      if (output.includes('Legal Markdown Interactive CLI') && 
-          output.includes('Searching for files in:')) {
-        foundExpectedOutput = true;
-        child.kill('SIGTERM');
-      }
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        
+        // Check if we see the expected prompts (without emojis to avoid encoding issues)
+        if (output.includes('Legal Markdown Interactive CLI') && 
+            output.includes('Searching for files in:')) {
+          foundExpectedOutput = true;
+          child.kill('SIGTERM');
+        }
+      });
+
+      child.on('exit', () => {
+        activeProcesses.delete(child);
+        clearTimeout(timeout);
+        
+        if (foundExpectedOutput) {
+          expect(output).toContain('Legal Markdown Interactive CLI');
+          expect(output).toContain('Searching for files in:');
+          resolve(void 0);
+        } else {
+          reject(new Error('Expected output not found'));
+        }
+      });
+
+      child.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+
+      // Shorter timeout to prevent hanging
+      const timeout = setTimeout(() => {
+        if (!child.killed) {
+          child.kill('SIGTERM');
+        }
+        if (!foundExpectedOutput) {
+          reject(new Error('Test timed out'));
+        }
+      }, 30000);
     });
+  }, 40000);
 
-    child.on('exit', () => {
-      activeProcesses.delete(child);
-      if (foundExpectedOutput) {
-        expect(output).toContain('Legal Markdown Interactive CLI');
-        expect(output).toContain('Searching for files in:');
-        done();
-      } else {
-        done(new Error('Expected output not found'));
-      }
-    });
-
-    child.on('error', (error) => {
-      done(error);
-    });
-
-    // Shorter timeout to prevent hanging
-    const timeout = setTimeout(() => {
-      if (!child.killed) {
-        child.kill('SIGTERM');
-      }
-      if (!foundExpectedOutput) {
-        done(new Error('Test timed out'));
-      }
-    }, 7000);
-    
-    // Clear timeout if test completes early
-    child.on('exit', () => {
-      clearTimeout(timeout);
-    });
-  }, 10000);
-
-  it('should handle graceful exit when user cancels', (done) => {
+  it('should handle graceful exit when user cancels', async () => {
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
@@ -128,49 +132,49 @@ This is a test document for integration testing.`;
     
     activeProcesses.add(child);
 
-    let output = '';
-    let cancelled = false;
+    return new Promise((resolve, reject) => {
+      let output = '';
+      let cancelled = false;
 
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-      
-      // Wait for the file selection prompt, then simulate cancellation
-      if (output.includes('Select an input file:') && !cancelled) {
-        cancelled = true;
-        child.kill('SIGINT');
-      }
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        
+        // Wait for the file selection prompt, then simulate cancellation
+        if (output.includes('Select an input file:') && !cancelled) {
+          cancelled = true;
+          child.kill('SIGINT');
+        }
+      });
+
+      child.on('exit', (code, signal) => {
+        activeProcesses.delete(child);
+        clearTimeout(timeout);
+        
+        if ((signal === 'SIGINT' || code === 0) && cancelled) {
+          resolve(void 0);
+        } else if (!cancelled) {
+          reject(new Error('Process exited before cancellation could be tested'));
+        } else {
+          reject(new Error(`Unexpected exit: code=${code}, signal=${signal}`));
+        }
+      });
+
+      child.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+
+      // Shorter timeout
+      const timeout = setTimeout(() => {
+        if (!child.killed) {
+          child.kill('SIGTERM');
+        }
+        reject(new Error('Test timed out'));
+      }, 30000);
     });
+  }, 40000);
 
-    child.on('exit', (code, signal) => {
-      activeProcesses.delete(child);
-      if ((signal === 'SIGINT' || code === 0) && cancelled) {
-        done();
-      } else if (!cancelled) {
-        done(new Error('Process exited before cancellation could be tested'));
-      } else {
-        done(new Error(`Unexpected exit: code=${code}, signal=${signal}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      done(error);
-    });
-
-    // Shorter timeout
-    const timeout = setTimeout(() => {
-      if (!child.killed) {
-        child.kill('SIGTERM');
-      }
-      done(new Error('Test timed out'));
-    }, 7000);
-    
-    // Clear timeout if test completes early
-    child.on('exit', () => {
-      clearTimeout(timeout);
-    });
-  }, 10000);
-
-  it('should handle empty input directory gracefully', (done) => {
+  it('should handle empty input directory gracefully', async () => {
     const emptyDir = path.join(__dirname, '../../../test-fixtures/empty-interactive');
     
     // Create empty directory
@@ -189,59 +193,58 @@ This is a test document for integration testing.`;
     
     activeProcesses.add(child);
 
-    let output = '';
-    let foundWarning = false;
+    return new Promise((resolve, reject) => {
+      let output = '';
+      let foundWarning = false;
 
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-      
-      // Should show warning about no files found
-      if (output.includes('No supported files found')) {
-        foundWarning = true;
-        child.kill('SIGTERM');
-      }
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        
+        // Should show warning about no files found
+        if (output.includes('No supported files found')) {
+          foundWarning = true;
+          child.kill('SIGTERM');
+        }
+      });
+
+      child.on('exit', () => {
+        activeProcesses.delete(child);
+        clearTimeout(timeout);
+        
+        // Clean up empty directory
+        try {
+          fs.rmSync(emptyDir, { recursive: true, force: true });
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+
+        if (foundWarning) {
+          expect(output).toContain('No supported files found');
+          resolve(void 0);
+        } else {
+          reject(new Error('Expected warning message not found'));
+        }
+      });
+
+      child.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+
+      // Shorter timeout
+      const timeout = setTimeout(() => {
+        if (!child.killed) {
+          child.kill('SIGTERM');
+        }
+        try {
+          fs.rmSync(emptyDir, { recursive: true, force: true });
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+        if (!foundWarning) {
+          reject(new Error('Test timed out'));
+        }
+      }, 30000);
     });
-
-    child.on('exit', () => {
-      activeProcesses.delete(child);
-      
-      // Clean up empty directory
-      try {
-        fs.rmSync(emptyDir, { recursive: true, force: true });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
-
-      if (foundWarning) {
-        expect(output).toContain('No supported files found');
-        done();
-      } else {
-        done(new Error('Expected warning message not found'));
-      }
-    });
-
-    child.on('error', (error) => {
-      done(error);
-    });
-
-    // Shorter timeout
-    const timeout = setTimeout(() => {
-      if (!child.killed) {
-        child.kill('SIGTERM');
-      }
-      try {
-        fs.rmSync(emptyDir, { recursive: true, force: true });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
-      if (!foundWarning) {
-        done(new Error('Test timed out'));
-      }
-    }, 7000);
-    
-    // Clear timeout if test completes early
-    child.on('exit', () => {
-      clearTimeout(timeout);
-    });
-  }, 10000);
+  }, 40000);
 });

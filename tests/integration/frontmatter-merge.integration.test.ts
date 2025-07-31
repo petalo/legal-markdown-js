@@ -17,6 +17,7 @@ import { processLegalMarkdown } from '../../src/index';
 import { processPartialImports } from '../../src/core/processors/import-processor';
 import * as fs from 'fs';
 import * as path from 'path';
+import { vi } from 'vitest';
 
 describe('Frontmatter Merge Integration', () => {
   /** Temporary directory for test files */
@@ -478,7 +479,7 @@ End of document.`;
     });
 
     it('should validate types when type validation is enabled', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const importContent = `---
 count: [1, 2, 3]        # Type conflict with main

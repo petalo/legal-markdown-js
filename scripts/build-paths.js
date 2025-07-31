@@ -6,8 +6,11 @@
  */
 
 // Load .env file silently without dotenv messages
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Parse .env manually to avoid dotenv messages
 try {
@@ -44,10 +47,10 @@ const RESOLVED_PATHS = {
 };
 
 // Export for use in other scripts
-module.exports = { PATHS, RESOLVED_PATHS };
+export { PATHS, RESOLVED_PATHS };
 
 // If called directly, print paths for shell scripts
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
   
   switch (command) {

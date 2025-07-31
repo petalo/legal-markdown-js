@@ -1,9 +1,11 @@
 /**
- * @fileoverview Integration tests for field tracking vs highlighting separation
+ * Integration tests for field tracking vs highlighting separation
  *
  * These tests verify that field tracking (structure) is independent from highlighting (visual).
  * Field tracking should always generate spans with CSS classes for HTML/PDF, while highlighting
  * should only control the loading of additional CSS styles.
+ *
+ * @module
  */
 
 import { generateHtml, generatePdf } from '../../src/index';
@@ -254,6 +256,123 @@ lll. First Subsection
       expect(highlightHtml).toContain('john@example.com');
       expect(highlightHtml).toContain('Integration Test');
       expect(highlightHtml).toContain('Article 1. First Article');
+    });
+  });
+
+  describe('Cross-reference Field Tracking', () => {
+    const crossRefContent = `---
+level-two: 'Art. %n -'
+level-six: 'Anexo %R -'
+contrato:
+  plazo_meses_prorroga:
+    numero: 2
+---
+
+ll. **Objeto del Contrato** |objeto-contrato|
+
+The definitions in |objeto-contrato| apply throughout.
+
+l6. **Service Level Agreement** |anexo-vtt|
+
+Reference to |anexo-vtt| for technical specifications and {{contrato.plazo_meses_prorroga.numero}} months.
+
+ll. **Servicios a Prestar** |listado-servicios|
+
+Payments as per |listado-servicios| schedule.
+`;
+
+    it('should properly highlight cross-references without breaking HTML', async () => {
+      const html = await generateHtml(crossRefContent, {
+        title: 'Cross-reference Test',
+        includeHighlighting: true,
+      });
+
+      // Should have cross-reference highlights
+      const crossrefHighlights = html.match(/<span class="legal-field highlight"[^>]*data-field="crossref\.[^"]*"[^>]*>[^<]*<\/span>/g) || [];
+      expect(crossrefHighlights.length).toBeGreaterThan(0);
+      
+      // Headers should not contain pipe keys
+      const headersWithPipes = html.match(/<span[^>]*legal-header[^>]*>[^<]*\|[^|]+\|[^<]*<\/span>/g) || [];
+      expect(headersWithPipes).toHaveLength(0);
+
+      // Should not have escaped HTML
+      expect(html).not.toContain('&lt;span');
+      expect(html).not.toContain('&gt;');
+
+      // Should not highlight short numeric values in HTML attributes
+      expect(html).toContain('data-level="2"'); // Should remain unmodified
+      expect(html).not.toContain('data-level="<span'); // Should not be wrapped
+    });
+
+    it('should handle field values based on logic, not characteristics', async () => {
+      const html = await generateHtml(crossRefContent, {
+        title: 'Logic-based Highlighting Test',
+        includeHighlighting: true,
+      });
+
+      // Should highlight the template field {{contrato.plazo_meses_prorroga.numero}} -> "2"
+      // because it's a processed template field (reasonable length simple var)
+      const highlightedTwos = html.match(/<span[^>]*data-field="contrato\.plazo_meses_prorroga\.numero"[^>]*>2<\/span>/g) || [];
+      expect(highlightedTwos.length).toBe(1); // Should highlight the template field
+      
+      // HTML attributes should remain untouched
+      expect(html).toContain('data-level="2"');
+      expect(html).toContain('data-number="2"');
+      expect(html).not.toContain('data-level="<span');
+      expect(html).not.toContain('data-number="<span');
+    });
+
+    it('should maintain proper HTML structure with cross-references', async () => {
+      const html = await generateHtml(crossRefContent, {
+        title: 'HTML Structure Test',
+        includeHighlighting: true,
+      });
+
+      // Check that legal-header class exists in the HTML
+      expect(html).toContain('legal-header');
+      expect(html).toContain('legal-header-level-2');
+
+      // Check that headers have proper data attributes
+      expect(html).toMatch(/data-level="\d+"/);
+      expect(html).toMatch(/data-number="\d+"/);
+
+      // Headers should not contain pipe keys in the visible text
+      const headerElements = html.match(/<span[^>]*legal-header[^>]*>.*?<\/span>/g) || [];
+      expect(headerElements.length).toBeGreaterThan(0);
+      
+      headerElements.forEach(headerElement => {
+        // The header element itself should not have visible pipe syntax
+        // (cross-references should be processed and highlighted)
+        expect(headerElement).not.toMatch(/\|[^|]+\|.*<\/span>$/); // No pipe keys at the end
+      });
+
+      // Check that cross-reference highlights don't break HTML structure
+      const crossrefSpans = html.match(/<span class="legal-field highlight"[^>]*>[^<]*<\/span>/g) || [];
+      expect(crossrefSpans.length).toBeGreaterThan(0);
+      
+      crossrefSpans.forEach(span => {
+        expect(span).toMatch(/<span class="legal-field highlight" data-field="crossref\.[^"]*">[^<]+<\/span>/);
+      });
+    });
+
+    it('should track cross-references correctly in field report', async () => {
+      const html = await generateHtml(crossRefContent, {
+        title: 'Field Report Test',
+        includeHighlighting: true,
+      });
+
+      // Generate field report would be called internally
+      // We verify by checking the expected highlights exist
+      const crossrefFields = [
+        'crossref.objeto-contrato',
+        'crossref.anexo-vtt', 
+        'crossref.listado-servicios'
+      ];
+
+      crossrefFields.forEach(fieldName => {
+        const fieldHighlight = new RegExp(`<span class="legal-field highlight"[^>]*data-field="${fieldName}"[^>]*>[^<]*</span>`);
+        expect(html).toMatch(fieldHighlight);
+      });
     });
   });
 });

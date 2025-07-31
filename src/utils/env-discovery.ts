@@ -39,8 +39,8 @@ export function discoverAndLoadEnv(): string | null {
 
     try {
       if (fs.existsSync(envPath) && fs.statSync(envPath).isFile()) {
-        // Load the .env file
-        config({ path: envPath, debug: false });
+        // Load the .env file quietly
+        config({ path: envPath, quiet: true });
         return envPath;
       }
     } catch (error) {

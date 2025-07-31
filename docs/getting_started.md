@@ -194,13 +194,27 @@ cat input.md | legal-md --stdin --stdout
 ### Programmatic Usage
 
 ```typescript
-import { processLegalMarkdown } from 'legal-markdown-js';
+import {
+  processLegalMarkdown,
+  processLegalMarkdownWithRemark,
+} from 'legal-markdown-js';
 
-// Basic processing
+// Basic processing (legacy)
 const result = processLegalMarkdown(content);
 console.log(result.content);
 
-// With options
+// Remark-based processing (recommended for new projects)
+const remarkResult = await processLegalMarkdownWithRemark(content, {
+  basePath: './documents',
+  enableFieldTracking: true,
+  debug: false,
+});
+
+console.log(remarkResult.content);
+console.log(remarkResult.metadata);
+console.log(remarkResult.fieldReport);
+
+// With options (legacy)
 const result = processLegalMarkdown(content, {
   basePath: './documents',
   exportMetadata: true,
@@ -468,9 +482,9 @@ legal-md --export-json input.md
 
 Now that you have Legal Markdown JS set up, explore these resources:
 
-- **[CLI Reference](CLI-REFERENCE.md)** - Complete command-line documentation
-- **[Features Guide](FEATURES-GUIDE.md)** - Advanced features and helpers
-- **[Headers & Numbering](HEADERS-NUMBERING.md)** - Detailed numbering system
+- **[CLI Reference](cli_reference.md)** - Complete command-line documentation
+- **[Features Guide](features_guide.md)** - Advanced features and helpers
+- **[Headers & Numbering](headers_numbering.md)** - Detailed numbering system
   guide
 - **[Examples](../examples/)** - Real-world document templates
 
@@ -485,6 +499,6 @@ Now that you have Legal Markdown JS set up, explore these resources:
 ### Get Help
 
 - Check the [troubleshooting section](#troubleshooting) above
-- Review the [CLI Reference](CLI-REFERENCE.md) for command options
-- Consult the [Features Guide](FEATURES-GUIDE.md) for advanced usage
+- Review the [CLI Reference](cli_reference.md) for command options
+- Consult the [Features Guide](features_guide.md) for advanced usage
 - Open an issue on GitHub for bug reports or feature requests

@@ -5,8 +5,11 @@
  * Automatically injects default CSS styles into the HTML file
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Escapes CSS content for safe inclusion in JavaScript template literals.
@@ -111,8 +114,8 @@ ${escapedCSS}\`,
 }
 
 // Run the build if this script is executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   buildWeb();
 }
 
-module.exports = { buildWeb };
+export { buildWeb };

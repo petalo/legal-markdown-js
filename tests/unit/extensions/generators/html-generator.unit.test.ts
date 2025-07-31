@@ -11,14 +11,15 @@
 
 import { htmlGenerator } from '../../../../src/extensions/generators/html-generator';
 import * as fs from 'fs/promises';
+import { vi, Mocked } from 'vitest';
 
-jest.mock('fs/promises');
+vi.mock('fs/promises');
 
 describe('HTML Generator', () => {
-  const mockedFs = fs as jest.Mocked<typeof fs>;
+  const mockedFs = fs as Mocked<typeof fs>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('generateHtml', () => {

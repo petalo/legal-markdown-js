@@ -4,11 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { vi, MockedObject } from 'vitest';
 
 // Mock modules before importing the module under test
-jest.mock('fs');
+vi.mock('fs');
 
-const mockFs = fs as jest.Mocked<typeof fs>;
+const mockFs = fs as MockedObject<typeof fs>;
 
 // Import after mocking
 import { ArchiveManager } from '../../../src/utils/archive-manager';
@@ -20,7 +21,7 @@ describe('ArchiveManager', () => {
   const mockTargetPath = '/archive/document.md';
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     archiveManager = new ArchiveManager();
   });
 

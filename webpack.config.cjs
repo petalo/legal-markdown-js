@@ -37,7 +37,8 @@ module.exports = {
       '@constants': path.resolve(__dirname, 'src/constants'),
       '@lib': path.resolve(__dirname, 'src/lib'),
       '@extensions': path.resolve(__dirname, 'src/extensions'),
-      '@errors': path.resolve(__dirname, 'src/errors')
+      '@errors': path.resolve(__dirname, 'src/errors'),
+      '@utils': path.resolve(__dirname, 'src/utils')
     },
     fallback: {
       "fs": false,

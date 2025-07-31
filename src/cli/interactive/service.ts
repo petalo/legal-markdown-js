@@ -7,12 +7,12 @@
  */
 
 import * as path from 'path';
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../../types';
 import { CliService } from '../service';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS } from '../../constants/index';
 import { InteractiveConfig, ProcessingResult } from './types';
 import { ArchiveManager } from '../../utils/archive-manager';
-import { readFileSync } from '@lib';
+import { readFileSync } from '../../utils/index';
 import { processLegalMarkdown } from '../../index';
 
 /**
@@ -97,73 +97,120 @@ export class InteractiveService {
     const { outputFilename, outputFormats, archiveOptions } = this.getConfig();
 
     try {
+      // Determine the output directory: if archiving is enabled, use archive directory
+      let outputDir: string;
+      if (archiveOptions.enabled && archiveOptions.directory) {
+        // Custom directory should be relative to DEFAULT_OUTPUT_DIR
+        const customDir = archiveOptions.directory.replace(/\/+$/, '');
+        outputDir = path.resolve(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, customDir);
+      } else {
+        outputDir = RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+      }
+
       // Create a CliService without archiving for individual format processing
       const processingOptions = this.mapToCliOptions(this.getConfig());
       const nonArchivingService = new CliService({
         ...processingOptions,
         archiveSource: false, // Disable archiving during format processing
+        exportMetadata: false, // Disable metadata export to prevent duplications
         silent: true, // Suppress success messages to prevent duplication
       });
 
       // Process for each selected format
       if (outputFormats.pdf) {
-        const pdfOutput = path.join(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, `${outputFilename}.pdf`);
+        const pdfOutput = path.join(outputDir, `${outputFilename}.pdf`);
         await nonArchivingService.processFile(inputFile, pdfOutput);
         outputFiles.push(pdfOutput);
 
         // Add highlight version if highlight is enabled
         if (processingOptions.highlight) {
-          const highlightPdfOutput = path.join(
-            RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
-            `${outputFilename}.HIGHLIGHT.pdf`
-          );
+          const highlightPdfOutput = path.join(outputDir, `${outputFilename}.HIGHLIGHT.pdf`);
           outputFiles.push(highlightPdfOutput);
         }
       }
 
       if (outputFormats.html) {
-        const htmlOutput = path.join(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, `${outputFilename}.html`);
+        const htmlOutput = path.join(outputDir, `${outputFilename}.html`);
         await nonArchivingService.processFile(inputFile, htmlOutput);
         outputFiles.push(htmlOutput);
 
         // Add highlight version if highlight is enabled
         if (processingOptions.highlight) {
-          const highlightHtmlOutput = path.join(
-            RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
-            `${outputFilename}.HIGHLIGHT.html`
-          );
+          const highlightHtmlOutput = path.join(outputDir, `${outputFilename}.HIGHLIGHT.html`);
           outputFiles.push(highlightHtmlOutput);
         }
       }
 
       if (outputFormats.markdown) {
-        const mdOutput = path.join(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, `${outputFilename}.md`);
-        await nonArchivingService.processFile(inputFile, mdOutput);
-        outputFiles.push(mdOutput);
+        // Only generate normal MD file if archiving is disabled
+        // When archiving is enabled, we'll have .ORIGINAL and .PROCESSED files instead
+        if (!archiveOptions.enabled) {
+          const mdOutput = path.join(outputDir, `${outputFilename}.md`);
+          await nonArchivingService.processFile(inputFile, mdOutput);
+          outputFiles.push(mdOutput);
+        }
       }
 
       if (outputFormats.metadata) {
-        const yamlOutput = path.join(
-          RESOLVED_PATHS.DEFAULT_OUTPUT_DIR,
-          `${outputFilename}-metadata.yaml`
-        );
-        // Create a separate service instance for metadata export
-        const metadataService = new CliService({
+        const yamlOutput = path.join(outputDir, `${outputFilename}-metadata.yaml`);
+        // Process the file to get metadata only, without going through full pipeline
+        const content = readFileSync(inputFile);
+        const inputDir = path.dirname(inputFile);
+        const metadataOptions = {
           ...processingOptions,
-          archiveSource: false, // Disable archiving for metadata export
-          silent: true, // Suppress success messages to prevent duplication
+          basePath: inputDir,
           exportMetadata: true,
-          exportFormat: 'yaml',
+          exportFormat: 'yaml' as const,
           exportPath: yamlOutput,
-        });
-        await metadataService.processFile(inputFile);
-        outputFiles.push(yamlOutput);
+        };
+        const result = processLegalMarkdown(content, metadataOptions);
+
+        // Validate that metadata was actually exported
+        if (result.exportedFiles && result.exportedFiles.length > 0) {
+          // Filter out imported files - only include actual exported metadata files
+          const metadataFiles = result.exportedFiles.filter(file => {
+            const fileName = path.basename(file);
+            return fileName.includes('-metadata.') || fileName.includes('metadata.');
+          });
+
+          if (metadataFiles.length > 0) {
+            outputFiles.push(...metadataFiles);
+          } else {
+            throw new Error(`Failed to export metadata to: ${yamlOutput}`);
+          }
+        } else {
+          throw new Error(`Failed to export metadata to: ${yamlOutput}`);
+        }
       }
 
       // Handle archiving separately after all processing is complete
       let archiveResult;
       if (archiveOptions.enabled) {
         archiveResult = await this.handleArchiving(inputFile);
+
+        // Include archived MD files in outputFiles so they appear in the MD section
+        if (archiveResult && archiveResult.success) {
+          if (archiveResult.contentsIdentical && archiveResult.archivedPath) {
+            // Single archived file (content identical)
+            if (archiveResult.archivedPath.endsWith('.md')) {
+              outputFiles.push(archiveResult.archivedPath);
+            }
+          } else {
+            // Two archived files (content different) - include both MD files
+            if (
+              archiveResult.archivedOriginalPath &&
+              archiveResult.archivedOriginalPath.endsWith('.md')
+            ) {
+              outputFiles.push(archiveResult.archivedOriginalPath);
+            }
+            if (
+              archiveResult.archivedProcessedPath &&
+              archiveResult.archivedProcessedPath.endsWith('.md')
+            ) {
+              outputFiles.push(archiveResult.archivedProcessedPath);
+            }
+          }
+        }
       }
 
       return {
@@ -188,10 +235,13 @@ export class InteractiveService {
       const archiveManager = new ArchiveManager();
       const { archiveOptions } = this.getConfig();
 
-      // Determine archive directory
+      // Determine archive directory - should be relative to DEFAULT_OUTPUT_DIR
       let archiveDir: string;
       if (archiveOptions.directory) {
-        archiveDir = archiveOptions.directory;
+        // Custom directory should be relative to DEFAULT_OUTPUT_DIR
+        // Ensure directory name doesn't have trailing slash (normalize)
+        const customDir = archiveOptions.directory.replace(/\/+$/, '');
+        archiveDir = path.resolve(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR, customDir);
       } else {
         archiveDir = RESOLVED_PATHS.ARCHIVE_DIR;
       }

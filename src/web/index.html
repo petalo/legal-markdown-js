@@ -274,8 +274,7 @@ p {
     <div id="messageArea"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked@16.1.1/marked.min.js"></script>
-  <script src="./legal-markdown.umd.min.js"></script>
+  <script src="./legal-markdown.umd.js"></script>
   <script>
     class LegalMarkdownApp {
       constructor() {
@@ -398,7 +397,7 @@ p {
           this.showProcessing();
 
           const options = this.getProcessingOptions();
-          const result = window.LegalMarkdown.processLegalMarkdown(content, options);
+          const result = await window.LegalMarkdown.processLegalMarkdownWithRemark(content, options);
 
           this.processedResult = result.content;
           this.metadataResult = result.metadata;
@@ -488,23 +487,38 @@ p {
       }
 
       formatMarkdownForDisplay(content) {
-        // IMPORTANT: This content has already been processed by our Legal Markdown pipeline
-        // in processContent(). Here we just need to convert the final markdown to HTML.
-        if (typeof marked === 'undefined') {
-          console.error('Marked library is not available. Ensure it is loaded correctly.');
-          return `<p>Error: Markdown parser unavailable. Please check your setup.</p>
-                  <pre>${this.escapeHtml(content)}</pre>`;
-        }
-
+        // Simple markdown to HTML conversion without external dependencies
+        // This is a basic implementation focused on legal document structure
         try {
-          return marked.parse(content, {
-            breaks: true,
-            gfm: true
-          });
+          let html = content
+            // Headers
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            // Bold and italic
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+            // Line breaks
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            // Lists
+            .replace(/^\- (.*$)/gim, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            // Code blocks
+            .replace(/```([^`]*)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`([^`]*)`/g, '<code>$1</code>');
+          
+          // Wrap paragraphs
+          if (!html.startsWith('<')) {
+            html = '<p>' + html + '</p>';
+          }
+          
+          return html;
         } catch (error) {
-          console.error('Markdown parsing failed:', error);
-          return `<p>Error: Failed to process Markdown content.</p>
-                  <pre>${this.escapeHtml(content)}</pre>`;
+          console.error('Simple markdown parsing failed:', error);
+          return `<pre>${this.escapeHtml(content)}</pre>`;
         }
       }
 

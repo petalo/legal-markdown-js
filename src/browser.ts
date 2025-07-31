@@ -1,5 +1,5 @@
 /**
- * @fileoverview Browser-Specific Entry Point for Legal Markdown Processing
+ * Browser-Specific Entry Point for Legal Markdown Processing
  *
  * This module provides a browser-compatible version of the Legal Markdown
  * processing library that excludes Node.js-specific features like file system
@@ -29,37 +29,56 @@
  * console.log(result.content); // Processed markdown
  * console.log(result.metadata); // YAML front matter
  * ```
+ *
+ * @module
  */
 
-import { parseYamlFrontMatter } from '@core/parsers/yaml-parser';
-import { processHeaders } from '@core/processors/header-processor';
-import { processOptionalClauses } from '@core/processors/clause-processor';
-import { processCrossReferences } from '@core/processors/reference-processor';
-import { processMixins } from '@core/processors/mixin-processor';
+import { parseYamlFrontMatter } from './core/parsers/yaml-parser';
+import { processHeaders } from './core/processors/header-processor';
+import { processOptionalClauses } from './core/processors/clause-processor';
+import { processCrossReferences } from './core/processors/reference-processor';
+import { processMixins } from './extensions/ast-mixin-processor';
+import { processTemplateLoops } from './extensions/template-loops';
 // Import with fallback for browser environments
 let convertRstToLegalMarkdownSync: (content: string) => string;
 let convertLatexToLegalMarkdownSync: (content: string) => string;
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const rstParser = require('@extensions/rst-parser');
-  convertRstToLegalMarkdownSync = rstParser.convertRstToLegalMarkdownSync;
-} catch (error) {
-  // Fallback for browser environments without pandoc-wasm
-  convertRstToLegalMarkdownSync = (content: string) => content;
-}
+// Browser-safe fallback implementations
+// These are set as fallbacks since pandoc-wasm may not be available in all browser environments
+convertRstToLegalMarkdownSync = (content: string) => {
+  // In browser environments, RST parsing requires pandoc-wasm which may not be available
+  // Return content unchanged as fallback
+  return content;
+};
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const latexParser = require('@extensions/latex-parser');
-  convertLatexToLegalMarkdownSync = latexParser.convertLatexToLegalMarkdownSync;
-} catch (error) {
-  // Fallback for browser environments without pandoc-wasm
-  convertLatexToLegalMarkdownSync = (content: string) => content;
+convertLatexToLegalMarkdownSync = (content: string) => {
+  // In browser environments, LaTeX parsing requires pandoc-wasm which may not be available
+  // Return content unchanged as fallback
+  return content;
+};
+
+// Try to load parsers if available (Node.js or bundled environments)
+if (typeof window === 'undefined') {
+  // Node.js environment - try to load actual parsers
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const rstParser = require('./extensions/rst-parser');
+    convertRstToLegalMarkdownSync = rstParser.convertRstToLegalMarkdownSync;
+  } catch (error) {
+    // Keep fallback
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const latexParser = require('./extensions/latex-parser');
+    convertLatexToLegalMarkdownSync = latexParser.convertLatexToLegalMarkdownSync;
+  } catch (error) {
+    // Keep fallback
+  }
 }
-import { fieldTracker } from '@extensions/tracking/field-tracker';
+import { fieldTracker } from './extensions/tracking/field-tracker';
 import { logger } from './utils/logger';
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from './types';
 
 /**
  * Browser-compatible version of Legal Markdown processing
@@ -146,13 +165,22 @@ export function processLegalMarkdown(
     logger.debug('Skipping cross references processing');
   }
 
-  // Process mixins
+  // Process mixins (using improved AST-based processor)
   if (!options.noMixins) {
-    logger.debug('Processing mixins and template variables');
+    logger.debug('Processing mixins and template variables with AST-based processor');
     processedContent = processMixins(processedContent, metadata, options);
   } else {
     logger.debug('Skipping mixins processing');
   }
+
+  // Process template loops (using improved processor)
+  logger.debug('Processing template loops');
+  processedContent = processTemplateLoops(
+    processedContent,
+    metadata,
+    undefined,
+    options.enableFieldTrackingInMarkdown || false
+  );
 
   // Process headers (numbering, etc)
   if (!options.noHeaders) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @fileoverview Command Line Interface for Legal Markdown Processing
+ * Command Line Interface for Legal Markdown Processing
  *
  * This module provides a comprehensive CLI tool for processing Legal Markdown
  * documents with support for various output formats, processing options, and
@@ -32,15 +32,17 @@
  * # Export metadata
  * legal-md input.md --export-yaml --output-path metadata.yaml
  * ```
+ *
+ * @module
  */
 
 import { Command } from 'commander';
 import chalk from 'chalk';
 import * as fs from 'fs';
-import { LegalMarkdownOptions } from '@types';
+import { LegalMarkdownOptions } from '../types';
 import { CliService } from './service';
-import { FileNotFoundError } from '@errors';
-import { RESOLVED_PATHS } from '@constants';
+import { FileNotFoundError } from '../errors/index';
+import { RESOLVED_PATHS } from '../constants/index';
 
 /**
  * Helper function to read content from standard input

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Metadata Export System for Legal Markdown Documents
+ * Metadata Export System for Legal Markdown Documents
  *
  * This module provides functionality for exporting document metadata to external
  * files in various formats. It supports YAML and JSON export formats with
@@ -30,12 +30,14 @@
  * };
  * const result = exportMetadata(metadata);
  * ```
+ *
+ * @module
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { MetadataExportResult } from '@types';
+import { MetadataExportResult } from '../../types';
 
 /**
  * Exports document metadata to external files
@@ -87,8 +89,16 @@ export function exportMetadata(
   const jsonOutput = metadata['meta-json-output'] as string;
   const customOutputPath = metadata['meta-output-path'] as string;
 
-  // Determine output directory (customOutputPath from metadata takes precedence)
-  const outputDir = customOutputPath || outputPath || process.cwd();
+  // Determine output directory - if outputPath is a file, use its directory
+  let outputDir: string;
+  if (customOutputPath) {
+    outputDir = customOutputPath;
+  } else if (outputPath) {
+    // Check if outputPath looks like a file (has extension) or directory
+    outputDir = path.extname(outputPath) ? path.dirname(outputPath) : outputPath;
+  } else {
+    outputDir = process.cwd();
+  }
 
   // Create output directory if it doesn't exist
   if (!fs.existsSync(outputDir)) {
@@ -100,11 +110,23 @@ export function exportMetadata(
 
   // Process YAML output if specified
   if (yamlOutput || format === 'yaml') {
-    const yamlPath = yamlOutput
-      ? path.resolve(outputDir, yamlOutput)
-      : path.resolve(outputDir, 'metadata.yaml');
+    let yamlPath: string;
+    if (yamlOutput) {
+      yamlPath = path.resolve(outputDir, yamlOutput);
+    } else if (outputPath && path.extname(outputPath)) {
+      // If outputPath is a complete file path, use it directly
+      yamlPath = outputPath;
+    } else {
+      yamlPath = path.resolve(outputDir, 'metadata.yaml');
+    }
 
     try {
+      // Ensure directory exists
+      const yamlDir = path.dirname(yamlPath);
+      if (!fs.existsSync(yamlDir)) {
+        fs.mkdirSync(yamlDir, { recursive: true });
+      }
+
       const yamlContent = yaml.dump(exportedMetadata);
       fs.writeFileSync(yamlPath, yamlContent, 'utf8');
       exportedFiles.push(yamlPath);
@@ -121,6 +143,12 @@ export function exportMetadata(
       : path.resolve(outputDir, 'metadata.json');
 
     try {
+      // Ensure directory exists
+      const jsonDir = path.dirname(jsonPath);
+      if (!fs.existsSync(jsonDir)) {
+        fs.mkdirSync(jsonDir, { recursive: true });
+      }
+
       const jsonContent = JSON.stringify(exportedMetadata, null, 2);
       fs.writeFileSync(jsonPath, jsonContent, 'utf8');
       exportedFiles.push(jsonPath);

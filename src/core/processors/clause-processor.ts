@@ -1,5 +1,5 @@
 /**
- * @fileoverview Optional Clause Processing Module for Legal Markdown Documents
+ * Optional Clause Processing Module for Legal Markdown Documents
  *
  * This module provides functionality to process conditional clauses in Legal Markdown
  * documents, allowing for dynamic content inclusion based on metadata conditions.
@@ -38,6 +38,8 @@
  * // and has a termination period of 30 days
  * // with special provisions for European clients.
  * ```
+ *
+ * @module
  */
 
 /**

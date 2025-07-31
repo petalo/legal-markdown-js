@@ -29,20 +29,25 @@
  */
 
 import { processLegalMarkdown, generateHtml, generatePdf } from '../index';
-import { LegalMarkdownOptions } from '@types';
-import { readFileSync, writeFileSync, resolveFilePath } from '@lib';
-import { LegalMarkdownError, FileNotFoundError } from '@errors';
+import { LegalMarkdownOptions } from '../types';
+import { readFileSync, writeFileSync, resolveFilePath } from '../utils/index';
+import { LegalMarkdownError, FileNotFoundError } from '../errors/index';
 import {
   extractForceCommands,
   parseForceCommands,
   applyForceCommands,
 } from '../core/parsers/force-commands-parser';
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
-import { RESOLVED_PATHS } from '@constants';
+import { RESOLVED_PATHS } from '../constants/index';
 import { ArchiveManager } from '../utils/archive-manager';
 import chalk from 'chalk';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import * as fs from 'fs';
+import { getCurrentDir } from '../utils/esm-utils.js';
+
+// ESM/CJS compatible directory resolution
+const currentDir = getCurrentDir();
 
 /**
  * Extended options interface for CLI operations
@@ -277,10 +282,13 @@ export class CliService {
     const inputDir = path.dirname(resolvedInputPath);
 
     // Resolve CSS path if provided
-    let cssPath = (options as any).cssPath || options.css;
-    if (cssPath && !path.isAbsolute(cssPath)) {
+    let cssPath: string | undefined =
+      ((options as Record<string, unknown>).cssPath as string) || options.css;
+    if (typeof cssPath === 'string' && cssPath && !path.isAbsolute(cssPath)) {
       // If CSS path is relative, resolve it against STYLES_DIR
       cssPath = path.resolve(RESOLVED_PATHS.STYLES_DIR, cssPath);
+    } else if (typeof cssPath !== 'string') {
+      cssPath = undefined;
     }
 
     // Use the passed options (already processed for force commands)
@@ -289,6 +297,7 @@ export class CliService {
       basePath: inputDir,
       includeHighlighting: options.highlight,
       cssPath,
+      highlightCssPath: path.join(process.cwd(), 'src/styles/highlight.css'),
       title: options.title || baseName,
     };
 

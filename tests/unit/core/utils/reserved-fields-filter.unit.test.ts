@@ -5,6 +5,7 @@
  * frontmatter to prevent security vulnerabilities and system configuration override.
  */
 
+import { vi } from 'vitest';
 import {
   filterReservedFields,
   isReservedField,
@@ -136,7 +137,7 @@ describe('Reserved Fields Filter', () => {
     });
 
     it('should support logging of filtered fields', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       
       const input = {
         'level-one': 'ARTICLE %n.',

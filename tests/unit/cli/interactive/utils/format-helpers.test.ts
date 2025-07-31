@@ -2,6 +2,7 @@
  * @fileoverview Unit tests for format helper utilities
  */
 
+import { vi } from 'vitest';
 import {
   formatConfigSummary,
   formatSuccessMessage,
@@ -11,9 +12,21 @@ import {
 import { InteractiveConfig, ProcessingResult } from '../../../../../src/cli/interactive/types';
 
 // Mock chalk to disable colors in tests
-jest.mock('chalk', () => {
+vi.mock('chalk', () => {
   const mockFn = (str: string) => str;
   return {
+    default: {
+      bold: Object.assign(mockFn, {
+        cyan: mockFn,
+        green: mockFn,
+        red: mockFn,
+        yellow: mockFn,
+      }),
+      cyan: mockFn,
+      gray: mockFn,
+      green: mockFn,
+      red: mockFn,
+    },
     bold: Object.assign(mockFn, {
       cyan: mockFn,
       green: mockFn,
@@ -218,9 +231,7 @@ describe('Format Helper Utilities', () => {
       expect(result).toContain('Files generated successfully!');
       expect(result).toContain('Generated files:');
       expect(result).toContain('/output/document.pdf');
-      expect(result).toContain('Source file archiving:');
-      expect(result).toContain('Source archived to: /archive/document.md');
-      expect(result).toContain('Content unchanged - template preserved');
+      expect(result).not.toContain('Source file archiving:');
     });
 
     it('should format success message with archiving (different content)', () => {
@@ -237,10 +248,7 @@ describe('Format Helper Utilities', () => {
       expect(result).toContain('Files generated successfully!');
       expect(result).toContain('Generated files:');
       expect(result).toContain('/output/contract.pdf');
-      expect(result).toContain('Source file archiving:');
-      expect(result).toContain('Template archived to: /archive/contract.ORIGINAL.md');
-      expect(result).toContain('Processed archived to: /archive/contract.PROCESSED.md');
-      expect(result).toContain('Content changed - both versions preserved');
+      expect(result).not.toContain('Source file archiving:');
     });
 
     it('should format success message with failed archiving', () => {

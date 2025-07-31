@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # Features Guide <!-- omit in toc -->
 
 Comprehensive guide to all features and capabilities of Legal Markdown JS.
@@ -8,9 +10,19 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [YAML Front Matter](#yaml-front-matter)
   - [Headers and Numbering](#headers-and-numbering)
   - [Cross-References](#cross-references)
+    - [Internal Section References](#internal-section-references)
+    - [Variable References](#variable-references)
+    - [Automatic Cross-References Metadata](#automatic-cross-references-metadata)
   - [Optional Clauses](#optional-clauses)
   - [Partial Imports](#partial-imports)
   - [Frontmatter Merging](#frontmatter-merging)
+    - [Basic Frontmatter Merging](#basic-frontmatter-merging)
+    - [Granular Property-Level Merging](#granular-property-level-merging)
+    - [Sequential Import Processing](#sequential-import-processing)
+    - [Reserved Fields Security](#reserved-fields-security)
+    - [Advanced Frontmatter Features](#advanced-frontmatter-features)
+    - [Practical Use Cases](#practical-use-cases)
+    - [Security and Best Practices](#security-and-best-practices)
 - [Mixins System](#mixins-system)
   - [Basic Variable Substitution](#basic-variable-substitution)
   - [Nested Object Access](#nested-object-access)
@@ -87,6 +99,10 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [Performance Optimization](#performance-optimization)
   - [Quality Assurance](#quality-assurance)
   - [Security Considerations](#security-considerations)
+- [Remark-based Processing](#remark-based-processing)
+  - [AST-based Field Highlighting](#ast-based-field-highlighting)
+  - [Improved Performance](#improved-performance)
+  - [Better Text Processing](#better-text-processing)
 
 ## Core Features
 
@@ -1447,6 +1463,62 @@ module.exports = {
    - Use `--validate-import-types` to detect type confusion attacks
 6. **Timeout protection**: Automatic timeout prevents infinite loops from
    circular references
+
+## Remark-based Processing
+
+The library now includes advanced remark-based processing that provides improved
+accuracy and performance for field tracking and document processing.
+
+### AST-based Field Highlighting
+
+The new remark processor uses Abstract Syntax Tree (AST) processing to provide
+more accurate field highlighting:
+
+```typescript
+import { processLegalMarkdownWithRemark } from 'legal-markdown-js';
+
+const result = await processLegalMarkdownWithRemark(content, {
+  enableFieldTracking: true,
+  basePath: './documents',
+});
+```
+
+**Benefits:**
+
+- **No text contamination**: Field highlighting is applied during AST
+  processing, preventing false positives
+- **Accurate targeting**: Only actual template fields are highlighted, not
+  similar text elsewhere
+- **Double-wrapping prevention**: Automatic detection prevents nested field
+  tracking spans
+
+### Improved Performance
+
+The remark-based processor offers several performance improvements:
+
+- **Unified processing**: Single AST traversal handles multiple operations
+- **Optimized parsing**: Faster markdown parsing with remark ecosystem
+- **Reduced processing steps**: Combined field tracking and content processing
+
+### Better Text Processing
+
+Enhanced text processing capabilities:
+
+- **Markdown-aware**: Full understanding of markdown structure
+- **Context-sensitive**: Processing decisions based on document context
+- **Extensible**: Plugin-based architecture for future enhancements
+
+**Migration from Legacy:**
+
+```typescript
+// Legacy (still supported)
+import { processLegalMarkdown } from 'legal-markdown-js';
+const result = processLegalMarkdown(content, options);
+
+// New remark-based (recommended for new projects)
+import { processLegalMarkdownWithRemark } from 'legal-markdown-js';
+const result = await processLegalMarkdownWithRemark(content, options);
+```
 
 For more detailed examples and use cases, see the [examples](../examples/)
 directory.
