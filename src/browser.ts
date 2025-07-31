@@ -232,47 +232,20 @@ export function processLegalMarkdown(
 /**
  * UMD-compatible export object for browser environments
  *
- * This constant provides a namespace object that can be used in UMD builds
- * and script tag implementations, making the library accessible through
- * global window object or module systems.
+ * This object will be automatically exported by webpack as UMD.
+ * No manual window assignment needed - webpack handles this.
  *
- * {Object} LegalMarkdown
  * @example
  * ```typescript
- * // ES6 import
- * import { LegalMarkdown } from 'legal-markdown-js/browser';
- *
  * // UMD/Script tag usage
  * const result = window.LegalMarkdown.processLegalMarkdown(content);
  * ```
  */
-export const LegalMarkdown = {
-  processLegalMarkdown: processLegalMarkdown,
-  processLegalMarkdownWithRemark: processLegalMarkdownWithRemark,
-  processLegalMarkdownWithRemarkSync: processLegalMarkdownWithRemarkSync,
+const LegalMarkdown = {
+  processLegalMarkdown,
+  processLegalMarkdownWithRemark,
+  processLegalMarkdownWithRemarkSync,
 };
 
-// Create global window object for script tag usage with explicit assignments
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line no-undef
-  (window as any).LegalMarkdown = {
-    processLegalMarkdown: processLegalMarkdown,
-    processLegalMarkdownWithRemark: processLegalMarkdownWithRemark,
-    processLegalMarkdownWithRemarkSync: processLegalMarkdownWithRemarkSync,
-  };
-
-  // Debug logging to see what's being assigned
-  console.log('Browser bundle loaded - functions available:');
-  console.log('  processLegalMarkdown:', typeof processLegalMarkdown, processLegalMarkdown);
-  console.log(
-    '  processLegalMarkdownWithRemark:',
-    typeof processLegalMarkdownWithRemark,
-    processLegalMarkdownWithRemark
-  );
-  console.log(
-    '  processLegalMarkdownWithRemarkSync:',
-    typeof processLegalMarkdownWithRemarkSync,
-    processLegalMarkdownWithRemarkSync
-  );
-  console.log('Final window.LegalMarkdown:', (window as any).LegalMarkdown);
-}
+// Export as default for webpack UMD to handle
+export default LegalMarkdown;

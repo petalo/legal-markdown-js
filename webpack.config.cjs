@@ -9,6 +9,7 @@ module.exports = {
     filename: 'legal-markdown.umd.min.js',
     library: 'LegalMarkdown',
     libraryTarget: 'umd',
+    libraryExport: 'default',
     globalObject: 'this',
     umdNamedDefine: true
   },
