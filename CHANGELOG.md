@@ -1,3 +1,70 @@
+## 2.15.0 (2025-07-31)
+
+- fix: comprehensive CLI interactive fixes - duplicated output, imports,
+  archiving
+  ([b06cd54](https://github.com/petalo/legal-markdown-js/commit/b06cd54))
+- fix: correct CLI path references in test files after ESM migration
+  ([2b7d5d4](https://github.com/petalo/legal-markdown-js/commit/2b7d5d4))
+- fix: correct JSDoc violations in src/ files to comply with
+  DEVELOPMENT-GUIDELINES.md
+  ([775a420](https://github.com/petalo/legal-markdown-js/commit/775a420))
+- fix: correct JSDoc violations in tests/ files to comply with
+  DEVELOPMENT-GUIDELINES.md
+  ([01c05c8](https://github.com/petalo/legal-markdown-js/commit/01c05c8))
+- fix: correct web playground and browser entry point ESM compatibility
+  ([96e8684](https://github.com/petalo/legal-markdown-js/commit/96e8684))
+- fix: resolve CLI test failures and deprecated callback usage
+  ([52fb577](https://github.com/petalo/legal-markdown-js/commit/52fb577))
+- fix: resolve ESM compatibility issues in build scripts
+  ([dd88934](https://github.com/petalo/legal-markdown-js/commit/dd88934))
+- fix: resolve ESM compatibility issues in build scripts
+  ([3975503](https://github.com/petalo/legal-markdown-js/commit/3975503))
+- fix: resolve highlight.css embedding regression in ESM builds
+  ([94880ee](https://github.com/petalo/legal-markdown-js/commit/94880ee))
+- fix: update CSS classes for remark migration compatibility
+  ([e6cf3c2](https://github.com/petalo/legal-markdown-js/commit/e6cf3c2))
+- feat: add comprehensive remark-based Legal Markdown processor
+  ([ce5e54a](https://github.com/petalo/legal-markdown-js/commit/ce5e54a))
+- feat: enhance build system with ESM-compatible scripts and dual build support
+  ([fc91ab2](https://github.com/petalo/legal-markdown-js/commit/fc91ab2))
+- feat: implement comprehensive remark plugin architecture for Legal Markdown
+  ([c0afc8f](https://github.com/petalo/legal-markdown-js/commit/c0afc8f))
+- feat: implement ESM migration foundation with dual ESM/CJS build support
+  ([39124b2](https://github.com/petalo/legal-markdown-js/commit/39124b2))
+- feat: migrate from Jest to Vitest for improved ESM compatibility and
+  performance
+  ([e0956b1](https://github.com/petalo/legal-markdown-js/commit/e0956b1))
+- feat: migrate to remark ecosystem and Vitest for AST-based processing (#42)
+  ([3f081d3](https://github.com/petalo/legal-markdown-js/commit/3f081d3)),
+  closes [#42](https://github.com/petalo/legal-markdown-js/issues/42)
+- feat: reorganize utilities and enhance type system for remark migration
+  ([e0aa0bb](https://github.com/petalo/legal-markdown-js/commit/e0aa0bb))
+- feat: update legacy processors with ESM compatibility and improved
+  documentation
+  ([1ca0771](https://github.com/petalo/legal-markdown-js/commit/1ca0771))
+- style: fix Prettier formatting in esm-utils.ts
+  ([dde948a](https://github.com/petalo/legal-markdown-js/commit/dde948a))
+- refactor: address GitHub Copilot security and architecture feedback
+  ([75c5fb3](https://github.com/petalo/legal-markdown-js/commit/75c5fb3))
+- docs: add markdownlint directive to disable specific rule in features guide
+  ([91121d2](https://github.com/petalo/legal-markdown-js/commit/91121d2))
+- docs: add missing comma in markdownlint configuration
+  ([35529ac](https://github.com/petalo/legal-markdown-js/commit/35529ac))
+- docs: enhance generate-readmes.js with comprehensive JSDoc documentation
+  ([7bf1ba5](https://github.com/petalo/legal-markdown-js/commit/7bf1ba5))
+- docs: major documentation reorganization and comprehensive migration guide
+  ([f55f6a8](https://github.com/petalo/legal-markdown-js/commit/f55f6a8))
+- docs: reorganize ARCHITECTURE.md into modular structure
+  ([9b54a84](https://github.com/petalo/legal-markdown-js/commit/9b54a84))
+- docs: update CLI-REFERENCE.md with missing options and frontmatter merging
+  ([8c8d9c9](https://github.com/petalo/legal-markdown-js/commit/8c8d9c9))
+- chore: add .htmlhintignore configuration
+  ([4070f0d](https://github.com/petalo/legal-markdown-js/commit/4070f0d))
+- chore: add markdownlint configuration for sibling headers
+  ([341957b](https://github.com/petalo/legal-markdown-js/commit/341957b))
+- chore: update .gitignore with additional exclusion patterns
+  ([791e369](https://github.com/petalo/legal-markdown-js/commit/791e369))
+
 ## <small>2.14.2 (2025-07-29)</small>
 
 - fix: prevent malformed frontmatter comments from appearing as H1 headers (#40)
