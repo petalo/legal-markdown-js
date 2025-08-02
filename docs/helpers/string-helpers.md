@@ -398,7 +398,7 @@ version: '2.1'
 # {{titleCase(document_type)}}
 
 **Client:** {{titleCase(client_name)}} **Document ID:**
-{{upper(snakeCase(document_type))}}\_{{padStart(version | replace('.', ''), 3, '0')}}
+{{upper(snakeCase(document_type))}}\_{{padStart(replaceAll(version, '.', ''), 3, '0')}}
 **Reference:**
 {{upper(initials(client_name))}}-{{upper(kebabCase(document_type))}}
 ```

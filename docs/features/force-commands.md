@@ -485,7 +485,7 @@ version: '3.1'
 # Processing configuration
 force_commands: >
   --css templates/{{client.tier}}-theme.css --pdf --highlight --format A4
-  --title "{{titleCase(contract_type | replace('_', ' '))}} - {{client.name}}
+  --title "{{titleCase(replaceAll(contract_type, '_', ' '))}} - {{client.name}}
   v{{version}}" --output-name
   {{client.code}}_{{contract_type}}_v{{version}}_{{formatDate(effective_date,
   "YYYYMMDD")}}.pdf --export-yaml --export-json

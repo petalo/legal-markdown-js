@@ -423,12 +423,12 @@ generated:
 reference:
   id:
     "{{upper(initials(client.name))}}{{formatDate(generated.date,
-    'YYMMDD')}}{{document.version | replace('.', '')}}"
+    'YYMMDD')}}{{replaceAll(document.version, '.', '')}}"
 ---
 ```
 
 ```markdown
-# {{titleCase(document.type | replace('_', ' '))}}
+# {{titleCase(replaceAll(document.type, '_', ' '))}}
 
 **Document Reference:** {{reference.id}} **Client:** {{titleCase(client.name)}}
 ({{titleCase(client.type)}}) **Version:** {{document.version}} **Generated:**
@@ -438,7 +438,7 @@ reference:
 
 - Client Initials: {{upper(initials(client.name))}}
 - Date: {{formatDate(generated.date, 'YYMMDD')}}
-- Version: {{document.version | replace('.', '')}}
+- Version: {{replaceAll(document.version, '.', '')}}
 - Full ID: {{reference.id}}
 ```
 
@@ -616,7 +616,7 @@ effective_date: '@today'
 # {{document.title}}
 
 **Document Reference:** {{document.reference}} **Document Type:**
-{{titleCase(document.type | replace('_', ' '))}} **Version:**
+{{titleCase(replaceAll(document.type, '_', ' '))}} **Version:**
 {{document.version}} **Effective Date:**
 {{formatDate(effective_date, "MMMM Do, YYYY")}}
 
