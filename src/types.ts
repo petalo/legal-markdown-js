@@ -48,6 +48,11 @@ export interface LegalMarkdownOptions {
   yamlOnly?: boolean;
 
   /**
+   * Auto-populate YAML front matter with header patterns and properties
+   */
+  autoPopulateHeaders?: boolean;
+
+  /**
    * Skip processing headers
    */
   noHeaders?: boolean;

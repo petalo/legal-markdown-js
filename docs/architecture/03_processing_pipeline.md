@@ -1,7 +1,7 @@
 # Processing Pipeline Architecture
 
 The document processing follows a hybrid architecture approach: a primary
-remark-based AST processor with legacy pipeline components for specific
+remark-based AST processor with comprehensive plugin system for all
 functionality and backward compatibility.
 
 ## Modern Remark-based Processing (Primary Architecture)
@@ -68,43 +68,17 @@ flowchart TD
 - **Field Tracking Plugin**: Tracks field usage and generates comprehensive
   reports
 
-## Legacy Pipeline Architecture (Fallback)
+## Remark Architecture Benefits
 
-The original pipeline system for backward compatibility:
+The remark-based architecture provides several advantages:
 
-```mermaid
-flowchart TD
-    START([Document Input]) --> PIPELINE[Pipeline Manager]
-
-    PIPELINE --> RST_STEP[RST Conversion]
-    RST_STEP --> LATEX_STEP[LaTeX Conversion]
-    LATEX_STEP --> YAML_STEP[YAML Front Matter]
-    YAML_STEP --> IMPORT_STEP[Import Processing]
-    IMPORT_STEP --> CLAUSE_STEP[Optional Clauses]
-    CLAUSE_STEP --> REF_STEP[Cross-References]
-    REF_STEP --> TEMPLATE_STEP[Template Loops]
-    TEMPLATE_STEP --> MIXIN_STEP[AST Mixin Processing]
-    MIXIN_STEP --> HEADER_STEP[Header Processing]
-    HEADER_STEP --> META_STEP[Metadata Export]
-    META_STEP --> TRACK_STEP[Field Tracking]
-    TRACK_STEP --> COMPLETE[Processing Complete]
-
-    COMPLETE --> END([Output])
-
-    subgraph "Pipeline Features"
-        METRICS[Performance Metrics]
-        ERROR_HANDLING[Error Recovery]
-        PROFILING[Step Profiling]
-        LOGGING[Comprehensive Logging]
-        FALLBACK[Legacy Fallback]
-    end
-
-    PIPELINE --> METRICS
-    PIPELINE --> ERROR_HANDLING
-    PIPELINE --> PROFILING
-    PIPELINE --> LOGGING
-    PIPELINE --> FALLBACK
-```
+- **AST-based Processing**: Prevents text contamination and provides surgical
+  modifications
+- **Plugin Ecosystem**: Leverages the extensive unified/remark ecosystem
+- **Composable Architecture**: Plugins can be combined and reordered as needed
+- **Type Safety**: Full TypeScript support with comprehensive error handling
+- **Performance**: Optimized single-pass processing with caching
+- **Extensibility**: Easy addition of new functionality without core changes
 
 ### Pipeline Processing Steps
 
@@ -316,6 +290,6 @@ flowchart TD
 
 This hybrid pipeline architecture ensures both modern processing capabilities
 through remark-based AST processing and comprehensive backward compatibility
-through the legacy pipeline system. The system automatically selects the
+through the remark-based processor. The system provides comprehensive
 appropriate processing path based on document requirements and available
 features.

@@ -301,7 +301,8 @@ export function processMixins(
 
     // Handle @today special value
     if (arg === '@today') {
-      return new Date();
+      // Check if @today is defined in metadata first, otherwise use current date
+      return metadata['@today'] ? new Date(metadata['@today']) : new Date();
     }
 
     // Handle nested helper function calls
@@ -314,6 +315,62 @@ export function processMixins(
 
     // Handle variable references
     return resolvePath(metadata, arg);
+  }
+
+  /**
+   * Evaluates simple JavaScript expressions containing variables and basic operations
+   *
+   * @private
+   * @param {string} expression - Expression to evaluate (e.g., '"$" + price', 'quantity * rate')
+   * @param {Record<string, any>} metadata - Variables available for evaluation
+   * @returns {string} Evaluated result or original expression if evaluation fails
+   * @example
+   * ```typescript
+   * const result = evaluateExpression('"$" + price', { price: 10.99 });
+   * // Returns: "$10.99"
+   * ```
+   */
+  function evaluateExpression(expression: string, metadata: Record<string, any>): string {
+    try {
+      // Remove quotes from the expression for processing
+      let cleanExpression = expression.trim();
+
+      // Handle string literals and variable substitution
+      // Replace variable names with their values
+      const variables = Object.keys(metadata);
+      variables.forEach(varName => {
+        const value = metadata[varName];
+        // Create a regex that matches the variable name as a whole word
+        const regex = new RegExp(`\\b${varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+
+        if (typeof value === 'string') {
+          cleanExpression = cleanExpression.replace(regex, `"${value}"`);
+        } else if (typeof value === 'number') {
+          cleanExpression = cleanExpression.replace(regex, String(value));
+        } else if (value === null || value === undefined) {
+          cleanExpression = cleanExpression.replace(regex, 'null');
+        } else {
+          cleanExpression = cleanExpression.replace(regex, JSON.stringify(value));
+        }
+      });
+
+      // Safely evaluate simple expressions (string concatenation, basic math)
+      if (cleanExpression.includes('+') && cleanExpression.includes('"')) {
+        // Handle string concatenation like '"$" + 10.99'
+        const result = Function(`"use strict"; return (${cleanExpression})`)();
+        return String(result);
+      } else if (/^[\d\s+\-*/().]+$/.test(cleanExpression)) {
+        // Handle simple math expressions
+        const result = Function(`"use strict"; return (${cleanExpression})`)();
+        return String(result);
+      }
+
+      // If we can't safely evaluate, return the original expression
+      return expression;
+    } catch (error) {
+      // If evaluation fails, return the original expression
+      return expression;
+    }
   }
 
   /**
@@ -382,7 +439,25 @@ export function processMixins(
           });
 
           if (selectedPart) {
-            const processedPart = replaceMixins(selectedPart, depth + 1);
+            // Try to evaluate as an expression first, then fall back to regular mixin processing
+            let processedPart: string;
+            if (
+              selectedPart.includes('+') ||
+              selectedPart.includes('*') ||
+              selectedPart.includes('-') ||
+              selectedPart.includes('/')
+            ) {
+              // Looks like an expression, try to evaluate it
+              processedPart = evaluateExpression(selectedPart, metadata);
+              // If evaluation didn't change anything, try mixin replacement
+              if (processedPart === selectedPart) {
+                processedPart = replaceMixins(selectedPart, depth + 1);
+              }
+            } else {
+              // Regular mixin processing
+              processedPart = replaceMixins(selectedPart, depth + 1);
+            }
+
             if (options.enableFieldTrackingInMarkdown) {
               return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${processedPart}</span></span>`;
             }

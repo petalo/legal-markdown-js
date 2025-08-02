@@ -229,7 +229,7 @@ describe('Metadata Export', () => {
         'meta-json-output': 'test.json'
       };
 
-      const result = exportMetadata(metadata);
+      const result = exportMetadata(metadata, undefined, testDir);
       
       expect(result.exportedFiles).toHaveLength(1);
       expect(result.exportedFiles[0]).toContain(customPath);
@@ -251,7 +251,7 @@ describe('Metadata Export', () => {
 
       expect(fs.existsSync(deepPath)).toBe(false);
       
-      const result = exportMetadata(metadata);
+      const result = exportMetadata(metadata, undefined, testDir);
       
       expect(fs.existsSync(deepPath)).toBe(true);
       expect(result.exportedFiles).toHaveLength(1);

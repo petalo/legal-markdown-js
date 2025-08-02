@@ -34,10 +34,12 @@
  */
 
 import { logger } from '../../utils/logger';
-import { FieldStatus, TrackedField } from '../../core/tracking/field-state';
+import { FieldStatus } from '../../core/tracking/field-state';
+import type { TrackedField } from '../../core/tracking/field-state';
 
 // Re-export for compatibility
-export { FieldStatus, TrackedField };
+export { FieldStatus };
+export type { TrackedField };
 
 /**
  * Field tracking system for Legal Markdown processing

@@ -274,8 +274,12 @@ p {
     <div id="messageArea"></div>
   </div>
 
-  <script src="./legal-markdown.umd.min.js"></script>
-  <script>
+  <script type="module">
+    // Import the modern ES module bundle
+    import LegalMarkdown from './legal-markdown-browser.js';
+    
+    // Make it available globally for the playground code
+    window.LegalMarkdown = LegalMarkdown;
     // Simple verification that the library loaded correctly
     if (typeof window.LegalMarkdown === 'undefined') {
       console.error('Legal Markdown library not loaded');
@@ -446,7 +450,7 @@ p {
         // Display raw markdown output
         this.markdownPreview.innerHTML = `
                     <div class="legal-document">
-                        <pre style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; margin: 0; padding: 0;">${this.escapeHtml(result.content)}</pre>
+                        <pre style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.4; margin: 0; padding: 0;">${result.content}</pre>
                     </div>
                 `;
 

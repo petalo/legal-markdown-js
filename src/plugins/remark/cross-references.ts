@@ -471,6 +471,95 @@ function replaceCrossReferencesInAST(
 
     // Update node value if replacements were made
     if (hasReplacements) {
+      // If we have HTML in the replacement (field tracking spans), we need to convert to HTML node
+      if (enableFieldTracking && modifiedValue.includes('<span')) {
+        // Replace the text node with an HTML node to preserve HTML
+        if (parent && typeof index === 'number') {
+          const htmlNode = {
+            type: 'html',
+            value: modifiedValue,
+          };
+          parent.children[index] = htmlNode as any;
+        }
+      } else {
+        node.value = modifiedValue;
+      }
+    }
+  });
+
+  // Process HTML nodes that contain cross-references (after template field processing)
+  visit(root, 'html', (node: any) => {
+    if (!node.value || !node.value.includes('|')) {
+      return; // Skip HTML nodes without cross-references
+    }
+
+    let modifiedValue = node.value;
+    let hasReplacements = false;
+
+    // Replace all |key| patterns in HTML content
+    modifiedValue = modifiedValue.replace(/\|([^|]+)\|/g, (match: string, key: string) => {
+      const trimmedKey = key.trim();
+
+      // First try internal section reference
+      const sectionNumber = referenceMap.get(trimmedKey);
+      if (sectionNumber) {
+        // Track the cross-reference as a field for statistics
+        fieldTracker.trackField(`crossref.${trimmedKey}`, {
+          value: sectionNumber,
+          originalValue: match,
+          hasLogic: true,
+        });
+
+        hasReplacements = true;
+        // For HTML nodes, generate HTML span if field tracking is enabled
+        if (enableFieldTracking) {
+          const cssClass = getCrossRefCssClass(true, true);
+          return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${sectionNumber}</span>`;
+        } else {
+          return sectionNumber;
+        }
+      }
+
+      // Fallback to metadata value (for backward compatibility)
+      const metadataValue = getNestedValue(metadata, trimmedKey);
+      if (metadataValue !== undefined) {
+        const resolvedValue = formatMetadataValue(metadataValue, trimmedKey, metadata);
+
+        // Track metadata-based cross-reference as a field
+        fieldTracker.trackField(`crossref.${trimmedKey}`, {
+          value: resolvedValue,
+          originalValue: match,
+          hasLogic: false,
+        });
+
+        hasReplacements = true;
+        // For HTML nodes, generate HTML span if field tracking is enabled
+        if (enableFieldTracking) {
+          const cssClass = getCrossRefCssClass(true, false);
+          return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${resolvedValue}</span>`;
+        } else {
+          return resolvedValue;
+        }
+      }
+
+      // Track unresolved reference as empty
+      fieldTracker.trackField(`crossref.${trimmedKey}`, {
+        value: '',
+        originalValue: match,
+        hasLogic: false,
+      });
+
+      // For HTML nodes, generate HTML span for unresolved if field tracking is enabled
+      if (enableFieldTracking) {
+        const cssClass = getCrossRefCssClass(false, false);
+        return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${match}</span>`;
+      } else {
+        return match;
+      }
+    });
+
+    // Update HTML node value if replacements were made
+    if (hasReplacements) {
       node.value = modifiedValue;
     }
   });
@@ -591,6 +680,9 @@ const remarkCrossReferences: Plugin<[CrossReferenceOptions], Root> = options => 
     cleanHeaderDefinitionsInAST(tree, crossReferences);
 
     // Third pass: Replace cross-reference usage with section numbers
+    if (debug) {
+      console.log('🔄 Starting cross-reference replacement in content...');
+    }
     replaceCrossReferencesInAST(tree, crossReferences, metadata, enableFieldTracking);
 
     if (debug) {

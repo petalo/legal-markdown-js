@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "outDir": "./dist",
     "allowSyntheticDefaultImports": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "emitDeclarationOnly": false
   }
 }

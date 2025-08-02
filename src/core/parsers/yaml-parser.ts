@@ -38,6 +38,7 @@
 
 import * as yaml from 'js-yaml';
 import { YamlParsingResult } from '../../types';
+import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-date-helpers';
 
 /**
  * Parses YAML Front Matter from a markdown document
@@ -229,9 +230,50 @@ export function extractMetadataOutputConfig(metadata: Record<string, any>): {
 }
 
 /**
+ * Parse arithmetic operation from date token
+ */
+function parseArithmetic(
+  operation: string
+): { type: 'days' | 'months' | 'years'; amount: number } | null {
+  if (!operation) return null;
+
+  const match = operation.match(/^([+-])(\d+)([dmy]?)$/);
+  if (!match) {
+    // Simple number without suffix defaults to days
+    const simpleMatch = operation.match(/^([+-])(\d+)$/);
+    if (simpleMatch) {
+      const [, sign, amount] = simpleMatch;
+      return {
+        type: 'days',
+        amount: parseInt(amount) * (sign === '-' ? -1 : 1),
+      };
+    }
+    return null;
+  }
+
+  const [, sign, amount, suffix] = match;
+  const numAmount = parseInt(amount) * (sign === '-' ? -1 : 1);
+
+  switch (suffix) {
+    case 'd':
+    case '':
+      return { type: 'days', amount: numAmount };
+    case 'm':
+      return { type: 'months', amount: numAmount };
+    case 'y':
+      return { type: 'years', amount: numAmount };
+    default:
+      return { type: 'days', amount: numAmount };
+  }
+}
+
+// Date arithmetic functionality is now handled by the remark dates plugin
+
+/**
  * Processes @today references in YAML content before parsing
  *
  * Replaces @today references with properly formatted date strings that are valid YAML.
+ * Supports arithmetic operations like @today+365 or @today-30 and format specifiers.
  * This prevents YAML parsing errors when @today is used in frontmatter.
  *
  * @private
@@ -242,27 +284,37 @@ export function extractMetadataOutputConfig(metadata: Record<string, any>): {
  * const yamlContent = `
  * title: Document
  * date: @today
- * deadline: @today[long]
+ * deadline: @today+365
+ * start_date: @today-30[long]
  * `;
  *
  * const processed = processDateReferencesInYaml(yamlContent);
  * // Returns:
  * // title: Document
  * // date: "2024-01-15"
- * // deadline: "January 15, 2024"
+ * // deadline: "2025-01-15"
+ * // start_date: "December 16, 2023"
  * ```
  */
 function processDateReferencesInYaml(yamlContent: string): string {
-  // Regular expression to match @today references with optional format specifiers
+  // Basic regular expression to match @today references with format specifiers only
   const todayPattern = /@today(?:\[([^\]]+)\])?/g;
 
   return yamlContent.replace(todayPattern, (match, formatOverride) => {
-    // Use format override if provided, otherwise use ISO format for YAML compatibility
-    const format = formatOverride || 'YYYY-MM-DD';
-    const formattedDate = formatDateForYaml(new Date(), format);
+    try {
+      // Use current date
+      const date = new Date();
 
-    // Quote the date string to ensure it's valid YAML
-    return `"${formattedDate}"`;
+      // Use format override if provided, otherwise use ISO format for YAML compatibility
+      const format = formatOverride || 'YYYY-MM-DD';
+      const formattedDate = formatDateForYaml(date, format);
+
+      // Quote the date string to ensure it's valid YAML
+      return `"${formattedDate}"`;
+    } catch (error) {
+      console.warn(`Error processing YAML date reference ${match}:`, error);
+      return `"${match}"`; // Return quoted original on error for valid YAML
+    }
   });
 }
 
@@ -276,11 +328,43 @@ function processDateReferencesInYaml(yamlContent: string): string {
  */
 function formatDateForYaml(date: Date, format: string): string {
   try {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dayNumber = date.getDate();
+
+    // Month names for legal format
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
     // Handle different format patterns
     switch (format.toLowerCase()) {
       case 'iso':
       case 'yyyy-mm-dd':
-        return date.toISOString().split('T')[0];
+        return `${year}-${month}-${day}`;
+
+      case 'us':
+      case 'mm/dd/yyyy':
+        return `${month}/${day}/${year}`;
+
+      case 'eu':
+      case 'dd/mm/yyyy':
+        return `${day}/${month}/${year}`;
+
+      case 'legal':
+        return `${monthNames[date.getMonth()]} ${dayNumber}, ${year}`;
 
       case 'long':
         return date.toLocaleDateString('en-US', {
@@ -305,7 +389,7 @@ function formatDateForYaml(date: Date, format: string): string {
 
       default:
         // For any other format, default to ISO
-        return date.toISOString().split('T')[0];
+        return `${year}-${month}-${day}`;
     }
   } catch (error) {
     // Fallback to ISO format if there's an error

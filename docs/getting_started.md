@@ -483,9 +483,9 @@ legal-md --export-json input.md
 Now that you have Legal Markdown JS set up, explore these resources:
 
 - **[CLI Reference](cli_reference.md)** - Complete command-line documentation
-- **[Features Guide](features_guide.md)** - Advanced features and helpers
-- **[Headers & Numbering](headers_numbering.md)** - Detailed numbering system
-  guide
+- **[Features Guide](features/README.md)** - Advanced features and helpers
+- **[Headers & Numbering](features/headers-numbering.md)** - Detailed numbering
+  system guide
 - **[Examples](../examples/)** - Real-world document templates
 
 ### Learn More
@@ -500,5 +500,5 @@ Now that you have Legal Markdown JS set up, explore these resources:
 
 - Check the [troubleshooting section](#troubleshooting) above
 - Review the [CLI Reference](cli_reference.md) for command options
-- Consult the [Features Guide](features_guide.md) for advanced usage
+- Consult the [Features Guide](features/README.md) for advanced usage
 - Open an issue on GitHub for bug reports or feature requests

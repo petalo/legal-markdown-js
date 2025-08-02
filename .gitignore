@@ -108,6 +108,7 @@ output-*.md
 # Output directories
 output/
 benchmarks/
+!docs/output/
 
 # Examples directory output files
 examples/**/*.html

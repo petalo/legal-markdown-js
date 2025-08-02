@@ -1,5 +1,5 @@
 /**
- * @fileoverview CLI Service for Legal Markdown Processing
+ * CLI Service for Legal Markdown Processing
  *
  * This module provides a service class that handles the business logic for
  * the CLI tool, including file processing, output generation, error handling,
@@ -26,9 +26,12 @@
  *
  * await service.processFile('input.md', 'output.md');
  * ```
+ *
+ * @module
  */
 
-import { processLegalMarkdown, generateHtml, generatePdf } from '../index';
+import { generateHtml, generatePdf } from '../index';
+import { processLegalMarkdownWithRemark } from '../extensions/remark/legal-markdown-processor';
 import { LegalMarkdownOptions } from '../types';
 import { readFileSync, writeFileSync, resolveFilePath } from '../utils/index';
 import { LegalMarkdownError, FileNotFoundError } from '../errors/index';
@@ -172,8 +175,25 @@ export class CliService {
           effectiveOptions
         );
       } else {
-        // Normal markdown processing
-        const result = processLegalMarkdown(content, effectiveOptions);
+        // Process using remark-based processor
+        this.log('Using remark-based processor', 'info');
+        const result = await processLegalMarkdownWithRemark(content, {
+          basePath: effectiveOptions.basePath,
+          enableFieldTracking: effectiveOptions.enableFieldTracking,
+          debug: effectiveOptions.debug,
+          yamlOnly: effectiveOptions.yamlOnly,
+          noHeaders: effectiveOptions.noHeaders,
+          noClauses: effectiveOptions.noClauses,
+          noReferences: effectiveOptions.noReferences,
+          noImports: effectiveOptions.noImports,
+          noMixins: effectiveOptions.noMixins,
+          noReset: effectiveOptions.noReset,
+          noIndent: false, // CLI markdown output should preserve indentation
+          throwOnYamlError: effectiveOptions.throwOnYamlError,
+          exportMetadata: effectiveOptions.exportMetadata,
+          exportFormat: effectiveOptions.exportFormat,
+          exportPath: effectiveOptions.exportPath,
+        });
 
         if (outputPath) {
           const resolvedOutputPath = this.resolveOutputPath(outputPath);
@@ -217,7 +237,31 @@ export class CliService {
         enableFieldTracking: this.options.enableFieldTracking,
       });
 
-      const result = processLegalMarkdown(content, effectiveOptions);
+      // Handle auto-populate headers mode
+      if (effectiveOptions.autoPopulateHeaders) {
+        const { autoPopulateYamlFrontMatter } = await import('../core/yaml/yaml-auto-population');
+        return autoPopulateYamlFrontMatter(content);
+      }
+
+      // Process using remark-based processor
+      const result = await processLegalMarkdownWithRemark(content, {
+        basePath: effectiveOptions.basePath,
+        enableFieldTracking: effectiveOptions.enableFieldTracking,
+        debug: effectiveOptions.debug,
+        yamlOnly: effectiveOptions.yamlOnly,
+        noHeaders: effectiveOptions.noHeaders,
+        noClauses: effectiveOptions.noClauses,
+        noReferences: effectiveOptions.noReferences,
+        noImports: effectiveOptions.noImports,
+        noMixins: effectiveOptions.noMixins,
+        noReset: effectiveOptions.noReset,
+        noIndent: false, // CLI markdown output should preserve indentation
+        throwOnYamlError: effectiveOptions.throwOnYamlError,
+        exportMetadata: effectiveOptions.exportMetadata,
+        exportFormat: effectiveOptions.exportFormat,
+        exportPath: effectiveOptions.exportPath,
+      });
+
       return result.content;
     } catch (error) {
       this.handleError(error);
@@ -361,8 +405,25 @@ export class CliService {
       }
     }
 
-    // Process markdown if requested (toMarkdown option exists)
-    const markdownResult = processLegalMarkdown(content, generateOptions);
+    // Process markdown using remark processor
+    const markdownResult = await processLegalMarkdownWithRemark(content, {
+      basePath: generateOptions.basePath,
+      enableFieldTracking: generateOptions.enableFieldTracking,
+      debug: generateOptions.debug,
+      yamlOnly: generateOptions.yamlOnly,
+      noHeaders: generateOptions.noHeaders,
+      noClauses: generateOptions.noClauses,
+      noReferences: generateOptions.noReferences,
+      noImports: generateOptions.noImports,
+      noMixins: generateOptions.noMixins,
+      noReset: generateOptions.noReset,
+      noIndent: false, // CLI markdown output should preserve indentation
+      throwOnYamlError: generateOptions.throwOnYamlError,
+      exportMetadata: generateOptions.exportMetadata,
+      exportFormat: generateOptions.exportFormat,
+      exportPath: generateOptions.exportPath,
+    });
+
     if (options.toMarkdown || (!generateOptions.html && !generateOptions.pdf)) {
       const mdPath = path.join(dirName, `${baseName}.md`);
       writeFileSync(mdPath, markdownResult.content);

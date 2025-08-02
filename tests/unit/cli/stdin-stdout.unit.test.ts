@@ -24,6 +24,7 @@ describe('CLI stdin/stdout functionality', () => {
 
       const input = `---
 title: Test Document
+level-1: "Article %n."
 ---
 
 l. First Section
@@ -93,6 +94,7 @@ This is test content.
 
       const input = `---
 title: Test Document
+level-1: "Article %n."
 ---
 
 l. First Section
@@ -161,6 +163,7 @@ This is test content.
       
       const inputContent = `---
 title: Test Document
+level-1: "Article %n."
 ---
 
 l. First Section

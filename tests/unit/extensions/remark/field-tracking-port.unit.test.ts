@@ -45,8 +45,7 @@ phone: null
 Contact: {{email}}, {{phone}}, {{address}}`;
 
       const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true,
-        debug: true
+        enableFieldTracking: true
       });
 
       const fields = fieldTracker.getFields();
@@ -156,8 +155,8 @@ Hello, {{client_name}}!`;
         enableFieldTracking: true
       });
 
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('>John Doe\\</span>');
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('>John Doe</span>');
     });
 
     it('should wrap empty values with missing CSS class', async () => {
@@ -171,8 +170,8 @@ Value: {{empty_field}}`;
         enableFieldTracking: true
       });
 
-      expect(result.content).toContain('data-field="empty\\_field"');
-      expect(result.content).toContain('>{{empty\\_field}}\\</span>');
+      expect(result.content).toContain('data-field="empty_field"');
+      expect(result.content).toContain('>{{empty_field}}</span>');
     });
 
     it('should wrap logic-based fields with highlight CSS class', async () => {
@@ -189,7 +188,7 @@ See |payment| for details.`;
       });
 
       expect(result.content).toContain('data-field="crossref.payment"');
-      expect(result.content).toContain('>Article 1\\</span>');
+      expect(result.content).toContain('>Article 1</span>');
     });
   });
 
@@ -280,7 +279,7 @@ Short reference |pay| should be highlighted.`;
 
       // Cross-references should always get highlight class
       expect(result.content).toContain('data-field="crossref.pay"');
-      expect(result.content).toContain('>Art. 1 -\\</span>');
+      expect(result.content).toContain('>Art. 1 -</span>');
     });
   });
 
@@ -338,8 +337,8 @@ Welcome <<client_name>> to our service.`;
 
       const fields = fieldTracker.getFields();
       expect(fields.has('client_name')).toBe(true);
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('>Custom Client\\</span>');
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('>Custom Client</span>');
     });
 
     it('should handle multiple pattern types', async () => {
@@ -376,8 +375,8 @@ Field value: {{level_value}}`;
       // Should NOT wrap the "2" inside the HTML attribute
       expect(result.content).not.toContain('data-level="<span');
       // BUT should wrap the field value
-      expect(result.content).toContain('data-field="level\\_value"');
-      expect(result.content).toContain('>2\\</span>');
+      expect(result.content).toContain('data-field="level_value"');
+      expect(result.content).toContain('>2</span>');
     });
 
     it('should handle complex HTML without corruption', async () => {
@@ -468,12 +467,12 @@ As per |payment|, terms apply.`;
       expect(crossRefFields.length).toBe(1);
       
       // Should have appropriate highlighting
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('>ACME Corp\\</span>');
-      expect(result.content).toContain('data-field="contract\\_amount"');
-      expect(result.content).toContain('>$50000\\</span>');
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('>ACME Corp</span>');
+      expect(result.content).toContain('data-field="contract_amount"');
+      expect(result.content).toContain('>$50000</span>');
       expect(result.content).toContain('data-field="crossref.payment"');
-      expect(result.content).toContain('>Section 1\\</span>');
+      expect(result.content).toContain('>Section 1</span>');
     });
 
     it('should preserve field tracking across multiple processing calls', async () => {

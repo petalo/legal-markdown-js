@@ -1,8 +1,9 @@
 # Legal Markdown JS
 
-> A complete Node.js/TypeScript reimplementation of the original Ruby
-> [LegalMarkdown](https://github.com/compleatang/legal-markdown) tool with 100%
-> feature parity.
+> A Node.js and TypeScript implementation of the original Ruby
+> [LegalMarkdown](https://github.com/compleatang/legal-markdown) project. Legal
+> Markdown JS processes legal markdown documents with advanced features and
+> PDF/HTML exports.
 
 Process markdown with YAML front matter, conditional clauses
 `[text]{condition}`, cross-references `|reference|`, mixins `{{variable}}`,
@@ -12,7 +13,6 @@ imports `@import`, and generate professional PDFs ready to be shared.
 
 ## Table of Contents
 
-- [Goals](#goals)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Key Features](#key-features)
@@ -20,16 +20,6 @@ imports `@import`, and generate professional PDFs ready to be shared.
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
-
-## Goals
-
-- **Core Parity**: 1:1 compatibility with the original Ruby legal-markdown tool
-  in `src/core/`
-- **Node.js Extensions**: Additional functionality leveraging the Node.js
-  ecosystem in `src/extensions/`
-- **Type Safety**: Full TypeScript implementation with comprehensive type
-  definitions
-- **Modern Tooling**: Built with modern development practices and tooling
 
 ## Installation
 
@@ -44,7 +34,6 @@ After installation, you'll have access to these commands:
 - **`legal-md-setup`** - Configuration setup script for easy environment setup
 - **`legal-md-playground`** - Local playground server for testing and
   exploration
-- **`legal2md`** - Alias for `legal-md` (for compatibility)
 
 ## 🚀 Try it Online
 
@@ -138,14 +127,14 @@ import {
   processLegalMarkdownAsync,
 } from 'legal-markdown-js';
 
-// Synchronous processing (legacy)
+// Synchronous processing
 const result = processLegalMarkdown(content, {
   basePath: './documents',
   exportMetadata: true,
   exportFormat: 'json',
 });
 
-// Asynchronous processing with modern pipeline (recommended)
+// Asynchronous processing with remark pipeline (recommended)
 const asyncResult = await processLegalMarkdownAsync(content, {
   basePath: './documents',
   exportMetadata: true,
@@ -210,7 +199,7 @@ provides:
 - **AST-Based Processing**: Modern AST parsing for mixin processing to prevent
   text contamination
 - **Performance Monitoring**: Built-in step profiling and performance metrics
-- **Error Recovery**: Graceful fallback to legacy processing when needed
+- **Error Recovery**: Graceful error handling and comprehensive logging
 - **Field Tracking**: Enhanced field tracking with proper status categorization
 
 #### Processing Order
@@ -230,11 +219,11 @@ The new pipeline ensures correct processing order to prevent conflicts:
 #### API Usage
 
 ```typescript
-// Use the modern async API for best performance
+// Use the remark-based async API for best performance
 const result = await processLegalMarkdownAsync(content, options);
 
-// Automatic fallback to legacy processing if needed
-// No code changes required for existing applications
+// Comprehensive error handling and validation
+// Full remark-based processing for all documents
 ```
 
 ## Documentation
@@ -244,29 +233,29 @@ const result = await processLegalMarkdownAsync(content, options);
 - **[Getting Started](docs/getting_started.md)** - Installation and setup guide
 - **[CLI Reference](docs/cli_reference.md)** - Complete command-line interface
   documentation
-- **[Features Guide](docs/features_guide.md)** - All features, helpers, and
+- **[Features Guide](docs/features/README.md)** - All features, helpers, and
   advanced usage
-- **[Headers & Numbering](docs/headers_numbering.md)** - Hierarchical numbering
-  system guide
-- **[CSS Classes Reference](docs/css-classes.md)** - CSS classes for styling and
+- **[Headers & Numbering](docs/features/headers-numbering.md)** - Hierarchical
+  numbering system guide
+- **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and
   document review
-- **[Compatibility](docs/COMPATIBILITY.md)** - Ruby version compatibility
-  tracking
+- **[Features Overview](docs/FEATURES.md)** - Complete feature implementation
+  status and testing coverage
 
 ### Developer Documentation
 
 - **[Architecture](docs/architecture.md)** - Complete system architecture and
   design patterns
-- **[Contributing Guide](docs/CONTRIBUTING.md)** - Development workflow,
-  standards, and contribution guidelines
-- **[Helper Functions](docs/helpers.md)** - Complete reference for template
-  helpers and functions
-- **[Development Guide](docs/DEVELOPMENT-GUIDE.md)** - Complete developer setup
-  and workflow
-- **[Release Process](docs/RELEASE-PROCESS.md)** - Versioning and release
-  procedures
-- **[Scripts Reference](docs/SCRIPTS-REFERENCE.md)** - Available npm scripts and
-  commands
+- **[Contributing Guide](docs/development/contributing.md)** - Development
+  workflow, standards, and contribution guidelines
+- **[Helper Functions](docs/helpers/README.md)** - Complete reference for
+  template helpers and functions
+- **[Development Guide](docs/development/development-guide.md)** - Complete
+  developer setup and workflow
+- **[Release Process](docs/development/release-process.md)** - Versioning and
+  release procedures
+- **[Scripts Reference](docs/development/scripts-reference.md)** - Available npm
+  scripts and commands
 - **[API Documentation](docs/api/)** - Auto-generated TypeScript API docs
 
 ## Testing
@@ -361,7 +350,7 @@ console.log(RESOLVED_PATHS.STYLES_DIR); // Absolute resolved path
 ## Contributing
 
 We welcome contributions! Please see our
-[Contributing Guide](docs/CONTRIBUTING.md) for:
+[Contributing Guide](docs/development/contributing.md) for:
 
 - Development setup and workflow
 - Coding standards and best practices

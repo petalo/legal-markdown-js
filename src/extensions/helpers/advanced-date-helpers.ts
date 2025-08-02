@@ -249,7 +249,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
     YYYY: String(year),
     YY: String(year).slice(-2),
     MMMM: monthNames[month],
-    MMMMES: monthNamesSpanish[month],
+    MMMM_ES: monthNamesSpanish[month],
     MMM: monthNamesShort[month],
     MM: String(month + 1).padStart(2, '0'),
     M: String(month + 1),
@@ -263,7 +263,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
   let result = format;
   // Sort tokens by length (descending) to avoid replacement conflicts
   // For example, "Do" must be processed before "D" to prevent "Do" -> "15o"
-  // And "MMMMES" must be processed before "MMMM" to prevent Spanish conflicts
+  // And "MMMM_ES" must be processed before "MMMM" to prevent Spanish conflicts
   const sortedTokens = Object.keys(replacements).sort((a, b) => b.length - a.length);
 
   // Use word boundary regex to prevent partial matches within words
@@ -342,7 +342,7 @@ export const DateFormats = {
   FORMAL: 'dddd, MMMM Do, YYYY',
 
   /** Spanish format: "16 de julio de 2025" */
-  SPANISH: 'D de MMMMES de YYYY',
+  SPANISH: 'D de MMMM_ES de YYYY',
 
   /** US format: "07/16/2025" */
   US: 'MM/DD/YYYY',

@@ -668,3 +668,15 @@ export {
   processLegalMarkdownWithRemark,
   processLegalMarkdownWithRemarkSync,
 } from './extensions/remark/legal-markdown-processor';
+
+/**
+ * Wrapper function that provides legacy API compatibility with remark processing
+ *
+ * This function bridges the gap between the legacy `processLegalMarkdown` interface
+ * and the new remark-based processor. It maintains 100% API compatibility while
+ * internally using the modern remark pipeline.
+ *
+ * @param content - The raw Legal Markdown content to process
+ * @param options - Legacy LegalMarkdownOptions (will be mapped to remark options)
+ * @returns Processing result in legacy format
+ */

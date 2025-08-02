@@ -84,7 +84,7 @@ program
   .argument('[output]', 'Output file path')
   .option('-d, --debug', 'Enable debug mode')
   .option('-y, --yaml', 'Process only YAML front matter')
-  .option('--headers', 'Process only headers')
+  .option('--headers', 'Auto-populate YAML front matter with header patterns and properties')
   .option('--no-headers', 'Skip header processing')
   .option('--no-clauses', 'Skip optional clause processing')
   .option('--no-references', 'Skip cross-reference processing')
@@ -129,11 +129,12 @@ program
         } = {
           debug: options.debug,
           yamlOnly: options.yaml,
+          autoPopulateHeaders: options.headers === true,
           noHeaders: options.headers === false,
-          noClauses: options.headers === true ? true : options.clauses === false,
-          noReferences: options.headers === true ? true : options.references === false,
-          noImports: options.headers === true ? true : options.imports === false,
-          noMixins: options.headers === true ? true : options.mixins === false,
+          noClauses: options.clauses === false,
+          noReferences: options.references === false,
+          noImports: options.imports === false,
+          noMixins: options.mixins === false,
           noReset: options.reset === false,
           noIndent: options.indent === false,
           throwOnYamlError: options.throwOnYamlError,
@@ -210,11 +211,12 @@ program
       } = {
         debug: options.debug,
         yamlOnly: options.yaml,
+        autoPopulateHeaders: options.headers === true,
         noHeaders: options.headers === false,
-        noClauses: options.headers === true ? true : options.clauses === false,
-        noReferences: options.headers === true ? true : options.references === false,
-        noImports: options.headers === true ? true : options.imports === false,
-        noMixins: options.headers === true ? true : options.mixins === false,
+        noClauses: options.clauses === false,
+        noReferences: options.references === false,
+        noImports: options.imports === false,
+        noMixins: options.mixins === false,
         noReset: options.reset === false,
         noIndent: options.indent === false,
         throwOnYamlError: options.throwOnYamlError,

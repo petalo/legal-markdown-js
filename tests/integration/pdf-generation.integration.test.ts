@@ -59,11 +59,28 @@ This clause is included conditionally.
    * Clean up generated test files to prevent test pollution
    */
   afterAll(async () => {
-    // Clean up generated files
-    const files = await fs.readdir(outputDir);
-    for (const file of files) {
-      if (file.startsWith('test-')) {
-        await fs.unlink(path.join(outputDir, file));
+    try {
+      // Clean up generated files
+      const files = await fs.readdir(outputDir);
+      for (const file of files) {
+        if (file.startsWith('test-')) {
+          const filePath = path.join(outputDir, file);
+          try {
+            // Check if file exists before attempting to delete
+            await fs.stat(filePath);
+            await fs.unlink(filePath);
+          } catch (unlinkError: any) {
+            // Ignore file not found errors
+            if (unlinkError.code !== 'ENOENT') {
+              console.warn(`Warning: Could not delete test file ${filePath}:`, unlinkError.message);
+            }
+          }
+        }
+      }
+    } catch (readdirError: any) {
+      // Ignore if output directory doesn't exist
+      if (readdirError.code !== 'ENOENT') {
+        console.warn('Warning: Could not read output directory for cleanup:', readdirError.message);
       }
     }
   });
