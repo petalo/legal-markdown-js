@@ -19,6 +19,8 @@
  * ## Second Level Header
  * ### Third Level Header
  * ```
+ *
+ * @module
  */
 
 import { Plugin } from 'unified';

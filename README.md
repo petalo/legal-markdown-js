@@ -138,14 +138,14 @@ import {
   processLegalMarkdownAsync,
 } from 'legal-markdown-js';
 
-// Synchronous processing (legacy)
+// Synchronous processing
 const result = processLegalMarkdown(content, {
   basePath: './documents',
   exportMetadata: true,
   exportFormat: 'json',
 });
 
-// Asynchronous processing with modern pipeline (recommended)
+// Asynchronous processing with remark pipeline (recommended)
 const asyncResult = await processLegalMarkdownAsync(content, {
   basePath: './documents',
   exportMetadata: true,
@@ -210,7 +210,7 @@ provides:
 - **AST-Based Processing**: Modern AST parsing for mixin processing to prevent
   text contamination
 - **Performance Monitoring**: Built-in step profiling and performance metrics
-- **Error Recovery**: Graceful fallback to legacy processing when needed
+- **Error Recovery**: Graceful error handling and comprehensive logging
 - **Field Tracking**: Enhanced field tracking with proper status categorization
 
 #### Processing Order
@@ -230,11 +230,11 @@ The new pipeline ensures correct processing order to prevent conflicts:
 #### API Usage
 
 ```typescript
-// Use the modern async API for best performance
+// Use the remark-based async API for best performance
 const result = await processLegalMarkdownAsync(content, options);
 
-// Automatic fallback to legacy processing if needed
-// No code changes required for existing applications
+// Comprehensive error handling and validation
+// Full remark-based processing for all documents
 ```
 
 ## Documentation

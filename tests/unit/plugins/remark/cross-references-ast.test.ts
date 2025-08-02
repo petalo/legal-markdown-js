@@ -1,8 +1,10 @@
 /**
- * @fileoverview Unit Tests for Enhanced Cross-References AST Plugin
+ * Unit Tests for Enhanced Cross-References AST Plugin
  *
  * Tests for the new AST-based cross-reference system that uses custom reference nodes
  * for better performance and extensibility.
+ *
+ * @module
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

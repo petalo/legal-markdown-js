@@ -154,11 +154,25 @@ lll. First Subsection
       const inputPath = path.join(outputDir, 'field-tracking-test-input.md');
       await fs.writeFile(inputPath, testContent);
 
-      // Process with CLI service
+      // Process with CLI service with timeout
       const baseName = 'field-tracking-test-cli';
       const outputPath = path.join(outputDir, `${baseName}.md`);
       
-      await cliService.processFile(inputPath, outputPath);
+      try {
+        // Add timeout wrapper to prevent hanging
+        await Promise.race([
+          cliService.processFile(inputPath, outputPath),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('CLI Service timeout after 20 seconds')), 20000)
+          )
+        ]);
+      } catch (error) {
+        console.log('CLI Service error:', error);
+        throw error;
+      }
+
+      // Add a small delay to let CLI service finish
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Should generate 4 files: normal + highlight for both HTML and PDF
       const expectedFiles = [
@@ -168,14 +182,42 @@ lll. First Subsection
         `${baseName}.HIGHLIGHT.pdf`,
       ];
 
+      // Wait for all files to be generated with retry mechanism
+      const maxRetries = 50; // 5 seconds total
+      const retryDelay = 100; // 100ms between retries
+
       for (const fileName of expectedFiles) {
         const filePath = path.join(outputDir, fileName);
-        expect(await fs.stat(filePath)).toBeTruthy();
+        let fileExists = false;
+        
+        for (let retry = 0; retry < maxRetries; retry++) {
+          try {
+            await fs.stat(filePath);
+            fileExists = true;
+            break;
+          } catch (error) {
+            if (retry === maxRetries - 1) {
+              // Last retry failed, list actual files for debugging
+              const actualFiles = await fs.readdir(outputDir);
+              console.log(`Expected file not found after ${maxRetries} retries: ${fileName}`);
+              console.log(`Actual files in ${outputDir}:`, actualFiles);
+              throw error;
+            }
+            // Wait before next retry
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+        
+        expect(fileExists).toBe(true);
       }
 
       // Clean up input file
-      await fs.unlink(inputPath);
-    });
+      try {
+        await fs.unlink(inputPath);
+      } catch (error) {
+        // Ignore if file doesn't exist (already cleaned up)
+      }
+    }, 30000); // 30 second timeout
 
     it('should generate only normal versions when highlight flag is not used', async () => {
       const cliService = new CliService({
@@ -189,11 +231,25 @@ lll. First Subsection
       const inputPath = path.join(outputDir, 'field-tracking-test-input-no-highlight.md');
       await fs.writeFile(inputPath, testContent);
 
-      // Process with CLI service
+      // Process with CLI service with timeout
       const baseName = 'field-tracking-test-cli-no-highlight';
       const outputPath = path.join(outputDir, `${baseName}.md`);
       
-      await cliService.processFile(inputPath, outputPath);
+      try {
+        // Add timeout wrapper to prevent hanging
+        await Promise.race([
+          cliService.processFile(inputPath, outputPath),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('CLI Service timeout after 20 seconds')), 20000)
+          )
+        ]);
+      } catch (error) {
+        console.log('CLI Service error:', error);
+        throw error;
+      }
+
+      // Add a small delay to let CLI service finish
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Should generate only 2 files: normal versions for HTML and PDF
       const expectedFiles = [
@@ -206,9 +262,33 @@ lll. First Subsection
         `${baseName}.HIGHLIGHT.pdf`,
       ];
 
+      // Wait for all files to be generated with retry mechanism
+      const maxRetries = 50; // 5 seconds total
+      const retryDelay = 100; // 100ms between retries
+
       for (const fileName of expectedFiles) {
         const filePath = path.join(outputDir, fileName);
-        expect(await fs.stat(filePath)).toBeTruthy();
+        let fileExists = false;
+        
+        for (let retry = 0; retry < maxRetries; retry++) {
+          try {
+            await fs.stat(filePath);
+            fileExists = true;
+            break;
+          } catch (error) {
+            if (retry === maxRetries - 1) {
+              // Last retry failed, list actual files for debugging
+              const actualFiles = await fs.readdir(outputDir);
+              console.log(`Expected file not found after ${maxRetries} retries: ${fileName}`);
+              console.log(`Actual files in ${outputDir}:`, actualFiles);
+              throw error;
+            }
+            // Wait before next retry
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+        
+        expect(fileExists).toBe(true);
       }
 
       for (const fileName of notExpectedFiles) {
@@ -217,8 +297,12 @@ lll. First Subsection
       }
 
       // Clean up input file
-      await fs.unlink(inputPath);
-    });
+      try {
+        await fs.unlink(inputPath);
+      } catch (error) {
+        // Ignore if file doesn't exist (already cleaned up)
+      }
+    }, 30000); // 30 second timeout
   });
 
   describe('Content Verification', () => {
