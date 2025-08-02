@@ -9,7 +9,7 @@ Each release automatically generates 3 types of packages:
 
 ### 1. 🌐 Web Package (`legal-markdown-web-vX.X.X.zip`)
 
-**For end users without technical knowledge**
+For end users without technical knowledge:
 
 - Complete web interface
 - No Node.js required
@@ -18,7 +18,7 @@ Each release automatically generates 3 types of packages:
 
 ### 2. ⚡ CLI Package (`legal-markdown-cli-vX.X.X.zip`)
 
-**For developers and automation**
+For developers and automation:
 
 - Command-line tool
 - Requires Node.js
@@ -27,7 +27,7 @@ Each release automatically generates 3 types of packages:
 
 ### 3. 📦 Complete Package (`legal-markdown-complete-vX.X.X.zip`)
 
-**For developers who want everything**
+For developers who want everything:
 
 - CLI + Web + Examples + Documentation
 - Compiled source code

@@ -52,13 +52,6 @@ into specialized sections for better navigation and maintenance.
 - **[15. Troubleshooting](architecture/15_troubleshooting.md)** - Error handling
   and diagnostic tools
 
-### Project Status
-
-- **[16. Future Roadmap](architecture/16_future_roadmap.md)** - Development
-  roadmap and planned features
-- **[17. Current Status](architecture/17_current_status.md)** - Version
-  information and maturity assessment
-
 ## Quick Navigation
 
 ### For Developers
@@ -87,53 +80,6 @@ into specialized sections for better navigation and maintenance.
   [11. Testing Strategy](architecture/11_testing_strategy.md) and
   [12. Performance](architecture/12_performance.md)
 - **System Health**: Check
-  [15. Troubleshooting](architecture/15_troubleshooting.md) and
-  [17. Current Status](architecture/17_current_status.md)
+  [15. Troubleshooting](architecture/15_troubleshooting.md)
 - **Future Planning**: Review
-  [16. Future Roadmap](architecture/16_future_roadmap.md) and
   [14. Migration Strategy](architecture/14_migration_strategy.md)
-
-## Architecture Highlights
-
-### Current Version: 2.14.2
-
-- **Hybrid Processing**: Primary remark-based AST processing with legacy
-  fallback
-- **Dual Build System**: ESM/CommonJS compatibility with UMD browser bundles
-- **Comprehensive Type Safety**: Full TypeScript implementation with strict
-  typing
-- **Interactive CLI**: Advanced command-line interface with intelligent file
-  discovery
-- **Web Interface**: Full-featured browser-based document editor with live
-  preview
-- **Security Hardened**: Input validation, frontmatter filtering, and XSS
-  protection
-- **Performance Optimized**: Pipeline architecture with concurrency control and
-  caching
-
-### Key Features
-
-- **Template Field Processing**: Dynamic content insertion with {{field}} syntax
-- **Structured Headers**: Hierarchical document organization with automatic
-  numbering
-- **Optional Clauses**: Conditional content inclusion with [text]{condition}
-  syntax
-- **Cross-References**: Internal document linking with |reference| syntax
-- **Field Tracking**: Visual highlighting and comprehensive reporting
-- **Multi-format Output**: HTML, PDF, and plain text generation
-- **Batch Processing**: Efficient processing of multiple documents
-- **Extension Points**: Plugin system for custom functionality
-
-### Architecture Maturity
-
-The current architecture demonstrates production-ready maturity with
-comprehensive error handling, extensive logging, modular plugin system,
-performance monitoring, security-first design, and cross-platform compatibility.
-
----
-
-**Last Updated**: Version 2.14.2 - This documentation reflects the current
-production state of the Legal Markdown JS architecture.
-
-For detailed information on any aspect of the system, please refer to the
-specific documentation files linked above.

@@ -50,7 +50,7 @@ predictable releases with minimal manual intervention.
 
 ### Message Structure
 
-```
+```msg
 <type>[optional scope]: <description>
 
 [optional body]

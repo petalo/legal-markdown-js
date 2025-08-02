@@ -286,8 +286,8 @@ if (fieldHasValue(field)) {
 
 ## 📖 See Also
 
-- [Headers Numbering Guide](headers_numbering.md) - Learn about header numbering
-  systems
-- [Features Guide](features_guide.md) - Complete feature documentation
+- [Headers Numbering Guide](../features/headers-numbering.md) - Learn about
+  header numbering systems
+- [Features Guide](../features/README.md) - Complete feature documentation
 - [CLI Reference](cli_reference.md) - Command-line options and flags
 - [Getting Started](getting_started.md) - Basic usage examples

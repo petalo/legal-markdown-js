@@ -3,12 +3,34 @@
 - [Overview](#overview)
 - [Testing Strategy Overview](#testing-strategy-overview)
 - [Unit Testing Layer](#unit-testing-layer)
+  - [Core Component Tests](#core-component-tests)
+    - [Parser Tests](#parser-tests)
+    - [Processor Tests](#processor-tests)
+    - [Helper Function Tests](#helper-function-tests)
+    - [Generator Tests](#generator-tests)
+  - [Example Unit Test Structure](#example-unit-test-structure)
 - [Integration Testing Layer](#integration-testing-layer)
+  - [Pipeline Integration Tests](#pipeline-integration-tests)
+    - [Pipeline Tests](#pipeline-tests)
+    - [File Operation Tests](#file-operation-tests)
+    - [CLI Integration Tests](#cli-integration-tests)
+  - [Example Integration Test](#example-integration-test)
 - [End-to-End Testing Layer](#end-to-end-testing-layer)
+  - [Real-world Document Tests](#real-world-document-tests)
+    - [Document Type Tests](#document-type-tests)
+    - [Feature Combination Tests](#feature-combination-tests)
+  - [Example E2E Test](#example-e2e-test)
 - [Coverage Requirements](#coverage-requirements)
+  - [Coverage Thresholds](#coverage-thresholds)
+  - [Coverage Reporting](#coverage-reporting)
 - [Continuous Integration](#continuous-integration)
+  - [GitHub Actions Workflow](#github-actions-workflow)
 - [Testing Tools and Configuration](#testing-tools-and-configuration)
+  - [Vitest Configuration](#vitest-configuration)
+  - [Test Utilities](#test-utilities)
 - [Test Data Management](#test-data-management)
+  - [Fixture Organization](#fixture-organization)
+  - [Dynamic Test Generation](#dynamic-test-generation)
 
 ## Overview
 
@@ -428,7 +450,7 @@ export class TestFixtures {
 
 ### Fixture Organization
 
-```
+```text
 tests/
 ├── fixtures/
 │   ├── documents/
