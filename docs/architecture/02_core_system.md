@@ -23,19 +23,15 @@ graph TB
         YAML[YAML Parser]
         CONV[Format Converters]
 
-        subgraph "Remark-based Processors (Primary Architecture)"
+        subgraph "Remark-based Processing Architecture"
             REMARK_PROC[Remark Processor]
             TEMPLATE_FIELDS[Template Fields Plugin]
             CROSS_REFS[Cross-References Plugin]
             FIELD_TRACKING[Field Tracking Plugin]
-        end
-
-        subgraph "Legacy Processors (Fallback)"
-            IMP[Import Processor]
-            CLS[Clause Processor]
-            REF[Reference Processor]
-            MIX[Mixin Processor]
-            HDR[Header Processor]
+            CLAUSES[Clauses Plugin]
+            HEADERS[Headers Plugin]
+            IMPORTS[Imports Plugin]
+            MIXINS[Mixins Plugin]
         end
 
         subgraph "Helper System"
@@ -76,6 +72,10 @@ graph TB
     REMARK_PROC --> TEMPLATE_FIELDS
     REMARK_PROC --> CROSS_REFS
     REMARK_PROC --> FIELD_TRACKING
+    REMARK_PROC --> CLAUSES
+    REMARK_PROC --> HEADERS
+    REMARK_PROC --> IMPORTS
+    REMARK_PROC --> MIXINS
 
     TEMPLATE_FIELDS --> HELPERS
     HELPERS --> DATE
@@ -94,12 +94,7 @@ graph TB
     PDF --> OUT
     META --> OUT
 
-    %% Legacy fallback connections
-    REMARK_PROC -.-> IMP
-    IMP -.-> CLS
-    CLS -.-> REF
-    REF -.-> MIX
-    MIX -.-> HDR
+    %% All processing is now remark-based
 ```
 
 ## Module Architecture

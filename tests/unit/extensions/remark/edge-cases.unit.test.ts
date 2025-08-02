@@ -249,16 +249,16 @@ Mixed: {{client_name}} and \\{\\{not_a_field\\}\\}`;
         enableFieldTracking: true
       });
 
-      // Should process normal field WITH highlighting (underscores are escaped in output)
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('>ACME Corp\\</span>');
+      // Should process normal field WITH highlighting
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('>ACME Corp</span>');
 
       // Escaped patterns should be processed differently than normal patterns
       expect(result.content).toContain('Normal field:');
       expect(result.content).toContain('Escaped pattern:');
       
       // Should handle mixed content correctly
-      expect(result.content).toContain('Mixed: \\<span class=\"legal-field imported-value\" data-field=\"client\\_name\">ACME Corp\\</span>');
+      expect(result.content).toContain('Mixed: <span class="legal-field imported-value" data-field="client_name">ACME Corp</span>');
 
       // Should track the processed fields (escaped patterns also get processed)
       expect(fieldTracker.getTotalOccurrences()).toBe(4); // All patterns get processed
@@ -280,11 +280,11 @@ Standard again: {{project_id}}`;
         fieldPatterns: ['<<(.+?)>>']
       });
 
-      // Should process both pattern types WITH highlighting (underscores are escaped in output)
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('data-field="project\\_id"');
-      expect(result.content).toContain('>ACME Corp\\</span>');
-      expect(result.content).toContain('>PROJ-123\\</span>');
+      // Should process both pattern types WITH highlighting
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('data-field="project_id"');
+      expect(result.content).toContain('>ACME Corp</span>');
+      expect(result.content).toContain('>PROJ-123</span>');
 
       // Should track all occurrences (may have slight variance due to preprocessing)
       expect(fieldTracker.getTotalOccurrences()).toBeGreaterThanOrEqual(4);
@@ -323,12 +323,12 @@ Reference again: {{client_name}} - {{project_name}} - {{contact_email}}`;
       expect(fieldTracker.getFields().size).toBe(3);
 
       // Content should be processed correctly WITH highlighting
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('data-field="project\\_name"');
-      expect(result.content).toContain('data-field="contact\\_email"');
-      expect(result.content).toContain('>ACME Corporation\\</span>');
-      expect(result.content).toContain('>Legal System\\</span>');
-      expect(result.content).toContain('>legal@acme.com\\</span>');
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('data-field="project_name"');
+      expect(result.content).toContain('data-field="contact_email"');
+      expect(result.content).toContain('>ACME Corporation</span>');
+      expect(result.content).toContain('>Legal System</span>');
+      expect(result.content).toContain('>legal@acme.com</span>');
     });
   });
 
@@ -355,10 +355,10 @@ const client = "{{client_name}}";
       });
 
       // Should process template fields WITH highlighting
-      expect(result.content).toContain('data-field="contract\\_type"');
-      expect(result.content).toContain('data-field="client\\_name"');
-      expect(result.content).toContain('>Service Agreement\\</span>');
-      expect(result.content).toContain('>ACME Corporation\\</span>');
+      expect(result.content).toContain('data-field="contract_type"');
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('>Service Agreement</span>');
+      expect(result.content).toContain('>ACME Corporation</span>');
       
       // Should not process code blocks
       expect(result.content).toContain('const client = "{{client_name}}";');

@@ -27,3 +27,8 @@ export type { RemarkMixinsOptions } from './mixins';
 
 export { remarkImports } from './imports';
 export type { RemarkImportsOptions, ImportResult } from './imports';
+
+export { remarkLegalHeadersParser } from './legal-headers-parser';
+
+export { default as remarkDates } from './dates';
+export type { DateProcessingOptions } from './dates';

@@ -81,21 +81,20 @@ This content should not be processed.
   describe('Cross-References Integration', () => {
     it('should process cross-references and track them', async () => {
       const content = `---
-level1: "Article %n"
+level-one: "Article %n"
 ---
 
-# Payment Terms |payment|
+l. Payment Terms |payment|
 
 Payment is due within 30 days.
 
-# General Provisions
+l. General Provisions
 
 As specified in |payment|, all payments must be made promptly.
 `;
 
       const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true,
-        debug: true
+        enableFieldTracking: true
       });
 
       // Check that cross-references were processed
@@ -108,9 +107,42 @@ As specified in |payment|, all payments must be made promptly.
       expect(result.stats.pluginsUsed).toContain('remarkCrossReferences');
       
       // Check that the content was processed
-      expect(result.content).toContain('# l. Payment Terms'); // Header format is preserved in remark
+      expect(result.content).toContain('# Article 1 Payment Terms'); // Legal header processed with numbering
       expect(result.content).not.toContain('|payment|'); // Should be cleaned from header
       expect(result.content).toContain('Article 1'); // Should be replaced in content
+    });
+
+    it('should process cross-references with dot format and track them', async () => {
+      const content = `---
+level-one: "Article %n."
+---
+
+l. Payment Terms |payment|
+
+Payment is due within 30 days.
+
+l. General Provisions
+
+As specified in |payment|, all payments must be made promptly.
+`;
+
+      const result = await processLegalMarkdownWithRemark(content, {
+        enableFieldTracking: true
+      });
+
+      // Check that cross-references were processed
+      expect(result.metadata['_cross_references']).toBeDefined();
+      expect(result.metadata['_cross_references']).toHaveLength(1);
+      expect(result.metadata['_cross_references'][0].key).toBe('payment');
+      
+      // Check statistics
+      expect(result.stats.crossReferencesFound).toBe(1);
+      expect(result.stats.pluginsUsed).toContain('remarkCrossReferences');
+      
+      // Check that the content was processed
+      expect(result.content).toContain('# Article 1. Payment Terms'); // Legal header processed with numbering and dot
+      expect(result.content).not.toContain('|payment|'); // Should be cleaned from header
+      expect(result.content).toContain('Article 1.'); // Should be replaced in content with dot
     });
 
     it('should disable cross-references when requested', async () => {
@@ -193,15 +225,15 @@ Contract for <<client_name>> with standard {{field}}.
   describe('Plugin Integration', () => {
     it('should combine cross-references and field tracking', async () => {
       const content = `---
-level1: "Section %n"
+level-one: "Section %n"
 client_name: ACME Corp
 ---
 
-# Payment Terms |payment|
+l. Payment Terms |payment|
 
 Payment for {{client_name}} is due within 30 days.
 
-# General
+l. General
 
 As per |payment|, {{client_name}} must pay promptly.
 `;

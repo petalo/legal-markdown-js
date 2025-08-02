@@ -42,9 +42,14 @@ import {
   remarkClauses,
   remarkMixins,
   remarkImports,
+  remarkLegalHeadersParser,
+  remarkDates,
 } from '../../plugins/remark/index';
+import { remarkDebugAST } from '../../plugins/remark/debug-ast';
 import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
+import { processTemplateLoops } from '../template-loops';
+import { exportMetadata } from '../../core/exporters/metadata-exporter';
 
 /**
  * Configuration options for the Legal Markdown processor
@@ -70,6 +75,11 @@ export interface LegalMarkdownProcessorOptions {
   disableCrossReferences?: boolean;
   disableFieldTracking?: boolean;
 
+  /** Metadata export options */
+  exportMetadata?: boolean;
+  exportFormat?: 'yaml' | 'json';
+  exportPath?: string;
+
   /** Processing flags (for compatibility with legacy processor) */
   yamlOnly?: boolean;
   noHeaders?: boolean;
@@ -92,6 +102,9 @@ export interface LegalMarkdownProcessorResult {
 
   /** Extracted and processed metadata */
   metadata: Record<string, any>;
+
+  /** Array of exported metadata files */
+  exportedFiles?: string[];
 
   /** Field tracking report (if enabled) */
   fieldReport?: {
@@ -136,6 +149,14 @@ function createLegalMarkdownProcessor(
 ) {
   const processor = unified().use(remarkParse);
 
+  // Add legal headers parser FIRST to convert l., ll., etc. to proper headers
+  // This must run before any other plugin that depends on headers
+  if (!options.noHeaders) {
+    processor.use(remarkLegalHeadersParser, {
+      debug: options.debug,
+    });
+  }
+
   // Add imports plugin first (must be processed before other content)
   if (!options.noImports) {
     processor.use(remarkImports, {
@@ -160,13 +181,24 @@ function createLegalMarkdownProcessor(
     });
   }
 
+  // Skip loop processing plugins since we pre-process loops
+  // Consolidation and loop processing now happen before remark parsing
+
   // Add clauses plugin (conditional content processing)
   if (!options.noClauses) {
     processor.use(remarkClauses, {
       metadata,
       debug: options.debug,
+      enableFieldTracking: options.enableFieldTracking,
     });
   }
+
+  // Add dates plugin (processes @today tokens with arithmetic and formatting)
+  processor.use(remarkDates, {
+    metadata,
+    debug: options.debug,
+    enableFieldTracking: options.enableFieldTracking,
+  });
 
   // Add template fields plugin (processes {{field}} patterns)
   processor.use(remarkTemplateFields, {
@@ -208,8 +240,15 @@ function createLegalMarkdownProcessor(
     });
   }
 
-  // Add stringify plugin
-  processor.use(remarkStringify);
+  // Add stringify plugin with proper markdown formatting
+  processor.use(remarkStringify, {
+    emphasis: '*', // Use * for _italic_
+    strong: '*', // Use * for __bold__ (single asterisk means **double**)
+    bullet: '-', // Use - for bullets
+    fence: '`', // Use ` for code blocks
+    fences: true, // Use fenced code blocks
+    incrementListMarker: true, // Increment list markers (1. 2. 3.)
+  });
 
   return processor;
 }
@@ -259,10 +298,57 @@ export async function processLegalMarkdownWithRemark(
     }
 
     // Parse YAML front matter first
+    if (options.debug) {
+      console.log('[legal-markdown-processor] Raw content length:', content.length);
+      console.log(
+        '[legal-markdown-processor] Raw content first 500 chars:',
+        content.substring(0, 500)
+      );
+    }
+
     const { content: contentWithoutYaml, metadata: yamlMetadata } = parseYamlFrontMatter(
       content,
       options.throwOnYamlError
     );
+
+    if (options.debug) {
+      console.log('[legal-markdown-processor] YAML parsed:', Object.keys(yamlMetadata));
+      console.log('[legal-markdown-processor] Sample metadata:', yamlMetadata);
+    }
+
+    // If key processing is disabled, return original content without remark processing
+    // Check if the main content-altering features are disabled
+    const keyProcessingDisabled = options.noHeaders && options.noReferences && options.noMixins;
+
+    if (options.debug) {
+      console.log('[legal-markdown-processor] Processing flags:', {
+        noHeaders: options.noHeaders,
+        noReferences: options.noReferences,
+        noMixins: options.noMixins,
+        enableFieldTracking: options.enableFieldTracking,
+        keyProcessingDisabled,
+      });
+    }
+
+    if (keyProcessingDisabled && !options.enableFieldTracking) {
+      if (options.debug) {
+        console.log(
+          '[legal-markdown-processor] Key processing disabled, returning original content'
+        );
+      }
+
+      return {
+        content: contentWithoutYaml,
+        metadata: { ...yamlMetadata, ...options.additionalMetadata },
+        stats: {
+          processingTime: Date.now() - startTime,
+          pluginsUsed: [],
+          crossReferencesFound: 0,
+          fieldsTracked: 0,
+        },
+        warnings: [],
+      };
+    }
 
     // If only processing YAML, return early
     if (options.yamlOnly) {
@@ -285,9 +371,29 @@ export async function processLegalMarkdownWithRemark(
       ...options.additionalMetadata,
     };
 
+    if (options.debug) {
+      console.log(
+        '[legal-markdown-processor] Combined metadata keys:',
+        Object.keys(combinedMetadata)
+      );
+      console.log('[legal-markdown-processor] Combined metadata sample:', combinedMetadata);
+      console.log(
+        '[legal-markdown-processor] Services structure:',
+        JSON.stringify(combinedMetadata.services, null, 2)
+      );
+      console.log(
+        '[legal-markdown-processor] Milestones structure:',
+        JSON.stringify(combinedMetadata.milestones, null, 2)
+      );
+    }
+
     // Preprocess custom field patterns to avoid HTML parsing issues
     let preprocessedContent = contentWithoutYaml;
     const fieldMappings = new Map<string, string>(); // Maps normalized patterns to original patterns
+
+    if (options.debug) {
+      console.log('[legal-markdown-processor] About to check for pre-processing...');
+    }
 
     if (options.fieldPatterns && options.fieldPatterns.length > 0) {
       for (const pattern of options.fieldPatterns) {
@@ -299,6 +405,36 @@ export async function processLegalMarkdownWithRemark(
             fieldMappings.set(normalizedPattern, match);
             return normalizedPattern;
           });
+        }
+      }
+    }
+
+    // Pre-process template loops before remark parsing
+    if (!options.noClauses) {
+      if (options.debug) {
+        console.log('[legal-markdown-processor] Pre-processing template loops...');
+      }
+
+      preprocessedContent = processTemplateLoops(
+        preprocessedContent,
+        combinedMetadata,
+        undefined, // context
+        options.enableFieldTracking || false
+      );
+
+      if (options.debug) {
+        console.log(
+          '[legal-markdown-processor] Content after processTemplateLoops (first 800 chars):'
+        );
+        console.log(preprocessedContent.substring(0, 800));
+      }
+
+      if (options.debug) {
+        console.log('[legal-markdown-processor] Template loops processed');
+        if (preprocessedContent.includes('{{#')) {
+          console.log(
+            '[legal-markdown-processor] WARNING: Content still contains {{# patterns after loop processing!'
+          );
         }
       }
     }
@@ -368,6 +504,29 @@ export async function processLegalMarkdownWithRemark(
       };
     }
 
+    // Handle metadata export if requested
+    let exportedFiles: string[] = [];
+    if (options.exportMetadata) {
+      try {
+        const exportResult = exportMetadata(
+          finalMetadata,
+          options.exportFormat,
+          options.exportPath
+        );
+        exportedFiles = exportResult.exportedFiles;
+
+        if (options.debug) {
+          console.log(`📁 Exported metadata files: ${exportedFiles.join(', ')}`);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        warnings.push(`Failed to export metadata: ${errorMessage}`);
+        if (options.debug) {
+          console.warn('⚠️ Metadata export failed:', error);
+        }
+      }
+    }
+
     if (options.debug) {
       console.log(`✅ Processing completed in ${Date.now() - startTime}ms`);
       console.log(`📊 Cross-references found: ${crossReferencesFound}`);
@@ -377,6 +536,7 @@ export async function processLegalMarkdownWithRemark(
     return {
       content: processedContent,
       metadata: finalMetadata,
+      exportedFiles: exportedFiles.length > 0 ? exportedFiles : undefined,
       fieldReport,
       stats: {
         processingTime: Date.now() - startTime,
