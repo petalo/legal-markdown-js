@@ -1,3 +1,9 @@
+## <small>3.0.3 (2025-08-02)</small>
+
+- fix: prevent indented headers from becoming code blocks in HTML/PDF (#50)
+  ([1a92de1](https://github.com/petalo/legal-markdown-js/commit/1a92de1)),
+  closes [#50](https://github.com/petalo/legal-markdown-js/issues/50)
+
 ## <small>3.0.2 (2025-08-02)</small>
 
 - fix: correctly handle empty string vs undefined in header level definitions
