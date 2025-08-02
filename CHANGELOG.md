@@ -7,6 +7,45 @@
 - chore: update version to 3.0.0 and fix semantic-release configuration
   ([20657e6](https://github.com/petalo/legal-markdown-js/commit/20657e6))
 
+## 3.0.0 (2025-08-02)
+
+### ⚠ BREAKING CHANGES
+
+- **remark migration**: Internal processing pipeline migrated to AST-based
+  remark system
+- **API changes**: Some internal APIs have changed for enhanced performance
+- **field tracking**: Field tracking implementation updated for better accuracy
+
+### Features
+
+- **remark integration**: Complete remark migration with enhanced features and
+  modern architecture (#47)
+  ([a4dae11](https://github.com/petalo/legal-markdown-js/commit/a4dae11))
+- **CLI integration**: Add --headers flag for auto-populating YAML front matter
+- **remark processor**: Implement complete Legal Markdown processor using
+  unified/remark
+- **plugin architecture**: Export centralized plugin registry for consistent
+  imports
+- **API extensions**: Export processLegalMarkdownWithRemark for public API
+- **enhanced testing**: Add comprehensive noIndent integration tests and
+  enhanced coverage
+- **documentation**: Update core system architecture and processing pipeline
+  documentation
+
+### Performance Improvements
+
+- **AST processing**: Modern AST-based document processing with remark
+- **single pipeline**: Combine all Legal Markdown plugins in single processing
+  pipeline
+- **field tracking**: Automatic field tracking integration with clearing
+- **debugging**: Include debugging capabilities and error handling
+
+### Documentation
+
+- **architecture**: Complete remark integration architecture guide
+- **processing**: Enhanced processing pipeline documentation
+- **migration**: Comprehensive migration guide for remark system
+
 ## <small>2.16.3 (2025-07-31)</small>
 
 - fix: unify archive directory behavior to be project-relative (#46)
