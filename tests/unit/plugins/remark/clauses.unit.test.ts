@@ -1,5 +1,5 @@
 /**
- * @fileoverview Unit Tests for Remark Clauses Plugin
+ * Unit Tests for Remark Clauses Plugin
  *
  * Comprehensive test suite for the remark clauses plugin, covering conditional
  * logic, expression evaluation, security, edge cases, and integration scenarios.
@@ -18,14 +18,11 @@ async function processMarkdownWithClauses(
   markdown: string,
   options: RemarkClausesOptions
 ): Promise<string> {
-  const processor = unified()
-    .use(remarkParse)
-    .use(remarkClauses, options)
-    .use(remarkStringify, {
-      bullet: '-',
-      fences: true,
-      incrementListMarker: false,
-    });
+  const processor = unified().use(remarkParse).use(remarkClauses, options).use(remarkStringify, {
+    bullet: '-',
+    fences: true,
+    incrementListMarker: false,
+  });
 
   const result = await processor.process(markdown);
   return result.toString();
@@ -36,7 +33,7 @@ describe('remarkClauses Plugin', () => {
     it('should include content when condition is true', async () => {
       const input = `This is {{#if hasWarranty}}warranty content{{/if}} in the document.`;
       const options: RemarkClausesOptions = {
-        metadata: { hasWarranty: true }
+        metadata: { hasWarranty: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -47,7 +44,7 @@ describe('remarkClauses Plugin', () => {
     it('should exclude content when condition is false', async () => {
       const input = `This is {{#if hasWarranty}}warranty content{{/if}} in the document.`;
       const options: RemarkClausesOptions = {
-        metadata: { hasWarranty: false }
+        metadata: { hasWarranty: false },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -59,7 +56,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle missing variables as false', async () => {
       const input = `This is {{#if missingVariable}}content{{/if}} in the document.`;
       const options: RemarkClausesOptions = {
-        metadata: {}
+        metadata: {},
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -71,7 +68,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle undefined variables as false', async () => {
       const input = `This is {{#if undefinedVar}}content{{/if}} in the document.`;
       const options: RemarkClausesOptions = {
-        metadata: { undefinedVar: undefined }
+        metadata: { undefinedVar: undefined },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -82,7 +79,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle null variables as false', async () => {
       const input = `This is {{#if nullVar}}content{{/if}} in the document.`;
       const options: RemarkClausesOptions = {
-        metadata: { nullVar: null }
+        metadata: { nullVar: null },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -95,7 +92,7 @@ describe('remarkClauses Plugin', () => {
     it('should include if-content when condition is true', async () => {
       const input = `{{#if hasInsurance}}Full coverage{{else}}Basic coverage{{/if}} applies.`;
       const options: RemarkClausesOptions = {
-        metadata: { hasInsurance: true }
+        metadata: { hasInsurance: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -107,7 +104,7 @@ describe('remarkClauses Plugin', () => {
     it('should include else-content when condition is false', async () => {
       const input = `{{#if hasInsurance}}Full coverage{{else}}Basic coverage{{/if}} applies.`;
       const options: RemarkClausesOptions = {
-        metadata: { hasInsurance: false }
+        metadata: { hasInsurance: false },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -119,7 +116,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle complex if-else content', async () => {
       const input = `{{#if jurisdiction == "US"}}This agreement is governed by US law.{{else}}This agreement is governed by international law.{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: { jurisdiction: 'US' }
+        metadata: { jurisdiction: 'US' },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -134,7 +131,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle string equality', async () => {
         const input = `{{#if country == "USA"}}US specific clause{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { country: 'USA' }
+          metadata: { country: 'USA' },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -145,7 +142,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle number equality', async () => {
         const input = `{{#if employees == 50}}Medium company{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { employees: 50 }
+          metadata: { employees: 50 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -156,7 +153,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle boolean equality', async () => {
         const input = `{{#if isActive == true}}Active status{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isActive: true }
+          metadata: { isActive: true },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -169,7 +166,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle string inequality', async () => {
         const input = `{{#if status != "pending"}}Processing complete{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { status: 'approved' }
+          metadata: { status: 'approved' },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -180,7 +177,7 @@ describe('remarkClauses Plugin', () => {
       it('should exclude when inequality is false', async () => {
         const input = `{{#if status != "pending"}}Processing complete{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { status: 'pending' }
+          metadata: { status: 'pending' },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -193,7 +190,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle greater than (>)', async () => {
         const input = `{{#if revenue > 1000000}}Large enterprise{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { revenue: 1500000 }
+          metadata: { revenue: 1500000 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -204,7 +201,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle less than (<)', async () => {
         const input = `{{#if employees < 10}}Small business{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { employees: 5 }
+          metadata: { employees: 5 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -215,7 +212,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle greater than or equal (>=)', async () => {
         const input = `{{#if age >= 18}}Adult terms{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { age: 18 }
+          metadata: { age: 18 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -226,7 +223,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle less than or equal (<=)', async () => {
         const input = `{{#if discount <= 10}}Standard rate{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { discount: 10 }
+          metadata: { discount: 10 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -241,7 +238,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle simple AND conditions', async () => {
         const input = `{{#if hasLicense && isActive}}Licensed and active{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { hasLicense: true, isActive: true }
+          metadata: { hasLicense: true, isActive: true },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -252,7 +249,7 @@ describe('remarkClauses Plugin', () => {
       it('should fail when any AND condition is false', async () => {
         const input = `{{#if hasLicense && isActive}}Licensed and active{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { hasLicense: true, isActive: false }
+          metadata: { hasLicense: true, isActive: false },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -263,7 +260,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle multiple AND conditions', async () => {
         const input = `{{#if hasLicense && isActive && isPaid}}All requirements met{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { hasLicense: true, isActive: true, isPaid: true }
+          metadata: { hasLicense: true, isActive: true, isPaid: true },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -276,7 +273,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle simple OR conditions', async () => {
         const input = `{{#if isVip || isPremium}}Special treatment{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isVip: false, isPremium: true }
+          metadata: { isVip: false, isPremium: true },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -287,7 +284,7 @@ describe('remarkClauses Plugin', () => {
       it('should succeed when any OR condition is true', async () => {
         const input = `{{#if isVip || isPremium}}Special treatment{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isVip: true, isPremium: false }
+          metadata: { isVip: true, isPremium: false },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -298,7 +295,7 @@ describe('remarkClauses Plugin', () => {
       it('should fail when all OR conditions are false', async () => {
         const input = `{{#if isVip || isPremium}}Special treatment{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isVip: false, isPremium: false }
+          metadata: { isVip: false, isPremium: false },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -311,7 +308,7 @@ describe('remarkClauses Plugin', () => {
       it('should handle mixed AND and OR operators', async () => {
         const input = `{{#if isVip && isActive || isPremium && isActive}}Active premium user{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isVip: false, isPremium: true, isActive: true }
+          metadata: { isVip: false, isPremium: true, isActive: true },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -322,7 +319,7 @@ describe('remarkClauses Plugin', () => {
       it('should respect operator precedence (AND before OR)', async () => {
         const input = `{{#if isVip || isPremium && isActive}}Show content{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { isVip: true, isPremium: false, isActive: false }
+          metadata: { isVip: true, isPremium: false, isActive: false },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -337,8 +334,8 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if client.isActive}}Client is active{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: {
-          client: { isActive: true }
-        }
+          client: { isActive: true },
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -352,10 +349,10 @@ describe('remarkClauses Plugin', () => {
         metadata: {
           company: {
             address: {
-              country: 'US'
-            }
-          }
-        }
+              country: 'US',
+            },
+          },
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -367,8 +364,8 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if client.settings.notifications}}Notifications enabled{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: {
-          client: { name: 'John' } // Missing settings property
-        }
+          client: { name: 'John' }, // Missing settings property
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -380,8 +377,8 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if contracts.length > 0}}Has contracts{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: {
-          contracts: ['contract1', 'contract2']
-        }
+          contracts: ['contract1', 'contract2'],
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -395,7 +392,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat non-empty strings as truthy', async () => {
         const input = `{{#if message}}Has message{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { message: 'Hello' }
+          metadata: { message: 'Hello' },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -406,7 +403,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat empty strings as falsy', async () => {
         const input = `{{#if message}}Has message{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { message: '' }
+          metadata: { message: '' },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -419,7 +416,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat non-zero numbers as truthy', async () => {
         const input = `{{#if count}}Has count{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { count: 5 }
+          metadata: { count: 5 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -430,7 +427,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat zero as falsy', async () => {
         const input = `{{#if count}}Has count{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { count: 0 }
+          metadata: { count: 0 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -441,7 +438,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat negative numbers as truthy', async () => {
         const input = `{{#if balance}}Has balance{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { balance: -100 }
+          metadata: { balance: -100 },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -454,7 +451,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat non-empty arrays as truthy', async () => {
         const input = `{{#if items}}Has items{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { items: [1, 2, 3] }
+          metadata: { items: [1, 2, 3] },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -465,7 +462,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat empty arrays as falsy', async () => {
         const input = `{{#if items}}Has items{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { items: [] }
+          metadata: { items: [] },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -478,7 +475,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat non-empty objects as truthy', async () => {
         const input = `{{#if config}}Has config{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { config: { setting: 'value' } }
+          metadata: { config: { setting: 'value' } },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -489,7 +486,7 @@ describe('remarkClauses Plugin', () => {
       it('should treat empty objects as falsy', async () => {
         const input = `{{#if config}}Has config{{/if}}`;
         const options: RemarkClausesOptions = {
-          metadata: { config: {} }
+          metadata: { config: {} },
         };
 
         const result = await processMarkdownWithClauses(input, options);
@@ -512,8 +509,8 @@ describe('remarkClauses Plugin', () => {
         metadata: {
           hasWarranty: true,
           hasInsurance: false,
-          isCommercial: true
-        }
+          isCommercial: true,
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -528,8 +525,8 @@ describe('remarkClauses Plugin', () => {
       const options: RemarkClausesOptions = {
         metadata: {
           hasWarranty: true,
-          hasSupport: false
-        }
+          hasSupport: false,
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -544,8 +541,8 @@ describe('remarkClauses Plugin', () => {
       const options: RemarkClausesOptions = {
         metadata: {
           isEnterprise: true,
-          hasSupport: true
-        }
+          hasSupport: true,
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -560,8 +557,8 @@ describe('remarkClauses Plugin', () => {
         metadata: {
           level1: true,
           level2: true,
-          level3: true
-        }
+          level3: true,
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -574,8 +571,8 @@ describe('remarkClauses Plugin', () => {
       const options: RemarkClausesOptions = {
         metadata: {
           level1: false,
-          level2: true
-        }
+          level2: true,
+        },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -588,7 +585,7 @@ describe('remarkClauses Plugin', () => {
     it('should reject unsafe condition expressions', async () => {
       const input = `{{#if eval('1+1')}}Dangerous content{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: {}
+        metadata: {},
       };
 
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -610,7 +607,7 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if <script>alert(1)</script>}}Bad content{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: {},
-        debug: true
+        debug: true,
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -624,7 +621,7 @@ describe('remarkClauses Plugin', () => {
     it('should allow safe condition expressions', async () => {
       const input = `{{#if name == "John" && age > 18}}Safe content{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: { name: 'John', age: 25 }
+        metadata: { name: 'John', age: 25 },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -637,7 +634,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle malformed conditional blocks gracefully', async () => {
       const input = `{{#if condition}}Content without closing tag`;
       const options: RemarkClausesOptions = {
-        metadata: { condition: true }
+        metadata: { condition: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -649,7 +646,7 @@ describe('remarkClauses Plugin', () => {
     it('should handle unmatched else blocks', async () => {
       const input = `{{else}}Orphaned else block{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: {}
+        metadata: {},
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -661,7 +658,7 @@ describe('remarkClauses Plugin', () => {
     it('should include content on condition evaluation errors', async () => {
       const input = `{{#if}}Empty condition{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: {}
+        metadata: {},
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -676,7 +673,7 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if testCondition}}Test content{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: { testCondition: true },
-        debug: true
+        debug: true,
       };
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -695,7 +692,7 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if complexCondition == "test"}}Debug content{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: { complexCondition: 'test' },
-        debug: true
+        debug: true,
       };
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -714,7 +711,7 @@ describe('remarkClauses Plugin', () => {
       const input = `{{#if testCondition}}Test content{{/if}}`;
       const options: RemarkClausesOptions = {
         metadata: { testCondition: true },
-        debug: false
+        debug: false,
       };
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -731,7 +728,7 @@ describe('remarkClauses Plugin', () => {
     it('should work with formatted text inside conditions', async () => {
       const input = `{{#if showImportant}}**Important:** This is critical information.{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: { showImportant: true }
+        metadata: { showImportant: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -742,7 +739,7 @@ describe('remarkClauses Plugin', () => {
     it('should work with links inside conditions', async () => {
       const input = `{{#if showLink}}Visit [our website](https://example.com) for more info.{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: { showLink: true }
+        metadata: { showLink: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -757,7 +754,7 @@ describe('remarkClauses Plugin', () => {
 - {{#if hasSupport}}Support terms included{{/if}}
 `;
       const options: RemarkClausesOptions = {
-        metadata: { hasWarranty: true, hasSupport: false }
+        metadata: { hasWarranty: true, hasSupport: false },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -769,7 +766,7 @@ describe('remarkClauses Plugin', () => {
     it('should work within headers', async () => {
       const input = `# {{#if isContract}}Contract{{else}}Agreement{{/if}} Terms`;
       const options: RemarkClausesOptions = {
-        metadata: { isContract: true }
+        metadata: { isContract: true },
       };
 
       const result = await processMarkdownWithClauses(input, options);
@@ -780,8 +777,9 @@ describe('remarkClauses Plugin', () => {
 
   describe('Performance and Memory', () => {
     it('should handle documents with many conditional blocks', async () => {
-      const blocks = Array.from({ length: 50 }, (_, i) => 
-        `{{#if condition${i}}}Content ${i}{{/if}}`
+      const blocks = Array.from(
+        { length: 50 },
+        (_, i) => `{{#if condition${i}}}Content ${i}{{/if}}`
       );
       const input = blocks.join(' ');
 
@@ -813,7 +811,7 @@ describe('remarkClauses Plugin', () => {
     it('should not leak memory with repeated processing', async () => {
       const input = `{{#if testVar}}Test content{{/if}}`;
       const options: RemarkClausesOptions = {
-        metadata: { testVar: true }
+        metadata: { testVar: true },
       };
 
       // Process the same document multiple times
@@ -824,6 +822,71 @@ describe('remarkClauses Plugin', () => {
 
       // If we get here without running out of memory, the test passes
       expect(true).toBe(true);
+    });
+  });
+
+  describe('Array Loops and Context Variables', () => {
+    it('should process array loops with @total variable', async () => {
+      const input = `{{#items}}Item {{@index}} of {{@total}}: {{name}}{{/items}}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          items: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
+        },
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Item 0 of 3: First');
+      expect(result).toContain('Item 1 of 3: Second');
+      expect(result).toContain('Item 2 of 3: Third');
+    });
+
+    it('should provide all loop context variables including @first and @last', async () => {
+      const input = `{{#services}}{{#if @first}}First: {{/if}}{{name}}{{#if @last}} (Total: {{@total}}){{/if}}{{/services}}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          services: [{ name: 'Service A' }, { name: 'Service B' }],
+        },
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('First: Service A');
+      expect(result).toContain('Service B (Total: 2)');
+    });
+
+    it('should not show content for empty arrays', async () => {
+      const input = `{{#items}}This should not appear{{/items}}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          items: [],
+        },
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).not.toContain('This should not appear');
+    });
+
+    it('should handle nested loops within clauses', async () => {
+      const input = `{{#if showDepartments}}{{#departments}}Department: {{name}}{{#employees}} - {{name}}{{/employees}}{{/departments}}{{/if}}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          showDepartments: true,
+          departments: [
+            {
+              name: 'Engineering',
+              employees: [{ name: 'Alice' }, { name: 'Bob' }],
+            },
+          ],
+        },
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Department: Engineering');
+      expect(result).toContain(' - Alice');
+      expect(result).toContain(' - Bob');
     });
   });
 });

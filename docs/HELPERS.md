@@ -13,6 +13,7 @@ expressions.
 ## Table of Contents
 
 - [Template Loops and Lists](#template-loops-and-lists)
+- [Conditional Clauses](#conditional-clauses)
 - [Date Helpers](#date-helpers)
 - [Number Helpers](#number-helpers)
 - [String Helpers](#string-helpers)
@@ -23,8 +24,7 @@ expressions.
 
 ## Template Loops and Lists
 
-Legal Markdown supports template loops for iterating over arrays and conditional
-blocks using the `{{#variable}}...{{/variable}}` syntax.
+Legal Markdown supports multiple syntaxes for template loops and conditional blocks. The system automatically detects whether a variable contains an array (for iteration) or a boolean/truthy value (for conditional rendering).
 
 ### Array Loops
 
@@ -160,6 +160,80 @@ Perfect for generating table rows:
 
 6. **Error Handling:** If the array variable doesn't exist, the loop block is
    simply omitted from the output.
+
+## Conditional Clauses
+
+Beyond template loops, Legal Markdown JS supports multiple syntaxes for conditional content rendering. Each syntax has specific advantages for different use cases:
+
+### Block Conditional Syntax `{{#if condition}}`
+
+For complex conditions with logical operators and optional else clauses:
+
+```markdown
+{{#if premium && region == "US"}}
+**Premium US Features:**
+- Priority support
+- Extended warranty
+- Advanced analytics
+{{else}}
+**Standard Features:**
+- Standard support  
+- Basic warranty
+- Standard analytics
+{{/if}}
+```
+
+**Supported operators:**
+- **Comparison**: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- **Logical**: `&&` (AND), `||` (OR)
+- **Grouping**: Use parentheses for complex expressions
+
+### Bracket Conditional Syntax `[content]{condition}`
+
+Ideal for inline conditional content within paragraphs:
+
+```markdown
+This service [includes priority support]{isPremium} and [offers 24/7 availability]{hasExtendedSupport}.
+
+[Premium features are available]{subscription.level == "premium"} for qualified accounts.
+```
+
+### Legacy Bracket Syntax `[{{condition}}content]`
+
+For compatibility with original Legal Markdown documents:
+
+```markdown
+[{{confidentiality}}This information is confidential and proprietary.]
+
+[{{includeWarranty}}Warranty terms apply as described in Annex A.]
+```
+
+### Advanced Conditional Examples
+
+**Nested conditions:**
+```markdown
+{{#if client.type == "enterprise"}}
+  {{#if client.region == "US"}}
+  Special US enterprise terms apply.
+  {{else}}
+  International enterprise terms apply.
+  {{/if}}
+{{/if}}
+```
+
+**Multiple conditions in one paragraph:**
+```markdown
+The agreement [includes standard terms]{includeStandard}[, premium features]{isPremium}[, and extended support]{hasSupport}.
+```
+
+**Numeric comparisons:**
+```markdown
+[Volume discount applies]{quantity >= 100} for large orders.
+
+{{#if amount > 10000}}
+Executive approval required for high-value contracts.
+{{/if}}
+```
 
 ## Date Helpers
 

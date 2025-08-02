@@ -131,15 +131,35 @@ export function processTemplateLoops(
  */
 function findLoopBlocks(content: string): LoopBlock[] {
   const loopBlocks: LoopBlock[] = [];
+
+  // Pattern for array loops: {{#variable}}...{{/variable}}
   const loopPattern = /\{\{#([\w.]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g;
 
+  // Pattern for conditionals: {{#if condition}}...{{/if}} (with optional {{else}})
+  const conditionalPattern = /\{\{#if\s*([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+
   let match;
+
+  // Find array loops
   while ((match = loopPattern.exec(content)) !== null) {
     const [fullMatch, variable, loopContent] = match;
 
     loopBlocks.push({
       variable,
       content: loopContent,
+      start: match.index,
+      end: match.index + fullMatch.length,
+      fullMatch,
+    });
+  }
+
+  // Find conditional blocks
+  while ((match = conditionalPattern.exec(content)) !== null) {
+    const [fullMatch, condition, conditionalContent] = match;
+
+    loopBlocks.push({
+      variable: `if ${condition}`, // Mark as conditional
+      content: conditionalContent,
       start: match.index,
       end: match.index + fullMatch.length,
       fullMatch,
@@ -165,6 +185,38 @@ function expandLoopBlock(
   enableFieldTracking: boolean = true
 ): string {
   const { variable, content } = loopBlock;
+
+  // Handle conditional blocks ({{#if condition}})
+  if (variable.startsWith('if ')) {
+    const condition = variable.substring(3).trim(); // Remove 'if '
+    const conditionValue = evaluateCondition(condition, metadata);
+
+    // Track field usage for conditional
+    fieldTracker.trackField(`if ${condition}`, {
+      value: conditionValue,
+      hasLogic: true,
+      mixinUsed: 'conditional',
+    });
+
+    // Check if content contains {{else}} clause
+    const elseIndex = content.indexOf('{{else}}');
+
+    if (elseIndex !== -1) {
+      // Split content into "if" and "else" parts
+      const ifContent = content.substring(0, elseIndex);
+      const elseContent = content.substring(elseIndex + 8); // 8 = length of '{{else}}'
+
+      const selectedContent = conditionValue ? ifContent : elseContent;
+      return processTemplateContent(selectedContent, metadata, parentContext, enableFieldTracking);
+    } else {
+      // No {{else}} clause, use original behavior
+      if (conditionValue) {
+        return processTemplateContent(content, metadata, parentContext, enableFieldTracking);
+      } else {
+        return ''; // Condition false, return empty
+      }
+    }
+  }
 
   // Resolve the loop variable value from metadata or parent context
   const loopValue = resolveLoopVariable(variable, metadata, parentContext);
@@ -497,7 +549,8 @@ function resolveHelperArgument(arg: string, metadata: Record<string, any>): any 
 
   // Handle @today special case
   if (arg === '@today') {
-    return new Date();
+    // Check if @today is defined in metadata first, otherwise use current date
+    return metadata['@today'] ? new Date(metadata['@today']) : new Date();
   }
 
   // Handle nested helper function calls
@@ -729,32 +782,145 @@ function findOperatorIndex(expression: string, operator: string, startIndex: num
  * @returns Processed expression result
  */
 function processExpression(expression: string, metadata: Record<string, any>): string {
-  // Handle concatenation with +
-  if (expression.includes('+')) {
-    return expression
-      .split('+')
-      .map(part => {
-        const trimmed = part.trim();
+  // Handle string concatenation (if expression has quotes and +)
 
-        // Handle quoted strings
-        if (
-          (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-          // eslint-disable-next-line quotes
-          (trimmed.startsWith("'") && trimmed.endsWith("'"))
-        ) {
-          return trimmed.slice(1, -1);
-        }
+  // eslint-disable-next-line quotes
+  if (expression.includes('+') && (expression.includes('"') || expression.includes("'"))) {
+    return evaluateStringConcatenation(expression, metadata);
+  }
 
-        // Handle variables
-        const value = resolveVariablePath(trimmed, metadata);
-        return value !== undefined ? String(value) : trimmed;
-      })
-      .join('');
+  // Handle mathematical operations (*, /, +, -)
+  if (
+    expression.includes('*') ||
+    expression.includes('/') ||
+    expression.includes('+') ||
+    expression.includes('-')
+  ) {
+    return evaluateMathematicalExpression(expression, metadata);
   }
 
   // Handle single variable
   const value = resolveVariablePath(expression, metadata);
   return value !== undefined ? String(value) : expression;
+}
+
+/**
+ * Evaluates string concatenation expressions with variables
+ * @param expression - The concatenation expression (e.g., '"$" + price')
+ * @param metadata - The metadata object
+ * @returns The concatenated result as string
+ */
+function evaluateStringConcatenation(expression: string, metadata: Record<string, any>): string {
+  try {
+    // Replace variables in the expression with their values
+    let processedExpression = expression.trim();
+
+    // Find all variable names (alphanumeric + underscores + dots, but not inside quotes)
+    const variablePattern = /\b[a-zA-Z_][a-zA-Z0-9_.]*\b/g;
+    const variables = new Set<string>();
+    let match;
+
+    // Only capture variables that are not inside quoted strings
+    let inQuotes = false;
+    let quoteChar = '';
+    for (let i = 0; i < expression.length; i++) {
+      const char = expression[i];
+      // eslint-disable-next-line quotes
+      if (!inQuotes && (char === '"' || char === "'")) {
+        inQuotes = true;
+        quoteChar = char;
+      } else if (inQuotes && char === quoteChar) {
+        inQuotes = false;
+        quoteChar = '';
+      }
+    }
+
+    // Reset and find variables outside quotes
+    while ((match = variablePattern.exec(expression)) !== null) {
+      // Check if this match is inside quotes
+      const beforeMatch = expression.substring(0, match.index);
+      const openQuotes = (beforeMatch.match(/"/g) || []).length;
+      const openSingleQuotes = (beforeMatch.match(/'/g) || []).length;
+
+      // If even number of quotes before this match, we're outside quotes
+      if (openQuotes % 2 === 0 && openSingleQuotes % 2 === 0) {
+        variables.add(match[0]);
+      }
+    }
+
+    // Replace each variable with its value
+    for (const variable of variables) {
+      const value = resolveVariablePath(variable, metadata);
+      if (value !== undefined) {
+        const regex = new RegExp(`\\b${variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        if (typeof value === 'string') {
+          processedExpression = processedExpression.replace(regex, `"${value}"`);
+        } else {
+          processedExpression = processedExpression.replace(regex, String(value));
+        }
+      } else {
+        // If any variable is undefined, return original expression
+        return expression;
+      }
+    }
+
+    // Safely evaluate the string concatenation expression
+    // Use Function constructor for safe evaluation
+    const result = new Function(`"use strict"; return (${processedExpression})`)();
+
+    return String(result);
+  } catch (error) {
+    // If evaluation fails, return original expression
+    return expression;
+  }
+}
+
+/**
+ * Evaluates mathematical expressions with variables
+ * @param expression - The mathematical expression (e.g., "hours * rate")
+ * @param metadata - The metadata object
+ * @returns The calculated result as string
+ */
+function evaluateMathematicalExpression(expression: string, metadata: Record<string, any>): string {
+  try {
+    // Replace variables in the expression with their values
+    let processedExpression = expression;
+
+    // Find all variable names (alphanumeric + underscores + dots)
+    const variablePattern = /[a-zA-Z_][a-zA-Z0-9_.]*(?![a-zA-Z0-9_.])/g;
+    const variables = new Set<string>();
+    let match;
+
+    while ((match = variablePattern.exec(expression)) !== null) {
+      variables.add(match[0]);
+    }
+
+    // Replace each variable with its value
+    for (const variable of variables) {
+      const value = resolveVariablePath(variable, metadata);
+      if (value !== undefined && !isNaN(Number(value))) {
+        const regex = new RegExp(`\\b${variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        processedExpression = processedExpression.replace(regex, String(value));
+      } else {
+        // If any variable is undefined or not a number, return original expression
+        return expression;
+      }
+    }
+
+    // Evaluate the mathematical expression safely
+    // Only allow numbers, operators, parentheses, and whitespace
+    if (!/^[\d\s+\-*/().]+$/.test(processedExpression)) {
+      return expression;
+    }
+
+    // Use Function constructor for safe evaluation (no access to global scope)
+    const result = new Function(`"use strict"; return (${processedExpression})`)();
+
+    return typeof result === 'number' && !isNaN(result) ? String(result) : expression;
+  } catch (error) {
+    // If evaluation fails, return original expression
+    return expression;
+  }
 }
 
 /**
@@ -810,4 +976,70 @@ function convertMarkdownListToHtml(content: string): string {
   }
 
   return content;
+}
+
+/**
+ * Evaluates a conditional expression
+ * @param condition - The condition to evaluate (e.g., "includeSupport", "client.active")
+ * @param metadata - The metadata object
+ * @returns Boolean result of the condition
+ */
+function evaluateCondition(condition: string, metadata: Record<string, any>): boolean {
+  const value = resolveVariablePath(condition, metadata);
+
+  // Consider truthy values: non-empty strings, non-zero numbers, true, non-empty arrays, non-empty objects
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') return value.length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+
+  return Boolean(value);
+}
+
+/**
+ * Processes template content with field substitution
+ * @param content - The content to process
+ * @param metadata - The metadata object
+ * @param context - Current loop context
+ * @param enableFieldTracking - Whether to enable field tracking
+ * @returns Processed content with fields substituted
+ */
+function processTemplateContent(
+  content: string,
+  metadata: Record<string, any>,
+  context?: LoopContext,
+  enableFieldTracking: boolean = true
+): string {
+  // Process any nested template loops first
+  let processedContent = processTemplateLoops(content, metadata, context, enableFieldTracking);
+
+  // Process field substitutions {{variable}}
+  processedContent = processedContent.replace(/\{\{([^#/][^}]*)\}\}/g, (match, variable) => {
+    const trimmedVar = variable.trim();
+    const value = resolveVariablePath(trimmedVar, metadata);
+
+    if (value !== undefined) {
+      if (enableFieldTracking) {
+        const isEmptyValue =
+          value === null || value === '' || (typeof value === 'string' && value.trim() === '');
+        const cssClass = isEmptyValue ? 'missing-value' : 'imported-value';
+
+        fieldTracker.trackField(trimmedVar, {
+          value: value,
+          originalValue: match,
+          hasLogic: false,
+          mixinUsed: 'conditional',
+        });
+
+        return `<span class="${cssClass}" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(value)}</span>`;
+      }
+      return String(value);
+    }
+
+    return match; // Keep original if not found
+  });
+
+  return processedContent;
 }

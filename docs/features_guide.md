@@ -14,6 +14,12 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
     - [Variable References](#variable-references)
     - [Automatic Cross-References Metadata](#automatic-cross-references-metadata)
   - [Optional Clauses](#optional-clauses)
+    - [Modern Bracket Syntax `[content]{condition}`](#modern-bracket-syntax-contentcondition)
+    - [Block Conditional Syntax `{{#if condition}}`](#block-conditional-syntax-if-condition)
+    - [Simple Variable Syntax `{{#variable}}`](#simple-variable-syntax-variable)
+    - [Legacy Bracket Syntax `[{{condition}}content]`](#legacy-bracket-syntax-conditioncontent)
+    - [Advanced Operators](#advanced-operators)
+    - [Template Loops](#template-loops)
   - [Partial Imports](#partial-imports)
   - [Frontmatter Merging](#frontmatter-merging)
     - [Basic Frontmatter Merging](#basic-frontmatter-merging)
@@ -28,7 +34,7 @@ Comprehensive guide to all features and capabilities of Legal Markdown JS.
   - [Nested Object Access](#nested-object-access)
   - [Array Access](#array-access)
   - [Conditional Mixins](#conditional-mixins)
-- [Template Loops](#template-loops)
+- [Template Loops](#template-loops-1)
   - [Array Iteration](#array-iteration)
   - [Conditional Blocks](#conditional-blocks)
   - [Nested Loops](#nested-loops)
@@ -223,16 +229,101 @@ overridden by imports.
 
 ### Optional Clauses
 
-Conditional content based on YAML variables:
+Legal Markdown JS supports **multiple syntaxes** for conditional content based on YAML variables. Each syntax offers different advantages for various use cases:
+
+#### Modern Bracket Syntax `[content]{condition}`
+
+The recommended syntax for inline conditional content:
 
 ```markdown
 [This clause appears only if confidentiality is required.]{confidentiality}
 
-[Premium support is included for enterprise clients.]{client.type =
-"enterprise"}
+[Premium support is included for enterprise clients.]{client.type == "enterprise"}
 
-[This applies to California residents only.]{jurisdiction = "California"}
+[This applies to California residents only.]{jurisdiction == "California"}
+
+The service [includes priority support]{isPremium} and [24/7 availability]{hasExtendedSupport}.
 ```
+
+#### Block Conditional Syntax `{{#if condition}}`
+
+For complex conditions with logical operators and optional else clauses:
+
+```markdown
+{{#if premium && region == "US"}}
+**Premium US Terms:**
+- 24/7 phone support
+- Priority handling
+- Extended warranty
+
+{{else}}
+**Standard Terms:**
+- Email support
+- Standard processing
+- Basic warranty
+{{/if}}
+```
+
+#### Simple Variable Syntax `{{#variable}}`
+
+Concise syntax for boolean variables and automatic array iteration:
+
+```markdown
+{{#includeWarranty}}
+**Warranty Terms:**
+This product includes a 12-month warranty covering defects.
+{{/includeWarranty}}
+
+{{#services}}
+- {{name}}: {{formatCurrency(price, currency)}}
+{{/services}}
+```
+
+#### Legacy Bracket Syntax `[{{condition}}content]`
+
+For compatibility with original Legal Markdown documents:
+
+```markdown
+[{{confidentiality}}This information is confidential and proprietary.]
+
+[{{showLegalNotice}}This document is legally binding.]
+```
+
+#### Advanced Operators
+
+All syntaxes support comparison and logical operators:
+
+- **Comparison**: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- **Logical**: `&&` (AND), `||` (OR)
+- **Grouping**: Use parentheses for complex expressions
+
+```markdown
+{{#if (premium || enterprise) && status == "active"}}
+Advanced features are available for your account type.
+{{/if}}
+
+[Special pricing applies]{amount >= 1000 && region != "restricted"}
+```
+
+#### Template Loops
+
+Arrays are automatically detected and iterated:
+
+```markdown
+{{#items}}
+{{@index + 1}}. **{{name}}** - {{formatCurrency(price, "USD")}}
+   {{description}}
+   {{#if @last}}*All prices include tax*{{/if}}
+{{/items}}
+```
+
+**Loop Context Variables:**
+- `@index` - Current item index (0-based)
+- `@first` - True for first item
+- `@last` - True for last item
+- `@total` - Total number of items
+
+For comprehensive documentation on all clause syntaxes, see the [Optional Clauses Guide](./optional-clauses.md).
 
 ### Partial Imports
 
