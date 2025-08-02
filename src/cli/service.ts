@@ -338,7 +338,7 @@ export class CliService {
       cssPath,
       highlightCssPath: path.join(process.cwd(), 'src/styles/highlight.css'),
       title: options.title || baseName,
-      // Force noIndent: true for HTML/PDF generation to prevent indented headers 
+      // Force noIndent: true for HTML/PDF generation to prevent indented headers
       // from being interpreted as code blocks by remark
       noIndent: true,
     };
