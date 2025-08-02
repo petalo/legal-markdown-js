@@ -339,9 +339,12 @@ templates/
 title: 'Custom Enterprise Agreement'
 ---
 
-@import metadata/enterprise-defaults.md @import metadata/client-defaults.md
-@import contracts/base-contract.md @import clauses/confidentiality.md @import
-clauses/warranty.md @import metadata/compliance-eu.md
+@import metadata/enterprise-defaults.md
+@import metadata/client-defaults.md
+@import contracts/base-contract.md
+@import clauses/confidentiality.md
+@import clauses/warranty.md
+@import metadata/compliance-eu.md
 ```
 
 ## Best Practices
