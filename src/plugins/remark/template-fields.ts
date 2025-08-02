@@ -36,6 +36,7 @@ import type { Plugin } from 'unified';
 import type { Root, Text, HTML } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { extensionHelpers as helpers } from '../../extensions/helpers/index';
+import { detectBracketValues } from '../../extensions/ast-mixin-processor';
 
 /**
  * Template field definition extracted from text
@@ -68,6 +69,43 @@ interface TemplateFieldOptions {
 const DEFAULT_FIELD_PATTERN = /\{\{\s*([^}]+)\s*\}\}/g;
 
 /**
+ * Pattern for @today syntax without brackets
+ */
+const TODAY_PATTERN = /@today(?:\[([^\]]+)\])?/g;
+
+/**
+ * Check if a position is inside a loop or conditional block
+ */
+function isInsideLoopOrConditional(text: string, position: number): boolean {
+  // Pattern to match loop/conditional blocks (including underscores in variable names)
+  const blockPattern = /\{\{#([\w_]+)\}\}[\s\S]*?\{\{\/\1\}\}/g;
+  
+  let match;
+  while ((match = blockPattern.exec(text)) !== null) {
+    const blockStart = match.index;
+    const blockEnd = match.index + match[0].length;
+    
+    // Check if position is inside this block
+    if (position > blockStart && position < blockEnd) {
+      return true;
+    }
+  }
+  
+  // Also check for {{#if}} blocks
+  const ifBlockPattern = /\{\{#if\s+[^}]+\}\}[\s\S]*?\{\{\/if\}\}/g;
+  while ((match = ifBlockPattern.exec(text)) !== null) {
+    const blockStart = match.index;
+    const blockEnd = match.index + match[0].length;
+    
+    if (position > blockStart && position < blockEnd) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Extract template fields from text content
  */
 function extractTemplateFields(text: string, patterns: string[]): TemplateField[] {
@@ -83,13 +121,68 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
 
     while ((match = regex.exec(text)) !== null) {
       const [fullMatch, fieldExpression] = match;
+      const trimmedExpression = fieldExpression.trim();
+      
+      // Skip loop/conditional patterns that should be handled by the clauses plugin
+      // These include: {{#if ...}}, {{#variableName}}, {{/if}}, {{/variableName}}, {{else}}
+      if (trimmedExpression.startsWith('#') || trimmedExpression.startsWith('/') || trimmedExpression === 'else') {
+        continue;
+      }
+      
+      // Skip fields that are inside loop/conditional blocks
+      if (isInsideLoopOrConditional(text, match.index)) {
+        continue;
+      }
 
       fields.push({
         pattern: fullMatch,
-        fieldName: fieldExpression.trim(),
-        expression: fieldExpression.trim(),
+        fieldName: trimmedExpression,
+        expression: trimmedExpression,
         startIndex: match.index,
         endIndex: match.index + fullMatch.length,
+      });
+    }
+  }
+
+  // Also search for @today patterns (without brackets), but skip those inside {{}} blocks
+  let todayMatch;
+  TODAY_PATTERN.lastIndex = 0; // Reset regex state
+  
+  while ((todayMatch = TODAY_PATTERN.exec(text)) !== null) {
+    const [fullMatch, formatSpecifier] = todayMatch;
+    
+    // Check if this @today is inside a {{}} block
+    const matchStart = todayMatch.index;
+    const matchEnd = todayMatch.index + fullMatch.length;
+    
+    // Look for any {{}} blocks that contain this @today match
+    let isInsideTemplateField = false;
+    const templateFieldPattern = /\{\{[^}]*\}\}/g;
+    let templateMatch;
+    templateFieldPattern.lastIndex = 0;
+    
+    while ((templateMatch = templateFieldPattern.exec(text)) !== null) {
+      const templateStart = templateMatch.index;
+      const templateEnd = templateMatch.index + templateMatch[0].length;
+      
+      // Check if the @today match is inside this template field
+      if (matchStart >= templateStart && matchEnd <= templateEnd) {
+        isInsideTemplateField = true;
+        break;
+      }
+    }
+    
+    // Only add @today as a separate field if it's not inside a template field
+    if (!isInsideTemplateField) {
+      // Create field name - if there's a format specifier, include it as a parameter
+      const fieldName = formatSpecifier ? `@today[${formatSpecifier}]` : '@today';
+      
+      fields.push({
+        pattern: fullMatch,
+        fieldName: fieldName,
+        expression: fieldName,
+        startIndex: todayMatch.index,
+        endIndex: todayMatch.index + fullMatch.length,
       });
     }
   }
@@ -105,10 +198,61 @@ function resolveFieldValue(
   fieldName: string,
   metadata: Record<string, any>
 ): { value: any; hasLogic: boolean; mixinType?: string } {
-  // Handle special values
-  if (fieldName === '@today') {
+  // Check if this field path has a bracket value (should be treated as missing)
+  const bracketFields = detectBracketValues(metadata);
+  const isBracketValue = bracketFields.has(fieldName);
+  // Handle @today with format specifiers
+  if (fieldName === '@today' || fieldName.startsWith('@today[')) {
+    // Check if @today is defined in metadata first, otherwise use current date
+    const today = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+    let formattedDate: string;
+    
+    if (fieldName === '@today') {
+      // Default format: YYYY-MM-DD
+      formattedDate = today.toISOString().split('T')[0];
+    } else {
+      // Extract format specifier from @today[format]
+      const formatMatch = fieldName.match(/@today\[([^\]]+)\]/);
+      const format = formatMatch ? formatMatch[1] : '';
+      
+      switch (format.toLowerCase()) {
+        case 'iso':
+          formattedDate = today.toISOString().split('T')[0];
+          break;
+        case 'long':
+          formattedDate = today.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          break;
+        case 'european':
+          formattedDate = today.toLocaleDateString('en-GB');
+          break;
+        case 'legal':
+          formattedDate = today.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric'
+          });
+          break;
+        case 'medium':
+          formattedDate = today.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          break;
+        default:
+          // Try to use the format as a custom date format
+          // For now, fall back to ISO format
+          formattedDate = today.toISOString().split('T')[0];
+          break;
+      }
+    }
+    
     return {
-      value: new Date().toISOString().split('T')[0],
+      value: formattedDate,
       hasLogic: true,
       mixinType: 'helper',
     };
@@ -170,6 +314,15 @@ function resolveFieldValue(
 
   // Simple variable access with dot notation
   const value = resolveNestedValue(metadata, fieldName);
+
+  // If this is a bracket value, treat it as missing (return undefined)
+  if (isBracketValue) {
+    return {
+      value: undefined,
+      hasLogic: false,
+      mixinType: 'variable',
+    };
+  }
 
   return {
     value,
@@ -353,7 +506,7 @@ function smartSplitArguments(str: string): string[] {
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
 
-    if ((char === '"' || char === "'") && !inQuotes) {
+    if ((char === '"' || char === '\'') && !inQuotes) {
       // Start of quoted string
       inQuotes = true;
       quoteChar = char;
@@ -429,7 +582,7 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
     // String literal
     if (
       (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      (trimmed.startsWith('\'') && trimmed.endsWith('\''))
     ) {
       args.push(trimmed.slice(1, -1));
       continue;
@@ -483,7 +636,15 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
       }
     }
 
-    // Metadata reference (including @today, etc.)
+    // Handle @today special case
+    if (trimmed === '@today' || trimmed.startsWith('@today[')) {
+      // Check if @today is defined in metadata first, otherwise use current date
+      const todayValue = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+      args.push(todayValue);
+      continue;
+    }
+
+    // Metadata reference (including other variables)
     const value = resolveNestedValue(metadata, trimmed);
     args.push(value);
   }
@@ -585,6 +746,12 @@ function processTemplateFieldsInAST(
 
       // Update the node value
       (node as any).value = processedText;
+      
+      // If we added field tracking HTML and this is a text node, convert it to HTML node
+      // to prevent remark-stringify from escaping the HTML
+      if (enableFieldTracking && node.type === 'text' && processedText.includes('<span class="legal-field')) {
+        (node as any).type = 'html';
+      }
     }
   });
 }
@@ -598,6 +765,8 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
   return (tree: Root) => {
     if (debug) {
       console.log('📝 Processing template fields with remark plugin');
+      console.log('📊 Metadata:', metadata);
+      console.log('📋 Field patterns:', fieldPatterns);
       if (enableFieldTracking) {
         console.log('🎯 Field tracking highlighting enabled');
       }
