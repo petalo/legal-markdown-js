@@ -1,3 +1,11 @@
+## <small>3.0.2 (2025-08-02)</small>
+
+- fix: correctly handle empty string vs undefined in header level definitions
+  (#49) ([bed33e1](https://github.com/petalo/legal-markdown-js/commit/bed33e1)),
+  closes [#49](https://github.com/petalo/legal-markdown-js/issues/49)
+- docs: add missing v3.0.0 changelog entry with breaking changes
+  ([3f305af](https://github.com/petalo/legal-markdown-js/commit/3f305af))
+
 ## <small>3.0.1 (2025-08-02)</small>
 
 - fix: use temp directories in interactive CLI tests instead of creating
