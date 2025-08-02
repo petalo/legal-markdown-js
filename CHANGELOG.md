@@ -1,3 +1,12 @@
+## <small>3.0.1 (2025-08-02)</small>
+
+- fix: use temp directories in interactive CLI tests instead of creating
+  test-fixtures in root (#48)
+  ([9172b1c](https://github.com/petalo/legal-markdown-js/commit/9172b1c)),
+  closes [#48](https://github.com/petalo/legal-markdown-js/issues/48)
+- chore: update version to 3.0.0 and fix semantic-release configuration
+  ([20657e6](https://github.com/petalo/legal-markdown-js/commit/20657e6))
+
 ## <small>2.16.3 (2025-07-31)</small>
 
 - fix: unify archive directory behavior to be project-relative (#46)
