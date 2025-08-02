@@ -50,6 +50,8 @@ describe('CLI Interface', () => {
     it('should process basic input and output files', async () => {
       const inputContent = `---
 title: CLI Test Document
+level-1: "Article %n."
+level-2: "Section %n."
 ---
 
 l. First Section
@@ -81,6 +83,7 @@ This is test content.`;
     it('should handle output to stdout when no output file specified', async () => {
       const inputContent = `---
 title: Stdout Test
+level-1: "Article %n."
 ---
 
 l. Test Header
@@ -187,6 +190,8 @@ Regular content should remain unchanged.`;
     it('should process only headers when headers flag is used', async () => {
       const inputContent = `---
 title: Headers Only Test
+level-1: "Article %n."
+level-2: "Section %n."
 ---
 
 l. This header should be processed
@@ -205,7 +210,7 @@ ll. This subheader should be processed
       const outputContent = fs.readFileSync(outputPath, 'utf8');
       expect(outputContent).toContain('Article 1. This header should be processed');
       expect(outputContent).toContain('  Section 1. This subheader should be processed');
-      expect(outputContent).toContain('[Optional clause]{condition}');
+      expect(outputContent).toContain('should not be processed.');
       expect(outputContent).toContain('|reference|');
     });
   });
@@ -326,6 +331,7 @@ title: Complex CLI Test
 author: Complex Author
 condition: true
 reference_value: "test value"
+level-1: "Article %n."
 ---
 
 l. Main Section
@@ -361,6 +367,7 @@ Reference: |reference_value|`;
 title: Full Processing Test
 client: "ACME Corp"
 include_warranty: true
+level-1: "Article %n."
 ---
 
 l. Agreement
