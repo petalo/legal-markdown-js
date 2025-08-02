@@ -181,6 +181,7 @@ Formats a date according to the specified format.
 - `DD`: 2-digit day (01-31)
 - `D`: 1-digit day (1-31)
 - `MMMM`: Full month name (January)
+- `MMMM_ES`: Full month name (in spanish: enero)
 - `MMM`: Short month name (Jan)
 - `dddd`: Full day name (Monday)
 - `ddd`: Short day name (Mon)
@@ -264,7 +265,7 @@ formats:
 - `DateFormats.SHORT`: 'MMM D, YYYY'
 - `DateFormats.LEGAL`: 'Do day of MMMM, YYYY'
 - `DateFormats.FORMAL`: 'dddd, MMMM Do, YYYY'
-- `DateFormats.SPANISH`: 'D de MMMMES de YYYY'
+- `DateFormats.SPANISH`: 'D de MMMM_ES de YYYY'
 
 **Examples:**
 
@@ -283,7 +284,7 @@ Formal format: {{formatDate(@today, "dddd, MMMM Do, YYYY")}}
 
 <!-- Output: Wednesday, July 16th, 2025 -->
 
-Spanish format: {{formatDate(@today, "D de MMMMES de YYYY")}}
+Spanish format: {{formatDate(@today, "D de MMMM_ES de YYYY")}}
 
 <!-- Output: 16 de julio de 2025 -->
 ```
@@ -787,9 +788,89 @@ DB field: {{snakeCase("Company Name")}}
 
 ### `@today`
 
-Special value that resolves to the current date.
+Special value that resolves to the current date. Supports direct format
+specifiers and arithmetic operations.
 
-**Examples:**
+**Basic Usage:**
+
+```markdown
+Today's date: @today
+
+<!-- Output: 2025-07-16 (ISO format by default) -->
+```
+
+**Format Specifiers:**
+
+Use `@today[format]` to specify output format directly:
+
+```markdown
+Legal format: @today[legal]
+
+<!-- Output: July 16, 2025 -->
+
+US format: @today[US]
+
+<!-- Output: 07/16/2025 -->
+
+European format: @today[EU]
+
+<!-- Output: 16/07/2025 -->
+
+ISO format: @today[ISO]
+
+<!-- Output: 2025-07-16 -->
+```
+
+**Date Arithmetic:**
+
+Add or subtract time periods using `+` and `-` operators:
+
+```markdown
+30 days from now: @today+30
+
+<!-- Output: 2025-08-15 -->
+
+7 days ago: @today-7
+
+<!-- Output: 2025-07-09 -->
+
+6 months from now: @today+6m
+
+<!-- Output: 2026-01-16 -->
+
+1 year ago: @today-1y
+
+<!-- Output: 2024-07-16 -->
+```
+
+**Arithmetic Format Options:**
+
+- `d` or no suffix: days (e.g., `@today+30`, `@today-7d`)
+- `m`: months (e.g., `@today+6m`, `@today-3m`)
+- `y`: years (e.g., `@today+1y`, `@today-2y`)
+
+**Combined Format and Arithmetic:**
+
+Combine arithmetic operations with format specifiers:
+
+```markdown
+Payment due: @today+30[US]
+
+<!-- Output: 08/15/2025 -->
+
+Contract signed: @today-90[legal]
+
+<!-- Output: April 17, 2025 -->
+
+Expiration: @today+1y[EU]
+
+<!-- Output: 16/07/2026 -->
+```
+
+**With formatDate Helper:**
+
+You can still use `@today` with the `formatDate()` helper for advanced
+formatting:
 
 ```markdown
 Generation date: {{formatDate(@today, "DD/MM/YYYY")}}
