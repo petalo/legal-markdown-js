@@ -310,6 +310,9 @@ tax_rate: 0.085
 principal_amount: 100000
 interest_rate: 0.065
 payment_term_months: 36
+# Pre-calculated monthly payment (calculated externally)
+# Formula: principal * (rate/12) * (1 + rate/12)^months / ((1 + rate/12)^months - 1)
+monthly_payment: 3046.22
 ---
 ```
 
@@ -323,8 +326,43 @@ payment_term_months: 36
 
 **Term:** {{formatInteger(payment_term_months)}} months
 
-**Monthly Payment:**
-{{formatCurrency(principal_amount * (interest_rate / 12) * Math.pow(1 + interest_rate / 12, payment_term_months) / (Math.pow(1 + interest_rate / 12, payment_term_months) - 1), "USD")}}
+**Monthly Payment:** {{formatCurrency(monthly_payment, "USD")}}
+```
+
+> **💡 Best Practice**: Complex mathematical expressions using `Math.pow()`,
+> `Math.sqrt()`, etc.  
+> are not supported in template fields or YAML frontmatter. Instead, calculate
+> these  
+> values externally (in your application, spreadsheet, or calculator) and
+> include the  
+> final result in your YAML frontmatter. This approach is more reliable and
+> secure.
+
+### Simple Calculations with Nested Helpers
+
+```yaml
+---
+# Raw values
+base_price: 1250.789
+discount_percent: 15
+tax_rate: 8.5
+---
+```
+
+```markdown
+# Price Calculation
+
+**Base Price:** {{formatCurrency(base_price, "USD")}}
+
+**Rounded Base:** {{formatCurrency(round(base_price, 2), "USD")}}
+
+**Discount:** {{formatPercent(discount_percent, 0)}}
+
+**Tax Rate:** {{formatPercent(tax_rate, 1)}}
+
+<!-- Note: For complex calculations, pre-calculate in YAML -->
+
+**Final Price:** {{formatCurrency(final_price, "USD")}}
 ```
 
 ### International Formats
