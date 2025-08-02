@@ -45,7 +45,7 @@ export interface RemarkClausesOptions {
 
   /** Enable debug logging */
   debug?: boolean;
-  
+
   /** Enable field tracking (to coordinate with template fields plugin) */
   enableFieldTracking?: boolean;
 }
@@ -103,7 +103,12 @@ export const remarkClauses: Plugin<[RemarkClausesOptions], Root> = options => {
 /**
  * Process a text node for conditional blocks
  */
-function processTextNode(node: Text, metadata: Record<string, any>, debug: boolean, enableFieldTracking: boolean) {
+function processTextNode(
+  node: Text,
+  metadata: Record<string, any>,
+  debug: boolean,
+  enableFieldTracking: boolean
+) {
   const originalText = node.value;
   const conditionalBlocks = extractConditionalBlocks(originalText);
 
@@ -134,7 +139,7 @@ function processTextNode(node: Text, metadata: Record<string, any>, debug: boole
   }
 
   node.value = processedText;
-  
+
   // If we processed any loops/conditionals and field tracking is enabled,
   // we need to mark this as HTML to prevent escaping
   if (conditionalBlocks.length > 0 && processedText.includes('<span class="legal-field')) {
@@ -145,7 +150,12 @@ function processTextNode(node: Text, metadata: Record<string, any>, debug: boole
 /**
  * Process an HTML node for conditional blocks
  */
-function processHtmlNode(node: any, metadata: Record<string, any>, debug: boolean, enableFieldTracking: boolean) {
+function processHtmlNode(
+  node: any,
+  metadata: Record<string, any>,
+  debug: boolean,
+  enableFieldTracking: boolean
+) {
   const originalHtml = node.value;
   const conditionalBlocks = extractConditionalBlocks(originalHtml);
 
@@ -176,7 +186,12 @@ function processHtmlNode(node: any, metadata: Record<string, any>, debug: boolea
 /**
  * Process a paragraph node for conditional blocks
  */
-function processParagraphNode(node: Paragraph, metadata: Record<string, any>, debug: boolean, enableFieldTracking: boolean) {
+function processParagraphNode(
+  node: Paragraph,
+  metadata: Record<string, any>,
+  debug: boolean,
+  enableFieldTracking: boolean
+) {
   // Process each text child in the paragraph
   node.children.forEach(child => {
     if (child.type === 'text') {
@@ -214,7 +229,7 @@ function extractConditionalBlocks(text: string): ConditionalBlock[] {
   // Also support simpler syntax: {{#variable}}content{{/variable}}
   // This handles both loops and simple conditionals (including underscores in names)
   const simpleConditionalRegex = /\{\{#([\w._]+)\}\}((?:(?!\{\{\/\1\}\}).)*?)\{\{\/\1\}\}/gs;
-  
+
   while ((match = simpleConditionalRegex.exec(text)) !== null) {
     const [fullMatch, variable, content] = match;
 
@@ -229,7 +244,7 @@ function extractConditionalBlocks(text: string): ConditionalBlock[] {
 
   // Also support bracket syntax: [content]{condition}
   const bracketConditionalRegex = /\[([^[\]]*(?:\[[^\]]*\][^[\]]*)*?)\]\{([^{}]*?)\}/g;
-  
+
   while ((match = bracketConditionalRegex.exec(text)) !== null) {
     const [fullMatch, content, condition] = match;
 
@@ -245,7 +260,7 @@ function extractConditionalBlocks(text: string): ConditionalBlock[] {
   // Also support original Legal Markdown bracket syntax: [{{condition}}content]
   // Need to handle nested brackets in content by using a more sophisticated pattern
   const originalBracketRegex = /\[\{\{([^{}]*?)\}\}([^[\]]*(?:\[[^\]]*\][^[\]]*)*?)\]/g;
-  
+
   while ((match = originalBracketRegex.exec(text)) !== null) {
     const [fullMatch, condition, content] = match;
 
@@ -283,11 +298,11 @@ function evaluateConditionalBlock(
     if (condition.startsWith('if ') || condition === 'if') {
       const actualCondition = condition === 'if' ? '' : condition.substring(3).trim(); // Remove 'if ' or handle empty 'if'
       const result = evaluateCondition(actualCondition, metadata);
-      
+
       if (debug) {
         console.log(`[remarkClauses] Conditional "if ${actualCondition}" evaluated to:`, result);
       }
-      
+
       if (result) {
         return content;
       } else if (elseContent !== undefined) {
@@ -296,18 +311,20 @@ function evaluateConditionalBlock(
         return '';
       }
     }
-    
+
     // For simple {{#variable}} syntax, check if it's an array that should be processed as a loop
     const value = getNestedValue(metadata, condition);
-    
+
     if (Array.isArray(value)) {
       if (debug) {
-        console.log(`[remarkClauses] Array condition "${condition}" with ${value.length} items - processing as loop`);
+        console.log(
+          `[remarkClauses] Array condition "${condition}" with ${value.length} items - processing as loop`
+        );
       }
       // Process as array loop
       return processArrayLoop(condition, content, value, metadata, debug, enableFieldTracking);
     }
-    
+
     // Otherwise evaluate as a simple boolean condition
     const result = evaluateCondition(condition, metadata);
 
@@ -571,65 +588,73 @@ function processArrayLoop(
   enableFieldTracking: boolean
 ): string {
   const results: string[] = [];
-  
+
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    
+
     // Create enhanced metadata with current item properties
     const enhancedMetadata = { ...metadata };
-    
+
     // Add item properties if it's an object
     if (item && typeof item === 'object' && !Array.isArray(item)) {
       Object.assign(enhancedMetadata, item);
     }
-    
+
     // Add special variables
     enhancedMetadata['@index'] = i;
     enhancedMetadata['@first'] = i === 0;
     enhancedMetadata['@last'] = i === items.length - 1;
     enhancedMetadata['@total'] = items.length;
-    
+
     // Process the content with enhanced metadata
     let processedContent = content;
-    
+
     // First, process any nested conditional blocks (including nested loops)
     const nestedBlocks = extractConditionalBlocks(processedContent);
     if (nestedBlocks.length > 0) {
       // Process blocks in reverse order to maintain correct positions
       for (let j = nestedBlocks.length - 1; j >= 0; j--) {
         const nestedBlock = nestedBlocks[j];
-        const nestedResult = evaluateConditionalBlock(nestedBlock, enhancedMetadata, debug, enableFieldTracking);
-        
+        const nestedResult = evaluateConditionalBlock(
+          nestedBlock,
+          enhancedMetadata,
+          debug,
+          enableFieldTracking
+        );
+
         // Replace the nested block with the result
         processedContent =
-          processedContent.substring(0, nestedBlock.start) + 
-          nestedResult + 
+          processedContent.substring(0, nestedBlock.start) +
+          nestedResult +
           processedContent.substring(nestedBlock.end);
       }
     }
-    
+
     // Then replace field references {{fieldname}}
     processedContent = processedContent.replace(/\{\{([^}]+)\}\}/g, (match, field) => {
       const trimmedField = field.trim();
-      
+
       // Skip loop/conditional markers
       if (trimmedField.startsWith('#') || trimmedField.startsWith('/') || trimmedField === 'else') {
         return match;
       }
-      
+
       const value = getNestedValue(enhancedMetadata, trimmedField);
-      
+
       if (debug) {
         console.log(`[remarkClauses] Loop field "${trimmedField}" resolved to:`, value);
       }
-      
+
       // Apply field tracking if enabled
       if (enableFieldTracking) {
-        const isEmptyValue = value === undefined || value === null || value === '' || 
-                           (typeof value === 'string' && value.trim() === '');
+        const isEmptyValue =
+          value === undefined ||
+          value === null ||
+          value === '' ||
+          (typeof value === 'string' && value.trim() === '');
         const cssClass = isEmptyValue ? 'legal-field missing-value' : 'legal-field imported-value';
         const formattedValue = value !== undefined ? String(value) : match;
-        
+
         // Track the field
         fieldTracker.trackField(trimmedField, {
           value: value,
@@ -637,16 +662,16 @@ function processArrayLoop(
           hasLogic: false,
           mixinUsed: 'loop',
         });
-        
+
         return `<span class="${cssClass}" data-field="${trimmedField.replace(/"/g, '&quot;')}">${formattedValue}</span>`;
       }
-      
+
       return value !== undefined ? String(value) : match;
     });
-    
+
     results.push(processedContent);
   }
-  
+
   return results.join('');
 }
 
