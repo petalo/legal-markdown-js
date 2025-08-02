@@ -83,7 +83,7 @@ async function fixImportsInFile(filePath) {
 
     // Fix dynamic imports too
     const finalContent = fixedExports.replace(
-      /import\s*\(\s*['"](\.[^'"]*?)(['"]\s*\))/g,
+      /import\s*\(\s*['"](\.[^'"]*?)['"](\s*\))/g,
       (match, importPath, closing) => {
         if (extname(importPath)) {
           return match;
