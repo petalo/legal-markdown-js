@@ -129,7 +129,8 @@ confidentiality: true
 
 ### Headers and Numbering
 
-Hierarchical numbering system for legal documents:
+Hierarchical numbering system for legal documents with **9 levels** and
+**enhanced variable system**:
 
 ```markdown
 l. Definitions ll. Software "Software" means the computer program licensed under
@@ -143,6 +144,15 @@ Licensee a license to use the Software.
 ll. Restrictions Licensee may not distribute, modify, or reverse engineer the
 Software.
 ```
+
+**Enhanced Features:**
+
+- **Extended hierarchy**: Support for 9 levels (`l.` through `lllllllll.`)
+- **Enhanced variables**: %n, %A, %a, %R, %r, %l1-l9, %o for flexible formatting
+- **Undefined fallbacks**: Undefined levels render as `{{undefined-level-n}}`
+  templates
+- **Auto-population**: CLI `--headers` flag automatically populates YAML front
+  matter
 
 ### Cross-References
 

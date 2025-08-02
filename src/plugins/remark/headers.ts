@@ -66,6 +66,10 @@ interface HeaderState {
   levelThree: number;
   levelFour: number;
   levelFive: number;
+  levelSix: number;
+  levelSeven: number;
+  levelEight: number;
+  levelNine: number;
   customLevels: Map<string, number>;
 }
 
@@ -73,11 +77,15 @@ interface HeaderState {
  * Header configuration extracted from metadata
  */
 interface HeaderConfig {
-  levelOne: string;
-  levelTwo: string;
-  levelThree: string;
-  levelFour: string;
-  levelFive: string;
+  levelOne: string | null;
+  levelTwo: string | null;
+  levelThree: string | null;
+  levelFour: string | null;
+  levelFive: string | null;
+  levelSix: string | null;
+  levelSeven: string | null;
+  levelEight: string | null;
+  levelNine: string | null;
   customFormats: Map<string, string>;
 }
 
@@ -97,15 +105,53 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
   return (tree: Root) => {
     if (debug) {
       console.log('[remarkHeaders] Processing headers with options:', options);
+      console.log('[remarkHeaders] Metadata:', metadata);
     }
 
     // Initialize header configuration from metadata
     const config = extractHeaderConfig(metadata);
     const state = initializeHeaderState();
 
-    // Process all headings in the document
+    // Count legal headings first
+    let headingCount = 0;
+    visit(tree, 'heading', (node: Heading) => {
+      if ((node as any).data?.isLegalHeader) {
+        headingCount++;
+      }
+    });
+
+    if (debug) {
+      console.log(`[remarkHeaders] Found ${headingCount} legal headings in document`);
+    }
+
+    // Process only headings that come from legal header syntax
     visit(tree, 'heading', (node: Heading, index, parent) => {
-      processHeader(node, config, state, { noReset, noIndent, debug });
+      if ((node as any).data?.isLegalHeader) {
+        if (debug) {
+          console.log(
+            `[remarkHeaders] Processing legal heading at depth ${node.depth}:`,
+            extractTextContent(node)
+          );
+        }
+        processHeader(node, config, state, { noReset, noIndent, debug });
+      }
+    });
+
+    // Second pass: Replace heading nodes marked for HTML replacement
+    visit(tree, 'heading', (node: Heading, index, parent) => {
+      if ((node as any).__needsHtmlReplacement && parent && typeof index === 'number') {
+        if (debug) {
+          console.log('[remarkHeaders] Replacing heading with HTML node to preserve indentation');
+        }
+
+        // Replace the heading node with an HTML node
+        const htmlNode = {
+          type: 'html',
+          value: (node as any).__htmlContent,
+        };
+
+        parent.children[index] = htmlNode as any;
+      }
     });
 
     if (debug) {
@@ -119,11 +165,15 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
  */
 function extractHeaderConfig(metadata: Record<string, any>): HeaderConfig {
   return {
-    levelOne: metadata['level-one'] || metadata['level_one'] || 'l.',
-    levelTwo: metadata['level-two'] || metadata['level_two'] || 'll.',
-    levelThree: metadata['level-three'] || metadata['level_three'] || 'lll.',
-    levelFour: metadata['level-four'] || metadata['level_four'] || 'llll.',
-    levelFive: metadata['level-five'] || metadata['level_five'] || 'lllll.',
+    levelOne: metadata['level-1'] || metadata['level-one'] || metadata['level_one'] || null,
+    levelTwo: metadata['level-2'] || metadata['level-two'] || metadata['level_two'] || null,
+    levelThree: metadata['level-3'] || metadata['level-three'] || metadata['level_three'] || null,
+    levelFour: metadata['level-4'] || metadata['level-four'] || metadata['level_four'] || null,
+    levelFive: metadata['level-5'] || metadata['level-five'] || metadata['level_five'] || null,
+    levelSix: metadata['level-6'] || metadata['level-six'] || metadata['level_six'] || null,
+    levelSeven: metadata['level-7'] || metadata['level-seven'] || metadata['level_seven'] || null,
+    levelEight: metadata['level-8'] || metadata['level-eight'] || metadata['level_eight'] || null,
+    levelNine: metadata['level-9'] || metadata['level-nine'] || metadata['level_nine'] || null,
     customFormats: new Map(),
   };
 }
@@ -138,6 +188,10 @@ function initializeHeaderState(): HeaderState {
     levelThree: 0,
     levelFour: 0,
     levelFive: 0,
+    levelSix: 0,
+    levelSeven: 0,
+    levelEight: 0,
+    levelNine: 0,
     customLevels: new Map(),
   };
 }
@@ -157,13 +211,6 @@ function processHeader(
   const level = node.depth;
   const format = getHeaderFormat(level, config);
 
-  if (!format) {
-    if (debug) {
-      console.log(`[remarkHeaders] No format found for level ${level}`);
-    }
-    return;
-  }
-
   // Update numbering state
   updateHeaderState(level, state, noReset);
 
@@ -171,10 +218,20 @@ function processHeader(
   const number = getHeaderNumber(level, state);
 
   // Format the header text
-  const headerText = formatHeaderText(node, format, number, { noIndent, debug });
+  const headerText = formatHeaderText(node, format, number, state, { noIndent, debug });
 
   // Update the node's children with the new formatted text
   if (headerText !== null) {
+    // Check if we need to replace with HTML node due to indentation
+    const hasIndentation = headerText.startsWith('  ');
+
+    if (hasIndentation) {
+      // We need to return this information to the main processor
+      // to replace the heading node with an HTML node
+      (node as any).__needsHtmlReplacement = true;
+      (node as any).__htmlContent = `${'#'.repeat(level)} ${headerText}`;
+    }
+
     updateHeaderNode(node, headerText);
   }
 
@@ -186,21 +243,47 @@ function processHeader(
 /**
  * Get header format for a given level
  */
-function getHeaderFormat(level: number, config: HeaderConfig): string | null {
+function getHeaderFormat(level: number, config: HeaderConfig): string {
+  let format: string | null = null;
+
   switch (level) {
     case 1:
-      return config.levelOne;
+      format = config.levelOne;
+      break;
     case 2:
-      return config.levelTwo;
+      format = config.levelTwo;
+      break;
     case 3:
-      return config.levelThree;
+      format = config.levelThree;
+      break;
     case 4:
-      return config.levelFour;
+      format = config.levelFour;
+      break;
     case 5:
-      return config.levelFive;
+      format = config.levelFive;
+      break;
+    case 6:
+      format = config.levelSix;
+      break;
+    case 7:
+      format = config.levelSeven;
+      break;
+    case 8:
+      format = config.levelEight;
+      break;
+    case 9:
+      format = config.levelNine;
+      break;
     default:
-      return null;
+      format = null;
   }
+
+  // If no format is defined, return undefined template
+  if (format === null) {
+    return `{{undefined-level-${level}}}`;
+  }
+
+  return format;
 }
 
 /**
@@ -215,6 +298,10 @@ function updateHeaderState(level: number, state: HeaderState, noReset: boolean) 
         state.levelThree = 0;
         state.levelFour = 0;
         state.levelFive = 0;
+        state.levelSix = 0;
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
       }
       break;
     case 2:
@@ -223,6 +310,10 @@ function updateHeaderState(level: number, state: HeaderState, noReset: boolean) 
         state.levelThree = 0;
         state.levelFour = 0;
         state.levelFive = 0;
+        state.levelSix = 0;
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
       }
       break;
     case 3:
@@ -230,16 +321,54 @@ function updateHeaderState(level: number, state: HeaderState, noReset: boolean) 
       if (!noReset) {
         state.levelFour = 0;
         state.levelFive = 0;
+        state.levelSix = 0;
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
       }
       break;
     case 4:
       state.levelFour++;
       if (!noReset) {
         state.levelFive = 0;
+        state.levelSix = 0;
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
       }
       break;
     case 5:
       state.levelFive++;
+      if (!noReset) {
+        state.levelSix = 0;
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
+      }
+      break;
+    case 6:
+      state.levelSix++;
+      if (!noReset) {
+        state.levelSeven = 0;
+        state.levelEight = 0;
+        state.levelNine = 0;
+      }
+      break;
+    case 7:
+      state.levelSeven++;
+      if (!noReset) {
+        state.levelEight = 0;
+        state.levelNine = 0;
+      }
+      break;
+    case 8:
+      state.levelEight++;
+      if (!noReset) {
+        state.levelNine = 0;
+      }
+      break;
+    case 9:
+      state.levelNine++;
       break;
   }
 }
@@ -259,9 +388,24 @@ function getHeaderNumber(level: number, state: HeaderState): number {
       return state.levelFour;
     case 5:
       return state.levelFive;
+    case 6:
+      return state.levelSix;
+    case 7:
+      return state.levelSeven;
+    case 8:
+      return state.levelEight;
+    case 9:
+      return state.levelNine;
     default:
       return 0;
   }
+}
+
+/**
+ * Get the value for a specific level (helper for leading zero formatting)
+ */
+function getLevelValue(level: number, state: HeaderState): number {
+  return getHeaderNumber(level, state);
 }
 
 /**
@@ -271,9 +415,11 @@ function formatHeaderText(
   node: Heading,
   format: string,
   number: number,
+  state: HeaderState,
   options: { noIndent: boolean; debug: boolean }
 ): string | null {
   const { noIndent, debug } = options;
+  const level = node.depth;
 
   // Extract current text content
   const currentText = extractTextContent(node);
@@ -293,34 +439,46 @@ function formatHeaderText(
     return null;
   }
 
-  // Apply numbering format
-  const numberedText = applyNumberingFormat(format, number);
+  // Apply numbering format with full state
+  const numberedText = applyNumberingFormat(format, number, node.depth, state);
 
-  // Note: Indentation is not implemented in this version as remark-stringify
-  // handles header formatting. The noIndent option is preserved for API compatibility.
+  // Apply indentation if not disabled
+  const indentation = noIndent ? '' : '  '.repeat(Math.max(0, level - 1));
 
   // Combine with original text
-  return `${numberedText} ${currentText}`;
+  return `${indentation}${numberedText} ${currentText}`;
 }
 
 /**
  * Extract text content from header node
  */
 function extractTextContent(node: Heading): string {
-  return node.children
+  const result = node.children
     .map(child => {
       if (child.type === 'text') {
         return child.value;
+      } else if (child.type === 'html') {
+        // Handle HTML nodes (e.g., field tracking spans) - preserve the HTML
+        return child.value || '';
       } else if (child.type === 'strong' || child.type === 'emphasis') {
-        // Handle formatted text within headers
-        return child.children
+        // Handle formatted text within headers - preserve formatting
+        const innerText = child.children
           .map(grandchild => (grandchild.type === 'text' ? grandchild.value : ''))
           .join('');
+
+        // Convert to markdown syntax (use asterisks for consistency)
+        if (child.type === 'strong') {
+          return `**${innerText}**`;
+        } else if (child.type === 'emphasis') {
+          return `*${innerText}*`;
+        }
+        return innerText;
       } else if (child.type === 'link') {
         // Handle links - extract just the text content
-        return child.children
+        const linkText = child.children
           .map(grandchild => (grandchild.type === 'text' ? grandchild.value : ''))
           .join('');
+        return linkText;
       } else if (child.type === 'inlineCode') {
         // Handle inline code - extract the value
         return child.value || '';
@@ -329,30 +487,152 @@ function extractTextContent(node: Heading): string {
     })
     .join('')
     .trim();
+
+  return result;
 }
 
 /**
  * Check if header already has numbering
  */
 function hasExistingNumbering(text: string, format: string): boolean {
-  // Extract the numbering pattern from format (e.g., 'l.' -> 'l')
-  const pattern = format.replace('.', '');
+  // Check if text already starts with a numbering pattern
+  // Common patterns: "Article 1.", "Section 2.", "(1)", "1.", "1.1", etc.
+  const numberingPatterns = [
+    /^Article\s+\d+\.?\s*/i,
+    /^Section\s+\d+\.?\s*/i,
+    /^Chapter\s+\d+\.?\s*/i,
+    /^\(\d+\)\s*/,
+    /^\d+\.\s*/,
+    /^\d+\.\d+\.?\s*/,
+    /^[a-z]\.\s*/i,
+    /^\([a-z]\)\s*/i,
+    /^[ivxlcdm]+\.\s*/i,
+    /^\([ivxlcdm]+\)\s*/i,
+  ];
 
-  // Check if text starts with the numbering pattern
-  const regex = new RegExp(`^\\s*${pattern.replace(/l/g, 'l+')}\\s*\\d*\\.?\\s+`);
-  return regex.test(text);
+  return numberingPatterns.some(pattern => pattern.test(text));
 }
 
 /**
  * Apply numbering format with actual number
  */
-function applyNumberingFormat(format: string, number: number): string {
-  // For now, just return the format as-is
-  // In future versions, we could support more complex formatting like:
-  // - Roman numerals
-  // - Custom number formats
-  // - Letter sequences
-  return format;
+function applyNumberingFormat(
+  format: string,
+  number: number,
+  level: number,
+  state: HeaderState
+): string {
+  // Handle special leading zero formats first (e.g., %02n, %03n)
+  let result = format;
+
+  // Handle %0Xn format (leading zero numbers for current level)
+  const leadingZeroPattern = /%0(\d+)n/g;
+  result = result.replace(leadingZeroPattern, (match, digits) => {
+    return number.toString().padStart(parseInt(digits), '0');
+  });
+
+  // Handle leading zero formats for direct level references (%0Xl1, %0Xl2, etc.)
+  for (let i = 1; i <= 9; i++) {
+    const leadingZeroLevelPattern = new RegExp(`%0(\\d+)l${i}`, 'g');
+    result = result.replace(leadingZeroLevelPattern, (match, digits) => {
+      const levelValue = getLevelValue(i, state);
+      return levelValue.toString().padStart(parseInt(digits), '0');
+    });
+  }
+
+  // Replace %n with the actual number (non-leading-zero version)
+  result = result.replace(/%n/g, number.toString());
+
+  // Replace level-specific references (%l1, %l2, %l3, %l4, %l5, %l6, %l7, %l8, %l9)
+  result = result.replace(/%l1/g, state.levelOne.toString());
+  result = result.replace(/%l2/g, state.levelTwo.toString());
+  result = result.replace(/%l3/g, state.levelThree.toString());
+  result = result.replace(/%l4/g, state.levelFour.toString());
+  result = result.replace(/%l5/g, state.levelFive.toString());
+  result = result.replace(/%l6/g, state.levelSix.toString());
+  result = result.replace(/%l7/g, state.levelSeven.toString());
+  result = result.replace(/%l8/g, state.levelEight.toString());
+  result = result.replace(/%l9/g, state.levelNine.toString());
+
+  // Replace alphabetic variables
+  // %A = uppercase letters (A, B, C, ...)
+  if (format.includes('%A')) {
+    const alphaNumber = level === 4 && format.includes('%n%A') ? state.levelFour : number;
+    const alphaLabel = String.fromCharCode(64 + alphaNumber); // 65 = 'A'
+    result = result.replace(/%A/g, alphaLabel);
+  }
+
+  // %a = lowercase letters (a, b, c, ...) - alias for %c
+  if (format.includes('%a')) {
+    const alphaNumber = level === 4 && format.includes('%n%a') ? state.levelFour : number;
+    const alphaLabel = String.fromCharCode(96 + alphaNumber); // 97 = 'a'
+    result = result.replace(/%a/g, alphaLabel);
+  }
+
+  // Replace %c with alphabetic label (a, b, c, ...)
+  if (format.includes('%c')) {
+    // For level 4 formats like (%n%c), use level 4 number
+    // For other formats, use current level number
+    const alphaNumber = level === 4 && format.includes('%n%c') ? state.levelFour : number;
+    const alphaLabel = String.fromCharCode(96 + alphaNumber); // 97 = 'a'
+    result = result.replace(/%c/g, alphaLabel);
+  }
+
+  // Replace %r with lowercase roman numerals
+  if (format.includes('%r')) {
+    // For level 5 formats like (%n%c%r), use level 5 number
+    // For other formats, use current level number
+    const romanNumber =
+      level === 5 && (format.includes('%c%r') || format.includes('%n%c%r'))
+        ? state.levelFive
+        : number;
+    const romanNumeral = toRomanNumeral(romanNumber).toLowerCase();
+    result = result.replace(/%r/g, romanNumeral);
+  }
+
+  // Replace %R with uppercase roman numerals
+  if (format.includes('%R')) {
+    const romanNumeral = toRomanNumeral(number);
+    result = result.replace(/%R/g, romanNumeral);
+  }
+
+  // Replace %o with fallback to %n (placeholder for future extension)
+  // Currently just falls back to numeric representation
+  if (format.includes('%o')) {
+    result = result.replace(/%o/g, number.toString());
+  }
+
+  return result;
+}
+
+/**
+ * Convert number to Roman numeral
+ */
+function toRomanNumeral(num: number): string {
+  const romanNumerals: Array<[number, string]> = [
+    [1000, 'M'],
+    [900, 'CM'],
+    [500, 'D'],
+    [400, 'CD'],
+    [100, 'C'],
+    [90, 'XC'],
+    [50, 'L'],
+    [40, 'XL'],
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
+  ];
+
+  let result = '';
+  for (const [value, symbol] of romanNumerals) {
+    while (num >= value) {
+      result += symbol;
+      num -= value;
+    }
+  }
+  return result;
 }
 
 /**
@@ -364,16 +644,81 @@ function getIndentationForLevel(level: number): string {
 }
 
 /**
+ * Checks if text contains field tracking spans
+ * @param text - The text to check
+ * @returns True if text contains field tracking HTML spans
+ */
+function containsFieldTrackingSpans(text: string): boolean {
+  return (
+    text.includes('<span class="legal-field') ||
+    text.includes('<span class="imported-value') ||
+    text.includes('<span class="missing-value') ||
+    text.includes('<span class="highlight')
+  );
+}
+
+/**
  * Update header node with new text content
  */
-function updateHeaderNode(node: Heading, newText: string) {
-  // Replace the entire children array with new text node
-  node.children = [
-    {
+/**
+ * Preserve original formatting while adding numbering prefix
+ * @param node - The heading node with original formatting
+ * @param newText - The complete new text with numbering
+ * @returns Array of children nodes or null if preservation not possible
+ */
+function preserveFormattingInHeader(node: Heading, newText: string): any[] | null {
+  // Extract the original text content to find where the numbering ends
+  const originalText = extractTextContent(node);
+  if (!originalText) return null;
+
+  // Find the numbering part by comparing newText with originalText
+  const numberingIndex = newText.lastIndexOf(originalText);
+  if (numberingIndex === -1) return null;
+
+  const numberingPrefix = newText.substring(0, numberingIndex);
+
+  // Create new children array: numbering prefix + original formatted children
+  const newChildren: any[] = [];
+
+  // Add numbering prefix as text node
+  if (numberingPrefix) {
+    newChildren.push({
       type: 'text',
-      value: newText,
-    },
-  ];
+      value: numberingPrefix,
+    });
+  }
+
+  // Add all original children (which contain the formatting)
+  newChildren.push(...node.children);
+
+  return newChildren;
+}
+
+function updateHeaderNode(node: Heading, newText: string) {
+  // Check if the new text contains HTML spans (field tracking) or leading spaces (indentation)
+  // If so, create an HTML node instead of a text node to prevent escaping
+  const hasFieldTracking = containsFieldTrackingSpans(newText);
+  const hasLeadingSpaces = newText.startsWith('  ');
+  const hasMarkdownFormatting = newText.includes('*') || newText.includes('_');
+
+  if (hasFieldTracking || hasLeadingSpaces || hasMarkdownFormatting) {
+    // Replace the entire children array with new HTML node
+    node.children = [
+      {
+        type: 'html',
+        value: newText,
+      } as any,
+    ];
+  } else {
+    // For headers, always use plain text to ensure clean, consistent formatting
+    // This flattens all inline formatting (links, inline code, emphasis, strong)
+    node.children = [
+      {
+        type: 'text',
+        value: newText,
+      },
+    ];
+  }
 }
 
 export default remarkHeaders;

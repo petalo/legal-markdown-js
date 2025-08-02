@@ -23,11 +23,13 @@ standards.
 
 ### Key Features
 
-- **6 hierarchy levels** (Articles, Sections, Subsections, Sub-subsections,
-  Paragraphs, Annexes)
+- **9 hierarchy levels** (Articles, Sections, Subsections, Sub-subsections,
+  Paragraphs, Annexes, and 3 additional extended levels)
 - **Automatic numbering** with intelligent reset
 - **Configurable indentation** for each level
 - **Customizable templates** for each format
+- **Enhanced variable system** with %A, %a, %R, %r, %l1-l9, %o support
+- **Undefined level fallbacks** rendered as {{undefined-level-n}} templates
 - **Compatibility** with the original legal-markdown standard
 
 ## Basic Syntax
@@ -84,14 +86,30 @@ the invoice.
 
 ## Default Formats
 
-| Level | Notation           | Default Format | Output Example |
-| ----- | ------------------ | -------------- | -------------- |
-| 1     | `l.` or `l1.`      | `Article %n.`  | `Article 1.`   |
-| 2     | `ll.` or `l2.`     | `Section %n.`  | `Section 1.`   |
-| 3     | `lll.` or `l3.`    | `(%n)`         | `(1)`          |
-| 4     | `llll.` or `l4.`   | `(%n%c)`       | `(1a)`         |
-| 5     | `lllll.` or `l5.`  | `(%n%c%r)`     | `(1ai)`        |
-| 6     | `llllll.` or `l6.` | `Annex %r -`   | `Annex i -`    |
+Legal Markdown JS now uses **undefined fallbacks** instead of hardcoded
+defaults. The system only applies formatting when explicitly defined in YAML
+metadata.
+
+| Level | Notation              | Auto-Population Default | Undefined Fallback      |
+| ----- | --------------------- | ----------------------- | ----------------------- |
+| 1     | `l.` or `l1.`         | `Article %n.`           | `{{undefined-level-1}}` |
+| 2     | `ll.` or `l2.`        | `Section %n.`           | `{{undefined-level-2}}` |
+| 3     | `lll.` or `l3.`       | `%n.`                   | `{{undefined-level-3}}` |
+| 4     | `llll.` or `l4.`      | `(%n)`                  | `{{undefined-level-4}}` |
+| 5     | `lllll.` or `l5.`     | `(%A)`                  | `{{undefined-level-5}}` |
+| 6     | `llllll.` or `l6.`    | `(%a)`                  | `{{undefined-level-6}}` |
+| 7     | `lllllll.` or `l7.`   | `(%R)`                  | `{{undefined-level-7}}` |
+| 8     | `llllllll.` or `l8.`  | `(%r)`                  | `{{undefined-level-8}}` |
+| 9     | `lllllllll.` or `l9.` | `%n.`                   | `{{undefined-level-9}}` |
+
+The **Auto-Population Default** patterns are defined in
+`src/constants/headers.ts` and are used when the CLI `--headers` flag
+automatically populates YAML front matter. Users can modify these default
+patterns by editing the `DEFAULT_HEADER_PATTERNS` constant in that file.
+
+**Important**: Levels without metadata definitions will render as
+`{{undefined-level-n}}` templates instead of hardcoded values. This ensures
+templates remain reusable and don't produce unexpected formatting.
 
 ### Default Indentation
 
@@ -101,6 +119,9 @@ the invoice.
 - **Level 4**: 9 spaces (4.5 × 2)
 - **Level 5**: 12 spaces (6.0 × 2)
 - **Level 6**: 15 spaces (7.5 × 2)
+- **Level 7**: 18 spaces (9.0 × 2)
+- **Level 8**: 21 spaces (10.5 × 2)
+- **Level 9**: 24 spaces (12.0 × 2)
 
 > Indentation is calculated as: `(level - 1) × level-indent × 2` spaces
 
@@ -108,55 +129,71 @@ the invoice.
 
 ### Basic Variables
 
-| Variable | Description                                                | Example          |
-| -------- | ---------------------------------------------------------- | ---------------- |
-| `%n`     | Number of current level OR level 1 in hierarchical formats | `1`, `2`, `3`    |
-| `%c`     | Alphabetic letter of current level OR level 1 reference    | `a`, `b`, `c`    |
-| `%r`     | Roman numeral (lowercase)                                  | `i`, `ii`, `iii` |
-| `%R`     | Roman numeral (uppercase)                                  | `I`, `II`, `III` |
+| Variable | Description                     | Example             |
+| -------- | ------------------------------- | ------------------- |
+| `%n`     | Number of current level         | `1`, `2`, `3`       |
+| `%R`     | Roman numeral (uppercase)       | `I`, `II`, `III`    |
+| `%r`     | Roman numeral (lowercase)       | `i`, `ii`, `iii`    |
+| `%A`     | Alphabetic letter (uppercase)   | `A`, `B`, `C`       |
+| `%a`     | Alphabetic letter (lowercase)   | `a`, `b`, `c`       |
+| `%o`     | Ordinal number (fallback to %n) | `1st`, `2nd`, `3rd` |
 
 ### Variable Behavior by Context
 
-#### Standard Formats (Default behavior)
+#### Standard Formats (Current Level Variables)
 
-- **Levels 1-3**: `%n` = number of current level
-- **Level 4**: `%n` = number of level 3, `%c` = letter of level 4 (format:
-  `(%n%c)`)
-- **Level 5**: `%n` = number of level 3, `%c` = letter of level 4, `%r` = roman
-  of level 5 (format: `(%n%c%r)`)
+All basic variables (`%n`, `%r`, `%R`, `%A`, `%a`, `%o`) refer to the current
+level number:
 
-#### Hierarchical Formats (Academic/Dotted notation)
+- `%n` = current level number
+- `%a` = current level as lowercase letter
+- `%A` = current level as uppercase letter
+- `%r` = current level as lowercase roman numeral
+- `%R` = current level as uppercase roman numeral
+- `%o` = current level as ordinal (fallback to %n)
 
-- **Format pattern**: `%n.%s`, `%n.%s.%t`, etc.
-- **Level 1**: `%n` = level 1 number
-- **Level 2+**: `%n` = level 1 number, `%s`/`%t`/`%f`/`%i` = respective level
-  numbers
+#### Hierarchical Formats (Level Reference Variables)
 
-#### Mixed Hierarchical Formats (Roman/Alphabetic with dots)
+For academic/dotted notation or cross-level references, use the `%l1` through
+`%l9` variables:
 
-- **Format pattern**: `%r.%n`, `%c.%n`
-- **`%r` or `%c` before dot**: References level 1 value
-- **`%n` after dot**: Current level number
+- `%l1` = level 1 number, `%l2` = level 2 number, etc.
+- **Format pattern**: `%l1.%l2`, `%l1.%l2.%l3`, etc.
+- **Example**: `level-three: "%l1.%l2.%l3"` → "1.2.3"
 
-### Reference Variables (for Hierarchical Formats)
+### Extended Level Variables (Direct Level References)
 
-| Variable | Description    | Reference Level | Example Use                    |
-| -------- | -------------- | --------------- | ------------------------------ |
-| `%s`     | Level 2 number | Second Level    | `%n.%s` → "2.1"                |
-| `%t`     | Level 3 number | Third Level     | `%n.%s.%t` → "2.1.1"           |
-| `%f`     | Level 4 number | Fourth Level    | `%n.%s.%t.%f` → "2.1.1.1"      |
-| `%i`     | Level 5 number | Fifth Level     | `%n.%s.%t.%f.%i` → "2.1.1.1.1" |
+| Variable | Description    | Reference Level | Example Use                         |
+| -------- | -------------- | --------------- | ----------------------------------- |
+| `%l1`    | Level 1 number | First Level     | `%l1` → "1"                         |
+| `%l2`    | Level 2 number | Second Level    | `%l1.%l2` → "1.2"                   |
+| `%l3`    | Level 3 number | Third Level     | `%l1.%l2.%l3` → "1.2.3"             |
+| `%l4`    | Level 4 number | Fourth Level    | `%l1.%l2.%l3.%l4` → "1.2.3.4"       |
+| `%l5`    | Level 5 number | Fifth Level     | `%l1.%l2.%l3.%l4.%l5` → "1.2.3.4.5" |
+| `%l6`    | Level 6 number | Sixth Level     | `%l1.%l6` → "1.6"                   |
+| `%l7`    | Level 7 number | Seventh Level   | `%l1.%l7` → "1.7"                   |
+| `%l8`    | Level 8 number | Eighth Level    | `%l1.%l8` → "1.8"                   |
+| `%l9`    | Level 9 number | Ninth Level     | `%l1.%l9` → "1.9"                   |
 
 **Important**: These variables are used for academic/hierarchical numbering
 patterns where you need to reference specific level numbers in dotted notation.
 
-### Special Variables
+### Special Variables (Leading Zeros)
 
-| Variable | Description                | Example             |
-| -------- | -------------------------- | ------------------- |
-| `%02n`   | Number with leading zeros  | `01`, `02`, `10`    |
-| `%03n`   | Number with 3 digits       | `001`, `002`, `010` |
-| `%02s`   | Section with leading zeros | `01`, `02`          |
+| Variable | Description                              | Example             |
+| -------- | ---------------------------------------- | ------------------- |
+| `%02n`   | Current level with 2-digit leading zeros | `01`, `02`, `10`    |
+| `%03n`   | Current level with 3-digit leading zeros | `001`, `002`, `010` |
+| `%02l1`  | Level 1 with 2-digit leading zeros       | `01`, `02`          |
+| `%02l2`  | Level 2 with 2-digit leading zeros       | `01`, `02`          |
+| `%02l3`  | Level 3 with 2-digit leading zeros       | `01`, `02`          |
+| `%02l4`  | Level 4 with 2-digit leading zeros       | `01`, `02`          |
+| `%03l1`  | Level 1 with 3-digit leading zeros       | `001`, `002`        |
+| `%03l2`  | Level 2 with 3-digit leading zeros       | `001`, `002`        |
+| `%04l1`  | Level 1 with 4-digit leading zeros       | `0001`, `0002`      |
+
+**Pattern**: Use `%0Xn` for current level or `%0Xl1` through `%0Xl9` for
+specific level references, where X is the number of digits.
 
 ## Custom Configuration
 
@@ -167,10 +204,10 @@ patterns where you need to reference specific level numbers in dotted notation.
 title: 'My Legal Document'
 # Custom formats for each level
 level-one: 'Chapter %n:'
-level-two: 'Section %n.%s'
+level-two: 'Section %l1.%l2'
 level-three: 'Subsection (%n)'
-level-four: 'Part %n%c'
-level-five: 'Item %n%c%r'
+level-four: 'Part %n%a'
+level-five: 'Item %n%a%r'
 level-six: 'Annex %R -'
 # Custom indentation (em)
 level-indent: 2.0
@@ -182,11 +219,11 @@ level-indent: 2.0
 #### Academic Format (Hierarchical Dotted Numbering)
 
 ```yaml
-level-one: '%n.'
-level-two: '%n.%s'
-level-three: '%n.%s.%t'
-level-four: '%n.%s.%t.%f'
-level-five: '%n.%s.%t.%f.%i'
+level-one: '%l1.'
+level-two: '%l1.%l2'
+level-three: '%l1.%l2.%l3'
+level-four: '%l1.%l2.%l3.%l4'
+level-five: '%l1.%l2.%l3.%l4.%l5'
 level-six: 'Annex %R -'
 ```
 
@@ -206,10 +243,10 @@ level-six: 'Annex %R -'
 
 ```yaml
 level-one: '%r.'
-level-two: '%r.%n'
-level-three: '(%n)'
-level-four: '(%n%c)'
-level-five: '(%n%c%r)'
+level-two: '%l1.%l2'
+level-three: '(%l3)'
+level-four: '(%l3%a)'
+level-five: '(%l3%a%r)'
 ```
 
 **Example Output:**
@@ -228,10 +265,10 @@ iii. Third Main
 
 ```yaml
 level-one: '%R.'
-level-two: '%R.%n'
-level-three: '(%n)'
-level-four: '(%n%c)'
-level-five: '(%n%c%R)'
+level-two: '%l1.%l2'
+level-three: '(%l3)'
+level-four: '(%l3%a)'
+level-five: '(%l3%a%R)'
 level-six: 'Annex %R -'
 ```
 
@@ -251,11 +288,11 @@ III. Third Main
 #### Alphabetic Hierarchical Format
 
 ```yaml
-level-one: '%c.'
-level-two: '%c.%n'
-level-three: '(%c)'
-level-four: '(%c%n)'
-level-five: '(%c%n%r)'
+level-one: '%a.'
+level-two: '%l1.%l2'
+level-three: '(%l3)'
+level-four: '(%l1%l4)'
+level-five: '(%l1%l4%r)'
 ```
 
 **Example Output:**
@@ -274,10 +311,10 @@ c. Charlie
 
 ```yaml
 level-one: 'Part %r'
-level-two: 'Chapter %n'
-level-three: 'Section %c'
-level-four: 'Subsection %n%c'
-level-five: 'Item %n%c%r'
+level-two: 'Chapter %l2'
+level-three: 'Section %a'
+level-four: 'Subsection %l3%a'
+level-five: 'Item %l3%a%r'
 ```
 
 **Example Output:**
@@ -434,8 +471,8 @@ title: 'Software License Agreement'
 level-one: 'Article %n.'
 level-two: 'Section %n.'
 level-three: '(%n)'
-level-four: '(%n%c)'
-level-five: '(%n%c%r)'
+level-four: '(%n%a)'
+level-five: '(%n%a%r)'
 level-indent: 1.5
 ---
 
@@ -494,11 +531,11 @@ for illegal activities.
 ```markdown
 ---
 title: 'AI Research'
-level-one: '%n.'
-level-two: '%n.%s'
-level-three: '%n.%s.%t'
-level-four: '%n.%s.%t.%f'
-level-five: '%n.%s.%t.%f.%i'
+level-one: '%l1.'
+level-two: '%l1.%l2'
+level-three: '%l1.%l2.%l3'
+level-four: '%l1.%l2.%l3.%l4'
+level-five: '%l1.%l2.%l3.%l4.%l5'
 level-indent: 2.0
 ---
 
@@ -579,8 +616,8 @@ Use leading zeros for formal document numbering:
 
 ```yaml
 level-one: '%02n.'
-level-two: '%02n.%02s'
-level-three: '(%02n)'
+level-two: '%02l1.%02l2'
+level-three: '(%02l3)'
 ```
 
 **Example Output:**
@@ -618,13 +655,13 @@ level-indent: 1.0  # Less indentation
 
 #### 3. Incorrect Template Format
 
-**Problem**: Variables `%n`, `%c`, `%r` are not replaced.
+**Problem**: Variables `%n`, `%a`, `%r` are not replaced.
 
 **Solution**: Verify template syntax:
 
 ```yaml
 # Correct
-level-four: "(%n%c)"
+level-four: "(%n%a)"
 
 # Incorrect (missing %)
 level-four: "(nc)"
@@ -639,31 +676,32 @@ a higher level.
 
 #### 5. Hierarchical Format Variables Not Working
 
-**Problem**: Academic format `%n.%s.%t` shows wrong numbers.
+**Problem**: Academic format with level references shows wrong numbers.
 
-**Solution**: Ensure you're using the correct pattern:
+**Solution**: Use the `%l1`-`%l9` variables for hierarchical formatting:
 
 ```yaml
 # Correct academic format
-level-two: "%n.%s"    # Level 1 number . Level 2 number
-level-three: "%n.%s.%t"  # Level 1 . Level 2 . Level 3
+level-two: "%l1.%l2"        # Level 1 . Level 2
+level-three: "%l1.%l2.%l3"  # Level 1 . Level 2 . Level 3
 
-# Common mistake
-level-two: "%s.%n"    # Wrong order
+# Modern format with clear level references
+level-two: "%l1.%l2"        # Level 1 . Level 2
 ```
 
-#### 6. Roman/Alphabetic Hierarchical Issues
+#### 6. Current vs Reference Variables Confusion
 
-**Problem**: Format `%r.%n` shows wrong level 1 reference.
+**Problem**: Mixing current level variables (%n, %a, %r) with level references.
 
-**Solution**: In hierarchical formats like `%r.%n` or `%c.%n`:
+**Solution**: Understand the difference:
 
-- Variable before the dot (`.`) refers to level 1
-- Variable after the dot refers to current level
+- **Current level**: `%n`, `%a`, `%r`, `%R`, `%A` always refer to current level
+- **Level references**: `%l1`, `%l2`, `%l3`, etc. refer to specific levels
 
 ```yaml
-# For level 2 under level 1 "iii"
-level-two: '%r.%n' # Produces: "iii.1" (correct)
+# For level 2 format:
+level-two: '%l1.%l2'  # "1.2" (level 1 number . level 2 number)
+level-two: '%n'       # "2" (just current level number)
 ```
 
 #### 7. Consecutive Level 5 Not Incrementing
@@ -716,50 +754,51 @@ l. Level 1 # Article 1. ll. Level 2 # Section 1. lll. Level 3 # (1) llll. Level
 level-one: 'Article %n.'
 level-two: 'Section %n.'
 level-three: '(%n)'
-level-four: '(%n%c)'
-level-five: '(%n%c%r)'
+level-four: '(%n%a)'
+level-five: '(%n%a%r)'
 ```
 
 #### Academic Format
 
 ```yaml
-level-one: '%n.'
-level-two: '%n.%s'
-level-three: '%n.%s.%t'
-level-four: '%n.%s.%t.%f'
-level-five: '%n.%s.%t.%f.%i'
+level-one: '%l1.'
+level-two: '%l1.%l2'
+level-three: '%l1.%l2.%l3'
+level-four: '%l1.%l2.%l3.%l4'
+level-five: '%l1.%l2.%l3.%l4.%l5'
 ```
 
 #### Roman Hierarchical
 
 ```yaml
 level-one: '%r.'
-level-two: '%r.%n'
-level-three: '(%n)'
-level-four: '(%n%c)'
-level-five: '(%n%c%r)'
+level-two: '%l1.%l2'
+level-three: '(%l3)'
+level-four: '(%l3%a)'
+level-five: '(%l3%a%r)'
 ```
 
 ### Essential Variables
 
-| Variable | Standard Use                    | Hierarchical Use                   | Example             |
-| -------- | ------------------------------- | ---------------------------------- | ------------------- |
-| `%n`     | Current level number            | Level 1 number (in dotted formats) | `1`, `2`            |
-| `%c`     | Current level letter            | Level 1 letter (before dots)       | `a`, `b`            |
-| `%r`     | Current level roman (lowercase) | Level 1 roman (before dots)        | `i`, `ii`           |
-| `%R`     | Current level roman (uppercase) | Level 1 roman (before dots)        | `I`, `II`           |
-| `%s`     | -                               | Level 2 number                     | In `%n.%s`          |
-| `%t`     | -                               | Level 3 number                     | In `%n.%s.%t`       |
-| `%f`     | -                               | Level 4 number                     | In `%n.%s.%t.%f`    |
-| `%i`     | -                               | Level 5 number                     | In `%n.%s.%t.%f.%i` |
+| Variable | Current Level Use               | Hierarchical Use | Example              |
+| -------- | ------------------------------- | ---------------- | -------------------- |
+| `%n`     | Current level number            | -                | `1`, `2`             |
+| `%a`     | Current level letter            | -                | `a`, `b`             |
+| `%r`     | Current level roman (lowercase) | -                | `i`, `ii`            |
+| `%R`     | Current level roman (uppercase) | -                | `I`, `II`            |
+| `%l1`    | -                               | Level 1 number   | In `%l1.%l2`         |
+| `%l2`    | -                               | Level 2 number   | In `%l1.%l2.%l3`     |
+| `%l3`    | -                               | Level 3 number   | In `%l1.%l2.%l3.%l4` |
+| `%l4+`   | -                               | Level 4+ numbers | Extended hierarchy   |
 
 ### Format Pattern Recognition
 
-- **Dotted with references** (`%n.%s`, `%n.%s.%t`): Academic/hierarchical
-  numbering
-- **Variable + dot + n** (`%r.%n`, `%R.%n`, `%c.%n`): Mixed hierarchical (level
-  1 reference + current number)
-- **Combined variables** (`%n%c`, `%n%c%r`, `%n%c%R`): Standard legal format
+- **Level references** (`%l1.%l2`, `%l1.%l2.%l3`): Academic/hierarchical
+  numbering with specific level references
+- **Current level only** (`%n`, `%a`, `%r`, `%R`, `%A`): Simple current level
+  formatting
+- **Combined current + references** (`%l3%a`, `%l1.%l4%r`): Mixed patterns using
+  both systems
 
 ---
 
