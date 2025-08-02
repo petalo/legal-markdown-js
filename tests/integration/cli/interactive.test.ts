@@ -2,28 +2,21 @@
  * @fileoverview Integration tests for Interactive CLI
  */
 
+import { expect, describe, it, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
 import { CLI_PATHS } from '../../utils/cli-paths.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 describe('Interactive CLI Integration', () => {
-  const testInputDir = path.join(__dirname, '../../../test-fixtures/interactive-input');
-  const testOutputDir = path.join(__dirname, '../../../test-fixtures/interactive-output');
+  const testInputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-input-'));
+  const testOutputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-output-'));
   const cliPath = CLI_PATHS.interactive;
   const activeProcesses: Set<any> = new Set();
 
   beforeAll(() => {
-    // Ensure test directories exist
-    if (!fs.existsSync(testInputDir)) {
-      fs.mkdirSync(testInputDir, { recursive: true });
-    }
-    if (!fs.existsSync(testOutputDir)) {
-      fs.mkdirSync(testOutputDir, { recursive: true });
-    }
+    // Test directories already created with mkdtempSync
 
     // Create test input file
     const testContent = `---
@@ -175,12 +168,7 @@ This is a test document for integration testing.`;
   }, 40000);
 
   it('should handle empty input directory gracefully', async () => {
-    const emptyDir = path.join(__dirname, '../../../test-fixtures/empty-interactive');
-    
-    // Create empty directory
-    if (!fs.existsSync(emptyDir)) {
-      fs.mkdirSync(emptyDir, { recursive: true });
-    }
+    const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-'));
 
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
