@@ -164,16 +164,26 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
  * Extract header configuration from document metadata
  */
 function extractHeaderConfig(metadata: Record<string, any>): HeaderConfig {
+  // Helper to get first defined value (including empty strings)
+  const getFirstDefined = (...keys: string[]): string | null => {
+    for (const key of keys) {
+      if (key in metadata) {
+        return metadata[key];
+      }
+    }
+    return null;
+  };
+
   return {
-    levelOne: metadata['level-1'] || metadata['level-one'] || metadata['level_one'] || null,
-    levelTwo: metadata['level-2'] || metadata['level-two'] || metadata['level_two'] || null,
-    levelThree: metadata['level-3'] || metadata['level-three'] || metadata['level_three'] || null,
-    levelFour: metadata['level-4'] || metadata['level-four'] || metadata['level_four'] || null,
-    levelFive: metadata['level-5'] || metadata['level-five'] || metadata['level_five'] || null,
-    levelSix: metadata['level-6'] || metadata['level-six'] || metadata['level_six'] || null,
-    levelSeven: metadata['level-7'] || metadata['level-seven'] || metadata['level_seven'] || null,
-    levelEight: metadata['level-8'] || metadata['level-eight'] || metadata['level_eight'] || null,
-    levelNine: metadata['level-9'] || metadata['level-nine'] || metadata['level_nine'] || null,
+    levelOne: getFirstDefined('level-1', 'level-one', 'level_one'),
+    levelTwo: getFirstDefined('level-2', 'level-two', 'level_two'),
+    levelThree: getFirstDefined('level-3', 'level-three', 'level_three'),
+    levelFour: getFirstDefined('level-4', 'level-four', 'level_four'),
+    levelFive: getFirstDefined('level-5', 'level-five', 'level_five'),
+    levelSix: getFirstDefined('level-6', 'level-six', 'level_six'),
+    levelSeven: getFirstDefined('level-7', 'level-seven', 'level_seven'),
+    levelEight: getFirstDefined('level-8', 'level-eight', 'level_eight'),
+    levelNine: getFirstDefined('level-9', 'level-nine', 'level_nine'),
     customFormats: new Map(),
   };
 }
@@ -279,7 +289,7 @@ function getHeaderFormat(level: number, config: HeaderConfig): string {
   }
 
   // If no format is defined, return undefined template
-  if (format === null) {
+  if (format === null || format === undefined) {
     return `{{undefined-level-${level}}}`;
   }
 
