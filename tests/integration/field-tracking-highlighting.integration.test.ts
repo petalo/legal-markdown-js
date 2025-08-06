@@ -233,7 +233,7 @@ lll. First Subsection
 
       // Process with CLI service with timeout
       const baseName = 'field-tracking-test-cli-no-highlight';
-      const outputPath = path.join(outputDir, `${baseName}.md`);
+      const outputPath = path.join(outputDir, `${baseName}.html`);
       
       try {
         // Add timeout wrapper to prevent hanging

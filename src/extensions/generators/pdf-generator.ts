@@ -31,10 +31,11 @@
 
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import * as https from 'https';
 import * as http from 'http';
-import { fileURLToPath } from 'url';
 import { logger } from '../../utils/logger';
 import { getCurrentDir } from '../../utils/esm-utils.js';
 
@@ -327,25 +328,65 @@ async function downloadAndEncodeImage(logoUrl: string): Promise<string> {
  * ```
  */
 export class PdfGenerator {
-  private puppeteerOptions: puppeteer.LaunchOptions = {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu',
-    ],
-  };
+  private puppeteerOptions: puppeteer.LaunchOptions;
 
   /**
    * Creates a new PDF generator instance
    *
    */
-  constructor() {}
+  constructor() {
+    // Initialize Puppeteer options with platform-specific settings
+    this.puppeteerOptions = {
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        // Additional args for macOS compatibility
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+      ],
+      // Increase timeout for slower systems
+      timeout: 60000,
+    };
+
+    // Try to use system Chrome on macOS if available
+    const chromeExecutable = this.getMacOSChromeExecutable();
+    if (chromeExecutable) {
+      this.puppeteerOptions.executablePath = chromeExecutable;
+    }
+  }
+
+  /**
+   * Attempts to find Chrome executable on macOS
+   * @private
+   */
+  private getMacOSChromeExecutable(): string | null {
+    if (process.platform !== 'darwin') return null;
+
+    const possiblePaths = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      `${os.homedir()}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`,
+      `${os.homedir()}/Applications/Chromium.app/Contents/MacOS/Chromium`,
+    ];
+
+    for (const chromePath of possiblePaths) {
+      if (fsSync.existsSync(chromePath)) {
+        console.log(`[PDF Generator] Using system Chrome at: ${chromePath}`);
+        return chromePath;
+      }
+    }
+
+    console.log("[PDF Generator] System Chrome not found, will use Puppeteer's bundled Chromium");
+    return null;
+  }
 
   /**
    * Generates a PDF document from Legal Markdown content
@@ -399,9 +440,33 @@ export class PdfGenerator {
       tempHtmlPath = path.join(tempDir, `temp-${Date.now()}.html`);
       await fs.writeFile(tempHtmlPath, htmlContent, 'utf-8');
 
-      // Launch browser
-      logger.debug('Launching Puppeteer browser');
-      browser = await puppeteer.launch(this.puppeteerOptions);
+      // Launch browser with error handling
+      logger.debug('Launching Puppeteer browser', {
+        executablePath: this.puppeteerOptions.executablePath,
+        platform: process.platform,
+      });
+
+      try {
+        browser = await puppeteer.launch(this.puppeteerOptions);
+      } catch (launchError: unknown) {
+        // Provide helpful error message for macOS users
+        if (process.platform === 'darwin') {
+          const errorMessage = `
+Failed to launch Chrome/Chromium for PDF generation.
+
+Common solutions for macOS:
+1. Run: npx puppeteer browsers install chrome
+2. Install Google Chrome from: https://www.google.com/chrome/
+3. If using M1/M2 Mac, ensure Rosetta 2 is installed: softwareupdate --install-rosetta
+4. Try running with sudo if permission issues: sudo npm install
+
+Original error: ${launchError instanceof Error ? launchError.message : String(launchError)}
+`;
+          throw new Error(errorMessage);
+        }
+        throw launchError;
+      }
+
       const page = await browser.newPage();
 
       // Load the HTML file

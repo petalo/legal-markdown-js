@@ -384,7 +384,7 @@ l. **Party**: The contracting party is {{party1}}.
     } catch (error) {
       console.log(
         chalk.yellow(
-          `⚠️  Could not create demo file: ${error instanceof Error ? error.message : String(error)}`
+          `⚠️  Couldn't create demo file: ${error instanceof Error ? error.message : String(error)}`
         )
       );
     }
