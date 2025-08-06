@@ -11,6 +11,7 @@
 import { select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import * as fs from 'fs';
+import * as path from 'path';
 import { RESOLVED_PATHS } from '../../../constants/index';
 import { scanDirectory } from '../utils/file-scanner';
 import { formatWarningMessage } from '../utils/format-helpers';
@@ -51,7 +52,49 @@ function isConfigurationValid(): boolean {
   const hasCorrectEnvFile = fs.existsSync(expectedEnvPath);
 
   if (!hasCorrectEnvFile) {
-    return false;
+    // Fallback: check if there's a .env in the current working directory
+    const localEnvPath = path.join(process.cwd(), '.env');
+    const hasLocalEnvFile = fs.existsSync(localEnvPath);
+
+    if (!hasLocalEnvFile) {
+      return false;
+    }
+
+    // If local .env exists, reload environment variables from it
+    try {
+      const envContent = fs.readFileSync(localEnvPath, 'utf8');
+      const envVars = envContent
+        .split('\n')
+        .filter(line => line.trim() && !line.startsWith('#'))
+        .reduce(
+          (vars, line) => {
+            const [key, ...valueParts] = line.split('=');
+            if (key && valueParts.length > 0) {
+              // Remove quotes if present
+              let value = valueParts.join('=').trim();
+              if (
+                (value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))
+              ) {
+                value = value.slice(1, -1);
+              }
+              vars[key.trim()] = value;
+            }
+            return vars;
+          },
+          {} as Record<string, string>
+        );
+
+      // Check if DEFAULT_INPUT_DIR is configured and accessible in local .env
+      const localInputDir = envVars.DEFAULT_INPUT_DIR;
+      if (!localInputDir) {
+        return false;
+      }
+
+      return isDirectoryAccessible(path.resolve(localInputDir));
+    } catch {
+      return false;
+    }
   }
 
   // Check if the configured input directory is accessible
