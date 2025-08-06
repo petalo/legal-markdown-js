@@ -4,10 +4,10 @@
  * Run with: node scripts/test-pdf-setup.cjs
  */
 
-import puppeteer from 'puppeteer';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 async function testPdfSetup() {
   console.log('🔍 Testing PDF Generation Setup...\n');
