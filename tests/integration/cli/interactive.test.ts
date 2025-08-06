@@ -12,6 +12,7 @@ import { CLI_PATHS } from '../../utils/cli-paths.js';
 describe('Interactive CLI Integration', () => {
   const testInputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-input-'));
   const testOutputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-output-'));
+  const testWorkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-work-'));
   const cliPath = CLI_PATHS.interactive;
   const activeProcesses: Set<any> = new Set();
 
@@ -33,6 +34,18 @@ Date: {{date}}
 This is a test document for integration testing.`;
 
     fs.writeFileSync(path.join(testInputDir, 'integration-test.md'), testContent);
+
+    // Create test .env file in the isolated work directory
+    const testEnvContent = `# Legal Markdown Configuration
+# Generated for integration testing
+
+STYLES_DIR="./src/styles"
+DEFAULT_INPUT_DIR="${testInputDir}"
+DEFAULT_OUTPUT_DIR="${testOutputDir}"
+ARCHIVE_DIR="./archive"
+`;
+
+    fs.writeFileSync(path.join(testWorkDir, '.env'), testEnvContent);
   });
 
   afterAll(async () => {
@@ -48,6 +61,7 @@ This is a test document for integration testing.`;
     try {
       fs.rmSync(testInputDir, { recursive: true, force: true });
       fs.rmSync(testOutputDir, { recursive: true, force: true });
+      fs.rmSync(testWorkDir, { recursive: true, force: true });
     } catch (error) {
       // Ignore cleanup errors
     }
@@ -61,9 +75,8 @@ This is a test document for integration testing.`;
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        DEFAULT_INPUT_DIR: testInputDir,
-        DEFAULT_OUTPUT_DIR: testOutputDir,
       },
+      cwd: testWorkDir,
     });
     
     activeProcesses.add(child);
@@ -118,9 +131,8 @@ This is a test document for integration testing.`;
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        DEFAULT_INPUT_DIR: testInputDir,
-        DEFAULT_OUTPUT_DIR: testOutputDir,
       },
+      cwd: testWorkDir,
     });
     
     activeProcesses.add(child);
@@ -169,14 +181,25 @@ This is a test document for integration testing.`;
 
   it('should handle empty input directory gracefully', async () => {
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-'));
+    const emptyWorkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-work-'));
+
+    // Create temporary .env with empty directory in the empty work dir
+    const tempEnvContent = `# Legal Markdown Configuration
+# Generated for empty directory test
+
+STYLES_DIR="./src/styles"
+DEFAULT_INPUT_DIR="${emptyDir}"
+DEFAULT_OUTPUT_DIR="${testOutputDir}"
+ARCHIVE_DIR="./archive"
+`;
+    fs.writeFileSync(path.join(emptyWorkDir, '.env'), tempEnvContent);
 
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        DEFAULT_INPUT_DIR: emptyDir,
-        DEFAULT_OUTPUT_DIR: testOutputDir,
       },
+      cwd: emptyWorkDir,
     });
     
     activeProcesses.add(child);
@@ -199,9 +222,10 @@ This is a test document for integration testing.`;
         activeProcesses.delete(child);
         clearTimeout(timeout);
         
-        // Clean up empty directory
+        // Clean up empty directories
         try {
           fs.rmSync(emptyDir, { recursive: true, force: true });
+          fs.rmSync(emptyWorkDir, { recursive: true, force: true });
         } catch (error) {
           // Ignore cleanup errors
         }
@@ -226,6 +250,7 @@ This is a test document for integration testing.`;
         }
         try {
           fs.rmSync(emptyDir, { recursive: true, force: true });
+          fs.rmSync(emptyWorkDir, { recursive: true, force: true });
         } catch (error) {
           // Ignore cleanup errors
         }
