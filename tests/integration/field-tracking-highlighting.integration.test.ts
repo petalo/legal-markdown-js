@@ -38,19 +38,22 @@ ll. First Section
 lll. First Subsection
 `;
 
-  const outputDir = path.join(__dirname, '../output');
+  const outputDir = path.join(__dirname, '../output', `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   beforeAll(async () => {
     await fs.mkdir(outputDir, { recursive: true });
   });
 
   afterAll(async () => {
-    // Clean up generated test files
-    const files = await fs.readdir(outputDir);
-    for (const file of files) {
-      if (file.startsWith('field-tracking-test-')) {
+    // Clean up entire unique test directory
+    try {
+      const files = await fs.readdir(outputDir);
+      for (const file of files) {
         await fs.unlink(path.join(outputDir, file));
       }
+      await fs.rmdir(outputDir);
+    } catch (error) {
+      // Ignore cleanup errors - directory might not exist
     }
   });
 
@@ -114,31 +117,53 @@ lll. First Subsection
 
   describe('PDF Generation', () => {
     it('should always include field tracking classes for both normal and highlight versions', async () => {
-      const normalPdfPath = path.join(outputDir, 'field-tracking-test-normal.pdf');
-      const highlightPdfPath = path.join(outputDir, 'field-tracking-test-highlight.pdf');
+      // Use unique file names to avoid conflicts between parallel tests
+      const testId = Math.random().toString(36).substr(2, 9);
+      const normalPdfPath = path.join(outputDir, `field-tracking-test-normal-${testId}.pdf`);
+      const highlightPdfPath = path.join(outputDir, `field-tracking-test-highlight-${testId}.pdf`);
 
-      // Generate both versions
-      await generatePdf(testContent, normalPdfPath, {
-        title: 'Test PDF Normal',
-        includeHighlighting: false,
-      });
+      try {
+        // Generate both versions sequentially to avoid Puppeteer conflicts
+        await generatePdf(testContent, normalPdfPath, {
+          title: 'Test PDF Normal',
+          includeHighlighting: false,
+        });
 
-      await generatePdf(testContent, highlightPdfPath, {
-        title: 'Test PDF Highlight',
-        includeHighlighting: true,
-      });
+        // Add small delay to avoid Chrome process conflicts
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Both files should be created
-      expect(await fs.stat(normalPdfPath)).toBeTruthy();
-      expect(await fs.stat(highlightPdfPath)).toBeTruthy();
+        await generatePdf(testContent, highlightPdfPath, {
+          title: 'Test PDF Highlight',
+          includeHighlighting: true,
+        });
 
-      // Both should have content (size > 0)
-      const normalStats = await fs.stat(normalPdfPath);
-      const highlightStats = await fs.stat(highlightPdfPath);
-      
-      expect(normalStats.size).toBeGreaterThan(0);
-      expect(highlightStats.size).toBeGreaterThan(0);
-    });
+        // Wait for file system to sync
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Both files should be created
+        expect(await fs.stat(normalPdfPath)).toBeTruthy();
+        expect(await fs.stat(highlightPdfPath)).toBeTruthy();
+
+        // Both should have content (size > 0)
+        const normalStats = await fs.stat(normalPdfPath);
+        const highlightStats = await fs.stat(highlightPdfPath);
+        
+        expect(normalStats.size).toBeGreaterThan(0);
+        expect(highlightStats.size).toBeGreaterThan(0);
+      } catch (error) {
+        console.error('PDF Generation test failed:', error);
+        
+        // List actual files for debugging
+        try {
+          const actualFiles = await fs.readdir(outputDir);
+          console.log(`Files in test directory ${outputDir}:`, actualFiles);
+        } catch (listError) {
+          console.log('Could not list test directory files:', listError);
+        }
+        
+        throw error;
+      }
+    }, 60000); // Increase timeout to 60 seconds for PDF generation
   });
 
   describe('CLI Service Dual Generation', () => {
