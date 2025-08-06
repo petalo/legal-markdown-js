@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to run legal-md-ui with automatic dependency installation
-# Compatible with macOS and executable from Shortcuts as a shell script
+# Compatible with macOS and executable from the terminal as a shell script
 #
 # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/petalo/legal-markdown-js/refs/heads/main/scripts/install-from-npm-osx.sh)"
 
@@ -67,19 +67,19 @@ show_spinner() {
 # Function to check system requirements
 check_system_requirements() {
     print_status "Checking system requirements..."
-    
+
     # Check macOS version
     OS_VERSION=$(sw_vers -productVersion)
     print_status "macOS version: $OS_VERSION"
-    
+
     # Check architecture
     ARCH=$(uname -m)
     print_status "Architecture: $ARCH"
-    
+
     # Check available disk space
     DISK_SPACE=$(df -h / | awk 'NR==2 {print $4}')
     print_status "Available disk space: $DISK_SPACE"
-    
+
     # Check internet connectivity
     if ping -c 1 google.com &> /dev/null; then
         print_success "Internet connection available"
@@ -111,7 +111,7 @@ check_homebrew() {
         "/home/linuxbrew/.linuxbrew/bin/brew"  # Linux
         "$HOME/.brew/bin/brew"     # User installation
     )
-    
+
     # First check if brew is already in PATH
     if command -v brew &> /dev/null; then
         print_success "Homebrew is already in PATH"
@@ -121,38 +121,38 @@ check_homebrew() {
         fi
         return 0
     fi
-    
+
     # Check all possible installation paths
     for brew_path in "${brew_paths[@]}"; do
         if [[ -x "$brew_path" ]]; then
             print_success "Homebrew found at: $brew_path"
-            
+
             # Get the brew prefix and add to PATH
             local brew_prefix=$(dirname $(dirname $brew_path))
             eval "$($brew_path shellenv)"
-            
+
             # Add to shell profile if not already there
             local shell_profile="$HOME/.zprofile"
             if [[ "$SHELL" == *"bash"* ]]; then
                 shell_profile="$HOME/.bash_profile"
             fi
-            
+
             if ! grep -q "$brew_prefix/bin/brew shellenv" "$shell_profile" 2>/dev/null; then
                 echo "eval \"\$($brew_path shellenv)\"" >> "$shell_profile"
                 print_status "Added Homebrew to $shell_profile"
             fi
-            
+
             return 0
         fi
     done
-    
+
     # Homebrew not found, need to install
     print_warning "Homebrew not found in any standard location"
     print_status "Installing Homebrew..."
-    
+
     # Install Homebrew
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    
+
     # Setup PATH for current session based on architecture
     if [[ $(uname -m) == 'arm64' ]]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -161,7 +161,7 @@ check_homebrew() {
         eval "$(/usr/local/bin/brew shellenv)"
         echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
     fi
-    
+
     print_success "Homebrew installed successfully"
 }
 
@@ -170,22 +170,22 @@ check_homebrew
 # 2. Check if Node.js and npm are installed
 check_nodejs() {
     local min_node_version="18.0.0"
-    
+
     if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
         print_warning "Node.js/npm not found. Installing Node.js..."
-        
+
         # Install Node.js using Homebrew
         brew install node
-        
+
         print_success "Node.js and npm installed successfully"
     else
         print_success "Node.js and npm are already installed"
-        
+
         # Check Node.js version
         local node_version=$(node --version | sed 's/v//')
         print_status "Node.js version: v$node_version"
         print_status "npm version: $(npm --version)"
-        
+
         # Compare versions
         if [[ "$(printf '%s\n' "$min_node_version" "$node_version" | sort -V | head -n1)" != "$min_node_version" ]]; then
             print_warning "Node.js version is below minimum required ($min_node_version)"
@@ -194,7 +194,7 @@ check_nodejs() {
             print_success "Node.js updated"
         fi
     fi
-    
+
     # Verify npm global directory is writable
     NPM_PREFIX=$(npm config get prefix)
     if [[ ! -w "$NPM_PREFIX" ]]; then
@@ -214,9 +214,17 @@ check_nodejs
 if ! command -v legal-md-ui &> /dev/null; then
     print_warning "legal-markdown-js is not installed globally. Installing..."
 
-    # Install legal-markdown-js globally with Chrome download
+    # Install legal-markdown-js globally with Chrome download in global cache
     print_status "This may take a few minutes..."
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false npm install -g legal-markdown-js
+
+    # Set global cache directory for Puppeteer
+    GLOBAL_PUPPETEER_CACHE="$HOME/.cache/puppeteer-global"
+    mkdir -p "$GLOBAL_PUPPETEER_CACHE"
+
+    # Install with global cache configuration
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false \
+    PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" \
+    npm install -g legal-markdown-js
 
     print_success "legal-markdown-js installed successfully"
 else
@@ -226,7 +234,7 @@ else
     print_status "Checking for updates..."
     CURRENT_VERSION=$(npm list -g legal-markdown-js --depth=0 2>/dev/null | grep legal-markdown-js | sed 's/.*@//' | sed 's/ .*//')
     LATEST_VERSION=$(npm view legal-markdown-js version 2>/dev/null)
-    
+
     if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
         print_warning "Update available: $CURRENT_VERSION → $LATEST_VERSION"
         print_status "Updating legal-markdown-js..."
@@ -267,10 +275,10 @@ fi
 # 6. Check Chrome/Chromium for PDF generation
 check_chrome() {
     print_status "Checking Chrome/Chromium for PDF generation..."
-    
+
     local chrome_found=false
     local chrome_locations=()
-    
+
     # Check for system Chrome installations
     local chrome_paths=(
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -278,7 +286,7 @@ check_chrome() {
         "$HOME/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         "$HOME/Applications/Chromium.app/Contents/MacOS/Chromium"
     )
-    
+
     for chrome_path in "${chrome_paths[@]}"; do
         if [[ -f "$chrome_path" ]]; then
             chrome_locations+=("$chrome_path")
@@ -288,14 +296,15 @@ check_chrome() {
             fi
         fi
     done
-    
+
     # Check Puppeteer cache locations
     local cache_paths=(
+        "$HOME/.cache/puppeteer-global"  # Global cache for all installations
         "$HOME/.cache/puppeteer"
         "$HOME/.puppeteer-cache"
         "$(npm config get prefix 2>/dev/null)/lib/node_modules/puppeteer/.local-chromium"
     )
-    
+
     for cache_path in "${cache_paths[@]}"; do
         if [[ -d "$cache_path" ]] && [[ -n "$(ls -A "$cache_path" 2>/dev/null)" ]]; then
             chrome_found=true
@@ -304,7 +313,7 @@ check_chrome() {
             fi
         fi
     done
-    
+
     if [[ "$chrome_found" == "true" ]]; then
         print_success "Chrome/Chromium is available for PDF generation"
         if [[ "$VERBOSE" == "true" ]] && [[ ${#chrome_locations[@]} -gt 0 ]]; then
@@ -312,29 +321,34 @@ check_chrome() {
         fi
     else
         print_warning "Chrome/Chromium not found for PDF generation"
-        print_status "Installing Chrome for Puppeteer (this may take a few minutes)..."
-        
-        # Set environment to ensure download
+        print_status "Installing Chrome for Puppeteer in global cache (this may take a few minutes)..."
+
+        # Set global cache directory
+        GLOBAL_PUPPETEER_CACHE="$HOME/.cache/puppeteer-global"
+        mkdir -p "$GLOBAL_PUPPETEER_CACHE"
+
+        # Set environment to ensure download to global cache
         export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
         export PUPPETEER_SKIP_DOWNLOAD=false
-        
+        export PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE"
+
         # Try multiple installation methods
         local install_success=false
-        
+
         # Method 1: npx puppeteer browsers install
-        if npx puppeteer browsers install chrome 2>/dev/null; then
+        if PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npx puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via npx puppeteer"
+            print_success "Chrome installed via npx puppeteer in global cache"
         # Method 2: Direct npm execution
-        elif npm exec puppeteer browsers install chrome 2>/dev/null; then
+        elif PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npm exec puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via npm exec"
+            print_success "Chrome installed via npm exec in global cache"
         # Method 3: Global puppeteer installation
-        elif npm list -g puppeteer &>/dev/null && npx -p puppeteer browsers install chrome 2>/dev/null; then
+        elif npm list -g puppeteer &>/dev/null && PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npx -p puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via global puppeteer"
+            print_success "Chrome installed via global puppeteer in global cache"
         fi
-        
+
         if [[ "$install_success" == "false" ]]; then
             print_warning "Automatic Chrome installation failed"
             print_status "\n🔧 Manual steps to enable PDF generation:"

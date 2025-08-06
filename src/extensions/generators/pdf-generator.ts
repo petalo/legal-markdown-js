@@ -36,6 +36,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as https from 'https';
 import * as http from 'http';
+import { execSync } from 'child_process';
 import { logger } from '../../utils/logger';
 import { getCurrentDir } from '../../utils/esm-utils.js';
 
@@ -354,6 +355,11 @@ export class PdfGenerator {
       ],
       // Increase timeout for slower systems
       timeout: 60000,
+      // Set global cache directory for Puppeteer
+      env: {
+        ...process.env,
+        PUPPETEER_CACHE_DIR: path.join(os.homedir(), '.cache', 'puppeteer-global'),
+      }
     };
 
     // Try to use system Chrome on macOS if available
@@ -386,6 +392,87 @@ export class PdfGenerator {
 
     console.log("[PDF Generator] System Chrome not found, will use Puppeteer's bundled Chromium");
     return null;
+  }
+
+  /**
+   * Ensures Chrome is available for Puppeteer, installing it if necessary
+   * @private
+   */
+  private async ensureChrome(): Promise<void> {
+    // Check if we already have Chrome available
+    if (this.getMacOSChromeExecutable() || this.hasChromiumCache()) {
+      return;
+    }
+
+    console.log('[PDF Generator] Chrome not found. For PDF generation to work, Chrome must be available.');
+    console.log('[PDF Generator] Trying to install Chrome in global cache (this may take a few minutes)...');
+    
+    try {
+      // Use global cache directory to avoid multiple downloads
+      const globalCacheDir = path.join(os.homedir(), '.cache', 'puppeteer-global');
+      await fs.mkdir(globalCacheDir, { recursive: true });
+      
+      const installCommand = process.platform === 'win32' 
+        ? 'npx.cmd puppeteer browsers install chrome'
+        : 'npx puppeteer browsers install chrome';
+        
+      execSync(installCommand, {
+        stdio: 'inherit',
+        timeout: 300000, // 5 minutes
+        env: {
+          ...process.env,
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
+          PUPPETEER_CACHE_DIR: globalCacheDir,
+        },
+      });
+      
+      console.log('[PDF Generator] ✅ Chrome installed successfully!');
+    } catch (npxError) {
+      console.error('[PDF Generator] ❌ Failed to automatically install Chrome.');
+      console.error('[PDF Generator] 📋 Chrome Setup Status:');
+      
+      const { checkChromeStatus } = await import('../../utils/chrome-setup-helper');
+      const status = checkChromeStatus();
+      
+      console.error(`[PDF Generator]    System Chrome: ${status.hasSystemChrome ? '✅ Found' : '❌ Not found'}`);
+      console.error(`[PDF Generator]    Puppeteer Cache: ${status.hasPuppeteerCache ? '✅ Found' : '❌ Not found'}`);
+      
+      console.error('[PDF Generator] 🔧 To enable PDF generation, run ONE of these commands:');
+      console.error('[PDF Generator]    1. npx puppeteer browsers install chrome');
+      console.error('[PDF Generator]    2. Download Chrome from: https://www.google.com/chrome/');
+      
+      if (process.platform === 'darwin' && os.arch().includes('arm')) {
+        console.error('[PDF Generator]    3. For Apple Silicon Mac: softwareupdate --install-rosetta');
+      }
+      
+      throw new Error(`Chrome installation failed. Please install Chrome manually to enable PDF generation.`);
+    }
+  }
+
+  /**
+   * Checks if Puppeteer has a Chrome cache available
+   * @private
+   */
+  private hasChromiumCache(): boolean {
+    const cachePaths = [
+      path.join(os.homedir(), '.cache', 'puppeteer-global'), // Global cache (highest priority)
+      path.join(os.homedir(), '.cache', 'puppeteer'),
+      path.join(os.homedir(), '.puppeteer-cache'),
+      path.join(process.cwd(), 'node_modules', 'puppeteer', '.local-chromium'),
+      path.join(process.cwd(), 'node_modules', '.puppeteer-cache'),
+    ];
+
+    return cachePaths.some(cachePath => {
+      try {
+        if (fsSync.existsSync(cachePath)) {
+          const files = fsSync.readdirSync(cachePath);
+          return files.length > 0;
+        }
+      } catch {
+        // Ignore errors
+      }
+      return false;
+    });
   }
 
   /**
@@ -439,6 +526,9 @@ export class PdfGenerator {
       await fs.mkdir(tempDir, { recursive: true });
       tempHtmlPath = path.join(tempDir, `temp-${Date.now()}.html`);
       await fs.writeFile(tempHtmlPath, htmlContent, 'utf-8');
+
+      // Ensure Chrome is available before launching
+      await this.ensureChrome();
 
       // Launch browser with error handling
       logger.debug('Launching Puppeteer browser', {
