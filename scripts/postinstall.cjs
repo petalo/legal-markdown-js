@@ -4,13 +4,41 @@
  * This helps resolve Chrome/Chromium dependency issues that users commonly face
  */
 
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
 function log(message) {
   console.log(`[legal-markdown-js] ${message}`);
+}
+
+function executeCommand(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      stdio: 'inherit',
+      ...options
+    });
+
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      reject(new Error(`Command timeout: ${command} ${args.join(' ')}`));
+    }, options.timeout || 120000);
+
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      if (code === 0) {
+        resolve(code);
+      } else {
+        reject(new Error(`Command failed with exit code ${code}: ${command} ${args.join(' ')}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
 }
 
 function detectPlatform() {
@@ -54,7 +82,7 @@ function checkChromiumInstallation() {
   }
 }
 
-function installChromiumDependencies() {
+async function installChromiumDependencies() {
   const { platform } = detectPlatform();
   
   try {
@@ -63,7 +91,7 @@ function installChromiumDependencies() {
       
       // Check if we're in a container or have apt
       try {
-        execSync('which apt-get', { stdio: 'ignore' });
+        await executeCommand('which', ['apt-get'], { stdio: 'ignore' });
         log('Attempting to install Chrome dependencies via apt-get...');
         
         const dependencies = [
@@ -106,10 +134,10 @@ function installChromiumDependencies() {
           'xdg-utils'
         ];
         
-        execSync(`apt-get update && apt-get install -y ${dependencies.join(' ')}`, { 
-          stdio: 'inherit',
-          timeout: 120000 
-        });
+        // Run apt-get update first
+        await executeCommand('apt-get', ['update'], { timeout: 120000 });
+        // Then install dependencies
+        await executeCommand('apt-get', ['install', '-y', ...dependencies], { timeout: 120000 });
         
         log('Linux Chrome dependencies installed successfully');
       } catch (aptError) {
@@ -157,7 +185,7 @@ function installChromiumDependencies() {
   }
 }
 
-function ensurePuppeteerInstallation() {
+async function ensurePuppeteerInstallation() {
   try {
     log('Checking Puppeteer installation...');
     
@@ -180,29 +208,31 @@ function ensurePuppeteerInstallation() {
         
         try {
           // First, try the modern Puppeteer command which handles cache correctly
+          const globalCacheDir = path.join(os.homedir(), '.cache', 'puppeteer-global');
           log('Installing Chrome for Puppeteer...');
-          log('This will download Chrome to the user cache directory');
+          log(`This will download Chrome to the global cache directory: ${globalCacheDir}`);
           
-          // Clear any conflicting environment variables
-          const cleanEnv = { ...process.env };
-          delete cleanEnv.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD;
-          delete cleanEnv.PUPPETEER_SKIP_DOWNLOAD;
+          // Set up environment variables for global cache installation
+          const cleanEnv = { 
+            ...process.env,
+            PUPPETEER_CACHE_DIR: globalCacheDir,
+            PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
+            PUPPETEER_SKIP_DOWNLOAD: 'false'
+          };
           
           try {
             // This is the recommended way for Puppeteer v21+
-            execSync('npx puppeteer browsers install chrome', { 
-              stdio: 'inherit',
+            await executeCommand('npx', ['puppeteer', 'browsers', 'install', 'chrome'], {
               cwd: path.join(__dirname, '..'),
               timeout: 600000,
               env: cleanEnv
             });
             log('Chrome installed successfully via npx');
-            log(`Chrome should now be available at: ${path.join(os.homedir(), '.cache', 'puppeteer')}`);
+            log(`Chrome should now be available at: ${globalCacheDir}`);
           } catch (npxError) {
             // Fallback to install script
             log('Trying alternative installation via install script...');
-            execSync('node node_modules/puppeteer/install.mjs', { 
-              stdio: 'inherit',
+            await executeCommand('node', ['node_modules/puppeteer/install.mjs'], {
               cwd: path.join(__dirname, '..'),
               timeout: 600000,
               env: cleanEnv
@@ -233,12 +263,12 @@ function ensurePuppeteerInstallation() {
   }
 }
 
-function main() {
+async function main() {
   log('Running post-installation setup...');
   
   detectPlatform();
-  installChromiumDependencies();
-  ensurePuppeteerInstallation();
+  await installChromiumDependencies();
+  await ensurePuppeteerInstallation();
   
   log('Post-installation setup complete');
   log('If PDF generation still fails, try running: npx puppeteer browsers install chrome');
@@ -246,7 +276,10 @@ function main() {
 
 // Only run if called directly
 if (require.main === module) {
-  main();
+  main().catch(error => {
+    log(`Error during post-installation: ${error.message}`);
+    process.exit(0); // Don't fail the installation
+  });
 }
 
 module.exports = { main, detectPlatform, installChromiumDependencies, ensurePuppeteerInstallation };

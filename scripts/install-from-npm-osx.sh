@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to run legal-md-ui with automatic dependency installation
-# Compatible with macOS and executable from Shortcuts as a shell script
+# Compatible with macOS and executable from the terminal as a shell script
 #
 # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/petalo/legal-markdown-js/refs/heads/main/scripts/install-from-npm-osx.sh)"
 
@@ -214,9 +214,17 @@ check_nodejs
 if ! command -v legal-md-ui &> /dev/null; then
     print_warning "legal-markdown-js is not installed globally. Installing..."
 
-    # Install legal-markdown-js globally with Chrome download
+    # Install legal-markdown-js globally with Chrome download in global cache
     print_status "This may take a few minutes..."
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false npm install -g legal-markdown-js
+
+    # Set global cache directory for Puppeteer
+    GLOBAL_PUPPETEER_CACHE="$HOME/.cache/puppeteer-global"
+    mkdir -p "$GLOBAL_PUPPETEER_CACHE"
+
+    # Install with global cache configuration
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false \
+    PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" \
+    npm install -g legal-markdown-js
 
     print_success "legal-markdown-js installed successfully"
 else
@@ -291,6 +299,7 @@ check_chrome() {
     
     # Check Puppeteer cache locations
     local cache_paths=(
+        "$HOME/.cache/puppeteer-global"  # Global cache for all installations
         "$HOME/.cache/puppeteer"
         "$HOME/.puppeteer-cache"
         "$(npm config get prefix 2>/dev/null)/lib/node_modules/puppeteer/.local-chromium"
@@ -312,29 +321,34 @@ check_chrome() {
         fi
     else
         print_warning "Chrome/Chromium not found for PDF generation"
-        print_status "Installing Chrome for Puppeteer (this may take a few minutes)..."
-        
-        # Set environment to ensure download
+        print_status "Installing Chrome for Puppeteer in global cache (this may take a few minutes)..."
+
+        # Set global cache directory
+        GLOBAL_PUPPETEER_CACHE="$HOME/.cache/puppeteer-global"
+        mkdir -p "$GLOBAL_PUPPETEER_CACHE"
+
+        # Set environment to ensure download to global cache
         export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
         export PUPPETEER_SKIP_DOWNLOAD=false
-        
+        export PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE"
+
         # Try multiple installation methods
         local install_success=false
-        
+
         # Method 1: npx puppeteer browsers install
-        if npx puppeteer browsers install chrome 2>/dev/null; then
+        if PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npx puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via npx puppeteer"
+            print_success "Chrome installed via npx puppeteer in global cache"
         # Method 2: Direct npm execution
-        elif npm exec puppeteer browsers install chrome 2>/dev/null; then
+        elif PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npm exec puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via npm exec"
+            print_success "Chrome installed via npm exec in global cache"
         # Method 3: Global puppeteer installation
-        elif npm list -g puppeteer &>/dev/null && npx -p puppeteer browsers install chrome 2>/dev/null; then
+        elif npm list -g puppeteer &>/dev/null && PUPPETEER_CACHE_DIR="$GLOBAL_PUPPETEER_CACHE" npx -p puppeteer browsers install chrome 2>/dev/null; then
             install_success=true
-            print_success "Chrome installed via global puppeteer"
+            print_success "Chrome installed via global puppeteer in global cache"
         fi
-        
+
         if [[ "$install_success" == "false" ]]; then
             print_warning "Automatic Chrome installation failed"
             print_status "\n🔧 Manual steps to enable PDF generation:"

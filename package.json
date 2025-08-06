@@ -41,7 +41,7 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint": "eslint src/**/*.ts",
     "prepare": "husky",
-    "postinstall": "node scripts/postinstall.js || true",
+    "postinstall": "node scripts/postinstall.cjs || true",
     "prepublishOnly": "npm run build",
     "prerelease": "npm run clean && npm run build && npm run test",
     "release:dry": "semantic-release --dry-run",
@@ -110,6 +110,7 @@
     "marked": "^15.0.12",
     "mdast-util-to-string": "^4.0.0",
     "puppeteer": "^24.13.0",
+    "@puppeteer/browsers": "^2.4.1",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "remark-parse": "^11.0.0",
@@ -187,6 +188,7 @@
   },
   "puppeteer": {
     "skipDownload": false,
-    "skipChromiumDownload": false
+    "skipChromiumDownload": false,
+    "cacheDirectory": "~/.cache/puppeteer-global"
   }
 }
