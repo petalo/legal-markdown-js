@@ -41,6 +41,7 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint": "eslint src/**/*.ts",
     "prepare": "husky",
+    "postinstall": "node scripts/postinstall.js || true",
     "prepublishOnly": "npm run build",
     "prerelease": "npm run clean && npm run build && npm run test",
     "release:dry": "semantic-release --dry-run",
@@ -66,6 +67,7 @@
     "test:run": "vitest run",
     "test:unit:fast": "vitest run tests/unit --exclude '**/integration/**' --exclude '**/e2e/**'",
     "test:slow": "vitest run tests/integration && E2E_TESTS=1 vitest run tests/e2e",
+    "test:pdf-setup": "node scripts/test-pdf-setup.cjs",
     "typecheck": "tsc --noEmit",
     "validate": "npm run typecheck && npm run lint && npm run test && npm run build",
     "web:serve": "node scripts/web-serve.cjs",
@@ -182,5 +184,9 @@
   },
   "optionalDependencies": {
     "pandoc-wasm": "^0.0.2"
+  },
+  "puppeteer": {
+    "skipDownload": false,
+    "skipChromiumDownload": false
   }
 }
