@@ -200,9 +200,23 @@ This clause is included conditionally.
       expect(normal).toBeInstanceOf(Buffer);
       expect(highlighted).toBeInstanceOf(Buffer);
 
-      // Verify both files were created
-      const normalStats = await fs.stat(path.join(outputDir, 'test-versions.pdf'));
-      const highlightedStats = await fs.stat(path.join(outputDir, 'test-versions.HIGHLIGHT.pdf'));
+      // Add a small delay to ensure files are written to disk
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify both files were created with retry mechanism
+      const maxRetries = 10;
+      let normalStats, highlightedStats;
+      
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          normalStats = await fs.stat(path.join(outputDir, 'test-versions.pdf'));
+          highlightedStats = await fs.stat(path.join(outputDir, 'test-versions.HIGHLIGHT.pdf'));
+          break;
+        } catch (error) {
+          if (i === maxRetries - 1) throw error;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
 
       expect(normalStats.size).toBeGreaterThan(1000);
       expect(highlightedStats.size).toBeGreaterThan(1000);

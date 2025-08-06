@@ -231,9 +231,9 @@ lll. First Subsection
       const inputPath = path.join(outputDir, 'field-tracking-test-input-no-highlight.md');
       await fs.writeFile(inputPath, testContent);
 
-      // Process with CLI service with timeout
+      // Process with CLI service with timeout - use base path without extension
       const baseName = 'field-tracking-test-cli-no-highlight';
-      const outputPath = path.join(outputDir, `${baseName}.html`);
+      const outputPath = path.join(outputDir, baseName);
       
       try {
         // Add timeout wrapper to prevent hanging
@@ -248,8 +248,8 @@ lll. First Subsection
         throw error;
       }
 
-      // Add a small delay to let CLI service finish
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Add a delay to let CLI service finish
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Should generate only 2 files: normal versions for HTML and PDF
       const expectedFiles = [
@@ -263,8 +263,8 @@ lll. First Subsection
       ];
 
       // Wait for all files to be generated with retry mechanism
-      const maxRetries = 50; // 5 seconds total
-      const retryDelay = 100; // 100ms between retries
+      const maxRetries = 15; // 3 seconds total
+      const retryDelay = 200; // 200ms between retries
 
       for (const fileName of expectedFiles) {
         const filePath = path.join(outputDir, fileName);
