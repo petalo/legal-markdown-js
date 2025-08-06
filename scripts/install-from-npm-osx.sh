@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # Script to run legal-md-ui with automatic dependency installation
-# Compatible with macOS and executable from Shortcuts
+# Compatible with macOS and executable from Shortcuts as a shell script
 #
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/petalo/legal-markdown-js/refs/heads/main/scripts/install-from-npm-osx.sh)"
+
+
 # FLOW:
 # 1. Check if Homebrew is installed, if not, install it
 # 2. Check if Node.js and npm are installed, if not, install them

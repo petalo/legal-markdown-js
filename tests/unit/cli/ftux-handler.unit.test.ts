@@ -89,7 +89,9 @@ describe('FTUX Handler', () => {
       mockSelect.mockResolvedValueOnce('setup');
       mockInput
         .mockResolvedValueOnce('/mock/input-dir') // input directory
-        .mockResolvedValueOnce('/mock/output-dir'); // output directory
+        .mockResolvedValueOnce('/mock/output-dir') // output directory
+        .mockResolvedValueOnce('/mock/styles-dir') // styles directory
+        .mockResolvedValueOnce('/mock/archive-dir'); // archive directory
       
       const mockExistsSync = vi.mocked(fs.existsSync);
       const mockStatSync = vi.mocked(fs.statSync);
@@ -128,7 +130,7 @@ describe('FTUX Handler', () => {
       
       expect(mockWriteFileSync).toHaveBeenCalledWith(
         '/mock/.config/legal-markdown-js/.env',
-        expect.stringContaining('LEGALMD_INPUT_DIR')
+        expect.stringContaining('DEFAULT_INPUT_DIR')
       );
       
       expect(result).toBe('/mock/input-dir/test.md');
@@ -261,7 +263,9 @@ describe('FTUX Handler', () => {
     it('should handle existing .env file with overwrite confirmation', async () => {
       mockInput
         .mockResolvedValueOnce('/mock/input')
-        .mockResolvedValueOnce('/mock/output');
+        .mockResolvedValueOnce('/mock/output')
+        .mockResolvedValueOnce('/mock/styles')
+        .mockResolvedValueOnce('/mock/archive');
       
       const mockExistsSync = vi.mocked(fs.existsSync);
       const mockStatSync = vi.mocked(fs.statSync);
@@ -298,7 +302,9 @@ describe('FTUX Handler', () => {
     it('should handle existing .env file with overwrite declined', async () => {
       mockInput
         .mockResolvedValueOnce('/mock/input')
-        .mockResolvedValueOnce('/mock/output');
+        .mockResolvedValueOnce('/mock/output')
+        .mockResolvedValueOnce('/mock/styles')
+        .mockResolvedValueOnce('/mock/archive');
       
       const mockExistsSync = vi.mocked(fs.existsSync);
       const mockStatSync = vi.mocked(fs.statSync);
@@ -328,7 +334,9 @@ describe('FTUX Handler', () => {
     it('should create output directory if it does not exist', async () => {
       mockInput
         .mockResolvedValueOnce('/mock/input')
-        .mockResolvedValueOnce('/mock/nonexistent-output');
+        .mockResolvedValueOnce('/mock/nonexistent-output')
+        .mockResolvedValueOnce('/mock/styles')
+        .mockResolvedValueOnce('/mock/archive');
       
       const mockExistsSync = vi.mocked(fs.existsSync);
       const mockStatSync = vi.mocked(fs.statSync);

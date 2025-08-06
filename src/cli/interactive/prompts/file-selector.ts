@@ -28,7 +28,7 @@ const EXIT_OPTION = '❌ Exit';
 
 /**
  * Check if a directory exists and is accessible
- * 
+ *
  * @param dirPath - Path to check
  * @returns True if directory exists and is accessible
  */
@@ -42,18 +42,18 @@ function isDirectoryAccessible(dirPath: string): boolean {
 
 /**
  * Check if configuration is properly set up
- * 
+ *
  * @returns True if .env exists in the correct location and input directory is configured and accessible
  */
 function isConfigurationValid(): boolean {
   // Check if .env exists in the expected installation-specific location
   const expectedEnvPath = getEnvFilePath();
   const hasCorrectEnvFile = fs.existsSync(expectedEnvPath);
-  
+
   if (!hasCorrectEnvFile) {
     return false;
   }
-  
+
   // Check if the configured input directory is accessible
   return isDirectoryAccessible(RESOLVED_PATHS.DEFAULT_INPUT_DIR);
 }
@@ -63,24 +63,26 @@ function isConfigurationValid(): boolean {
  */
 async function promptInitialSetup(): Promise<'ftux' | 'defaults'> {
   console.log(chalk.yellow('\n⚠️  Configuration Setup Needed'));
-  console.log(chalk.gray('No valid configuration detected or input directory is not accessible.\n'));
-  
+  console.log(
+    chalk.gray('No valid configuration detected or input directory is not accessible.\n')
+  );
+
   const choice = await select({
     message: 'How would you like to proceed?',
     choices: [
       {
         name: '🛠️  Run First-Time User Experience (recommended)',
         value: 'ftux' as const,
-        description: 'Set up directories, try examples, and get guided help'
+        description: 'Set up directories, try examples, and get guided help',
       },
       {
         name: '⚡ Continue with defaults (current directory)',
-        value: 'defaults' as const, 
-        description: 'Use current directory as input, no configuration saved'
-      }
-    ]
+        value: 'defaults' as const,
+        description: 'Use current directory as input, no configuration saved',
+      },
+    ],
   });
-  
+
   return choice;
 }
 
@@ -106,7 +108,7 @@ async function handleFileSelection(selectedFile: string): Promise<string> {
  * Prompt user to select an input file
  *
  * Initiates the file selection process by first checking if configuration is valid.
- * If not, offers FTUX or defaults. Then scans the input directory and presents 
+ * If not, offers FTUX or defaults. Then scans the input directory and presents
  * available files to the user, with fallback options for manual input.
  *
  * @returns Promise resolving to the absolute path of the selected input file
@@ -116,20 +118,20 @@ export async function selectInputFile(): Promise<string> {
   // Check if configuration is valid first
   if (!isConfigurationValid()) {
     const setupChoice = await promptInitialSetup();
-    
+
     if (setupChoice === 'ftux') {
       return await handleFirstTimeUserExperience();
     }
-    
+
     // Continue with defaults - scan current directory instead
     console.log(chalk.cyan('\n🔍 Using current directory as input...\n'));
     const currentDirFiles = scanDirectory(process.cwd());
-    
+
     if (currentDirFiles.length === 0) {
       console.log(formatWarningMessage('No supported files found in current directory.'));
       return await handleFirstTimeUserExperience();
     }
-    
+
     // Show files from current directory
     const choices = [
       ...currentDirFiles.map(file => ({

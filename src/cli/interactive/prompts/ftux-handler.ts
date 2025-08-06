@@ -171,16 +171,16 @@ async function handleSetupConfiguration(): Promise<string> {
 IMAGES_DIR=src/assets/images
 
 # Directory containing CSS stylesheets
-STYLES_DIR=${path.resolve(stylesDir)}
+STYLES_DIR="${path.resolve(stylesDir)}"
 
 # Default directory for input documents
-DEFAULT_INPUT_DIR=${path.resolve(inputDir)}
+DEFAULT_INPUT_DIR="${path.resolve(inputDir)}"
 
 # Default directory for output documents
-DEFAULT_OUTPUT_DIR=${path.resolve(outputDir)}
+DEFAULT_OUTPUT_DIR="${path.resolve(outputDir)}"
 
 # Directory for archiving processed input files
-ARCHIVE_DIR=${path.resolve(archiveDir)}
+ARCHIVE_DIR="${path.resolve(archiveDir)}"
 `;
 
   // Check if .env already exists
