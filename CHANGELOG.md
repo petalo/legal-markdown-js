@@ -1,3 +1,9 @@
+## <small>3.1.2 (2025-08-06)</small>
+
+- fix: resolve macOS PDF generation and Homebrew installation issues (#63)
+  ([10a9db2](https://github.com/petalo/legal-markdown-js/commit/10a9db2)),
+  closes [#63](https://github.com/petalo/legal-markdown-js/issues/63)
+
 ## <small>3.1.1 (2025-08-06)</small>
 
 - fix: resolve FTUX configuration validation issues
