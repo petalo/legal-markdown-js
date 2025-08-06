@@ -41,7 +41,7 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint": "eslint src/**/*.ts",
     "prepare": "husky",
-    "postinstall": "node scripts/postinstall.js || true",
+    "postinstall": "node scripts/postinstall.cjs || true",
     "prepublishOnly": "npm run build",
     "prerelease": "npm run clean && npm run build && npm run test",
     "release:dry": "semantic-release --dry-run",
