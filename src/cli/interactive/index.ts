@@ -35,6 +35,16 @@ import { handleFirstTimeUserExperience } from './prompts/ftux-handler';
 import { InteractiveService } from './service';
 import { InteractiveConfig } from './types';
 import { formatSuccessMessage, formatErrorMessage } from './utils/format-helpers';
+import { readFileSync } from '../../utils/index';
+import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
+import {
+  extractForceCommands,
+  parseForceCommands,
+  applyForceCommands,
+} from '../../core/parsers/force-commands-parser';
+import { CliService } from '../service';
+import * as path from 'path';
+import { RESOLVED_PATHS } from '../../constants/index';
 
 /**
  * Run FTUX (First-Time User Experience) mode
@@ -81,6 +91,89 @@ async function runFtuxMode(): Promise<void> {
  * @param inputFile - The file selected from FTUX
  */
 async function continueInteractiveFlow(inputFile: string): Promise<void> {
+  // Check for force commands in the file's frontmatter
+  try {
+    const content = readFileSync(inputFile);
+    const { metadata } = parseYamlFrontMatter(content);
+    const forceCommandsStr = extractForceCommands(metadata);
+
+    if (forceCommandsStr) {
+      console.log(
+        chalk.cyan('\n📋 Found force commands in document. Executing automatic configuration...\n')
+      );
+
+      // Parse the force commands
+      const forceCommands = parseForceCommands(forceCommandsStr, metadata);
+
+      if (forceCommands) {
+        // Apply force commands using CliService directly
+        const baseOptions = {
+          debug: false,
+          yamlOnly: false,
+          noHeaders: false,
+          noClauses: false,
+          noReferences: false,
+          noImports: false,
+          noMixins: false,
+          noReset: false,
+          noIndent: false,
+          throwOnYamlError: false,
+          basePath: path.dirname(inputFile),
+        };
+
+        // Apply force commands to base options
+        const options = applyForceCommands(baseOptions, forceCommands);
+
+        // Determine output path
+        const outputBaseName =
+          forceCommands.output || path.basename(inputFile, path.extname(inputFile));
+        const outputDir = forceCommands.outputPath || RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
+
+        // Process file with forced configuration - silent to avoid duplicate success messages
+        const cliService = new CliService({
+          ...options,
+          silent: true,
+        });
+
+        // Determine output file path - add extension to prevent path.basename from truncating name
+        // CliService will replace this extension with the appropriate ones for each format
+        const outputFile = path.join(outputDir, `${outputBaseName}.pdf`);
+
+        // Process once - CliService will handle all requested formats and highlight versions automatically
+        await cliService.processFile(inputFile, outputFile);
+
+        // Build list of expected output files for display
+        const outputFiles: string[] = [];
+
+        if (forceCommands.pdf) {
+          outputFiles.push(path.join(outputDir, `${outputBaseName}.pdf`));
+
+          if (forceCommands.highlight) {
+            outputFiles.push(path.join(outputDir, `${outputBaseName}.HIGHLIGHT.pdf`));
+          }
+        }
+
+        if (forceCommands.html) {
+          outputFiles.push(path.join(outputDir, `${outputBaseName}.html`));
+
+          if (forceCommands.highlight) {
+            outputFiles.push(path.join(outputDir, `${outputBaseName}.HIGHLIGHT.html`));
+          }
+        }
+
+        // Show success message
+        console.log(formatSuccessMessage(outputFiles));
+        return;
+      }
+    }
+  } catch (error) {
+    // If there's any error parsing force commands, continue with normal flow
+    console.log(
+      chalk.gray('No force commands found or error parsing. Continuing with interactive mode...\n')
+    );
+  }
+
+  // Normal interactive flow
   // Step 2: Select output formats
   const outputFormats = await selectOutputFormats();
 
