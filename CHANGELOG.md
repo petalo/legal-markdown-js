@@ -1,3 +1,11 @@
+## <small>3.1.1 (2025-08-06)</small>
+
+- fix: resolve FTUX configuration validation issues
+  ([4e180d0](https://github.com/petalo/legal-markdown-js/commit/4e180d0))
+- Enhanced FTUX with macOS installer and improved config validation (#62)
+  ([279770b](https://github.com/petalo/legal-markdown-js/commit/279770b)),
+  closes [#62](https://github.com/petalo/legal-markdown-js/issues/62)
+
 ## 3.1.0 (2025-08-06)
 
 - feat: enhance interactive CLI with force commands automation and optimizations
