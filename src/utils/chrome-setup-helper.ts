@@ -8,7 +8,7 @@
 import * as fsSync from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 
 export interface ChromeStatus {
   hasSystemChrome: boolean;
@@ -108,23 +108,44 @@ export async function autoInstallChrome(): Promise<boolean> {
       fsSync.mkdirSync(globalCacheDir, { recursive: true });
     }
 
-    const installCommand =
-      process.platform === 'win32'
-        ? 'npx.cmd puppeteer browsers install chrome'
-        : 'npx puppeteer browsers install chrome';
+    // Use spawn with explicit arguments to avoid command injection
+    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const args = ['puppeteer', 'browsers', 'install', 'chrome'];
 
-    execSync(installCommand, {
-      stdio: 'inherit',
-      timeout: 300000, // 5 minutes
-      env: {
-        ...process.env,
-        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
-        PUPPETEER_CACHE_DIR: globalCacheDir,
-      },
+    return new Promise(resolve => {
+      const childProcess = spawn(command, args, {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
+          PUPPETEER_CACHE_DIR: globalCacheDir,
+        },
+      });
+
+      // Set timeout manually since spawn doesn't have built-in timeout
+      const timeout = setTimeout(() => {
+        childProcess.kill('SIGTERM');
+        console.error('❌ Chrome installation timed out after 5 minutes');
+        resolve(false);
+      }, 300000); // 5 minutes
+
+      childProcess.on('close', code => {
+        clearTimeout(timeout);
+        if (code === 0) {
+          console.log(`✅ Chrome installed successfully in global cache: ${globalCacheDir}`);
+          resolve(true);
+        } else {
+          console.error(`❌ Chrome installation failed with exit code: ${code}`);
+          resolve(false);
+        }
+      });
+
+      childProcess.on('error', error => {
+        clearTimeout(timeout);
+        console.error('❌ Failed to install Chrome automatically:', error.message);
+        resolve(false);
+      });
     });
-
-    console.log(`✅ Chrome installed successfully in global cache: ${globalCacheDir}`);
-    return true;
   } catch (error) {
     console.error(
       '❌ Failed to install Chrome automatically:',
