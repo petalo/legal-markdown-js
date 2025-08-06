@@ -1,3 +1,9 @@
+## 3.1.0 (2025-08-06)
+
+- feat: enhance interactive CLI with force commands automation and optimizations
+  (#61) ([7085d14](https://github.com/petalo/legal-markdown-js/commit/7085d14)),
+  closes [#61](https://github.com/petalo/legal-markdown-js/issues/61)
+
 ## <small>3.0.3 (2025-08-02)</small>
 
 - fix: prevent indented headers from becoming code blocks in HTML/PDF (#50)
