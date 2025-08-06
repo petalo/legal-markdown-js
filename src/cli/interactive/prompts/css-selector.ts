@@ -38,9 +38,13 @@ export async function selectCssFile(outputFormats: OutputFormat): Promise<string
     })),
   ];
 
+  // If there's only one CSS file, pre-select it
+  const defaultChoice = cssFiles.length === 1 ? cssFiles[0] : undefined;
+
   const selectedCss = await select({
     message: 'Select a CSS file for styling:',
     choices,
+    default: defaultChoice,
   });
 
   return selectedCss;
