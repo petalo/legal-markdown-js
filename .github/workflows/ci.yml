@@ -34,7 +34,13 @@ jobs:
         run: npm ci
 
       - name: Install Chrome for PDF generation
-        run: npx puppeteer browsers install chrome
+        run: |
+          echo "Installing Chrome for Puppeteer..."
+          mkdir -p ~/.cache/puppeteer-global
+          PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome
+          echo "Checking Chrome installation..."
+          ls -la ~/.cache/puppeteer-global/ || echo "Global cache directory not found"
+          find ~/.cache -name "*chrome*" -type d || echo "No chrome directories found"
 
       - name: Type check
         run: npm run typecheck
@@ -55,7 +61,7 @@ jobs:
         if: matrix.node-version == 20
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage/lcov.info
+          files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 

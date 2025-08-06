@@ -400,7 +400,15 @@ export class PdfGenerator {
    */
   private async ensureChrome(): Promise<void> {
     // Check if we already have Chrome available
-    if (this.getMacOSChromeExecutable() || this.hasChromiumCache()) {
+    const systemChrome = this.getMacOSChromeExecutable();
+    const hasCache = this.hasChromiumCache();
+
+    console.log('[PDF Generator] Chrome availability check:');
+    console.log(`[PDF Generator]   System Chrome: ${systemChrome ? 'Found' : 'Not found'}`);
+    console.log(`[PDF Generator]   Puppeteer Cache: ${hasCache ? 'Found' : 'Not found'}`);
+
+    if (systemChrome || hasCache) {
+      console.log('[PDF Generator] Chrome is available, skipping installation');
       return;
     }
 
@@ -496,21 +504,30 @@ export class PdfGenerator {
       path.join(process.cwd(), 'node_modules', '.puppeteer-cache'),
     ];
 
+    console.log('[PDF Generator] Checking cache paths:');
     for (const cachePath of cachePaths) {
       try {
         if (fsSync.existsSync(cachePath)) {
           const files = fsSync.readdirSync(cachePath);
+          console.log(`[PDF Generator]   ${cachePath}: ${files.length} files`);
           if (files.length > 0) {
+            console.log(`[PDF Generator] Using cache: ${cachePath}`);
             return cachePath;
           }
+        } else {
+          console.log(`[PDF Generator]   ${cachePath}: does not exist`);
         }
-      } catch {
-        // Ignore errors
+      } catch (error) {
+        console.log(
+          `[PDF Generator]   ${cachePath}: error reading (${error instanceof Error ? error.message : String(error)})`
+        );
       }
     }
 
     // Default to global cache if none found
-    return path.join(os.homedir(), '.cache', 'puppeteer-global');
+    const defaultCache = path.join(os.homedir(), '.cache', 'puppeteer-global');
+    console.log(`[PDF Generator] No cache found, defaulting to: ${defaultCache}`);
+    return defaultCache;
   }
 
   /**
