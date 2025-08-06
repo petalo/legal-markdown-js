@@ -1,3 +1,9 @@
+## <small>3.1.3 (2025-08-06)</small>
+
+- fix: resolve test concurrency and Chrome detection issues for npm deployment
+  (#64) ([51ef397](https://github.com/petalo/legal-markdown-js/commit/51ef397)),
+  closes [#64](https://github.com/petalo/legal-markdown-js/issues/64)
+
 ## <small>3.1.2 (2025-08-06)</small>
 
 - fix: resolve macOS PDF generation and Homebrew installation issues (#63)
