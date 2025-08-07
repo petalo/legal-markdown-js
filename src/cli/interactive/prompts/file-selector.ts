@@ -168,7 +168,7 @@ export async function selectInputFile(): Promise<string> {
 
     // Continue with defaults - scan current directory instead
     console.log(chalk.cyan('\n🔍 Using current directory as input...\n'));
-    const currentDirFiles = scanDirectory(process.cwd());
+    const currentDirFiles = scanDirectory(process.cwd(), process.cwd());
 
     if (currentDirFiles.length === 0) {
       console.log(formatWarningMessage('No supported files found in current directory.'));
@@ -197,7 +197,7 @@ export async function selectInputFile(): Promise<string> {
   // Configuration is valid - use configured directory
   console.log(chalk.cyan(`🔍 Searching for files in: ${RESOLVED_PATHS.DEFAULT_INPUT_DIR}\n`));
 
-  const files = scanDirectory(RESOLVED_PATHS.DEFAULT_INPUT_DIR);
+  const files = scanDirectory(RESOLVED_PATHS.DEFAULT_INPUT_DIR, RESOLVED_PATHS.DEFAULT_INPUT_DIR);
 
   if (files.length === 0) {
     console.log(formatWarningMessage('No supported files found in the configured directory.'));

@@ -47,7 +47,7 @@ export async function handleBrowseFolder(): Promise<string> {
   const resolvedPath = path.resolve(folderPath);
   console.log(chalk.cyan(`🔍 Searching for files in: ${resolvedPath}\\n`));
 
-  const files = scanDirectory(resolvedPath);
+  const files = scanDirectory(resolvedPath, resolvedPath);
 
   if (files.length === 0) {
     console.log(formatWarningMessage('No supported files found in this directory.'));

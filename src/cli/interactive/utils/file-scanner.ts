@@ -26,10 +26,12 @@ const SUPPORTED_EXTENSIONS = ['.md', '.markdown', '.rst', '.tex', '.latex', '.tx
  * suitable for interactive selection menus.
  *
  * @param dirPath Absolute path to the directory to scan
+ * @param baseDir Optional base directory for calculating relative paths. If not provided, uses process.cwd()
  * @returns Array of FileItem objects representing discovered files and directories
  */
-export function scanDirectory(dirPath: string): FileItem[] {
+export function scanDirectory(dirPath: string, baseDir?: string): FileItem[] {
   const items: FileItem[] = [];
+  const relativeTo = baseDir || process.cwd();
 
   try {
     if (!fs.existsSync(dirPath)) {
@@ -43,13 +45,13 @@ export function scanDirectory(dirPath: string): FileItem[] {
 
       if (entry.isDirectory()) {
         // Add subdirectory files recursively
-        const subItems = scanDirectory(fullPath);
+        const subItems = scanDirectory(fullPath, baseDir);
         items.push(...subItems);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
         if (SUPPORTED_EXTENSIONS.includes(ext)) {
           items.push({
-            name: path.relative(process.cwd(), fullPath),
+            name: path.relative(relativeTo, fullPath),
             path: fullPath,
             type: 'file',
           });
