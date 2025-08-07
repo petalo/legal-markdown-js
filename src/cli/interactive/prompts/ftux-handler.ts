@@ -226,7 +226,8 @@ ARCHIVE_DIR="${path.resolve(archiveDir)}"
 
   // Now scan for files in the configured input directory
   console.log(chalk.cyan(`\n🔍 Scanning for files in: ${path.resolve(inputDir)}\n`));
-  const files = scanDirectory(path.resolve(inputDir));
+  const resolvedInputDir = path.resolve(inputDir);
+  const files = scanDirectory(resolvedInputDir, resolvedInputDir);
 
   if (files.length === 0) {
     console.log(formatWarningMessage('No supported files found in the configured directory.'));
