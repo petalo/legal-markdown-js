@@ -1,3 +1,9 @@
+## <small>3.1.4 (2025-08-07)</small>
+
+- fix: reduce PDF Generator verbosity by replacing console.log with logger (#66)
+  ([c787d06](https://github.com/petalo/legal-markdown-js/commit/c787d06)),
+  closes [#66](https://github.com/petalo/legal-markdown-js/issues/66)
+
 ## <small>3.1.3 (2025-08-06)</small>
 
 - fix: resolve test concurrency and Chrome detection issues for npm deployment
