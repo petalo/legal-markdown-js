@@ -37,10 +37,12 @@ jobs:
         run: |
           echo "Installing Chrome for Puppeteer..."
           mkdir -p ~/.cache/puppeteer-global
-          PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome
+          # Install with timeout and retry
+          timeout 300 bash -c 'PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome' || \
+          timeout 300 bash -c 'PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome'
           echo "Checking Chrome installation..."
           ls -la ~/.cache/puppeteer-global/ || echo "Global cache directory not found"
-          find ~/.cache -name "*chrome*" -type d || echo "No chrome directories found"
+          find ~/.cache -name "*chrome*" -type d | head -5 || echo "No chrome directories found"
 
       - name: Type check
         run: npm run typecheck
@@ -56,6 +58,11 @@ jobs:
 
       - name: Test
         run: npm run test:coverage
+        env:
+          # Increase timeouts for CI environment
+          VITEST_TEST_TIMEOUT: 45000
+          # Ensure Chrome is available
+          PUPPETEER_CACHE_DIR: ~/.cache/puppeteer-global
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 20

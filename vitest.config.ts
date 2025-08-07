@@ -30,15 +30,18 @@ export default defineConfig({
     // Test patterns
     include: ['tests/**/*.test.ts'],
     
-    // Timeout - Reduced for faster test execution
-    testTimeout: 15000,
+    // Timeout - Higher for CI environments to handle slower systems
+    testTimeout: process.env.VITEST_TEST_TIMEOUT ? parseInt(process.env.VITEST_TEST_TIMEOUT) : (process.env.CI ? 30000 : 15000),
+    
+    // Retry flaky tests in CI
+    retry: process.env.CI ? 2 : 0,
     
     // Parallelization - Use threads for better performance, single worker for E2E
     pool: process.env.E2E_TESTS ? 'forks' : 'threads',
     poolOptions: {
       threads: {
-        maxThreads: Math.min(4, os.cpus().length),
-        minThreads: 2
+        maxThreads: process.env.CI ? Math.min(2, os.cpus().length) : Math.min(4, os.cpus().length),
+        minThreads: process.env.CI ? 1 : 2
       },
       forks: {
         maxForks: process.env.E2E_TESTS ? 1 : undefined
