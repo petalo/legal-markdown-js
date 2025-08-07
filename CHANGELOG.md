@@ -1,3 +1,8 @@
+## <small>3.1.7 (2025-08-07)</small>
+
+- fix: resolve ESLint and Prettier quote conflict
+  ([f21fe68](https://github.com/petalo/legal-markdown-js/commit/f21fe68))
+
 ## <small>3.1.6 (2025-08-07)</small>
 
 - perf: improve test timeout handling for CI environments
