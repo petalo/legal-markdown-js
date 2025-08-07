@@ -1,3 +1,9 @@
+## <small>3.1.5 (2025-08-07)</small>
+
+- fix: Show relative paths in interactive file selector for cleaner UI (#67)
+  ([679efb6](https://github.com/petalo/legal-markdown-js/commit/679efb6)),
+  closes [#67](https://github.com/petalo/legal-markdown-js/issues/67)
+
 ## <small>3.1.4 (2025-08-07)</small>
 
 - fix: reduce PDF Generator verbosity by replacing console.log with logger (#66)
