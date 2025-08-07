@@ -394,8 +394,4 @@ if ! legal-md-ui; then
     exit 1
 fi
 
-echo ""
-echo "================================================="
-echo "           PROCESS COMPLETED"
-echo "================================================="
 print_success "legal-md-ui executed successfully"
