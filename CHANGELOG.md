@@ -1,3 +1,10 @@
+## <small>3.1.6 (2025-08-07)</small>
+
+- perf: improve test timeout handling for CI environments
+  ([e706417](https://github.com/petalo/legal-markdown-js/commit/e706417))
+- docs: clean up install script output by removing decorative completion message
+  ([5f82602](https://github.com/petalo/legal-markdown-js/commit/5f82602))
+
 ## <small>3.1.5 (2025-08-07)</small>
 
 - fix: Show relative paths in interactive file selector for cleaner UI (#67)
