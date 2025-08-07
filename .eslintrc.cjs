@@ -7,6 +7,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
+    'prettier', // Disable ESLint rules that conflict with Prettier
   ],
   plugins: ['@typescript-eslint'],
   env: {
@@ -31,11 +32,9 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn', // Allow any but warn about it
     
-    // Code style
+    // Code style (only rules that don't conflict with Prettier)
     'max-len': ['warn', { code: 100, ignoreComments: true }],
-    'indent': ['error', 2, { 'SwitchCase': 1 }],
-    'quotes': ['error', 'single'],
-    'semi': ['error', 'always'],
+    // Note: indent, quotes, and semi are handled by Prettier when eslint-config-prettier is used
   },
   overrides: [
     {

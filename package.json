@@ -99,6 +99,7 @@
   "unpkg": "dist/legal-markdown.umd.min.js",
   "dependencies": {
     "@inquirer/prompts": "^7.7.1",
+    "@puppeteer/browsers": "^2.4.1",
     "@types/js-beautify": "^1.14.3",
     "chalk": "^4.1.2",
     "cheerio": "^1.1.0",
@@ -110,7 +111,6 @@
     "marked": "^15.0.12",
     "mdast-util-to-string": "^4.0.0",
     "puppeteer": "^24.13.0",
-    "@puppeteer/browsers": "^2.4.1",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "remark-parse": "^11.0.0",
@@ -144,6 +144,7 @@
     "crypto-browserify": "^3.12.1",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.52.0",
+    "eslint-config-prettier": "^10.1.8",
     "events": "^3.3.0",
     "glob": "^11.0.3",
     "husky": "^9.1.7",
@@ -175,7 +176,7 @@
     "node": ">=18.0.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": ["eslint --fix", "prettier --write", "npm run test:staged"],
+    "src/**/*.{ts,tsx}": ["prettier --write", "eslint --fix", "npm run test:staged"],
     "*.{md,json,yaml,yml}": ["prettier --write"]
   },
   "config": {
