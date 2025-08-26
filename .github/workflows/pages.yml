@@ -52,7 +52,7 @@ jobs:
           test -f _site/legal-markdown.umd.min.js || { echo "Error: UMD bundle not found"; exit 1; }
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./_site
 
