@@ -35,7 +35,7 @@ import { handleFirstTimeUserExperience } from './prompts/ftux-handler';
 import { InteractiveService } from './service';
 import { InteractiveConfig } from './types';
 import { formatSuccessMessage, formatErrorMessage } from './utils/format-helpers';
-import { readFileSync } from '../../utils/index';
+import { readFileSync as readFileSyncUtil } from '../../utils/index';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import {
   extractForceCommands,
@@ -45,6 +45,29 @@ import {
 import { CliService } from '../service';
 import * as path from 'path';
 import { RESOLVED_PATHS } from '../../constants/index';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Get package.json version dynamically - compatible with both ESM and CJS
+function getVersion(): string {
+  try {
+    // Try to resolve package.json from the current module's location
+    const packageJsonPath = join(__dirname || process.cwd(), '../../../package.json');
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    return packageJson.version;
+  } catch {
+    // Fallback: try from process.cwd()
+    try {
+      const packageJsonPath = join(process.cwd(), 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+      return packageJson.version;
+    } catch {
+      return '0.1.0'; // Fallback version
+    }
+  }
+}
+
+const version = getVersion();
 
 /**
  * Run FTUX (First-Time User Experience) mode
@@ -93,7 +116,7 @@ async function runFtuxMode(): Promise<void> {
 async function continueInteractiveFlow(inputFile: string): Promise<void> {
   // Check for force commands in the file's frontmatter
   try {
-    const content = readFileSync(inputFile);
+    const content = readFileSyncUtil(inputFile);
     const { metadata } = parseYamlFrontMatter(content);
     const forceCommandsStr = extractForceCommands(metadata);
 
@@ -263,7 +286,7 @@ const program = new Command();
 program
   .name('legal-md-ui')
   .description('Interactive CLI for Legal Markdown document processing')
-  .version('0.1.0')
+  .version(version)
   .option('--ftux', 'Launch First-Time User Experience (setup wizard)')
   .action(async options => {
     if (options.ftux) {

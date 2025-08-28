@@ -43,6 +43,29 @@ import { LegalMarkdownOptions } from '../types';
 import { CliService } from './service';
 import { FileNotFoundError } from '../errors/index';
 import { RESOLVED_PATHS } from '../constants/index';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Get package.json version dynamically - compatible with both ESM and CJS
+function getVersion(): string {
+  try {
+    // Try to resolve package.json from the current module's location
+    const packageJsonPath = join(__dirname || process.cwd(), '../../package.json');
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    return packageJson.version;
+  } catch {
+    // Fallback: try from process.cwd()
+    try {
+      const packageJsonPath = join(process.cwd(), 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+      return packageJson.version;
+    } catch {
+      return '0.1.0'; // Fallback version
+    }
+  }
+}
+
+const version = getVersion();
 
 /**
  * Helper function to read content from standard input
@@ -76,7 +99,7 @@ const program = new Command();
 program
   .name('legal-md')
   .description('Node.js implementation of LegalMarkdown for processing legal documents')
-  .version('0.1.0');
+  .version(version);
 
 // Main command
 program

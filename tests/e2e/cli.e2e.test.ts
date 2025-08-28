@@ -320,7 +320,9 @@ Content.`;
     it('should display version when version flag is used', async () => {
       const { stdout } = await execAsync(`node ${cliPath} --version`);
 
-      expect(stdout).toContain('0.1.0');
+      // Version should match package.json version (dynamic reading)
+      const packageJson = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../../package.json'), 'utf8'));
+      expect(stdout.trim()).toBe(packageJson.version);
     });
   });
 
