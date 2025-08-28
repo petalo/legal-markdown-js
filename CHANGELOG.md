@@ -1,3 +1,9 @@
+## 3.2.0 (2025-08-28)
+
+- feat: dynamic CLI version reading from package.json (#87)
+  ([559dc67](https://github.com/petalo/legal-markdown-js/commit/559dc67)),
+  closes [#87](https://github.com/petalo/legal-markdown-js/issues/87)
+
 ## <small>3.1.7 (2025-08-07)</small>
 
 - fix: resolve ESLint and Prettier quote conflict
