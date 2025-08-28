@@ -43,6 +43,9 @@ import { LegalMarkdownOptions } from '../types';
 import { CliService } from './service';
 import { FileNotFoundError } from '../errors/index';
 import { RESOLVED_PATHS } from '../constants/index';
+import { getPackageVersion } from './utils/version';
+
+const version = getPackageVersion('../../package.json');
 
 /**
  * Helper function to read content from standard input
@@ -76,7 +79,7 @@ const program = new Command();
 program
   .name('legal-md')
   .description('Node.js implementation of LegalMarkdown for processing legal documents')
-  .version('0.1.0');
+  .version(version);
 
 // Main command
 program
