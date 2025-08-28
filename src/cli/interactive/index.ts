@@ -45,29 +45,9 @@ import {
 import { CliService } from '../service';
 import * as path from 'path';
 import { RESOLVED_PATHS } from '../../constants/index';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { getPackageVersion } from '../utils/version';
 
-// Get package.json version dynamically - compatible with both ESM and CJS
-function getVersion(): string {
-  try {
-    // Try to resolve package.json from the current module's location
-    const packageJsonPath = join(__dirname || process.cwd(), '../../../package.json');
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-    return packageJson.version;
-  } catch {
-    // Fallback: try from process.cwd()
-    try {
-      const packageJsonPath = join(process.cwd(), 'package.json');
-      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-      return packageJson.version;
-    } catch {
-      return '0.1.0'; // Fallback version
-    }
-  }
-}
-
-const version = getVersion();
+const version = getPackageVersion('../../../package.json');
 
 /**
  * Run FTUX (First-Time User Experience) mode
