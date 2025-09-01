@@ -1033,7 +1033,7 @@ function processTemplateContent(
           hasLogic: false,
         });
 
-        return `<span class="${cssClass}" data-field="${trimmedVar}">${String(value)}</span>`;
+        return `<span class="${cssClass}" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(value)}</span>`;
       }
       return String(value);
     }
