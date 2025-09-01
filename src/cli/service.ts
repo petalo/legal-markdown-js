@@ -609,25 +609,32 @@ export class CliService {
         return baseOptions;
       }
 
+      // First check for direct metadata options
+      const updatedOptionsFromMetadata = { ...baseOptions };
+
       // Extract force commands from metadata
       const forceCommandsString = extractForceCommands(metadata);
 
       if (!forceCommandsString) {
-        return baseOptions;
+        return updatedOptionsFromMetadata;
       }
 
       this.log(`Found force commands: ${forceCommandsString}`, 'info');
 
       // Parse the force commands
-      const forceCommands = parseForceCommands(forceCommandsString, metadata, baseOptions);
+      const forceCommands = parseForceCommands(
+        forceCommandsString,
+        metadata,
+        updatedOptionsFromMetadata
+      );
 
       if (!forceCommands) {
         this.log('Failed to parse force commands', 'warn');
-        return baseOptions;
+        return updatedOptionsFromMetadata;
       }
 
-      // Apply force commands to base options
-      const updatedOptions = applyForceCommands(baseOptions, forceCommands);
+      // Apply force commands to updated options (includes metadata options)
+      const updatedOptions = applyForceCommands(updatedOptionsFromMetadata, forceCommands);
 
       this.log(`Applied force commands: ${Object.keys(forceCommands).join(', ')}`, 'success');
 

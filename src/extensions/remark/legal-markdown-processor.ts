@@ -371,7 +371,22 @@ export async function processLegalMarkdownWithRemark(
       ...options.additionalMetadata,
     };
 
-    if (options.debug) {
+    // Process force commands and metadata options
+    const { parseForceCommands, applyForceCommands } = await import(
+      '../../core/parsers/force-commands-parser'
+    );
+
+    let updatedOptions = { ...options };
+
+    // Parse force_commands from metadata if present (higher precedence)
+    if (combinedMetadata.force_commands && typeof combinedMetadata.force_commands === 'string') {
+      const forceCommands = parseForceCommands(combinedMetadata.force_commands, combinedMetadata);
+      if (forceCommands) {
+        updatedOptions = applyForceCommands(updatedOptions, forceCommands);
+      }
+    }
+
+    if (updatedOptions.debug) {
       console.log(
         '[legal-markdown-processor] Combined metadata keys:',
         Object.keys(combinedMetadata)
@@ -391,12 +406,12 @@ export async function processLegalMarkdownWithRemark(
     let preprocessedContent = contentWithoutYaml;
     const fieldMappings = new Map<string, string>(); // Maps normalized patterns to original patterns
 
-    if (options.debug) {
+    if (updatedOptions.debug) {
       console.log('[legal-markdown-processor] About to check for pre-processing...');
     }
 
-    if (options.fieldPatterns && options.fieldPatterns.length > 0) {
-      for (const pattern of options.fieldPatterns) {
+    if (updatedOptions.fieldPatterns && updatedOptions.fieldPatterns.length > 0) {
+      for (const pattern of updatedOptions.fieldPatterns) {
         if (pattern !== '{{(.+?)}}') {
           // Skip default pattern
           const regex = new RegExp(pattern, 'g');
@@ -410,8 +425,8 @@ export async function processLegalMarkdownWithRemark(
     }
 
     // Pre-process template loops before remark parsing
-    if (!options.noClauses) {
-      if (options.debug) {
+    if (!updatedOptions.noClauses) {
+      if (updatedOptions.debug) {
         console.log('[legal-markdown-processor] Pre-processing template loops...');
       }
 
@@ -419,22 +434,18 @@ export async function processLegalMarkdownWithRemark(
         preprocessedContent,
         combinedMetadata,
         undefined, // context
-        options.enableFieldTracking || false
+        updatedOptions.enableFieldTracking || false
       );
 
-      if (options.debug) {
-        console.log(
-          '[legal-markdown-processor] Content after processTemplateLoops (first 800 chars):'
-        );
+      if (updatedOptions.debug) {
+        console.log('[legal-markdown-processor] Content after processTemplateLoops:');
         console.log(preprocessedContent.substring(0, 800));
       }
 
-      if (options.debug) {
+      if (updatedOptions.debug) {
         console.log('[legal-markdown-processor] Template loops processed');
         if (preprocessedContent.includes('{{#')) {
-          console.log(
-            '[legal-markdown-processor] WARNING: Content still contains {{# patterns after loop processing!'
-          );
+          console.log('[legal-markdown-processor] WARNING: Content has {{# patterns!');
         }
       }
     }
@@ -445,10 +456,10 @@ export async function processLegalMarkdownWithRemark(
     // Ensure default pattern is always included for template field processing
     // since preprocessing normalizes all patterns to {{field}} format
     const processingOptions = {
-      ...options,
+      ...updatedOptions,
       fieldPatterns:
-        options.fieldPatterns && options.fieldPatterns.length > 0
-          ? ['{{(.+?)}}', ...options.fieldPatterns]
+        updatedOptions.fieldPatterns && updatedOptions.fieldPatterns.length > 0
+          ? ['{{(.+?)}}', ...updatedOptions.fieldPatterns]
           : undefined,
     };
 
@@ -457,14 +468,14 @@ export async function processLegalMarkdownWithRemark(
 
     // Track which plugins are being used
     pluginsUsed.push('remarkTemplateFields');
-    if (!options.disableCrossReferences && !options.noReferences) {
+    if (!updatedOptions.disableCrossReferences && !updatedOptions.noReferences) {
       pluginsUsed.push('remarkCrossReferences');
     }
-    if (!options.disableFieldTracking && options.enableFieldTracking) {
+    if (!updatedOptions.disableFieldTracking && updatedOptions.enableFieldTracking) {
       pluginsUsed.push('remarkFieldTracking');
     }
 
-    if (options.debug) {
+    if (updatedOptions.debug) {
       console.log(`📋 Using plugins: ${pluginsUsed.join(', ')}`);
     }
 
@@ -473,8 +484,8 @@ export async function processLegalMarkdownWithRemark(
     const processedContent = String(result);
 
     // Extract imported metadata from the processed tree
-    const processedTree = result.history[0]; // Get the processed tree
-    const importedMetadata = (processedTree as any)?._importedMetadata || {};
+    const processedTree = result.history[0] as unknown; // Get the processed tree
+    const importedMetadata = (processedTree as Record<string, unknown>)?._importedMetadata || {};
 
     // Merge imported metadata with combined metadata (imported metadata has lower priority)
     const finalMetadata = {
@@ -482,7 +493,7 @@ export async function processLegalMarkdownWithRemark(
       ...combinedMetadata,
     };
 
-    if (options.debug && Object.keys(importedMetadata).length > 0) {
+    if (updatedOptions.debug && Object.keys(importedMetadata).length > 0) {
       console.log(
         `📦 Merged ${Object.keys(importedMetadata).length} imported metadata fields:`,
         Object.keys(importedMetadata)
@@ -491,11 +502,13 @@ export async function processLegalMarkdownWithRemark(
 
     // Extract processing statistics
     const crossReferencesFound = combinedMetadata['_cross_references']?.length || 0;
-    const fieldsTracked = options.enableFieldTracking ? fieldTracker.getTotalOccurrences() : 0;
+    const fieldsTracked = updatedOptions.enableFieldTracking
+      ? fieldTracker.getTotalOccurrences()
+      : 0;
 
     // Generate field report if field tracking is enabled
     let fieldReport;
-    if (options.enableFieldTracking) {
+    if (updatedOptions.enableFieldTracking) {
       const fields = fieldTracker.getFields();
       fieldReport = {
         totalFields: fieldsTracked,
@@ -506,28 +519,28 @@ export async function processLegalMarkdownWithRemark(
 
     // Handle metadata export if requested
     let exportedFiles: string[] = [];
-    if (options.exportMetadata) {
+    if (updatedOptions.exportMetadata) {
       try {
         const exportResult = exportMetadata(
           finalMetadata,
-          options.exportFormat,
-          options.exportPath
+          updatedOptions.exportFormat,
+          updatedOptions.exportPath
         );
         exportedFiles = exportResult.exportedFiles;
 
-        if (options.debug) {
+        if (updatedOptions.debug) {
           console.log(`📁 Exported metadata files: ${exportedFiles.join(', ')}`);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         warnings.push(`Failed to export metadata: ${errorMessage}`);
-        if (options.debug) {
+        if (updatedOptions.debug) {
           console.warn('⚠️ Metadata export failed:', error);
         }
       }
     }
 
-    if (options.debug) {
+    if (updatedOptions.debug) {
       console.log(`✅ Processing completed in ${Date.now() - startTime}ms`);
       console.log(`📊 Cross-references found: ${crossReferencesFound}`);
       console.log(`📋 Fields tracked: ${fieldsTracked}`);

@@ -934,6 +934,7 @@ function evaluateMathematicalExpression(expression: string, metadata: Record<str
 function resolveVariablePath(
   path: string,
   metadata: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   context?: LoopContext
 ): any {
   // Handle special case for current item in template loops
@@ -1018,7 +1019,7 @@ function processTemplateContent(
   // Process field substitutions {{variable}}
   processedContent = processedContent.replace(/\{\{([^#/][^}]*)\}\}/g, (match, variable) => {
     const trimmedVar = variable.trim();
-    const value = resolveVariablePath(trimmedVar, metadata);
+    const value = resolveVariablePath(trimmedVar, metadata, context);
 
     if (value !== undefined) {
       if (enableFieldTracking) {
@@ -1030,7 +1031,6 @@ function processTemplateContent(
           value: value,
           originalValue: match,
           hasLogic: false,
-          mixinUsed: 'conditional',
         });
 
         return `<span class="${cssClass}" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(value)}</span>`;

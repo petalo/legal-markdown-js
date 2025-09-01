@@ -394,121 +394,125 @@ export function processMixins(
     }
 
     return text.replace(mixinPattern, (match, variable) => {
-      const trimmedVar = variable.trim();
+      return processVariable(match, variable, depth);
+    });
+  }
 
-      // Check if it's a helper function call
-      if (trimmedVar.includes('(') && trimmedVar.includes(')')) {
-        const result = evaluateHelperExpression(trimmedVar, metadata);
-        if (result !== undefined) {
-          // Track field with helper
-          fieldTracker.trackField(trimmedVar, {
-            value: result,
-            hasLogic: true,
-            mixinUsed: 'helper',
-          });
-          if (options.enableFieldTrackingInMarkdown) {
-            return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(result)}</span></span>`;
-          }
-          return String(result);
-        }
-        // Helper failed - treat as missing value
+  function processVariable(match: string, variable: string, depth: number): string {
+    const trimmedVar = variable.trim();
+
+    // Check if it's a helper function call
+    if (trimmedVar.includes('(') && trimmedVar.includes(')')) {
+      const result = evaluateHelperExpression(trimmedVar, metadata);
+      if (result !== undefined) {
+        // Track field with helper
+        fieldTracker.trackField(trimmedVar, {
+          value: result,
+          hasLogic: true,
+          mixinUsed: 'helper',
+        });
         if (options.enableFieldTrackingInMarkdown) {
-          return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
+          return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${String(result)}</span></span>`;
         }
-        return `{{${trimmedVar}}}`;
+        return String(result);
       }
+      // Helper failed - treat as missing value
+      if (options.enableFieldTrackingInMarkdown) {
+        return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
+      }
+      return `{{${trimmedVar}}}`;
+    }
 
-      // Check if it's a conditional mixin
-      if (trimmedVar.includes('?')) {
-        const questionIndex = trimmedVar.indexOf('?');
-        const colonIndex = trimmedVar.indexOf(':', questionIndex);
+    // Check if it's a conditional mixin
+    if (trimmedVar.includes('?')) {
+      const questionIndex = trimmedVar.indexOf('?');
+      const colonIndex = trimmedVar.indexOf(':', questionIndex);
 
-        if (colonIndex !== -1) {
-          const condition = trimmedVar.substring(0, questionIndex).trim();
-          const truePart = trimmedVar.substring(questionIndex + 1, colonIndex).trim();
-          const falsePart = trimmedVar.substring(colonIndex + 1).trim();
+      if (colonIndex !== -1) {
+        const condition = trimmedVar.substring(0, questionIndex).trim();
+        const truePart = trimmedVar.substring(questionIndex + 1, colonIndex).trim();
+        const falsePart = trimmedVar.substring(colonIndex + 1).trim();
 
-          const conditionValue = resolvePath(metadata, condition);
-          const selectedPart = conditionValue ? truePart : falsePart;
+        const conditionValue = resolvePath(metadata, condition);
+        const selectedPart = conditionValue ? truePart : falsePart;
 
-          // Track field with logic
-          fieldTracker.trackField(condition, {
-            value: conditionValue,
-            hasLogic: true,
-            mixinUsed: 'conditional',
-          });
+        // Track field with logic
+        fieldTracker.trackField(condition, {
+          value: conditionValue,
+          hasLogic: true,
+          mixinUsed: 'conditional',
+        });
 
-          if (selectedPart) {
-            // Try to evaluate as an expression first, then fall back to regular mixin processing
-            let processedPart: string;
-            if (
-              selectedPart.includes('+') ||
-              selectedPart.includes('*') ||
-              selectedPart.includes('-') ||
-              selectedPart.includes('/')
-            ) {
-              // Looks like an expression, try to evaluate it
-              processedPart = evaluateExpression(selectedPart, metadata);
-              // If evaluation didn't change anything, try mixin replacement
-              if (processedPart === selectedPart) {
-                processedPart = replaceMixins(selectedPart, depth + 1);
-              }
-            } else {
-              // Regular mixin processing
+        if (selectedPart) {
+          // Try to evaluate as an expression first, then fall back to regular mixin processing
+          let processedPart: string;
+          if (
+            selectedPart.includes('+') ||
+            selectedPart.includes('*') ||
+            selectedPart.includes('-') ||
+            selectedPart.includes('/')
+          ) {
+            // Looks like an expression, try to evaluate it
+            processedPart = evaluateExpression(selectedPart, metadata);
+            // If evaluation didn't change anything, try mixin replacement
+            if (processedPart === selectedPart) {
               processedPart = replaceMixins(selectedPart, depth + 1);
             }
-
-            if (options.enableFieldTrackingInMarkdown) {
-              return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${processedPart}</span></span>`;
-            }
-            return processedPart;
+          } else {
+            // Regular mixin processing
+            processedPart = replaceMixins(selectedPart, depth + 1);
           }
+
+          if (options.enableFieldTrackingInMarkdown) {
+            return `<span class="highlight"><span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${processedPart}</span></span>`;
+          }
+          return processedPart;
         }
-        if (options.enableFieldTrackingInMarkdown) {
-          return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
-        }
-        return `{{${trimmedVar}}}`;
       }
-
-      // Regular variable substitution
-      const value = resolvePath(metadata, trimmedVar);
-
-      if (value === undefined || value === null) {
-        // Track empty field
-        fieldTracker.trackField(trimmedVar, {
-          value: undefined,
-          hasLogic: false,
-        });
-        // Return wrapped missing value or original mixin
-        if (options.enableFieldTrackingInMarkdown) {
-          return `<span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span>`;
-        }
-        return `{{${trimmedVar}}}`;
+      if (options.enableFieldTrackingInMarkdown) {
+        return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
       }
+      return `{{${trimmedVar}}}`;
+    }
 
-      // Track filled field
+    // Regular variable substitution
+    const value = resolvePath(metadata, trimmedVar);
+
+    if (value === undefined || value === null) {
+      // Track empty field
       fieldTracker.trackField(trimmedVar, {
-        value: value,
+        value: undefined,
         hasLogic: false,
       });
-
-      // Convert value to string
-      const stringValue = String(value);
-
-      // Check if the result contains more mixins (nested mixins)
-      if (mixinPattern.test(stringValue)) {
-        const nestedResult = replaceMixins(stringValue, depth + 1);
-        if (options.enableFieldTrackingInMarkdown) {
-          return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${nestedResult}</span>`;
-        }
-        return nestedResult;
-      }
-
+      // Return wrapped missing value or original mixin
       if (options.enableFieldTrackingInMarkdown) {
-        return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${stringValue}</span>`;
+        return `<span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span>`;
       }
-      return stringValue;
+      return `{{${trimmedVar}}}`;
+    }
+
+    // Track filled field
+    fieldTracker.trackField(trimmedVar, {
+      value: value,
+      hasLogic: false,
     });
+
+    // Convert value to string
+    const stringValue = String(value);
+
+    // Check if the result contains more mixins (nested mixins)
+    if (mixinPattern.test(stringValue)) {
+      const nestedResult = replaceMixins(stringValue, depth + 1);
+      if (options.enableFieldTrackingInMarkdown) {
+        return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${nestedResult}</span>`;
+      }
+      return nestedResult;
+    }
+
+    if (options.enableFieldTrackingInMarkdown) {
+      return `<span class="imported-value" data-field="${escapeHtmlAttribute(trimmedVar)}">${stringValue}</span>`;
+    }
+    return stringValue;
   }
 
   // First process template loops, then regular mixins
