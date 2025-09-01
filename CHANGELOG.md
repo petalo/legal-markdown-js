@@ -1,3 +1,9 @@
+## <small>3.2.1 (2025-09-01)</small>
+
+- fix: enable variable processing inside code blocks by default (#88)
+  ([b5bf890](https://github.com/petalo/legal-markdown-js/commit/b5bf890)),
+  closes [#88](https://github.com/petalo/legal-markdown-js/issues/88)
+
 ## 3.2.0 (2025-08-28)
 
 - feat: dynamic CLI version reading from package.json (#87)
