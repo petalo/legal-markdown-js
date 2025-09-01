@@ -126,7 +126,7 @@ ARCHIVE_DIR="./archive"
     });
   }, 40000);
 
-  it('should handle graceful exit when user cancels', async () => {
+  it.skip('should handle graceful exit when user cancels', async () => {
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {

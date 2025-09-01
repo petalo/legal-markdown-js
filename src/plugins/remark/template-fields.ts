@@ -33,7 +33,7 @@
 
 import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
-import type { Root, Text, HTML } from 'mdast';
+import type { Root, Text, HTML, Code, InlineCode, Node, Parent } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { extensionHelpers as helpers } from '../../extensions/helpers/index';
 import { detectBracketValues } from '../../extensions/ast-mixin-processor';
@@ -79,29 +79,29 @@ const TODAY_PATTERN = /@today(?:\[([^\]]+)\])?/g;
 function isInsideLoopOrConditional(text: string, position: number): boolean {
   // Pattern to match loop/conditional blocks (including underscores in variable names)
   const blockPattern = /\{\{#([\w_]+)\}\}[\s\S]*?\{\{\/\1\}\}/g;
-  
+
   let match;
   while ((match = blockPattern.exec(text)) !== null) {
     const blockStart = match.index;
     const blockEnd = match.index + match[0].length;
-    
+
     // Check if position is inside this block
     if (position > blockStart && position < blockEnd) {
       return true;
     }
   }
-  
+
   // Also check for {{#if}} blocks
   const ifBlockPattern = /\{\{#if\s+[^}]+\}\}[\s\S]*?\{\{\/if\}\}/g;
   while ((match = ifBlockPattern.exec(text)) !== null) {
     const blockStart = match.index;
     const blockEnd = match.index + match[0].length;
-    
+
     if (position > blockStart && position < blockEnd) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -122,13 +122,17 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
     while ((match = regex.exec(text)) !== null) {
       const [fullMatch, fieldExpression] = match;
       const trimmedExpression = fieldExpression.trim();
-      
+
       // Skip loop/conditional patterns that should be handled by the clauses plugin
       // These include: {{#if ...}}, {{#variableName}}, {{/if}}, {{/variableName}}, {{else}}
-      if (trimmedExpression.startsWith('#') || trimmedExpression.startsWith('/') || trimmedExpression === 'else') {
+      if (
+        trimmedExpression.startsWith('#') ||
+        trimmedExpression.startsWith('/') ||
+        trimmedExpression === 'else'
+      ) {
         continue;
       }
-      
+
       // Skip fields that are inside loop/conditional blocks
       if (isInsideLoopOrConditional(text, match.index)) {
         continue;
@@ -147,36 +151,36 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
   // Also search for @today patterns (without brackets), but skip those inside {{}} blocks
   let todayMatch;
   TODAY_PATTERN.lastIndex = 0; // Reset regex state
-  
+
   while ((todayMatch = TODAY_PATTERN.exec(text)) !== null) {
     const [fullMatch, formatSpecifier] = todayMatch;
-    
+
     // Check if this @today is inside a {{}} block
     const matchStart = todayMatch.index;
     const matchEnd = todayMatch.index + fullMatch.length;
-    
+
     // Look for any {{}} blocks that contain this @today match
     let isInsideTemplateField = false;
     const templateFieldPattern = /\{\{[^}]*\}\}/g;
     let templateMatch;
     templateFieldPattern.lastIndex = 0;
-    
+
     while ((templateMatch = templateFieldPattern.exec(text)) !== null) {
       const templateStart = templateMatch.index;
       const templateEnd = templateMatch.index + templateMatch[0].length;
-      
+
       // Check if the @today match is inside this template field
       if (matchStart >= templateStart && matchEnd <= templateEnd) {
         isInsideTemplateField = true;
         break;
       }
     }
-    
+
     // Only add @today as a separate field if it's not inside a template field
     if (!isInsideTemplateField) {
       // Create field name - if there's a format specifier, include it as a parameter
       const fieldName = formatSpecifier ? `@today[${formatSpecifier}]` : '@today';
-      
+
       fields.push({
         pattern: fullMatch,
         fieldName: fieldName,
@@ -206,7 +210,7 @@ function resolveFieldValue(
     // Check if @today is defined in metadata first, otherwise use current date
     const today = metadata['@today'] ? new Date(metadata['@today']) : new Date();
     let formattedDate: string;
-    
+
     if (fieldName === '@today') {
       // Default format: YYYY-MM-DD
       formattedDate = today.toISOString().split('T')[0];
@@ -214,16 +218,16 @@ function resolveFieldValue(
       // Extract format specifier from @today[format]
       const formatMatch = fieldName.match(/@today\[([^\]]+)\]/);
       const format = formatMatch ? formatMatch[1] : '';
-      
+
       switch (format.toLowerCase()) {
         case 'iso':
           formattedDate = today.toISOString().split('T')[0];
           break;
         case 'long':
-          formattedDate = today.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          formattedDate = today.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
           });
           break;
         case 'european':
@@ -232,15 +236,15 @@ function resolveFieldValue(
         case 'legal':
           formattedDate = today.toLocaleDateString('en-US', {
             year: 'numeric',
-            month: 'long', 
-            day: 'numeric'
+            month: 'long',
+            day: 'numeric',
           });
           break;
         case 'medium':
           formattedDate = today.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
           });
           break;
         default:
@@ -250,7 +254,7 @@ function resolveFieldValue(
           break;
       }
     }
-    
+
     return {
       value: formattedDate,
       hasLogic: true,
@@ -506,7 +510,7 @@ function smartSplitArguments(str: string): string[] {
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
 
-    if ((char === '"' || char === '\'') && !inQuotes) {
+    if ((char === '"' || char === "'") && !inQuotes) {
       // Start of quoted string
       inQuotes = true;
       quoteChar = char;
@@ -582,7 +586,7 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
     // String literal
     if (
       (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith('\'') && trimmed.endsWith('\''))
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
     ) {
       args.push(trimmed.slice(1, -1));
       continue;
@@ -665,11 +669,14 @@ function processTemplateFieldsInAST(
   // Get field mappings from metadata if available
   const fieldMappings = (metadata['_field_mappings'] as Map<string, string>) || new Map();
 
-  // Process both text and HTML nodes
+  // Process text, HTML, code, and inlineCode nodes
   visit(root, (node, index, parent) => {
-    // Only process text and HTML nodes that have a value property
+    // Process text, HTML, code, and inlineCode nodes
     if (
-      (node.type === 'text' || node.type === 'html') &&
+      (node.type === 'text' ||
+        node.type === 'html' ||
+        node.type === 'code' ||
+        node.type === 'inlineCode') &&
       'value' in node &&
       typeof node.value === 'string'
     ) {
@@ -746,10 +753,14 @@ function processTemplateFieldsInAST(
 
       // Update the node value
       (node as any).value = processedText;
-      
+
       // If we added field tracking HTML and this is a text node, convert it to HTML node
       // to prevent remark-stringify from escaping the HTML
-      if (enableFieldTracking && node.type === 'text' && processedText.includes('<span class="legal-field')) {
+      if (
+        enableFieldTracking &&
+        node.type === 'text' &&
+        processedText.includes('<span class="legal-field')
+      ) {
         (node as any).type = 'html';
       }
     }
@@ -770,6 +781,7 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
       if (enableFieldTracking) {
         console.log('🎯 Field tracking highlighting enabled');
       }
+      console.log('🔧 Code block processing enabled by default');
     }
 
     // Process all template fields in the AST with optional field tracking
