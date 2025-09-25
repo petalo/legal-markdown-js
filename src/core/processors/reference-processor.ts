@@ -45,6 +45,11 @@ import { getRomanNumeral, getAlphaLabel } from '../../utils/number-utilities';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 
 /**
+ * Maximum number of header levels supported
+ */
+const MAX_HEADER_LEVELS = 6;
+
+/**
  * Internal structure to track cross-references and their section numbers
  */
 interface CrossReference {
@@ -153,74 +158,12 @@ function extractCrossReferences(content: string, metadata: Record<string, any>):
         key = keyName;
       }
 
-      // Update section counters
-      if (level === 1) {
-        sectionCounters.level1++;
-        sectionCounters.level2 = 0;
-        sectionCounters.level3 = 0;
-        sectionCounters.level4 = 0;
-        sectionCounters.level5 = 0;
-        sectionCounters.level6 = 0;
-      } else if (level === 2) {
-        sectionCounters.level2++;
-        sectionCounters.level3 = 0;
-        sectionCounters.level4 = 0;
-        sectionCounters.level5 = 0;
-        sectionCounters.level6 = 0;
-      } else if (level === 3) {
-        sectionCounters.level3++;
-        sectionCounters.level4 = 0;
-        sectionCounters.level5 = 0;
-        sectionCounters.level6 = 0;
-      } else if (level === 4) {
-        sectionCounters.level4++;
-        sectionCounters.level5 = 0;
-        sectionCounters.level6 = 0;
-      } else if (level === 5) {
-        sectionCounters.level5++;
-        sectionCounters.level6 = 0;
-      } else if (level === 6) {
-        sectionCounters.level6++;
-      }
+      // Update section counters and reset sub-levels
+      updateSectionCounters(level, sectionCounters);
 
       // Generate section number based on level
-      let sectionNumber: string;
-      let sectionText: string;
-
-      if (level === 1) {
-        sectionNumber = levelFormats.level1.replace(/%n/g, sectionCounters.level1.toString());
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else if (level === 2) {
-        sectionNumber = levelFormats.level2.replace(/%n/g, sectionCounters.level2.toString());
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else if (level === 3) {
-        sectionNumber = levelFormats.level3.replace(/%n/g, sectionCounters.level3.toString());
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else if (level === 4) {
-        sectionNumber = levelFormats.level4
-          .replace(/%n/g, sectionCounters.level4.toString())
-          .replace(/%c/g, getAlphaLabel(sectionCounters.level4))
-          .replace(/%r/g, getRomanNumeral(sectionCounters.level4, true))
-          .replace(/%R/g, getRomanNumeral(sectionCounters.level4, false));
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else if (level === 5) {
-        sectionNumber = levelFormats.level5
-          .replace(/%n/g, sectionCounters.level5.toString())
-          .replace(/%c/g, getAlphaLabel(sectionCounters.level5))
-          .replace(/%r/g, getRomanNumeral(sectionCounters.level5, true))
-          .replace(/%R/g, getRomanNumeral(sectionCounters.level5, false));
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else if (level === 6) {
-        sectionNumber = levelFormats.level6
-          .replace(/%n/g, sectionCounters.level6.toString())
-          .replace(/%r/g, getRomanNumeral(sectionCounters.level6, true))
-          .replace(/%R/g, getRomanNumeral(sectionCounters.level6, false));
-        sectionText = `${sectionNumber} ${headerText}`;
-      } else {
-        // Fallback for unknown levels
-        sectionNumber = `Level ${level}.`;
-        sectionText = `${sectionNumber} ${headerText}`;
-      }
+      const sectionNumber = generateSectionNumber(level, levelFormats, sectionCounters);
+      const sectionText = `${sectionNumber} ${headerText}`;
 
       crossReferences.push({
         key,
@@ -314,6 +257,51 @@ function replaceCrossReferences(
   });
 
   return processedLines.join('\n');
+}
+
+/**
+ * Generates formatted section number with placeholder replacement
+ * @param level - Section level (1-6)
+ * @param levelFormats - Format templates for each level
+ * @param counters - Current section counters
+ * @returns Formatted section number
+ */
+function generateSectionNumber(
+  level: number,
+  levelFormats: Record<string, string>,
+  counters: Record<string, number>
+): string {
+  const levelKey = `level${level}` as keyof typeof levelFormats;
+  const format = levelFormats[levelKey];
+  const counter = counters[levelKey];
+
+  if (!format) {
+    return `Level ${level}.`;
+  }
+
+  return format
+    .replace(/%n/g, counter.toString())
+    .replace(/%c/g, getAlphaLabel(counter))
+    .replace(/%r/g, getRomanNumeral(counter, true))
+    .replace(/%R/g, getRomanNumeral(counter, false));
+}
+
+/**
+ * Updates section counter for given level and resets sub-levels
+ * @param level - Current level being processed
+ * @param counters - Section counters to update
+ */
+function updateSectionCounters(
+  level: number,
+  counters: Record<string, number>
+): void {
+  const levelKey = `level${level}`;
+  counters[levelKey]++;
+
+  // Reset all lower-level counters
+  for (let i = level + 1; i <= MAX_HEADER_LEVELS; i++) {
+    counters[`level${i}`] = 0;
+  }
 }
 
 /**

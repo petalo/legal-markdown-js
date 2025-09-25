@@ -39,7 +39,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import * as fs from 'fs';
-import { LegalMarkdownOptions } from '../types';
+import type { LegalMarkdownOptions } from '../types';
 import { CliService } from './service';
 import { FileNotFoundError } from '../errors/index';
 import { RESOLVED_PATHS } from '../constants/index';
