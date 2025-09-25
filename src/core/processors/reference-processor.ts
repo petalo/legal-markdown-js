@@ -291,10 +291,7 @@ function generateSectionNumber(
  * @param level - Current level being processed
  * @param counters - Section counters to update
  */
-function updateSectionCounters(
-  level: number,
-  counters: Record<string, number>
-): void {
+function updateSectionCounters(level: number, counters: Record<string, number>): void {
   const levelKey = `level${level}`;
   counters[levelKey]++;
 
