@@ -1,3 +1,9 @@
+## <small>3.2.2 (2025-09-25)</small>
+
+- fix: process Roman numerals (%R, %r) in all cross-reference levels (#105)
+  ([27de7cd](https://github.com/petalo/legal-markdown-js/commit/27de7cd)),
+  closes [#105](https://github.com/petalo/legal-markdown-js/issues/105)
+
 ## <small>3.2.1 (2025-09-01)</small>
 
 - fix: enable variable processing inside code blocks by default (#88)
