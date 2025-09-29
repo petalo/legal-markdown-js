@@ -3,4 +3,4 @@
  *
  * Re-exports all types from the main types file for convenient importing
  */
-export * from '../types';
+// Removed re-export to avoid circular dependency risk.
