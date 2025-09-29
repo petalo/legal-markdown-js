@@ -372,7 +372,7 @@ describe('processMixins', () => {
       const content = 'The value is {{missing_field}}.';
       const metadata = {};
       const result = processMixins(content, metadata, { enableFieldTrackingInMarkdown: true });
-      expect(result).toContain('<span class="missing-value" data-field="missing_field">[[missing_field]]</span>');
+      expect(result).toContain('<span class="legal-field missing-value" data-field="missing_field">[[missing_field]]</span>');
     });
 
     it('should work with legacy enableFieldTracking for backward compatibility', () => {

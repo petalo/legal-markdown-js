@@ -498,7 +498,9 @@ function extractTextContent(node: Heading): string {
     .join('')
     .trim();
 
-  return result;
+  // Remove cross-reference keys (|key|) from the extracted text
+  // This ensures headers don't contain cross-reference markers after processing
+  return result.replace(/\s*\|[\w.-]+\|\s*$/, '');
 }
 
 /**

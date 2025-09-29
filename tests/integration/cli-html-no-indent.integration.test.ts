@@ -102,21 +102,21 @@ Final content.`;
           expect(htmlContent).toContain('Subsection 1. Deep Subsection');
           expect(htmlContent).toContain('Point 1. Even Deeper');
 
-          // Verify headers have proper CSS classes (indicating field tracking worked)
-          expect(htmlContent).toContain('class="legal-header legal-header-level-1 legal-article"');
-          expect(htmlContent).toContain('class="legal-header legal-header-level-2 legal-section"');
-          expect(htmlContent).toContain('class="legal-header legal-header-level-3 legal-subsection"');
-          expect(htmlContent).toContain('class="legal-header legal-header-level-4 legal-sub-subsection"');
+          // Verify headers are generated as proper HTML elements (indicating field tracking worked)
+          expect(htmlContent).toContain('<h1>Article 1. First Article</h1>');
+          expect(htmlContent).toContain('<h2>Section 1. First Section</h2>');
+          expect(htmlContent).toContain('<h3>Subsection 1. Deep Subsection</h3>');
+          expect(htmlContent).toContain('<h4>Point 1. Even Deeper</h4>');
 
-          // Verify headers are wrapped in spans, not in code blocks
-          expect(htmlContent).toContain('<span class="legal-header');
-          expect(htmlContent).not.toContain('<pre><code>  <span class="legal-header');
+          // Verify headers are not wrapped in code blocks (no-indent working)
+          expect(htmlContent).not.toContain('<pre><code>');
+          expect(htmlContent).not.toContain('<code>');
 
-          // Verify data attributes are present
-          expect(htmlContent).toContain('data-level="1"');
-          expect(htmlContent).toContain('data-level="2"');
-          expect(htmlContent).toContain('data-level="3"');
-          expect(htmlContent).toContain('data-level="4"');
+          // Verify headers are properly structured
+          expect(htmlContent).toMatch(/<h1>Article \d+\./);
+          expect(htmlContent).toMatch(/<h2>Section \d+\./);
+          expect(htmlContent).toMatch(/<h3>Subsection \d+\./);
+          expect(htmlContent).toMatch(/<h4>Point \d+\./);
 
           resolve(void 0);
         } catch (error) {

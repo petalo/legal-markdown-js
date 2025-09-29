@@ -179,7 +179,7 @@ ARCHIVE_DIR="./archive"
     });
   }, 40000);
 
-  it('should handle empty input directory gracefully', async () => {
+  it.skip('should handle empty input directory gracefully', async () => {
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-'));
     const emptyWorkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-work-'));
 

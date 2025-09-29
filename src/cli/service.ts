@@ -163,7 +163,7 @@ export class CliService {
       const effectiveOptions = this.processForceCommands(content, {
         ...this.options,
         basePath: inputDir,
-        enableFieldTracking: this.options.enableFieldTracking,
+        enableFieldTracking: this.options.enableFieldTracking || this.options.highlight,
       });
 
       // Determine output format using effective options (after force commands)
@@ -234,7 +234,7 @@ export class CliService {
       // Process force commands and update options
       const effectiveOptions = this.processForceCommands(content, {
         ...this.options,
-        enableFieldTracking: this.options.enableFieldTracking,
+        enableFieldTracking: this.options.enableFieldTracking || this.options.highlight,
       });
 
       // Handle auto-populate headers mode

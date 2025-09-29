@@ -308,7 +308,7 @@ describe('AST Mixin Processor', () => {
       
       const result = processMixins(content, metadata, options);
       
-      expect(result).toContain('<span class="missing-value"');
+      expect(result).toContain('<span class="legal-field missing-value"');
     });
 
     it('should generate spans for logic fields when markdown tracking enabled', () => {

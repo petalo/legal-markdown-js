@@ -653,7 +653,7 @@ export function processMixinAST(
       // Handle malformed mixins
       if (options.enableFieldTrackingInMarkdown) {
         // eslint-disable-next-line max-len
-        return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(node.content)}">{{${node.variable || 'malformed'}}}</span></span>`;
+        return `<span class="legal-field highlight"><span class="legal-field missing-value" data-field="${escapeHtmlAttribute(node.content)}">{{${node.variable || 'malformed'}}}</span></span>`;
       }
       return node.content; // Return original malformed content
     }
@@ -700,7 +700,7 @@ export function processMixinAST(
       // Handle missing values
       if (options.enableFieldTrackingInMarkdown) {
         // eslint-disable-next-line max-len
-        return `<span class="missing-value" data-field="${escapeHtmlAttribute(node.variable)}">{{${node.variable}}}</span>`;
+        return `<span class="legal-field missing-value" data-field="${escapeHtmlAttribute(node.variable)}">{{${node.variable}}}</span>`;
       }
       return node.content; // Return original mixin syntax
     }

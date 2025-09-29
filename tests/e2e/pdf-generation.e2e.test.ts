@@ -182,8 +182,8 @@ ${contractContent}`;
       expect(html).toContain('Property Management LLC');
       
       // Check for highlighting classes
-      expect(html).toContain('class="imported-value"'); // Filled fields
-      expect(html).toContain('class="missing-value"'); // Empty ID field
+      expect(html).toContain('class="legal-field imported-value"'); // Filled fields
+      expect(html).toContain('class="legal-field missing-value"'); // Empty ID field
       expect(html).toContain('ID Required'); // Conditional text for missing ID
       
       // Check CSS was included

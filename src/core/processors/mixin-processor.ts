@@ -418,7 +418,7 @@ export function processMixins(
       }
       // Helper failed - treat as missing value
       if (options.enableFieldTrackingInMarkdown) {
-        return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
+        return `<span class="legal-field highlight"><span class="legal-field missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
       }
       return `{{${trimmedVar}}}`;
     }
@@ -470,7 +470,7 @@ export function processMixins(
         }
       }
       if (options.enableFieldTrackingInMarkdown) {
-        return `<span class="highlight"><span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
+        return `<span class="legal-field highlight"><span class="legal-field missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span></span>`;
       }
       return `{{${trimmedVar}}}`;
     }
@@ -486,7 +486,7 @@ export function processMixins(
       });
       // Return wrapped missing value or original mixin
       if (options.enableFieldTrackingInMarkdown) {
-        return `<span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span>`;
+        return `<span class="legal-field missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">[[${trimmedVar}]]</span>`;
       }
       return `{{${trimmedVar}}}`;
     }

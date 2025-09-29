@@ -208,7 +208,7 @@ function createLegalMarkdownProcessor(
     debug: options.debug,
   });
 
-  // Add cross-references plugin unless disabled
+  // Add cross-references plugin BEFORE headers (needs to extract |key| patterns before headers removes them)
   if (!options.disableCrossReferences && !options.noReferences) {
     processor.use(remarkCrossReferences, {
       metadata,
@@ -217,7 +217,7 @@ function createLegalMarkdownProcessor(
     });
   }
 
-  // Add headers plugin (should be processed after content is finalized)
+  // Add headers plugin AFTER cross-references (processes headers after cross-reference extraction)
   if (!options.noHeaders) {
     processor.use(remarkHeaders, {
       metadata,

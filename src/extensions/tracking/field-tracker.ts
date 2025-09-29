@@ -211,8 +211,11 @@ export class FieldTracker {
 
               const isInsideHighlightSpan =
                 prevTag.includes('class="highlight"') ||
+                prevTag.includes('class="legal-field highlight"') ||
                 prevTag.includes('class="imported-value"') ||
-                prevTag.includes('class="missing-value"');
+                prevTag.includes('class="legal-field imported-value"') ||
+                prevTag.includes('class="missing-value"') ||
+                prevTag.includes('class="legal-field missing-value"');
               const isClosedBySpan = nextTag === '</span>';
 
               if (isInsideHighlightSpan && isClosedBySpan) {

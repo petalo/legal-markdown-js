@@ -58,6 +58,7 @@ import { htmlGenerator } from './extensions/generators/html-generator';
 import { pdfGenerator } from './extensions/generators/pdf-generator';
 import { LegalMarkdownOptions } from './types';
 import { createDefaultPipeline, createHtmlPipeline } from './extensions/pipeline/pipeline-config';
+import { processLegalMarkdownWithRemark } from './extensions/remark/legal-markdown-processor';
 import path from 'path';
 import { getCurrentDir } from './utils/esm-utils.js';
 
@@ -406,39 +407,20 @@ export async function generateHtml(
   } = {}
 ): Promise<string> {
   try {
-    // Use HTML-optimized pipeline for better performance and field tracking
-    // Field tracking is always enabled for HTML generation
-    const pipeline = createHtmlPipeline({
-      enableFieldTracking: true,
-      includeHighlighting: options.includeHighlighting,
+    // Always use remark processor for HTML generation to ensure field tracking works
+    // Field tracking is essential for HTML structure (headers, mixins, etc.)
+    const result = await processLegalMarkdownWithRemark(content, {
+      ...options,
+      enableFieldTracking: true, // Always enabled for HTML generation (structure)
+      debug: options.debug || false,
     });
 
-    const metadata: Record<string, any> = {};
-
-    const pipelineOptions = {
-      legalMarkdownOptions: {
-        ...options,
-        enableFieldTracking: true,
-        enableFieldTrackingInMarkdown: true, // Always enabled for HTML generation (structure)
-        _htmlGeneration: true, // Flag to indicate HTML generation context
-      },
-      enableStepProfiling: process.env.NODE_ENV === 'development',
-    };
-
-    const result = await pipeline.execute(content, metadata, pipelineOptions);
-
-    if (!result.success) {
-      console.warn('HTML pipeline failed, falling back to legacy processing');
-      return generateHtmlLegacy(content, options);
-    }
-
-    // Generate HTML using the processed content
     return htmlGenerator.generateHtml(result.content, {
       cssPath: options.cssPath,
       highlightCssPath:
         options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
       includeHighlighting: options.includeHighlighting,
-      title: options.title,
+      title: options.title || result.metadata?.title,
       metadata: result.metadata,
     });
   } catch (error) {
@@ -518,31 +500,13 @@ export async function generatePdf(
   } = {}
 ): Promise<Buffer> {
   try {
-    // Use PDF-optimized pipeline (same as HTML pipeline for now)
-    // Field tracking is always enabled for PDF generation
-    const pipeline = createHtmlPipeline({
-      enableFieldTracking: true,
-      includeHighlighting: options.includeHighlighting,
+    // Always use remark processor for PDF generation to ensure field tracking works
+    // Field tracking is essential for PDF structure (headers, mixins, cross-references)
+    const result = await processLegalMarkdownWithRemark(content, {
+      ...options,
+      enableFieldTracking: true, // Always enabled for PDF generation (structure)
+      debug: options.debug || false,
     });
-
-    const metadata: Record<string, any> = {};
-
-    const pipelineOptions = {
-      legalMarkdownOptions: {
-        ...options,
-        enableFieldTracking: true,
-        enableFieldTrackingInMarkdown: true, // Always enabled for PDF generation (structure)
-        _htmlGeneration: true, // Flag to indicate PDF generation context
-      },
-      enableStepProfiling: process.env.NODE_ENV === 'development',
-    };
-
-    const result = await pipeline.execute(content, metadata, pipelineOptions);
-
-    if (!result.success) {
-      console.warn('PDF pipeline failed, falling back to legacy processing');
-      return generatePdfLegacy(content, outputPath, options);
-    }
 
     // Generate PDF using the processed content
     return pdfGenerator.generatePdf(result.content, outputPath, {
@@ -550,7 +514,7 @@ export async function generatePdf(
       highlightCssPath:
         options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
       includeHighlighting: options.includeHighlighting,
-      title: options.title,
+      title: options.title || result.metadata?.title,
       metadata: result.metadata,
       format: options.format,
       landscape: options.landscape,

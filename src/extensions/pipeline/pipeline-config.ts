@@ -49,6 +49,14 @@ import { fieldTracker } from '../tracking/field-tracker';
 import { PipelineManager } from './pipeline-manager';
 import { PipelineStep, PipelineConfig } from './types';
 import { ConsolePipelineLogger, LogLevel } from './pipeline-logger';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkStringify from 'remark-stringify';
+import {
+  remarkCrossReferences,
+  remarkHeaders,
+  remarkLegalHeadersParser,
+} from '../../plugins/remark/index';
 
 /**
  * Wrapper for RST conversion processor
@@ -193,6 +201,12 @@ class ReferencesProcessor extends AbstractProcessor {
   readonly name = 'references';
 
   isEnabled(options: LegalMarkdownOptions): boolean {
+    // Skip pipeline cross-reference processing when field tracking is enabled
+    // The remark processor handles cross-references more accurately for field tracking
+    if (options.enableFieldTracking || options.enableFieldTrackingInMarkdown) {
+      return false;
+    }
+
     return !options.noReferences;
   }
 
@@ -201,7 +215,60 @@ class ReferencesProcessor extends AbstractProcessor {
     metadata: Record<string, any>,
     options: LegalMarkdownOptions
   ): string {
+    // Use AST-based processing when field tracking is enabled to prevent
+    // false positive highlighting of resolved cross-reference values
+    if (options.enableFieldTracking || options.enableFieldTrackingInMarkdown) {
+      return this.processWithRemarkPlugin(content, metadata, options);
+    }
+
+    // Use legacy string-based processing for backward compatibility
     return processCrossReferences(content, metadata);
+  }
+
+  /**
+   * Process cross-references using remark plugin for accurate AST-based field tracking
+   */
+  private processWithRemarkPlugin(
+    content: string,
+    metadata: Record<string, any>,
+    options: LegalMarkdownOptions
+  ): string {
+    try {
+      const processor = unified()
+        .use(remarkParse)
+        // Add legal headers parser to convert l., ll., etc. to proper headers
+        .use(remarkLegalHeadersParser, {
+          debug: options.debug,
+        })
+        // Add cross-references plugin BEFORE headers processing (needs to extract |key| patterns first)
+        .use(remarkCrossReferences, {
+          metadata,
+          enableFieldTracking: true,
+          debug: options.debug || false,
+        })
+        // Add headers plugin AFTER cross-references (processes headers after cross-reference extraction)
+        .use(remarkHeaders, {
+          metadata,
+          noReset: false,
+          noIndent: false,
+          debug: options.debug || false,
+        })
+        .use(remarkStringify, {
+          bullet: '-',
+          fences: true,
+          incrementListMarker: false,
+        });
+
+      const result = processor.processSync(content);
+      return String(result);
+    } catch (error) {
+      this.debug(
+        'Remark cross-reference processing failed, falling back to string processor',
+        error
+      );
+      // Fallback to legacy processor if remark fails
+      return processCrossReferences(content, metadata);
+    }
   }
 }
 
@@ -413,7 +480,7 @@ export function createDefaultPipeline(logger?: ConsolePipelineLogger): PipelineM
     {
       name: 'references',
       processor: new ReferencesProcessor(),
-      order: 6,
+      order: 10,
       enabled: true,
       description: 'Resolve cross-references and internal links',
     },
@@ -441,14 +508,14 @@ export function createDefaultPipeline(logger?: ConsolePipelineLogger): PipelineM
     {
       name: 'metadata-export',
       processor: new MetadataExportProcessor(),
-      order: 10,
+      order: 11,
       enabled: true,
       description: 'Export metadata to external files if configured',
     },
     {
       name: 'field-tracking',
       processor: new FieldTrackingProcessor(),
-      order: 11,
+      order: 12,
       enabled: true,
       description: 'Apply centralized field tracking and highlighting',
     },
