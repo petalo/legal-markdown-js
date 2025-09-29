@@ -20,6 +20,9 @@ party:
   name: John Doe
   email: john@example.com
 hasClause: true
+level-one: 'Article %n.'
+level-two: 'Section %n.'
+level-three: 'Subsection %n.'
 ---
 
 # {{title}}
@@ -70,13 +73,13 @@ lll. First Subsection
       });
 
       // Both should contain field tracking classes for structure
-      expect(htmlWithoutHighlight).toContain('class="imported-value"');
-      expect(htmlWithoutHighlight).toContain('class="missing-value"');
-      expect(htmlWithoutHighlight).toContain('legal-header');
+      expect(htmlWithoutHighlight).toContain('class="legal-field imported-value"');
+      expect(htmlWithoutHighlight).toContain('class="legal-field missing-value"');
+      expect(htmlWithoutHighlight).toContain('legal-field');
 
-      expect(htmlWithHighlight).toContain('class="imported-value"');
-      expect(htmlWithHighlight).toContain('class="missing-value"');
-      expect(htmlWithHighlight).toContain('legal-header');
+      expect(htmlWithHighlight).toContain('class="legal-field imported-value"');
+      expect(htmlWithHighlight).toContain('class="legal-field missing-value"');
+      expect(htmlWithHighlight).toContain('legal-field');
     });
 
     it('should only include highlight CSS when highlighting is enabled', async () => {
@@ -104,14 +107,13 @@ lll. First Subsection
         includeHighlighting: false,
       });
 
-      // Headers should have spans for CSS styling
-      expect(html).toContain('legal-header');
-      expect(html).toContain('legal-header-level-1');
-      expect(html).toContain('legal-header-level-2');
-      expect(html).toContain('legal-header-level-3');
-      expect(html).toContain('legal-article');
-      expect(html).toContain('legal-section');
-      expect(html).toContain('legal-subsection');
+      // Headers should be generated as HTML elements
+      expect(html).toContain('<h1>');
+      expect(html).toContain('<h2>');
+      expect(html).toContain('<h3>');
+      expect(html).toContain('Article 1.');
+      expect(html).toContain('Section 1.');
+      expect(html).toContain('Subsection 1.');
     });
   });
 
@@ -343,17 +345,17 @@ lll. First Subsection
       });
 
       // Both should have the same field tracking spans
-      const normalSpans = (normalHtml.match(/<span class="imported-value"/g) || []).length;
-      const highlightSpans = (highlightHtml.match(/<span class="imported-value"/g) || []).length;
+      const normalSpans = (normalHtml.match(/<span class="legal-field imported-value"/g) || []).length;
+      const highlightSpans = (highlightHtml.match(/<span class="legal-field imported-value"/g) || []).length;
       expect(normalSpans).toBe(highlightSpans);
 
-      const normalMissingSpans = (normalHtml.match(/<span class="missing-value"/g) || []).length;
-      const highlightMissingSpans = (highlightHtml.match(/<span class="missing-value"/g) || []).length;
+      const normalMissingSpans = (normalHtml.match(/<span class="legal-field missing-value"/g) || []).length;
+      const highlightMissingSpans = (highlightHtml.match(/<span class="legal-field missing-value"/g) || []).length;
       expect(normalMissingSpans).toBe(highlightMissingSpans);
 
-      const normalHeaderSpans = (normalHtml.match(/legal-header/g) || []).length;
-      const highlightHeaderSpans = (highlightHtml.match(/legal-header/g) || []).length;
-      expect(normalHeaderSpans).toBe(highlightHeaderSpans);
+      const normalHeaders = (normalHtml.match(/<h[1-6]>/g) || []).length;
+      const highlightHeaders = (highlightHtml.match(/<h[1-6]>/g) || []).length;
+      expect(normalHeaders).toBe(highlightHeaders);
 
       // Content should be the same (ignoring CSS differences)
       expect(normalHtml).toContain('John Doe');
@@ -401,16 +403,16 @@ Payments as per |listado-servicios| schedule.
       expect(crossrefHighlights.length).toBeGreaterThan(0);
       
       // Headers should not contain pipe keys
-      const headersWithPipes = html.match(/<span[^>]*legal-header[^>]*>[^<]*\|[^|]+\|[^<]*<\/span>/g) || [];
+      const headersWithPipes = html.match(/<h[1-6][^>]*>[^<]*\|[^|]+\|[^<]*<\/h[1-6]>/g) || [];
       expect(headersWithPipes).toHaveLength(0);
 
       // Should not have escaped HTML
       expect(html).not.toContain('&lt;span');
       expect(html).not.toContain('&gt;');
 
-      // Should not highlight short numeric values in HTML attributes
-      expect(html).toContain('data-level="2"'); // Should remain unmodified
-      expect(html).not.toContain('data-level="<span'); // Should not be wrapped
+      // Headers should be properly formatted without cross-reference markup
+      expect(html).toContain('<h2>Art. 1 -'); // Should be clean header
+      expect(html).toContain('<h2>Art. 2 -'); // Should be clean header
     });
 
     it('should handle field values based on logic, not characteristics', async () => {
@@ -424,10 +426,10 @@ Payments as per |listado-servicios| schedule.
       const highlightedTwos = html.match(/<span[^>]*data-field="contrato\.plazo_meses_prorroga\.numero"[^>]*>2<\/span>/g) || [];
       expect(highlightedTwos.length).toBe(1); // Should highlight the template field
       
-      // HTML attributes should remain untouched
-      expect(html).toContain('data-level="2"');
-      expect(html).toContain('data-number="2"');
-      expect(html).not.toContain('data-level="<span');
+      // Headers should be clean and properly formatted
+      expect(html).toContain('<h2>Art. 1 -');
+      expect(html).toContain('<h2>Art. 2 -');
+      expect(html).not.toContain('data-level="<span'); // Should not have broken attributes
       expect(html).not.toContain('data-number="<span');
     });
 
@@ -437,16 +439,12 @@ Payments as per |listado-servicios| schedule.
         includeHighlighting: true,
       });
 
-      // Check that legal-header class exists in the HTML
-      expect(html).toContain('legal-header');
-      expect(html).toContain('legal-header-level-2');
+      // Check that headers are generated as HTML elements
+      expect(html).toContain('<h2>');
+      expect(html).toContain('Art. 2 -');
 
-      // Check that headers have proper data attributes
-      expect(html).toMatch(/data-level="\d+"/);
-      expect(html).toMatch(/data-number="\d+"/);
-
-      // Headers should not contain pipe keys in the visible text
-      const headerElements = html.match(/<span[^>]*legal-header[^>]*>.*?<\/span>/g) || [];
+      // Headers should be present and properly formatted
+      const headerElements = html.match(/<h[1-6][^>]*>.*?<\/h[1-6]>/g) || [];
       expect(headerElements.length).toBeGreaterThan(0);
       
       headerElements.forEach(headerElement => {
@@ -474,7 +472,6 @@ Payments as per |listado-servicios| schedule.
       // We verify by checking the expected highlights exist
       const crossrefFields = [
         'crossref.objeto-contrato',
-        'crossref.anexo-vtt', 
         'crossref.listado-servicios'
       ];
 

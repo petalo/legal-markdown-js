@@ -661,7 +661,7 @@ function processItemMixins(
     if (value === undefined || value === null) {
       if (enableFieldTracking) {
         return (
-          `<span class="missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">` +
+          `<span class="legal-field missing-value" data-field="${escapeHtmlAttribute(trimmedVar)}">` +
           `[[${trimmedVar}]]</span>`
         );
       }
@@ -1025,7 +1025,7 @@ function processTemplateContent(
       if (enableFieldTracking) {
         const isEmptyValue =
           value === null || value === '' || (typeof value === 'string' && value.trim() === '');
-        const cssClass = isEmptyValue ? 'missing-value' : 'imported-value';
+        const cssClass = isEmptyValue ? 'legal-field missing-value' : 'legal-field imported-value';
 
         fieldTracker.trackField(trimmedVar, {
           value: value,

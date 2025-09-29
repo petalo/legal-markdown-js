@@ -182,8 +182,11 @@ export abstract class AbstractProcessor implements BaseProcessor {
   protected hasBeenProcessed(content: string): boolean {
     return (
       content.includes('class="imported-value"') ||
+      content.includes('class="legal-field imported-value"') ||
       content.includes('class="missing-value"') ||
-      content.includes('class="highlight"')
+      content.includes('class="legal-field missing-value"') ||
+      content.includes('class="highlight"') ||
+      content.includes('class="legal-field highlight"')
     );
   }
 

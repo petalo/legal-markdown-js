@@ -103,7 +103,7 @@ This clause is included conditionally.
       expect(html).toContain('ABC Corp');
       expect(html).toContain('Special Clause');
       // HTML should always contain field tracking classes for structure
-      expect(html).toContain('class="imported-value"');
+      expect(html).toContain('class="legal-field imported-value"');
       // But should NOT contain the highlight.css styles
       expect(html).not.toContain('border: 1px solid #0066cc');
     });
@@ -120,8 +120,8 @@ This clause is included conditionally.
       });
 
       expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain('class="imported-value"');
-      expect(html).toContain('class="missing-value"');
+      expect(html).toContain('class="legal-field imported-value"');
+      expect(html).toContain('class="legal-field missing-value"');
       expect(html).toContain('John Doe');
       expect(html).toContain('john@example.com');
       // Should include the highlight.css styles
