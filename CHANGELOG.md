@@ -1,3 +1,14 @@
+## 3.3.0 (2025-10-01)
+
+- feat: add signature lines detection and styling (#110)
+  ([e5b96be](https://github.com/petalo/legal-markdown-js/commit/e5b96be)),
+  closes [#110](https://github.com/petalo/legal-markdown-js/issues/110)
+  [#000](https://github.com/petalo/legal-markdown-js/issues/000)
+  [#000](https://github.com/petalo/legal-markdown-js/issues/000)
+- Refactor playground and enhance date formatting (#109)
+  ([3f96be7](https://github.com/petalo/legal-markdown-js/commit/3f96be7)),
+  closes [#109](https://github.com/petalo/legal-markdown-js/issues/109)
+
 ## <small>3.2.3 (2025-09-29)</small>
 
 - fix: resolve cross-reference field tracking and processing issues (#108)
