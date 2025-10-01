@@ -154,11 +154,28 @@ function applyDateArithmetic(baseDate: Date, arithmetic: ReturnType<typeof parse
 
 /**
  * Get ordinal suffix for a day number (st, nd, rd, th)
+ *
+ * Returns the appropriate English ordinal suffix for a given day number.
+ * Special handling for 11-13: these always end in "th" (11th, 12th, 13th)
+ * rather than following the last-digit rule (which would give 11st, 12nd, 13rd).
+ * This is because the teens are irregular in English ordinal numbering.
+ *
+ * @param day - The day number (1-31)
+ * @returns The ordinal suffix ('st', 'nd', 'rd', or 'th')
+ *
+ * @example
+ * getOrdinalSuffix(1)  // returns 'st' -> "1st"
+ * getOrdinalSuffix(2)  // returns 'nd' -> "2nd"
+ * getOrdinalSuffix(3)  // returns 'rd' -> "3rd"
+ * getOrdinalSuffix(11) // returns 'th' -> "11th" (special case)
+ * getOrdinalSuffix(21) // returns 'st' -> "21st"
  */
 function getOrdinalSuffix(day: number): string {
+  // Handle special case: 11th, 12th, 13th (teens are irregular in English)
   if (day >= 11 && day <= 13) {
     return 'th';
   }
+  // Handle regular cases based on last digit
   switch (day % 10) {
     case 1:
       return 'st';

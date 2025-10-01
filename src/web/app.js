@@ -783,7 +783,7 @@ Your content with {{variable}} substitutions...
   applyCSS() {
     this.customCSS = this.cssEditor.value;
     this.updatePreviewWithCSS();
-    // No mostrar mensaje en auto-apply para evitar spam
+    // Don't show message on auto-apply to avoid spam
   }
 
   handleCSSFileUpload(event) {

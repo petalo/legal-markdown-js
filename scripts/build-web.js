@@ -119,7 +119,11 @@ ${escapedCSS}\`,
 
       // Copy all chunk files (with hash pattern) and their source maps
       // Pattern: name-HASH.js or name-HASH.js.map
-      if ((file.includes('-') && file.endsWith('.js')) || file.endsWith('.js.map')) {
+      // More specific regex to match rollup chunk pattern: word-HASH.js
+      const isChunkFile = /^[\w-]+-[A-Za-z0-9_-]{8,}\.js$/.test(file);
+      const isSourceMap = file.endsWith('.js.map');
+
+      if (isChunkFile || isSourceMap) {
         const destFile = path.join(distWebDir, file);
         fs.copyFileSync(srcFilePath, destFile);
         chunkCount++;
