@@ -124,9 +124,9 @@ describe('Escaped Underscores in Formatting Contexts', () => {
       const input = '*{{__private__field__}}*';
       const result = await processor.process(input);
 
-      // Note: Variables with double underscores at start/end may conflict with
-      // markdown parsing. This documents current behavior - may need special handling.
-      // The variable name gets malformed in parsing
+      // NOTE: This test uses the plugin directly WITHOUT the fix from legal-markdown-processor
+      // The fix (escapeTemplateUnderscores) prevents this issue at the processor level
+      // This documents standalone plugin behavior - variables with leading/trailing underscores get malformed
       expect(result.toString()).toContain('private');
     });
   });

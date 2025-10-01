@@ -72,22 +72,6 @@ function escapeTemplateUnderscores(content: string): string {
 }
 
 /**
- * Un-escape underscores that were escaped in template fields
- * This is called after parsing to restore original field names
- *
- * @param content - Processed content
- * @returns Content with template underscores un-escaped
- */
-function unescapeTemplateUnderscores(content: string): string {
-  // Match {{...}} patterns and un-escape underscores inside them
-  return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
-    // Un-escape any escaped underscores in the template field
-    const unescaped = inner.replace(/\\_/g, '_');
-    return `{{${unescaped}}}`;
-  });
-}
-
-/**
  * Configuration options for the Legal Markdown processor
  * @interface LegalMarkdownProcessorOptions
  */

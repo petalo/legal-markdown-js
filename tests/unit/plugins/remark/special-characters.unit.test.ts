@@ -248,8 +248,9 @@ describe('Special Characters in Variable Names', () => {
       const input = 'Value: {{_special_}}';
       const result = await processor.process(input);
 
-      // LIMITATION: Variables with leading AND trailing underscores conflict with markdown
-      // italic parsing (underscores become asterisks in AST)
+      // NOTE: This test uses the plugin directly WITHOUT the fix from legal-markdown-processor
+      // The fix (escapeTemplateUnderscores) prevents this issue at the processor level
+      // This test documents what happens when the plugin is used standalone
       expect(result.toString()).toContain('{{*special*}}');
     });
 
@@ -271,10 +272,12 @@ describe('Special Characters in Variable Names', () => {
       const result = await processor.process(input);
       const output = result.toString();
 
-      // LIMITATION: Leading/trailing single underscores conflict with markdown parsing
-      expect(output).toContain('{{*field1}}'); // Leading _ becomes *
-      expect(output).toContain('{{field2*}}'); // Trailing _ becomes *
-      // BUT: Double underscores and mid-word underscores work fine
+      // NOTE: This test uses the plugin directly WITHOUT the fix from legal-markdown-processor
+      // The fix (escapeTemplateUnderscores) prevents this issue at the processor level
+      // This documents standalone plugin behavior for reference
+      expect(output).toContain('{{*field1}}'); // Leading _ becomes * (without fix)
+      expect(output).toContain('{{field2*}}'); // Trailing _ becomes * (without fix)
+      // BUT: Double underscores and mid-word underscores work fine even without fix
       expect(output).toContain('Double');
       expect(output).toContain('Mixed');
     });
