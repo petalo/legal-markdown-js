@@ -1,3 +1,9 @@
+## <small>3.2.3 (2025-09-29)</small>
+
+- fix: resolve cross-reference field tracking and processing issues (#108)
+  ([0ddca47](https://github.com/petalo/legal-markdown-js/commit/0ddca47)),
+  closes [#108](https://github.com/petalo/legal-markdown-js/issues/108)
+
 ## <small>3.2.2 (2025-09-25)</small>
 
 - fix: process Roman numerals (%R, %r) in all cross-reference levels (#105)
