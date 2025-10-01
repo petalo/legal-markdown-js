@@ -53,6 +53,41 @@ import { processTemplateLoops } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
 
 /**
+ * Pre-process content to escape underscores inside {{}} to prevent
+ * markdown parser from interpreting them as italic delimiters
+ *
+ * This solves the issue where {{_field}} or {{field_}} get parsed as
+ * {{*field}} or {{field*}} due to underscore-to-italic conversion.
+ *
+ * @param content - Raw markdown content
+ * @returns Content with underscores escaped inside template fields
+ */
+function escapeTemplateUnderscores(content: string): string {
+  // Match {{...}} patterns and escape underscores inside them
+  return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
+    // Escape any underscores in the template field
+    const escaped = inner.replace(/_/g, '\\_');
+    return `{{${escaped}}}`;
+  });
+}
+
+/**
+ * Un-escape underscores that were escaped in template fields
+ * This is called after parsing to restore original field names
+ *
+ * @param content - Processed content
+ * @returns Content with template underscores un-escaped
+ */
+function unescapeTemplateUnderscores(content: string): string {
+  // Match {{...}} patterns and un-escape underscores inside them
+  return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
+    // Un-escape any escaped underscores in the template field
+    const unescaped = inner.replace(/\\_/g, '_');
+    return `{{${unescaped}}}`;
+  });
+}
+
+/**
  * Configuration options for the Legal Markdown processor
  * @interface LegalMarkdownProcessorOptions
  */
@@ -325,6 +360,14 @@ export async function processLegalMarkdownWithRemark(
       console.log('[legal-markdown-processor] Sample metadata:', yamlMetadata);
     }
 
+    // Pre-process: Escape underscores inside {{}} to prevent markdown italic parsing
+    // This prevents {{_field}} from being parsed as {{*field}}
+    const contentWithEscapedTemplates = escapeTemplateUnderscores(contentWithoutYaml);
+
+    if (options.debug && contentWithEscapedTemplates !== contentWithoutYaml) {
+      console.log('[legal-markdown-processor] Escaped template underscores');
+    }
+
     // If key processing is disabled, return original content without remark processing
     // Check if the main content-altering features are disabled
     const keyProcessingDisabled = options.noHeaders && options.noReferences && options.noMixins;
@@ -347,7 +390,7 @@ export async function processLegalMarkdownWithRemark(
       }
 
       return {
-        content: contentWithoutYaml,
+        content: contentWithEscapedTemplates,
         metadata: { ...yamlMetadata, ...options.additionalMetadata },
         stats: {
           processingTime: Date.now() - startTime,
@@ -362,7 +405,7 @@ export async function processLegalMarkdownWithRemark(
     // If only processing YAML, return early
     if (options.yamlOnly) {
       return {
-        content: contentWithoutYaml,
+        content: contentWithEscapedTemplates,
         metadata: yamlMetadata,
         stats: {
           processingTime: Date.now() - startTime,
@@ -412,7 +455,7 @@ export async function processLegalMarkdownWithRemark(
     }
 
     // Preprocess custom field patterns to avoid HTML parsing issues
-    let preprocessedContent = contentWithoutYaml;
+    let preprocessedContent = contentWithEscapedTemplates;
     const fieldMappings = new Map<string, string>(); // Maps normalized patterns to original patterns
 
     if (updatedOptions.debug) {
