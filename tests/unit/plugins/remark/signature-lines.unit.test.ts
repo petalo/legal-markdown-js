@@ -342,4 +342,83 @@ This is another paragraph.`;
       await expect(processor.process(input)).resolves.toBeDefined();
     });
   });
+
+  describe('Security - CSS Class Name Sanitization', () => {
+    it('should sanitize invalid CSS class names with special characters', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkSignatureLines, { cssClassName: 'sig<script>alert("xss")</script>' })
+        .use(remarkStringify);
+
+      const input = 'Signature: __________';
+      const result = await processor.process(input);
+
+      // Should fall back to default class name
+      expect(result.toString().trim()).toBe(
+        'Signature: <span class="signature-line">__________</span>'
+      );
+      // Should not contain the malicious script
+      expect(result.toString()).not.toContain('<script>');
+    });
+
+    it('should sanitize CSS class names starting with numbers', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkSignatureLines, { cssClassName: '123invalid' })
+        .use(remarkStringify);
+
+      const input = 'Signature: __________';
+      const result = await processor.process(input);
+
+      // Should fall back to default class name
+      expect(result.toString().trim()).toBe(
+        'Signature: <span class="signature-line">__________</span>'
+      );
+    });
+
+    it('should allow valid CSS class names with hyphens and underscores', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkSignatureLines, { cssClassName: 'my-signature_line-2' })
+        .use(remarkStringify);
+
+      const input = 'Signature: __________';
+      const result = await processor.process(input);
+
+      // Should use the valid class name
+      expect(result.toString().trim()).toBe(
+        'Signature: <span class="my-signature_line-2">__________</span>'
+      );
+    });
+
+    it('should sanitize empty CSS class names', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkSignatureLines, { cssClassName: '' })
+        .use(remarkStringify);
+
+      const input = 'Signature: __________';
+      const result = await processor.process(input);
+
+      // Should fall back to default class name
+      expect(result.toString().trim()).toBe(
+        'Signature: <span class="signature-line">__________</span>'
+      );
+    });
+
+    it('should sanitize class names with spaces', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkSignatureLines, { cssClassName: 'sig line' })
+        .use(remarkStringify);
+
+      const input = 'Signature: __________';
+      const result = await processor.process(input);
+
+      // Should fall back to default class name
+      expect(result.toString().trim()).toBe(
+        'Signature: <span class="signature-line">__________</span>'
+      );
+    });
+  });
 });

@@ -56,6 +56,32 @@ const DEFAULT_OPTIONS: Required<SignatureLinesOptions> = {
 };
 
 /**
+ * Sanitize CSS class name to prevent XSS vulnerabilities
+ *
+ * Ensures the class name only contains valid CSS identifier characters:
+ * - Letters (a-z, A-Z)
+ * - Digits (0-9)
+ * - Hyphens (-)
+ * - Underscores (_)
+ *
+ * @param className - The class name to sanitize
+ * @returns Sanitized class name, or default if invalid
+ */
+function sanitizeCssClassName(className: string): string {
+  // Valid CSS identifier pattern: starts with letter/underscore, followed by letters/digits/hyphens/underscores
+  const validPattern = /^[a-zA-Z_][\w-]*$/;
+
+  if (!className || !validPattern.test(className)) {
+    console.warn(
+      `[signature-lines] Invalid CSS class name "${className}", using default "signature-line"`
+    );
+    return 'signature-line';
+  }
+
+  return className;
+}
+
+/**
  * Remark plugin that detects and marks signature lines
  *
  * This plugin processes text nodes in the markdown AST and identifies sequences
@@ -76,6 +102,9 @@ const DEFAULT_OPTIONS: Required<SignatureLinesOptions> = {
  */
 const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = {}) => {
   const config = { ...DEFAULT_OPTIONS, ...options };
+
+  // Sanitize CSS class name to prevent XSS
+  const safeCssClassName = sanitizeCssClassName(config.cssClassName);
 
   return (tree: Root) => {
     if (config.debug) {
@@ -109,7 +138,7 @@ const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = 
         if (config.debug) {
           console.log(`[signature-lines] Wrapping ${match.length} underscores`);
         }
-        return `<span class="${config.cssClassName}">${match}</span>`;
+        return `<span class="${safeCssClassName}">${match}</span>`;
       });
 
       // Replace the text node with an HTML node containing the wrapped signature lines
