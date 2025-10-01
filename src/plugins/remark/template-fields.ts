@@ -699,7 +699,11 @@ function processTemplateFieldsInAST(
         }
         return;
       }
-      const templateFields = extractTemplateFields(originalValue, fieldPatterns);
+      // Normalize escaped underscores from remark-parse (\_  back to _)
+      // This happens when underscores are in bold/italic contexts
+      const normalizedValue = originalValue.replace(/\\_/g, '_');
+
+      const templateFields = extractTemplateFields(normalizedValue, fieldPatterns);
 
       if (templateFields.length === 0) {
         return; // No template fields found
@@ -707,11 +711,11 @@ function processTemplateFieldsInAST(
 
       if (debug) {
         console.log(
-          `📋 Found ${templateFields.length} template fields in ${node.type}: "${originalValue}"`
+          `📋 Found ${templateFields.length} template fields in ${node.type}: "${normalizedValue}"`
         );
       }
 
-      let processedText = originalValue;
+      let processedText = normalizedValue;
 
       // Process fields in reverse order to maintain string indices
       for (const field of templateFields) {

@@ -153,6 +153,42 @@ function applyDateArithmetic(baseDate: Date, arithmetic: ReturnType<typeof parse
 // Internal function removed - functionality is implemented in processDateReferencesInAST
 
 /**
+ * Get ordinal suffix for a day number (st, nd, rd, th)
+ *
+ * Returns the appropriate English ordinal suffix for a given day number.
+ * Special handling for 11-13: these always end in "th" (11th, 12th, 13th)
+ * rather than following the last-digit rule (which would give 11st, 12nd, 13rd).
+ * This is because the teens are irregular in English ordinal numbering.
+ *
+ * @param day - The day number (1-31)
+ * @returns The ordinal suffix ('st', 'nd', 'rd', or 'th')
+ *
+ * @example
+ * getOrdinalSuffix(1)  // returns 'st' -> "1st"
+ * getOrdinalSuffix(2)  // returns 'nd' -> "2nd"
+ * getOrdinalSuffix(3)  // returns 'rd' -> "3rd"
+ * getOrdinalSuffix(11) // returns 'th' -> "11th" (special case)
+ * getOrdinalSuffix(21) // returns 'st' -> "21st"
+ */
+function getOrdinalSuffix(day: number): string {
+  // Handle special case: 11th, 12th, 13th (teens are irregular in English)
+  if (day >= 11 && day <= 13) {
+    return 'th';
+  }
+  // Handle regular cases based on last digit
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}
+
+/**
  * Basic date formatting fallback
  */
 function formatDateBasic(date: Date, format: string): string {
@@ -185,11 +221,23 @@ function formatDateBasic(date: Date, format: string): string {
     case 'mm/dd/yyyy':
       return `${month}/${day}/${year}`;
     case 'eu':
+    case 'european':
     case 'dd/mm/yyyy':
       return `${day}/${month}/${year}`;
-    case 'legal':
-      // Legal format without ordinal suffix as expected by tests
+    case 'long':
+      // Long format: "March 15, 2024"
       return `${monthNames[date.getMonth()]} ${dayNumber}, ${year}`;
+    case 'medium':
+      // Medium format: "Mar 15, 2024"
+      return `${monthNames[date.getMonth()].substring(0, 3)} ${dayNumber}, ${year}`;
+    case 'short':
+      // Short format: "Mar 15, 24"
+      return `${monthNames[date.getMonth()].substring(0, 3)} ${dayNumber}, ${String(year).substring(2)}`;
+    case 'legal': {
+      // Legal format with ordinal suffix: "March 15th, 2024"
+      const suffix = getOrdinalSuffix(dayNumber);
+      return `${monthNames[date.getMonth()]} ${dayNumber}${suffix}, ${year}`;
+    }
     default:
       return `${year}-${month}-${day}`;
   }
