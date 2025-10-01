@@ -69,8 +69,8 @@ describe('remarkDates Plugin', () => {
     it('should process @today with legal format specifier', async () => {
       const input = 'Document dated @today[legal].';
       const result = await processor.process(input);
-      
-      expect(result.toString().trim()).toBe('Document dated January 15, 2024.');
+
+      expect(result.toString().trim()).toBe('Document dated January 15th, 2024.');
     });
 
     it('should process multiple @today references', async () => {
@@ -107,7 +107,11 @@ describe('remarkDates Plugin', () => {
         { format: 'MM/DD/YYYY', expected: '01/15/2024' },
         { format: 'EU', expected: '15/01/2024' },
         { format: 'DD/MM/YYYY', expected: '15/01/2024' },
-        { format: 'legal', expected: 'January 15, 2024' },
+        { format: 'european', expected: '15/01/2024' },
+        { format: 'long', expected: 'January 15, 2024' },
+        { format: 'medium', expected: 'Jan 15, 2024' },
+        { format: 'short', expected: 'Jan 15, 24' },
+        { format: 'legal', expected: 'January 15th, 2024' },
       ];
 
       for (const testCase of testCases) {
@@ -138,8 +142,8 @@ describe('remarkDates Plugin', () => {
 
       const input = 'Document dated @today.';
       const result = await processorWithMetadata.process(input);
-      
-      expect(result.toString().trim()).toBe('Document dated January 15, 2024.');
+
+      expect(result.toString().trim()).toBe('Document dated January 15th, 2024.');
     });
 
     it('should override metadata format with explicit format specifier', async () => {
@@ -311,9 +315,9 @@ This agreement is effective @today.
 
       const result = await processor.process(input);
       const output = result.toString();
-      
+
       expect(output).toContain('effective 2024-01-15');
-      expect(output).toContain('Initial payment: January 15, 2024');
+      expect(output).toContain('Initial payment: January 15th, 2024');
       expect(output).toContain('Review date: 01/15/2024');
       expect(output).toContain('ISO format: 2024-01-15');
     });
@@ -335,9 +339,9 @@ All references are current as of @today[legal].`;
 
       const result = await processor.process(input);
       const output = result.toString();
-      
+
       expect(output).toContain('begins on 2024-01-15');
-      expect(output).toContain('as of January 15, 2024');
+      expect(output).toContain('as of January 15th, 2024');
     });
 
     it('should handle various date formats in templates', async () => {
@@ -358,8 +362,8 @@ All references are current as of @today[legal].`;
 
       const result = await processorWithLegal.process(input);
       const output = result.toString();
-      
-      expect(output).toContain('Date created: January 15, 2024'); // Uses metadata format
+
+      expect(output).toContain('Date created: January 15th, 2024'); // Uses metadata format
       expect(output).toContain('ISO format: 2024-01-15');
       expect(output).toContain('US format: 01/15/2024');
       expect(output).toContain('EU format: 15/01/2024');

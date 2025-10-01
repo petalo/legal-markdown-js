@@ -42,6 +42,8 @@ function buildWeb() {
     const defaultCSSPath = path.join(process.cwd(), 'src/styles/default.css');
     const htmlSourcePath = path.join(srcWebDir, 'index.html');
     const htmlTargetPath = path.join(distWebDir, 'index.html');
+    const cssExamplesSourcePath = path.join(srcWebDir, 'css-examples.js');
+    const cssExamplesTargetPath = path.join(distWebDir, 'css-examples.js');
 
     // Ensure dist/web directory exists
     if (!fs.existsSync(distWebDir)) {
@@ -57,16 +59,16 @@ function buildWeb() {
     const defaultCSS = fs.readFileSync(defaultCSSPath, 'utf8');
     const escapedCSS = escapeCSSForJS(defaultCSS);
 
-    // Read HTML template
-    console.log('📄 Reading HTML template...');
-    if (!fs.existsSync(htmlSourcePath)) {
-      throw new Error(`HTML source file not found: ${htmlSourcePath}`);
+    // Read CSS examples template
+    console.log('📄 Reading CSS examples template...');
+    if (!fs.existsSync(cssExamplesSourcePath)) {
+      throw new Error(`CSS examples file not found: ${cssExamplesSourcePath}`);
     }
-    
-    let htmlContent = fs.readFileSync(htmlSourcePath, 'utf8');
 
-    // Inject the default CSS into the HTML
-    console.log('💉 Injecting default CSS...');
+    let cssExamplesContent = fs.readFileSync(cssExamplesSourcePath, 'utf8');
+
+    // Inject the default CSS into css-examples.js
+    console.log('💉 Injecting default CSS into css-examples.js...');
     const defaultCSSInjection = `'default': \`/**
  * Default Legal Markdown Styles
  *
@@ -76,34 +78,59 @@ function buildWeb() {
 
 ${escapedCSS}\`,
 
-          `;
+  `;
 
     // Replace the placeholder with the actual CSS
-    htmlContent = htmlContent.replace(
+    cssExamplesContent = cssExamplesContent.replace(
       '// DEFAULT_CSS_PLACEHOLDER - This will be replaced during build',
       defaultCSSInjection
     );
 
-    // Copy other files from src/web to dist/web (excluding index.html)
-    const srcFiles = fs.readdirSync(srcWebDir);
-    for (const file of srcFiles) {
-      if (file === 'index.html') continue; // Skip index.html, we handle it separately
-      
+    // Write processed CSS examples
+    fs.writeFileSync(cssExamplesTargetPath, cssExamplesContent, 'utf8');
+
+    // Copy static files from src/web to dist/web
+    console.log('📄 Copying web files...');
+    const filesToCopy = ['index.html', 'app.js', 'examples.js', 'styles.css'];
+
+    for (const file of filesToCopy) {
       const srcFilePath = path.join(srcWebDir, file);
       const distFilePath = path.join(distWebDir, file);
-      
-      if (fs.statSync(srcFilePath).isFile()) {
-        console.log(`📄 Copying ${file}...`);
+
+      if (fs.existsSync(srcFilePath)) {
+        console.log(`   → Copying ${file}...`);
         fs.copyFileSync(srcFilePath, distFilePath);
+      } else {
+        console.warn(`   ⚠️  ${file} not found, skipping...`);
       }
     }
 
-    // Write the processed HTML
-    console.log('💾 Writing processed HTML...');
-    fs.writeFileSync(htmlTargetPath, htmlContent, 'utf8');
+    // Copy browser bundle chunks from dist/ to dist/web/
+    console.log('📦 Copying browser bundle chunks...');
+    const distDir = path.join(process.cwd(), 'dist');
+    const distFiles = fs.readdirSync(distDir);
+    let chunkCount = 0;
+
+    for (const file of distFiles) {
+      const srcFilePath = path.join(distDir, file);
+
+      // Skip directories
+      if (!fs.statSync(srcFilePath).isFile()) continue;
+
+      // Copy all chunk files (with hash pattern) and their source maps
+      // Pattern: name-HASH.js or name-HASH.js.map
+      if ((file.includes('-') && file.endsWith('.js')) || file.endsWith('.js.map')) {
+        const destFile = path.join(distWebDir, file);
+        fs.copyFileSync(srcFilePath, destFile);
+        chunkCount++;
+      }
+    }
+
+    console.log(`   → Copied ${chunkCount} bundle chunks`);
 
     console.log('✅ Web playground build completed successfully!');
     console.log(`   → HTML: ${htmlTargetPath}`);
+    console.log(`   → CSS examples: ${cssExamplesTargetPath}`);
     console.log(`   → Default CSS injected: ${Math.round(defaultCSS.length / 1024)}KB`);
     console.log('   → Ready for deployment');
 

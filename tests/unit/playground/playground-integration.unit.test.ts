@@ -83,7 +83,7 @@ Today (legal): @today[legal]`;
 
       // Check that dates are formatted correctly (using regex patterns instead of actual dates)
       expect(result.content).toMatch(/\d{4}-\d{2}-\d{2}/); // ISO format (YYYY-MM-DD)
-      expect(result.content).toMatch(/\w+ \d{1,2}, \d{4}/); // Legal format (Month DD, YYYY)
+      expect(result.content).toMatch(/\w+ \d{1,2}(?:st|nd|rd|th), \d{4}/); // Legal format (Month DDth, YYYY)
       expect(result.content).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/); // US format (MM/DD/YYYY)
       expect(result.content).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/); // EU format (DD/MM/YYYY)
     });

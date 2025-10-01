@@ -61,19 +61,23 @@ Use `@today[format]` to specify output format directly without helpers.
 
 ### Available Format Specifiers
 
-| Format  | Pattern      | Example Output |
-| ------- | ------------ | -------------- |
-| `legal` | Legal format | July 16, 2025  |
-| `US`    | MM/DD/YYYY   | 07/16/2025     |
-| `EU`    | DD/MM/YYYY   | 16/07/2025     |
-| `ISO`   | YYYY-MM-DD   | 2025-07-16     |
+| Format     | Pattern         | Example Output  |
+| ---------- | --------------- | --------------- |
+| `ISO`      | YYYY-MM-DD      | 2025-07-16      |
+| `US`       | MM/DD/YYYY      | 07/16/2025      |
+| `EU`       | DD/MM/YYYY      | 16/07/2025      |
+| `european` | DD/MM/YYYY      | 16/07/2025      |
+| `long`     | Month D, YYYY   | July 16, 2025   |
+| `medium`   | Mon D, YYYY     | Jul 16, 2025    |
+| `short`    | Mon D, YY       | Jul 16, 25      |
+| `legal`    | Month Dth, YYYY | July 16th, 2025 |
 
 ### Format Examples
 
 ```markdown
-Legal format: @today[legal]
+ISO format: @today[ISO]
 
-<!-- Output: July 16, 2025 -->
+<!-- Output: 2025-07-16 -->
 
 US format: @today[US]
 
@@ -83,9 +87,25 @@ European format: @today[EU]
 
 <!-- Output: 16/07/2025 -->
 
-ISO format: @today[ISO]
+European (alias): @today[european]
 
-<!-- Output: 2025-07-16 -->
+<!-- Output: 16/07/2025 -->
+
+Long format: @today[long]
+
+<!-- Output: July 16, 2025 -->
+
+Medium format: @today[medium]
+
+<!-- Output: Jul 16, 2025 -->
+
+Short format: @today[short]
+
+<!-- Output: Jul 16, 25 -->
+
+Legal format: @today[legal]
+
+<!-- Output: July 16th, 2025 -->
 ```
 
 ## Date Arithmetic
@@ -295,13 +315,13 @@ Executed on this {{formatDate(execution_date, "Do")}} day of
 
 **Signatures:**
 
-**Party A:** ************\_************ Date: @today[US]
+**Party A:** ****\*\*\*\*****\_****\*\*\*\***** Date: @today[US]
 
-**Party B:** ************\_************ Date: @today[US]
+**Party B:** ****\*\*\*\*****\_****\*\*\*\***** Date: @today[US]
 
-**Witness:** ************\_************ Date: @today[US]
+**Witness:** ****\*\*\*\*****\_****\*\*\*\***** Date: @today[US]
 
-**Notary:** ************\_\_************ Date: @today[US]
+**Notary:** ****\*\*\*\*****\_\_****\*\*\*\***** Date: @today[US]
 
 **Filing Deadline:** @today+10[legal]
 ```
@@ -402,6 +422,7 @@ project_end: @today+8w
 
 **Legal Date:** @today[legal] <!-- For legal documents --> **Form Date:**
 @today[US] <!-- For US forms --> **Database Date:** @today[ISO]
+
 <!-- For technical systems --> **European Date:** @today[EU]
 <!-- For European documents -->
 
