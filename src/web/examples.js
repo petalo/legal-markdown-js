@@ -658,6 +658,22 @@ Applicable tax rate is \{\{formatPercent(tax_rate, 1)\}\} as determined by \{\{j
 ll. Governing Law
 This Agreement shall be governed by the laws of \{\{jurisdiction\}\}.
 
+l. Signature Lines
+
+Legal Markdown automatically detects and styles signature lines (10+ underscores):
+
+ll. Basic Signature Block
+**Client Representative**
+
+Signature: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+Date: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+ll. Multiple Signatures
+Client: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ Date: \_\_\_\_\_\_\_\_\_\_
+
+Witness: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ Date: \_\_\_\_\_\_\_\_\_\_
+
 l. Document Summary
 
 **Document Information:**
