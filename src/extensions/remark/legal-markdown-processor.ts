@@ -45,6 +45,7 @@ import {
   remarkLegalHeadersParser,
   remarkDates,
 } from '../../plugins/remark/index';
+import remarkSignatureLines from '../../plugins/remark/signature-lines';
 import { remarkDebugAST } from '../../plugins/remark/debug-ast';
 import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
@@ -198,6 +199,14 @@ function createLegalMarkdownProcessor(
     metadata,
     debug: options.debug,
     enableFieldTracking: options.enableFieldTracking,
+  });
+
+  // Add signature lines plugin (wraps long underscore sequences with CSS class)
+  processor.use(remarkSignatureLines, {
+    minUnderscores: 10,
+    addCssClass: true,
+    cssClassName: 'signature-line',
+    debug: options.debug,
   });
 
   // Add template fields plugin (processes {{field}} patterns)

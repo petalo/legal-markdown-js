@@ -14,6 +14,8 @@ This section contains detailed documentation for all Legal Markdown JS features.
 - [Partial Imports](partial-imports.md) - File inclusion and frontmatter merging
 - [Variables & Mixins](mixins-variables.md) - Template variable substitution
 - [Template Loops](template-loops.md) - Array iteration and conditional blocks
+- [Signature Lines](signature-lines.md) - Automatic detection and styling of
+  signature lines
 - [Force Commands](force-commands.md) - Self-configuring documents
 - [Smart Archiving](smart-archiving.md) - Intelligent file management
 
