@@ -1,3 +1,12 @@
+## <small>3.3.1 (2025-10-02)</small>
+
+- fix: prevent underscore escaping in markdown output (#112)
+  ([a39298d](https://github.com/petalo/legal-markdown-js/commit/a39298d)),
+  closes [#112](https://github.com/petalo/legal-markdown-js/issues/112)
+- test: add comprehensive edge case tests + fix underscore parsing issue (#111)
+  ([4a9c037](https://github.com/petalo/legal-markdown-js/commit/4a9c037)),
+  closes [#111](https://github.com/petalo/legal-markdown-js/issues/111)
+
 ## 3.3.0 (2025-10-01)
 
 - feat: add signature lines detection and styling (#110)
