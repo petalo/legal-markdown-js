@@ -58,8 +58,9 @@ empty_field: ""
         enableFieldTracking: true
       });
 
-      // Should preserve existing missing-value span (may have escaped underscores)
-      expect(result.content).toMatch(/<span class="legal-field missing-value" data-field="empty_field">{{empty\\_?field}}<\/span>/);
+      // Should preserve existing missing-value span with escaped underscores
+      // (escaped by escapeTemplateUnderscores to prevent parser misinterpretation)
+      expect(result.content).toMatch(/<span class="legal-field missing-value" data-field="empty_field">{{empty\\_field}}<\/span>/);
       
       // Should preserve existing highlight span
       expect(result.content).toContain('<span class="legal-field highlight" data-field="logic_field">conditional content</span>');
@@ -374,6 +375,105 @@ const client = "{{client_name}}";
       const fields = fieldTracker.getFields();
       expect(fields.has('client_name')).toBe(true);
       expect(fields.has('contract_type')).toBe(true);
+    });
+  });
+
+  describe('Markdown Formatting Edge Cases', () => {
+    it('should render thematic breaks as dashes (---) not asterisks', async () => {
+      const content = `---
+title: "Test Document"
+---
+
+# Section 1
+
+First paragraph
+
+---
+
+Second paragraph`;
+
+      const result = await processLegalMarkdownWithRemark(content);
+
+      // Should use dashes for thematic breaks, not asterisks
+      expect(result.content).toContain('---');
+      expect(result.content).not.toContain('***');
+      expect(result.content).not.toContain('___');
+    });
+
+    it('should not escape underscores in signature lines', async () => {
+      const content = `Client Name: __________
+
+Date: __________
+
+Signature: __________`;
+
+      const result = await processLegalMarkdownWithRemark(content);
+
+      // Should NOT escape underscores
+      expect(result.content).toContain('__________');
+      expect(result.content).not.toContain('\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_');
+
+      // Should wrap signature lines with signature-line class
+      expect(result.content).toContain('<span class="signature-line">__________</span>');
+    });
+
+    it('should not escape underscores in field names', async () => {
+      const content = `---
+client_name: "ACME Corp"
+project_id: "PROJ-123"
+---
+
+Client: {{client_name}}
+Project: {{project_id}}`;
+
+      const result = await processLegalMarkdownWithRemark(content, {
+        enableFieldTracking: true
+      });
+
+      // Should NOT escape underscores in field names
+      expect(result.content).toContain('data-field="client_name"');
+      expect(result.content).toContain('data-field="project_id"');
+      expect(result.content).not.toContain('client\\_name');
+      expect(result.content).not.toContain('project\\_id');
+    });
+
+    it('should use asterisks for emphasis and strong, not underscores', async () => {
+      const content = `This is *italic* and this is **bold**.`;
+
+      const result = await processLegalMarkdownWithRemark(content);
+
+      // Should produce emphasis with asterisks
+      expect(result.content).toContain('*italic*');
+      expect(result.content).toContain('**bold**');
+
+      // Should NOT use underscores for emphasis
+      expect(result.content).not.toContain('_italic_');
+      expect(result.content).not.toContain('__bold__');
+    });
+
+    it('should handle thematic breaks alongside signature lines without confusion', async () => {
+      const content = `# Contract
+
+Section 1 content
+
+---
+
+Section 2 content
+
+Client Signature: __________
+
+Date: __________`;
+
+      const result = await processLegalMarkdownWithRemark(content);
+
+      // Should have thematic break with dashes
+      expect(result.content).toMatch(/---/);
+
+      // Should have signature lines without escapes
+      expect(result.content).toContain('<span class="signature-line">__________</span>');
+
+      // Should not confuse them
+      expect(result.content).not.toContain('\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_');
     });
   });
 });
