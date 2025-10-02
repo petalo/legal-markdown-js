@@ -57,12 +57,24 @@ import { exportMetadata } from '../../core/exporters/metadata-exporter';
 /**
  * Unsafe patterns for markdown serialization, excluding underscore patterns.
  *
- * This is based on mdast-util-to-markdown's default unsafe patterns, but with
+ * Based on mdast-util-to-markdown@2.1.2 default unsafe patterns, with
  * underscore patterns removed since we use asterisks for emphasis/strong.
  *
- * According to CommonMark spec, underscores between alphanumeric characters or
- * between other underscores cannot create emphasis (they are both left-flanking
- * AND right-flanking), so they don't need to be escaped.
+ * Why hardcoded instead of imported:
+ * - The lib/unsafe.js file is not exported in package.json exports
+ * - Dynamic import would fail in ESM environments
+ * - These patterns are stable across mdast-util-to-markdown versions
+ *
+ * According to CommonMark spec 0.31.2, underscores between alphanumeric
+ * characters or between other underscores cannot create emphasis (they are
+ * both left-flanking AND right-flanking), so they don't need to be escaped.
+ *
+ * Source: https://github.com/syntax-tree/mdast-util-to-markdown/blob/2.1.2/lib/unsafe.js
+ * Last reviewed: 2025-01-02 (mdast-util-to-markdown@2.1.2)
+ *
+ * Excluded patterns:
+ * - {atBreak: true, character: '_'}
+ * - {character: '_', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', ...]}
  */
 const unsafeWithoutUnderscores: Array<Unsafe> = [
   { character: '\t', after: '[\\r\\n]', inConstruct: 'phrasing' },
