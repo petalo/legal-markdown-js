@@ -34,6 +34,8 @@
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
+import type { Plugin } from 'unified';
+import type { Unsafe } from 'mdast-util-to-markdown';
 import {
   remarkCrossReferences,
   remarkFieldTracking,
@@ -51,6 +53,61 @@ import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { processTemplateLoops } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
+
+/**
+ * Unsafe patterns for markdown serialization, excluding underscore patterns.
+ *
+ * This is based on mdast-util-to-markdown's default unsafe patterns, but with
+ * underscore patterns removed since we use asterisks for emphasis/strong.
+ *
+ * According to CommonMark spec, underscores between alphanumeric characters or
+ * between other underscores cannot create emphasis (they are both left-flanking
+ * AND right-flanking), so they don't need to be escaped.
+ */
+const unsafeWithoutUnderscores: Array<Unsafe> = [
+  {character: '\t', after: '[\\r\\n]', inConstruct: 'phrasing'},
+  {character: '\t', before: '[\\r\\n]', inConstruct: 'phrasing'},
+  {character: '\t', inConstruct: ['codeFencedLangGraveAccent', 'codeFencedLangTilde']},
+  {character: '\r', inConstruct: ['codeFencedLangGraveAccent', 'codeFencedLangTilde', 'codeFencedMetaGraveAccent', 'codeFencedMetaTilde', 'destinationLiteral', 'headingAtx']},
+  {character: '\n', inConstruct: ['codeFencedLangGraveAccent', 'codeFencedLangTilde', 'codeFencedMetaGraveAccent', 'codeFencedMetaTilde', 'destinationLiteral', 'headingAtx']},
+  {character: ' ', after: '[\\r\\n]', inConstruct: 'phrasing'},
+  {character: ' ', before: '[\\r\\n]', inConstruct: 'phrasing'},
+  {character: ' ', inConstruct: ['codeFencedLangGraveAccent', 'codeFencedLangTilde']},
+  {character: '!', after: '\\[', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {character: '"', inConstruct: 'titleQuote'},
+  {atBreak: true, character: '#'},
+  {character: '#', inConstruct: 'headingAtx', after: '(?:[\r\n]|$)'},
+  {character: '&', after: '[#A-Za-z]', inConstruct: 'phrasing'},
+  {character: "'", inConstruct: 'titleApostrophe'},
+  {character: '(', inConstruct: 'destinationRaw'},
+  {before: '\\]', character: '(', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {atBreak: true, before: '\\d+', character: ')'},
+  {character: ')', inConstruct: 'destinationRaw'},
+  {atBreak: true, character: '*', after: '(?:[ \t\r\n*])'},
+  {character: '*', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {atBreak: true, character: '+', after: '(?:[ \t\r\n])'},
+  {atBreak: true, character: '-', after: '(?:[ \t\r\n-])'},
+  {atBreak: true, before: '\\d+', character: '.', after: '(?:[ \t\r\n]|$)'},
+  {atBreak: true, character: '<', after: '[!/?A-Za-z]'},
+  {character: '<', after: '[!/?A-Za-z]', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {character: '<', inConstruct: 'destinationLiteral'},
+  {atBreak: true, character: '='},
+  {atBreak: true, character: '>'},
+  {character: '>', inConstruct: 'destinationLiteral'},
+  {atBreak: true, character: '['},
+  {character: '[', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {character: '[', inConstruct: ['label', 'reference']},
+  {character: '\\', after: '[\\r\\n]', inConstruct: 'phrasing'},
+  {character: ']', inConstruct: ['label', 'reference']},
+  // NOTE: Underscore patterns are intentionally excluded here
+  // Original patterns were:
+  // {atBreak: true, character: '_'},
+  // {character: '_', inConstruct: 'phrasing', notInConstruct: fullPhrasingSpans},
+  {atBreak: true, character: '`'},
+  {character: '`', inConstruct: ['codeFencedLangGraveAccent', 'codeFencedMetaGraveAccent']},
+  {character: '`', inConstruct: 'phrasing', notInConstruct: ['autolink', 'destinationLiteral', 'destinationRaw', 'reference', 'titleQuote', 'titleApostrophe']},
+  {atBreak: true, character: '~'}
+];
 
 /**
  * Pre-process content to escape underscores inside {{}} to prevent
@@ -271,11 +328,14 @@ function createLegalMarkdownProcessor(
   // Add stringify plugin with proper markdown formatting
   processor.use(remarkStringify, {
     emphasis: '*', // Use * for _italic_
-    strong: '*', // Use * for __bold__ (single asterisk means **double**)
+    strong: '*', // Use ** for __bold__ (asterisks, not underscores)
     bullet: '-', // Use - for bullets
     fence: '`', // Use ` for code blocks
     fences: true, // Use fenced code blocks
     incrementListMarker: true, // Increment list markers (1. 2. 3.)
+    rule: '-', // Use --- for horizontal rules (not ***)
+    ruleRepetition: 3, // Use exactly 3 dashes for horizontal rules
+    unsafe: unsafeWithoutUnderscores, // Use filtered unsafe patterns without underscores
   });
 
   return processor;
