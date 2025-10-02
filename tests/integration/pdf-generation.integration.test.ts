@@ -16,6 +16,9 @@ import { generateHtml, generatePdf, generatePdfVersions } from '../../src/index'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+// PDF generation timeout - higher in CI environments for slower systems
+const PDF_TIMEOUT = process.env.CI ? 45000 : 30000;
+
 describe('PDF Generation Integration', () => {
   /**
    * Sample legal document content with YAML frontmatter and template variables.
@@ -166,7 +169,7 @@ This clause is included conditionally.
       // Verify file was written
       const stats = await fs.stat(pdfPath);
       expect(stats.size).toBeGreaterThan(1000);
-    }, 30000);
+    }, PDF_TIMEOUT);
 
     /**
      * Test PDF generation with field highlighting for document review.
@@ -183,7 +186,7 @@ This clause is included conditionally.
 
       expect(buffer).toBeInstanceOf(Buffer);
       expect(buffer.length).toBeGreaterThan(1000);
-    }, 30000);
+    }, PDF_TIMEOUT);
 
     /**
      * Test simultaneous generation of normal and highlighted PDF versions.
@@ -200,27 +203,30 @@ This clause is included conditionally.
       expect(normal).toBeInstanceOf(Buffer);
       expect(highlighted).toBeInstanceOf(Buffer);
 
-      // Add a small delay to ensure files are written to disk
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add delay to ensure files are written to disk (longer in CI)
+      await new Promise(resolve => setTimeout(resolve, process.env.CI ? 1500 : 500));
 
       // Verify both files were created with retry mechanism
-      const maxRetries = 10;
+      const maxRetries = process.env.CI ? 20 : 10;
       let normalStats, highlightedStats;
-      
+
       for (let i = 0; i < maxRetries; i++) {
         try {
           normalStats = await fs.stat(path.join(outputDir, 'test-versions.pdf'));
           highlightedStats = await fs.stat(path.join(outputDir, 'test-versions.HIGHLIGHT.pdf'));
           break;
         } catch (error) {
-          if (i === maxRetries - 1) throw error;
-          await new Promise(resolve => setTimeout(resolve, 100));
+          if (i === maxRetries - 1) {
+            console.error('Files not found after', maxRetries, 'retries');
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, process.env.CI ? 200 : 100));
         }
       }
 
-      expect(normalStats.size).toBeGreaterThan(1000);
-      expect(highlightedStats.size).toBeGreaterThan(1000);
-    }, 30000);
+      expect(normalStats!.size).toBeGreaterThan(1000);
+      expect(highlightedStats!.size).toBeGreaterThan(1000);
+    }, PDF_TIMEOUT);
 
     /**
      * Test PDF generation with different page formats (Letter, A4, etc.).
@@ -237,6 +243,6 @@ This clause is included conditionally.
 
       expect(buffer).toBeInstanceOf(Buffer);
       expect(buffer.length).toBeGreaterThan(1000);
-    }, 30000);
+    }, PDF_TIMEOUT);
   });
 });

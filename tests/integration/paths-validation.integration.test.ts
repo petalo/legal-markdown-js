@@ -120,15 +120,22 @@ describe('Path Validation Integration Tests', () => {
   describe('Permission issues', () => {
     it('should handle read-only directories appropriately', async () => {
       const readOnlyDir = path.join(testDir, 'readonly-styles');
-      
+
       // Clean up any existing directory first
       try {
-        await fs.chmod(readOnlyDir, 0o755);
+        // Check if directory exists before chmod
+        try {
+          await fs.access(readOnlyDir);
+          await fs.chmod(readOnlyDir, 0o755);
+        } catch {
+          // Directory doesn't exist, skip chmod
+        }
         await fs.rm(readOnlyDir, { recursive: true, force: true });
       } catch {
         // Ignore cleanup errors
       }
-      
+
+      // Ensure directory is created fresh
       await fs.mkdir(readOnlyDir, { recursive: true });
       
       // Create a CSS file

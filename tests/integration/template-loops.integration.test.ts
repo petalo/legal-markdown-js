@@ -14,6 +14,9 @@ import { processLegalMarkdown, generatePdf } from '../../src/index';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// PDF generation timeout - higher in CI environments for slower systems
+const PDF_TIMEOUT = process.env.CI ? 45000 : 30000;
+
 describe('Template Loops Integration', () => {
   describe('Complete Document Processing', () => {
     it('should process office lease contract with all template loops', async () => {
@@ -329,7 +332,7 @@ services:
       } catch (e) {
         // File might not exist, that's ok
       }
-    }, 15000); // Increased timeout for PDF generation
+    }, PDF_TIMEOUT);
 
     it('should generate larger PDF for complex documents with many template loops', async () => {
       const content = `---
@@ -382,7 +385,7 @@ insurance:
       } catch (e) {
         // File might not exist, that's ok
       }
-    }, 15000);
+    }, PDF_TIMEOUT);
   });
 
   describe('Error Handling Integration', () => {

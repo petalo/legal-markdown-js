@@ -13,6 +13,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+// Spawn timeout configuration - higher in CI environments for slower systems
+const SPAWN_TIMEOUT_SHORT = process.env.CI ? 6000 : 3000;
+const SPAWN_TIMEOUT_MEDIUM = process.env.CI ? 8000 : 4000;
+const SPAWN_TIMEOUT_LONG = process.env.CI ? 10000 : 5000;
+const EXIT_DELAY_SHORT = process.env.CI ? 1600 : 800;
+const EXIT_DELAY_MEDIUM = process.env.CI ? 2000 : 1000;
+
 // Helper function to check if CLI executable exists
 function getCliPath(): string {
   const cliPath = path.join(process.cwd(), 'dist/cli/interactive/index.js');
@@ -72,7 +79,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 5000);
+        }, SPAWN_TIMEOUT_LONG);
       });
 
       expect(result.code).toBe(0);
@@ -101,7 +108,7 @@ describe('FTUX Flag Integration', () => {
       // Send Ctrl+C to exit after a short delay
       setTimeout(() => {
         child.stdin.write('\x03'); // Ctrl+C
-      }, 1000);
+      }, EXIT_DELAY_MEDIUM);
 
       // Create a promise that resolves when child closes
       const result = await new Promise<{ code: number | null; output: string; stderr: string }>((resolve, reject) => {
@@ -113,7 +120,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 5000);
+        }, SPAWN_TIMEOUT_LONG);
       });
 
       // More specific assertions - should start successfully or show clear error
@@ -152,7 +159,7 @@ describe('FTUX Flag Integration', () => {
       // Send Ctrl+C to exit after a short delay
       setTimeout(() => {
         child.stdin.write('\x03'); // Ctrl+C
-      }, 1000);
+      }, EXIT_DELAY_MEDIUM);
 
       // Create a promise that resolves when child closes
       const result = await new Promise<{ code: number | null; output: string; stderr: string }>((resolve, reject) => {
@@ -163,7 +170,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 4000);
+        }, SPAWN_TIMEOUT_MEDIUM);
       });
 
       // Should either start CLI or show valid error
@@ -206,7 +213,7 @@ describe('FTUX Flag Integration', () => {
       // Send Ctrl+C to exit quickly
       setTimeout(() => {
         child.stdin.write('\x03'); // Ctrl+C
-      }, 800);
+      }, EXIT_DELAY_SHORT);
 
       // Create a promise that resolves when child closes
       const result = await new Promise<{ code: number | null; output: string; stderr: string }>((resolve, reject) => {
@@ -217,7 +224,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 3000);
+        }, SPAWN_TIMEOUT_SHORT);
       });
 
       // Should start or show valid error - simplified assertion
@@ -249,7 +256,7 @@ describe('FTUX Flag Integration', () => {
       // Exit quickly
       setTimeout(() => {
         child.stdin.write('\x03'); // Ctrl+C to exit
-      }, 800);
+      }, EXIT_DELAY_SHORT);
 
       const result = await new Promise<{ code: number | null; output: string; stderr: string }>((resolve, reject) => {
         child.on('close', (code) => {
@@ -259,7 +266,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 3000);
+        }, SPAWN_TIMEOUT_SHORT);
       });
 
       // Just verify it starts or fails gracefully
@@ -289,7 +296,7 @@ describe('FTUX Flag Integration', () => {
         setTimeout(() => {
           child.kill();
           reject(new Error('Process timed out'));
-        }, 3000);
+        }, SPAWN_TIMEOUT_SHORT);
       });
 
       expect(result.code).not.toBe(0);
