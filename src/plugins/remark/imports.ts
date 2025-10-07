@@ -42,6 +42,31 @@ import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/f
 import { processMixins } from '../../core/processors/mixin-processor';
 
 /**
+ * Maximum header level supported in legal markdown (l. to lllllllll.)
+ */
+const MAX_HEADER_LEVEL = 9;
+
+/**
+ * Pattern to detect function calls in field expressions (e.g., formatPercent(...))
+ */
+const FUNCTION_CALL_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(/;
+
+/**
+ * Pattern to detect conditional expressions in field expressions (e.g., field ? a : b)
+ */
+const CONDITIONAL_PATTERN = /\?.*:/;
+
+/**
+ * Pattern to match escaped less-than characters from remarkStringify
+ */
+const ESCAPED_LT_PATTERN = /\\</g;
+
+/**
+ * Pattern to match escaped greater-than characters from remarkStringify
+ */
+const ESCAPED_GT_PATTERN = /\\>/g;
+
+/**
  * Options for the remark imports plugin
  * @interface RemarkImportsOptions
  */
@@ -576,8 +601,8 @@ function expandMixinsWithTracking(content: string, metadata: Record<string, any>
       // Helpers: formatPercent(...), formatDate(...), etc.
       // Conditionals: field ? value1 : value2
       const hasLogic =
-        /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(/.test(trimmedField) || // Function call: formatPercent(...)
-        /\?.*:/.test(trimmedField); // Conditional: field ? a : b
+        FUNCTION_CALL_PATTERN.test(trimmedField) || // Function call: formatPercent(...)
+        CONDITIONAL_PATTERN.test(trimmedField); // Conditional: field ? a : b
 
       // Use appropriate CSS class based on whether it's a formula or simple field
       const cssClass = hasLogic ? 'legal-field highlight' : 'legal-field imported-value';
@@ -616,13 +641,20 @@ function stripHtmlComments(content: string): string {
   // Pattern: <p>\nll. Header\n</p> (but NOT <p class="...">\nll. Header\n</p>)
   // This prevents plain tags from being escaped while preserving styled tags
   // The negative lookahead (?!\s+[a-z]) ensures we only match tags without attributes
+  const headerPattern = `l{1,${MAX_HEADER_LEVEL}}`;
   processed = processed.replace(
-    /<(p|div|span)(?!\s+[a-z])\s*>\s*(l{1,9}\.\s+[^\n]+)\s*<\/\1>/gi,
+    new RegExp(
+      `<(p|div|span)(?!\\s+[a-z])\\s*>\\s*(${headerPattern}\\.\\s+[^\\n]+)\\s*<\\/\\1>`,
+      'gi'
+    ),
     '$2'
   );
 
   // Also remove wrapper tags on same line: <p>ll. Header</p> (but not <p class="...">ll. Header</p>)
-  processed = processed.replace(/<(p|div|span)(?!\s+[a-z])\s*>(l{1,9}\.\s+[^<]+)<\/\1>/gi, '$2');
+  processed = processed.replace(
+    new RegExp(`<(p|div|span)(?!\\s+[a-z])\\s*>(${headerPattern}\\.\\s+[^<]+)<\\/\\1>`, 'gi'),
+    '$2'
+  );
 
   return processed;
 }

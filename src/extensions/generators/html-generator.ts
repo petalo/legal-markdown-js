@@ -38,6 +38,16 @@ import { logger } from '../../utils/logger';
 import { RESOLVED_PATHS } from '../../constants/index';
 
 /**
+ * Pattern to match escaped less-than characters from remarkStringify
+ */
+const ESCAPED_LT_PATTERN = /\\</g;
+
+/**
+ * Pattern to match escaped greater-than characters from remarkStringify
+ */
+const ESCAPED_GT_PATTERN = /\\>/g;
+
+/**
  * Configuration options for HTML generation
  *
  * @interface HtmlGeneratorOptions
@@ -194,7 +204,9 @@ export class HtmlGenerator {
       // Pre-process: unescape backslash-escaped HTML from remarkStringify
       // remarkStringify escapes HTML as \< and \>, we need to unescape them
       // Pattern: \<div class="...">\</div> -> <div class="..."></div>
-      const processedMarkdown = contentWithoutFrontmatter.replace(/\\</g, '<').replace(/\\>/g, '>');
+      const processedMarkdown = contentWithoutFrontmatter
+        .replace(ESCAPED_LT_PATTERN, '<')
+        .replace(ESCAPED_GT_PATTERN, '>');
 
       // Convert markdown to HTML
       let htmlContent = await marked.parse(processedMarkdown);
