@@ -309,12 +309,20 @@ export interface LegalMarkdownProcessorResult {
  * This function assembles a unified processor with all the necessary remark plugins
  * for Legal Markdown processing. Plugins are added in a specific order to ensure
  * proper processing dependencies:
- * 1. Imports (must be first to process imported content)
- * 2. Mixins (content expansion before other processing)
- * 3. Clauses (conditional content)
- * 4. Template fields (field processing and tracking)
- * 5. Cross-references (reference resolution)
- * 6. Headers (final structure processing)
+ *
+ * **CRITICAL PLUGIN ORDER:**
+ * 1. Imports - MUST be first to load all content before any transformation
+ * 2. Legal Headers Parser - MUST be after imports to convert headers in imported files
+ * 3. Mixins - Content expansion before other processing
+ * 4. Clauses - Conditional content
+ * 5. Template fields - Field processing and tracking
+ * 6. Cross-references - Reference resolution
+ * 7. Headers - Final structure processing and numbering
+ *
+ * **WARNING:** Changing this order can break functionality:
+ * - If Legal Headers Parser runs before Imports, headers in imported files won't be converted
+ * - If Cross-references runs before Headers, section numbering won't be available
+ * - If Mixins runs before Imports, variable expansion won't work for imported content
  *
  * @param metadata - Document metadata from YAML frontmatter and additional sources
  * @param options - Configuration options for processing
@@ -327,15 +335,8 @@ function createLegalMarkdownProcessor(
 ) {
   const processor = unified().use(remarkParse);
 
-  // Add legal headers parser FIRST to convert l., ll., etc. to proper headers
-  // This must run before any other plugin that depends on headers
-  if (!options.noHeaders) {
-    processor.use(remarkLegalHeadersParser, {
-      debug: options.debug,
-    });
-  }
-
-  // Add imports plugin first (must be processed before other content)
+  // Step 1: Add imports plugin FIRST - must load all content before any transformation
+  // This ensures that imported files are loaded before any other processing
   if (!options.noImports) {
     processor.use(remarkImports, {
       basePath: options.basePath || '.',
@@ -346,6 +347,15 @@ function createLegalMarkdownProcessor(
       filterReserved: true,
       validateTypes: true,
       logImportOperations: options.debug,
+    });
+  }
+
+  // Step 2: Add legal headers parser AFTER imports to convert l., ll., etc. to proper headers
+  // This ensures headers in imported files are also converted
+  // WARNING: Do not move this before imports or headers in imported files won't be processed
+  if (!options.noHeaders) {
+    processor.use(remarkLegalHeadersParser, {
+      debug: options.debug,
     });
   }
 

@@ -39,6 +39,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
+import { processMixins } from '../../core/processors/mixin-processor';
+
+/**
+ * Maximum header level supported in legal markdown (l. to lllllllll.)
+ */
+const MAX_HEADER_LEVEL = 9;
+
+/**
+ * Pattern to detect function calls in field expressions (e.g., formatPercent(...))
+ */
+const FUNCTION_CALL_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(/;
+
+/**
+ * Pattern to detect conditional expressions in field expressions (e.g., field ? a : b)
+ */
+const CONDITIONAL_PATTERN = /\?.*:/;
+
+/**
+ * Pattern to match escaped less-than characters from remarkStringify
+ */
+const ESCAPED_LT_PATTERN = /\\</g;
+
+/**
+ * Pattern to match escaped greater-than characters from remarkStringify
+ */
+const ESCAPED_GT_PATTERN = /\\>/g;
 
 /**
  * Options for the remark imports plugin
@@ -142,6 +168,9 @@ interface ImportContext {
 
   /** List of successfully imported files */
   importedFiles: string[];
+
+  /** Accumulated metadata from all imports (for mixin expansion) */
+  accumulatedMetadata: Record<string, any>;
 }
 
 /**
@@ -223,6 +252,7 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
       contentCache: new Map(),
       importedMetadataList: [],
       importedFiles: [],
+      accumulatedMetadata: {}, // Initialize with empty metadata
     };
 
     // Process all text nodes that might contain import directives
@@ -356,6 +386,13 @@ function processImportDirective(directive: ImportDirective, context: ImportConte
         metadata,
         source: normalizedPath,
       });
+
+      // Accumulate metadata for mixin expansion in imported content
+      // Merge the new metadata into accumulated metadata (shallow merge)
+      context.accumulatedMetadata = {
+        ...context.accumulatedMetadata,
+        ...metadata,
+      };
 
       // Track imported file
       if (!context.importedFiles.includes(normalizedPath)) {
@@ -524,29 +561,136 @@ function extractSection(content: string, sectionName: string, debug: boolean): s
 }
 
 /**
+ * Expand mixins with field tracking spans
+ *
+ * Expands {{field}} patterns and wraps the results in HTML spans for field tracking,
+ * similar to what remarkTemplateFields does. This ensures imported mixins have proper
+ * field highlighting support.
+ *
+ * @param content - Content with {{field}} patterns
+ * @param metadata - Metadata to resolve field values
+ * @returns Content with expanded mixins wrapped in tracking spans
+ */
+function expandMixinsWithTracking(content: string, metadata: Record<string, any>): string {
+  const mixinPattern = /\{\{([^}]+)\}\}/g;
+
+  return content.replace(mixinPattern, (match, fieldExpression) => {
+    const trimmedField = fieldExpression.trim();
+
+    // Try to resolve the field value
+    let value: any;
+    let hasValue = false;
+
+    try {
+      // Use processMixins to handle the complex logic (helpers, dot notation, etc.)
+      const expandedValue = processMixins(match, metadata, {});
+
+      // Check if the mixin was actually expanded (processMixins returns original if not found)
+      if (expandedValue !== match) {
+        value = expandedValue;
+        hasValue = true;
+      }
+    } catch (error) {
+      // If resolution fails, leave as is for remarkTemplateFields to process
+    }
+
+    // Only expand mixins that we found in imported metadata
+    // Leave others unchanged so remarkTemplateFields can process them with main metadata
+    if (hasValue) {
+      // Detect if this is a formula/helper (contains function call) or a simple field
+      // Helpers: formatPercent(...), formatDate(...), etc.
+      // Conditionals: field ? value1 : value2
+      const hasLogic =
+        FUNCTION_CALL_PATTERN.test(trimmedField) || // Function call: formatPercent(...)
+        CONDITIONAL_PATTERN.test(trimmedField); // Conditional: field ? a : b
+
+      // Use appropriate CSS class based on whether it's a formula or simple field
+      const cssClass = hasLogic ? 'legal-field highlight' : 'legal-field imported-value';
+
+      // Value was found in imported metadata - expand and track
+      return `<span class="${cssClass}" data-field="${trimmedField}">${value}</span>`;
+    } else {
+      // Value not in imported metadata - leave unchanged for main pipeline processing
+      return match;
+    }
+  });
+}
+
+/**
+ * Strip HTML comments and wrapper tags from imported content
+ *
+ * This is a temporary workaround because remarkImports inserts content as plain text
+ * (not AST nodes), which causes HTML to be escaped when rendered.
+ *
+ * We strip:
+ * - HTML comments: <!-- ... -->
+ * - Standalone wrapper tags WITHOUT attributes: <p>, <div>, <span> (only when wrapping headers)
+ * - We PRESERVE tags WITH attributes (class, id, style) as they may be needed for styling
+ *
+ * TODO: Fix the root cause by making remarkImports insert content as proper AST nodes
+ * See: https://github.com/petalo/legal-markdown-js/issues/119
+ */
+function stripHtmlComments(content: string): string {
+  let processed = content;
+
+  // Remove HTML comments (<!-- ... -->)
+  // Use non-greedy match to handle multiple comments on same line
+  processed = processed.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Remove standalone wrapper tags WITHOUT attributes that contain legal headers
+  // Pattern: <p>\nll. Header\n</p> (but NOT <p class="...">\nll. Header\n</p>)
+  // This prevents plain tags from being escaped while preserving styled tags
+  // The negative lookahead (?!\s+[a-z]) ensures we only match tags without attributes
+  const headerPattern = `l{1,${MAX_HEADER_LEVEL}}`;
+  processed = processed.replace(
+    new RegExp(
+      `<(p|div|span)(?!\\s+[a-z])\\s*>\\s*(${headerPattern}\\.\\s+[^\\n]+)\\s*<\\/\\1>`,
+      'gi'
+    ),
+    '$2'
+  );
+
+  // Also remove wrapper tags on same line: <p>ll. Header</p> (but not <p class="...">ll. Header</p>)
+  processed = processed.replace(
+    new RegExp(`<(p|div|span)(?!\\s+[a-z])\\s*>(${headerPattern}\\.\\s+[^<]+)<\\/\\1>`, 'gi'),
+    '$2'
+  );
+
+  return processed;
+}
+
+/**
  * Process nested imports in content
  */
 function processNestedImports(content: string, context: ImportContext): string {
   const importDirectives = extractImportDirectives(content);
 
-  if (importDirectives.length === 0) {
-    return content;
-  }
-
-  // Process directives in reverse order to maintain correct positions
   let processedContent = content;
-  for (let i = importDirectives.length - 1; i >= 0; i--) {
-    const directive = importDirectives[i];
-    const result = processImportDirective(directive, context);
 
-    // Replace the directive with the result
-    processedContent =
-      processedContent.substring(0, directive.start) +
-      result +
-      processedContent.substring(directive.end);
+  if (importDirectives.length > 0) {
+    // Process directives in reverse order to maintain correct positions
+    for (let i = importDirectives.length - 1; i >= 0; i--) {
+      const directive = importDirectives[i];
+      const result = processImportDirective(directive, context);
+
+      // Replace the directive with the result
+      processedContent =
+        processedContent.substring(0, directive.start) +
+        result +
+        processedContent.substring(directive.end);
+    }
   }
 
-  return processedContent;
+  // Expand mixins using accumulated metadata from imported files
+  // This allows mixins defined in imported file frontmatter to work
+  // We use processMixins but then wrap values in HTML spans for field tracking
+  if (context.mergeMetadata && Object.keys(context.accumulatedMetadata).length > 0) {
+    processedContent = expandMixinsWithTracking(processedContent, context.accumulatedMetadata);
+  }
+
+  // Strip HTML comments from imported content to prevent escaping
+  // (temporary workaround - see stripHtmlComments function comment)
+  return stripHtmlComments(processedContent);
 }
 
 export default remarkImports;
