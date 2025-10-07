@@ -1,3 +1,18 @@
+## <small>3.3.2 (2025-10-07)</small>
+
+- fix: process mixins and headers correctly in imported files (#123)
+  ([2dc13f2](https://github.com/petalo/legal-markdown-js/commit/2dc13f2)),
+  closes [#123](https://github.com/petalo/legal-markdown-js/issues/123)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+- test: parametrize test timeouts to handle slower CI environments (#113)
+  ([b91fd46](https://github.com/petalo/legal-markdown-js/commit/b91fd46)),
+  closes [#113](https://github.com/petalo/legal-markdown-js/issues/113)
+
 ## <small>3.3.1 (2025-10-02)</small>
 
 - fix: prevent underscore escaping in markdown output (#112)
