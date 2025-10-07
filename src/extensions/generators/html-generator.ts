@@ -191,8 +191,18 @@ export class HtmlGenerator {
       // Remove YAML frontmatter if present
       const contentWithoutFrontmatter = this.removeYamlFrontmatter(markdownContent);
 
+      // Pre-process: unescape backslash-escaped HTML from remarkStringify
+      // remarkStringify escapes HTML as \< and \>, we need to unescape them
+      // Pattern: \<div class="...">\</div> -> <div class="..."></div>
+      const processedMarkdown = contentWithoutFrontmatter.replace(/\\</g, '<').replace(/\\>/g, '>');
+
       // Convert markdown to HTML
-      const htmlContent = await marked.parse(contentWithoutFrontmatter);
+      let htmlContent = await marked.parse(processedMarkdown);
+
+      // Post-process: unescape specific HTML tags that were escaped in imported content
+      // This is a workaround for issue #119 - imported content is inserted as text
+      // We need to unescape certain structural tags like page-break divs
+      htmlContent = this.unescapeStructuralTags(htmlContent);
 
       // Load and manipulate with cheerio
       const $ = cheerio.load(htmlContent);
@@ -367,6 +377,48 @@ ${metaTags ? metaTags + '\n' : ''}    <style>
 ${body}
 </body>
 </html>`;
+  }
+
+  /**
+   * Unescape specific structural HTML tags that were escaped in imported content
+   *
+   * This is a workaround for issue #119 where remarkImports inserts content as text,
+   * causing HTML tags to be escaped. We selectively unescape certain structural tags
+   * that are needed for styling and page breaks.
+   *
+   * Tags unescaped:
+   * - <div class="page-break-before"></div>
+   * - <div class="page-break-after"></div>
+   * - Other div/span tags with specific classes
+   *
+   * @param html - HTML content with potentially escaped tags
+   * @returns HTML with structural tags unescaped
+   * @private
+   */
+  private unescapeStructuralTags(html: string): string {
+    let processed = html;
+
+    // Unescape page-break divs wrapped in paragraphs
+    // Pattern: <p>&lt;div class="page-break-before"&gt;&lt;/div&gt;</p>
+    // Replace with: <div class="page-break-before"></div>
+    processed = processed.replace(
+      /<p>&lt;div class="page-break-(before|after)"&gt;&lt;\/div&gt;<\/p>/gi,
+      '<div class="page-break-$1"></div>'
+    );
+
+    // Also handle cases without the wrapping <p>
+    processed = processed.replace(
+      /&lt;div class="page-break-(before|after)"&gt;&lt;\/div&gt;/gi,
+      '<div class="page-break-$1"></div>'
+    );
+
+    // Unescape other common structural divs with classes
+    processed = processed.replace(
+      /<p>&lt;div class="([^"]+)"&gt;&lt;\/div&gt;<\/p>/gi,
+      '<div class="$1"></div>'
+    );
+
+    return processed;
   }
 }
 
