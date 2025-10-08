@@ -73,6 +73,12 @@ async function readStdin(): Promise<string> {
 }
 
 // Create program
+if (!Command) {
+  console.error('Error: Commander.js failed to load. Please reinstall legal-markdown-js:');
+  console.error('  npm install -g legal-markdown-js@latest');
+  process.exit(1);
+}
+
 const program = new Command();
 
 // Setup CLI information
