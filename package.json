@@ -103,7 +103,7 @@
     "@types/js-beautify": "^1.14.3",
     "chalk": "^4.1.2",
     "cheerio": "^1.1.0",
-    "commander": "^11.1.0",
+    "commander": "^14.0.1",
     "dotenv": "^17.2.1",
     "js-beautify": "^1.15.4",
     "js-yaml": "^4.1.0",
