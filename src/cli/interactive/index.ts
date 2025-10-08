@@ -31,7 +31,6 @@ import { selectCssFile } from './prompts/css-selector';
 import { promptOutputFilename } from './prompts/filename';
 import { promptArchiveOptions } from './prompts/archive-options';
 import { confirmConfiguration } from './prompts/confirmation';
-import { handleFirstTimeUserExperience } from './prompts/ftux-handler';
 import { InteractiveService } from './service';
 import { InteractiveConfig } from './types';
 import { formatSuccessMessage, formatErrorMessage } from './utils/format-helpers';
@@ -50,48 +49,9 @@ import { getPackageVersion } from '../utils/version';
 const version = getPackageVersion('../../../package.json');
 
 /**
- * Run FTUX (First-Time User Experience) mode
+ * Continue interactive flow from a selected file
  *
- * Provides a guided onboarding experience for new users with options to:
- * - Set up configuration files
- * - Try demo examples
- * - Get help and tutorials
- * - Browse for files manually
- *
- * @returns Promise that resolves when FTUX completes
- * @throws Error when FTUX fails or user cancels
- */
-async function runFtuxMode(): Promise<void> {
-  try {
-    console.log(chalk.bold.blue('\n🌟 Legal Markdown - First-Time User Experience\n'));
-    console.log(chalk.gray("Welcome! Let's get you started with Legal Markdown processing.\n"));
-
-    // Run the FTUX flow
-    const selectedFile = await handleFirstTimeUserExperience();
-
-    // If a file was selected from FTUX, continue with normal processing
-    if (selectedFile) {
-      console.log(chalk.green(`\n✅ Selected: ${selectedFile}`));
-      console.log(chalk.gray('Continuing with normal processing flow...\n'));
-
-      // Continue with the normal interactive flow starting from step 2
-      await continueInteractiveFlow(selectedFile);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('User force closed')) {
-      console.log(chalk.yellow('\n👋 Thanks for trying Legal Markdown!\n'));
-      return;
-    }
-
-    console.log(formatErrorMessage(error instanceof Error ? error.message : String(error)));
-    process.exit(1);
-  }
-}
-
-/**
- * Continue interactive flow from a selected file (used after FTUX)
- *
- * @param inputFile - The file selected from FTUX
+ * @param inputFile - The selected input file
  */
 async function continueInteractiveFlow(inputFile: string): Promise<void> {
   // Check for force commands in the file's frontmatter
@@ -267,13 +227,8 @@ program
   .name('legal-md-ui')
   .description('Interactive CLI for Legal Markdown document processing')
   .version(version)
-  .option('--ftux', 'Launch First-Time User Experience (setup wizard)')
-  .action(async options => {
-    if (options.ftux) {
-      await runFtuxMode();
-    } else {
-      await runInteractiveMode();
-    }
+  .action(async () => {
+    await runInteractiveMode();
   });
 
 // Parse command line arguments
