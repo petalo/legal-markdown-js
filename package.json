@@ -187,6 +187,7 @@
   "optionalDependencies": {
     "pandoc-wasm": "^0.0.2"
   },
+  "bundleDependencies": ["commander", "chalk", "@inquirer/prompts"],
   "puppeteer": {
     "skipDownload": false,
     "skipChromiumDownload": false,
