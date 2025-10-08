@@ -1,3 +1,9 @@
+## <small>3.3.3 (2025-10-08)</small>
+
+- fix: remove FTUX feature to resolve CLI initialization issues (#124)
+  ([3ab7bf2](https://github.com/petalo/legal-markdown-js/commit/3ab7bf2)),
+  closes [#124](https://github.com/petalo/legal-markdown-js/issues/124)
+
 ## <small>3.3.2 (2025-10-07)</small>
 
 - fix: process mixins and headers correctly in imported files (#123)
