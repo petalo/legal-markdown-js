@@ -145,7 +145,8 @@ function main() {
         console.error('');
       });
 
-      console.error(`\n❌ Found ${allErrors.length} confusable symbol(s) in ${files.length} file(s)`);
+      const errorFiles = new Set(allErrors.map(e => e.file));
+      console.error(`\n❌ Found ${allErrors.length} confusable symbol(s) in ${errorFiles.size} file(s)`);
       console.error('Please replace them with their ASCII equivalents or run with --fix flag.\n');
       process.exit(1);
     }
