@@ -47,16 +47,16 @@ export class PdfTemplates {
 
     return `
       <div style="
-        width: 100%; 
-        font-size: ${PDF_TEMPLATE_CONSTANTS.FONT_SIZE}; 
-        padding-right: ${PDF_TEMPLATE_CONSTANTS.HEADER_PADDING}; 
-        display: flex; 
+        width: 100%;
+        font-size: ${PDF_TEMPLATE_CONSTANTS.FONT_SIZE};
+        padding-right: ${PDF_TEMPLATE_CONSTANTS.HEADER_PADDING};
+        display: flex;
         justify-content: flex-end;
         font-family: ${PDF_TEMPLATE_CONSTANTS.FONT_FAMILY};
       ">
-        <img 
-          src="data:image/png;base64,${logoBase64}" 
-          style="height: ${PDF_TEMPLATE_CONSTANTS.LOGO_HEIGHT};" 
+        <img
+          src="data:image/png;base64,${logoBase64}"
+          style="height: ${PDF_TEMPLATE_CONSTANTS.LOGO_HEIGHT};"
           alt="Logo"
         />
       </div>
@@ -64,27 +64,52 @@ export class PdfTemplates {
   }
 
   /**
-   * Generates HTML template for PDF footers with page numbers
+   * Generates HTML template for PDF footers with page numbers and optional version
    *
-   * Creates a right-aligned footer with "Page X / Y" format using Puppeteer's
-   * special classes for dynamic page numbering.
+   * Creates a footer with page numbers on the right. If a version is provided,
+   * it displays on the left in a smaller font.
    *
+   * @param {string} [version] - Optional version string from frontmatter metadata
    * @returns {string} HTML template string for the footer
    * @example
    * ```typescript
-   * const footer = PdfTemplates.generateFooterTemplate();
-   * // Results in: "Pg: 1 / 10" format in the PDF
+   * // Footer with version
+   * const footer = PdfTemplates.generateFooterTemplate('1.2.0');
+   * // Results in: "v1.2.0" (left) and "Pg: 1 / 10" (right)
+   *
+   * // Footer without version (backward compatible)
+   * const simpleFooter = PdfTemplates.generateFooterTemplate();
+   * // Results in: "Pg: 1 / 10" (right-aligned)
    * ```
    */
-  static generateFooterTemplate(): string {
+  static generateFooterTemplate(version?: string): string {
+    if (!version) {
+      // Backward compatible: no version, right-aligned page numbers only
+      return `
+        <div style="
+          width: 100%;
+          font-size: ${PDF_TEMPLATE_CONSTANTS.FONT_SIZE};
+          padding: 10px ${PDF_TEMPLATE_CONSTANTS.FOOTER_PADDING};
+          text-align: right;
+          font-family: ${PDF_TEMPLATE_CONSTANTS.FONT_FAMILY};
+        ">
+          <span>Pg: <span class="pageNumber"></span> / <span class="totalPages"></span></span>
+        </div>
+      `.trim();
+    }
+
+    // With version: version on left (small), page numbers on right
     return `
       <div style="
-        width: 100%; 
-        font-size: ${PDF_TEMPLATE_CONSTANTS.FONT_SIZE}; 
-        padding: 10px ${PDF_TEMPLATE_CONSTANTS.FOOTER_PADDING}; 
-        text-align: right; 
+        width: 100%;
+        font-size: ${PDF_TEMPLATE_CONSTANTS.FONT_SIZE};
+        padding: 10px ${PDF_TEMPLATE_CONSTANTS.FOOTER_PADDING};
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-family: ${PDF_TEMPLATE_CONSTANTS.FONT_FAMILY};
       ">
+        <span style="font-size: 8px; color: #666;">v${version}</span>
         <span>Pg: <span class="pageNumber"></span> / <span class="totalPages"></span></span>
       </div>
     `.trim();

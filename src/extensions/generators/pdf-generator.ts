@@ -81,6 +81,8 @@ export interface PdfGeneratorOptions extends HtmlGeneratorOptions {
   preferCSSPageSize?: boolean;
   /** Path to CSS file for automatic logo detection */
   cssPath?: string;
+  /** Document version to display in footer (optional) */
+  version?: string;
 }
 
 /**
@@ -830,13 +832,24 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
       let footerTemplate = options.footerTemplate;
 
       if (!headerTemplate && !footerTemplate) {
-        // Auto-generate templates based on logo detection
+        // Auto-generate templates based on logo detection and version
         headerTemplate = PdfTemplates.generateHeaderTemplate(logoBase64 || undefined);
-        footerTemplate = PdfTemplates.generateFooterTemplate();
+        footerTemplate = PdfTemplates.generateFooterTemplate(options.version);
         pdfOptions.displayHeaderFooter = true;
+
+        // Increase margins to make room for header/footer
+        if (!options.margin) {
+          pdfOptions.margin = {
+            top: '3cm',
+            right: '1cm',
+            bottom: '3cm',
+            left: '1cm',
+          };
+        }
 
         logger.debug('Auto-generated header/footer templates', {
           hasLogo: !!logoBase64,
+          hasVersion: !!options.version,
           headerLength: headerTemplate.length,
           footerLength: footerTemplate.length,
         });
@@ -997,8 +1010,72 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
         },
       };
 
-      // Note: Logo detection from CSS is skipped here since HTML is pre-generated
-      // If you need headers/footers, generate them when creating the HTML
+      // Auto-generate header/footer templates if not provided
+      let logoBase64: string | null = null;
+
+      // Detect logo from CSS if cssPath is provided
+      if (options.cssPath) {
+        try {
+          const logoFilename = await detectLogoFromCSS(options.cssPath);
+          if (logoFilename) {
+            if (logoFilename.startsWith('http://') || logoFilename.startsWith('https://')) {
+              logoBase64 = await downloadAndEncodeImage(logoFilename);
+            } else {
+              const logoPath = path.join(RESOLVED_PATHS.IMAGES_DIR, logoFilename);
+              logoBase64 = await loadAndEncodeImage(logoPath);
+            }
+
+            logger.info('Logo detected and loaded successfully', {
+              logoFilename,
+              cssPath: options.cssPath,
+            });
+          }
+        } catch (error) {
+          logger.warn('Logo detection failed, proceeding without logo', {
+            cssPath: options.cssPath,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      // Generate header and footer templates
+      let headerTemplate = options.headerTemplate;
+      let footerTemplate = options.footerTemplate;
+
+      if (!headerTemplate && !footerTemplate) {
+        // Auto-generate templates based on logo detection and version
+        headerTemplate = PdfTemplates.generateHeaderTemplate(logoBase64 || undefined);
+        footerTemplate = PdfTemplates.generateFooterTemplate(options.version);
+        pdfOptions.displayHeaderFooter = true;
+
+        // Increase margins to make room for header/footer
+        if (!options.margin) {
+          pdfOptions.margin = {
+            top: '3cm',
+            right: '1cm',
+            bottom: '3cm',
+            left: '1cm',
+          };
+        }
+
+        logger.debug('Auto-generated header/footer templates', {
+          hasLogo: !!logoBase64,
+          hasVersion: !!options.version,
+          headerLength: headerTemplate.length,
+          footerLength: footerTemplate.length,
+        });
+      } else {
+        // Use manually provided templates
+        pdfOptions.displayHeaderFooter = options.displayHeaderFooter || false;
+      }
+
+      // Set header and footer templates
+      if (headerTemplate) {
+        pdfOptions.headerTemplate = headerTemplate;
+      }
+      if (footerTemplate) {
+        pdfOptions.footerTemplate = footerTemplate;
+      }
 
       // Generate PDF (Puppeteer will write directly to outputPath)
       logger.debug('Generating PDF with options', { pdfOptions });
