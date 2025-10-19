@@ -1,3 +1,15 @@
+## <small>3.3.4 (2025-10-19)</small>
+
+- fix: add confusable symbols checker script (#133)
+  ([b873a0d](https://github.com/petalo/legal-markdown-js/commit/b873a0d)),
+  closes [#133](https://github.com/petalo/legal-markdown-js/issues/133)
+- refactor: implement 3-phase pipeline with HTML reuse optimization (#132)
+  ([79f3539](https://github.com/petalo/legal-markdown-js/commit/79f3539)),
+  closes [#132](https://github.com/petalo/legal-markdown-js/issues/132)
+  [#131](https://github.com/petalo/legal-markdown-js/issues/131)
+  [#131](https://github.com/petalo/legal-markdown-js/issues/131)
+  [#132](https://github.com/petalo/legal-markdown-js/issues/132)
+
 ## <small>3.3.3 (2025-10-08)</small>
 
 - fix: remove FTUX feature to resolve CLI initialization issues (#124)
