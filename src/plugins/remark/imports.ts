@@ -41,20 +41,12 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
-// REMOVED: No longer using legacy processMixins
-// import { processMixins } from '../../core/processors/mixin-processor';
 import type { PluginMetadata } from './types';
 
 /**
  * Maximum header level supported in legal markdown (l. to lllllllll.)
  */
 const MAX_HEADER_LEVEL = 9;
-
-// REMOVED: FUNCTION_CALL_PATTERN and CONDITIONAL_PATTERN
-// These were only used by expandMixinsWithTracking() which has been removed
-
-// REMOVED: ESCAPED_LT_PATTERN and ESCAPED_GT_PATTERN (Issue #119)
-// These were never used in this file and are no longer needed
 
 /**
  * Options for the remark imports plugin
@@ -655,12 +647,7 @@ function extractSection(content: string, sectionName: string, debug: boolean): s
   return lines.slice(sectionStart, sectionEnd).join('\n').trim();
 }
 
-// REMOVED: expandMixinsWithTracking() - Legacy workaround eliminated
-// This function used processMixins (legacy) to expand {{field}} patterns in imported content
-// and wrapped them in HTML spans. This is no longer needed because:
-// 1. It created a circular string->AST->string->AST conversion
-// 2. remarkTemplateFields now handles all mixin processing uniformly
-// 3. All tests pass without this workaround
+// expandMixinsWithTracking() removed; see PR for details.
 
 /**
  * Process nested imports in content and return AST nodes
@@ -743,17 +730,7 @@ async function expandMixinsInAST(
 
       for (const child of paragraph.children) {
         if (child.type === 'text') {
-          const text = child.value;
-          // WORKAROUND REMOVED: No longer expand mixins here with legacy processMixins
           // Let remarkTemplateFields handle all mixin processing with proper metadata
-          // Old code:
-          // if (text.includes('{{')) {
-          //   const expanded = expandMixinsWithTracking(text, metadata);
-          //   const expandedNodes = await parseImportedContentToAST(expanded);
-          //   processedChildren.push(...((expandedNodes[0] as Paragraph)?.children || []));
-          // } else {
-          //   processedChildren.push(child);
-          // }
           processedChildren.push(child);
         } else {
           processedChildren.push(child);

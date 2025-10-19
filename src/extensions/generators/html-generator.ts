@@ -39,10 +39,6 @@ import { RESOLVED_PATHS } from '../../constants/index';
 import type { MarkdownString, HtmlString } from '../../types/content-formats';
 import { isHtml } from '../../types/content-formats';
 
-// REMOVED: ESCAPED_LT_PATTERN and ESCAPED_GT_PATTERN (Issue #119)
-// These patterns were used to unescape \< and \> from remarkStringify
-// No longer needed with AST-based imports
-
 /**
  * Configuration options for HTML generation
  *
