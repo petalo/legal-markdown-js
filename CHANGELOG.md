@@ -1,3 +1,10 @@
+## 3.4.0 (2025-10-19)
+
+- feat: add version display in PDF footers and fix header/footer regression
+  (#134)
+  ([9db9a2c](https://github.com/petalo/legal-markdown-js/commit/9db9a2c)),
+  closes [#134](https://github.com/petalo/legal-markdown-js/issues/134)
+
 ## <small>3.3.4 (2025-10-19)</small>
 
 - fix: add confusable symbols checker script (#133)
