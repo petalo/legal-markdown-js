@@ -65,6 +65,11 @@ interface CrossReference {
  * 1. First tries to resolve |key| as internal section references (Ruby spec)
  * 2. Falls back to metadata values for backward compatibility
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkCrossReferences` plugin instead.
+ * The remark-based approach provides better AST processing and reference tracking.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing cross-references
  * @param {Record<string, any>} metadata - Document metadata (used for level formatting and fallback)
  * @returns {string} Processed content with internal references resolved
@@ -84,6 +89,15 @@ interface CrossReference {
  * ```
  */
 export function processCrossReferences(content: string, metadata: Record<string, any>): string {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processCrossReferences() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkCrossReferences plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   // First, extract all cross-reference definitions from headers
   const crossReferences = extractCrossReferences(content, metadata);
 

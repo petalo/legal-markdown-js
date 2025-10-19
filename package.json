@@ -38,6 +38,8 @@
     "docs": "typedoc src --out docs/api",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
+    "gremlin:check": "git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.cjs' '*.mjs' '*.json' '*.md' | xargs node scripts/check-confusable-symbols.cjs",
+    "gremlin:fix": "git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.cjs' '*.mjs' '*.json' '*.md' | xargs node scripts/check-confusable-symbols.cjs --fix",
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint": "eslint src/**/*.ts",
     "prepare": "husky",
@@ -151,6 +153,8 @@
     "lint-staged": "^16.1.2",
     "path-browserify": "^1.0.1",
     "prettier": "^3.0.3",
+    "rehype-stringify": "^10.0.1",
+    "remark-rehype": "^11.1.2",
     "semantic-release": "^24.2.5",
     "stream-browserify": "^3.0.0",
     "ts-loader": "^9.4.4",
@@ -176,8 +180,13 @@
     "node": ">=18.0.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": ["prettier --write", "eslint --fix", "npm run test:staged"],
-    "*.{md,json,yaml,yml}": ["prettier --write"]
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "node scripts/check-confusable-symbols.cjs",
+      "prettier --write",
+      "eslint --fix",
+      "npm run test:staged"
+    ],
+    "*.{md,json,yaml,yml}": ["node scripts/check-confusable-symbols.cjs", "prettier --write"]
   },
   "config": {
     "commitizen": {

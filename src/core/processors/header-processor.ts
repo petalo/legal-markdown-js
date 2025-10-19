@@ -53,6 +53,11 @@ import { getRomanNumeral, getAlphaLabel } from '../../utils/number-utilities';
  * numbering, applies custom formatting templates, and handles complex academic
  * and legal document structures.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkHeaders` plugin instead.
+ * The remark-based approach provides better AST processing and CSS class support.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing headers to process
  * @param {Record<string, any>} metadata - Document metadata with potential header formatting options
  * @param {Object} [processingOptions={}] - Additional processing options
@@ -102,6 +107,15 @@ export function processHeaders(
     enableFieldTrackingInMarkdown?: boolean;
   } = {}
 ): string {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processHeaders() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkHeaders plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   // Extract header options from metadata
   const options = extractHeaderOptions(metadata, processingOptions);
 

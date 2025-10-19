@@ -49,6 +49,11 @@
  * or excludes content based on metadata values. Supports complex boolean logic
  * and various comparison operators for sophisticated document customization.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkClauses` plugin instead.
+ * The remark-based approach provides better AST processing and safety.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing optional clauses
  * @param {Record<string, any>} metadata - Document metadata with clause conditions
  * @returns {string} Processed content with conditional clauses evaluated
@@ -74,6 +79,15 @@
  * ```
  */
 export function processOptionalClauses(content: string, metadata: Record<string, any>): string {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processOptionalClauses() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkClauses plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   // Regular expression to match optional clauses
   // Format: [Optional text]{condition}
   // Note: We remove the 's' flag to prevent matching across large sections of text

@@ -66,6 +66,11 @@ export interface DateFormatOptions {
  * documents. It supports format overrides and uses metadata settings for
  * default formatting, timezone, and locale preferences.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkDates` plugin instead.
+ * The remark-based approach provides better AST processing and date handling.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing `@today` references
  * @param {Record<string, any>} metadata - Document metadata with date formatting options
  * @returns {string} Processed content with `@today` references replaced by formatted dates
@@ -89,6 +94,15 @@ export interface DateFormatOptions {
  * ```
  */
 export function processDateReferences(content: string, metadata: Record<string, any>): string {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processDateReferences() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkDates plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   // Extract date format options from metadata
   const dateOptions = extractDateOptions(metadata);
 

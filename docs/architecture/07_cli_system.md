@@ -1,287 +1,122 @@
 # CLI Architecture <!-- omit in toc -->
 
 - [Overview](#overview)
-- [CLI System Components](#cli-system-components)
-- [Traditional CLI Mode](#traditional-cli-mode)
-- [Interactive CLI Mode](#interactive-cli-mode)
-- [CLI Service Architecture](#cli-service-architecture)
-- [Command Line Options](#command-line-options)
-- [Interactive Features](#interactive-features)
+- [Component Diagram](#component-diagram)
+- [Batch CLI Flow](#batch-cli-flow)
+- [Interactive CLI Flow](#interactive-cli-flow)
+- [Service Layer Responsibilities](#service-layer-responsibilities)
+- [Command-Line Surface](#command-line-surface)
 
 ## Overview
 
-The CLI system features both traditional command-line interface and advanced
-interactive mode, providing flexible access to Legal Markdown processing
-capabilities. The CLI architecture supports both simple one-off processing and
-complex interactive workflows.
+The CLI provides two entry points over the three-phase pipeline:
 
-## CLI System Components
+1. **Batch mode** (`legal-md <input> [options]`) for scripted usage
+2. **Interactive mode** (`legal-md --interactive`) for guided workflows
 
-```mermaid
-graph TB
-    subgraph "CLI Architecture"
-        ENTRY[cli/index.ts] --> COMMANDER[Commander.js]
-        ENTRY --> SERVICE[CLI Service]
-        ENTRY --> INTERACTIVE[Interactive Service]
+Both modes delegate work to the shared `CliService` and `InteractiveService`,
+which in turn call the pipeline helpers (`buildProcessingContext`,
+`processLegalMarkdownWithRemark`, `generateAllFormats`).
 
-        COMMANDER --> ARGS[Argument Parsing]
-        COMMANDER --> OPTS[Option Parsing]
-
-        SERVICE --> FILE_OPS[File Operations]
-        SERVICE --> PROC_CALL[Processing Call]
-        SERVICE --> OUTPUT_GEN[Output Generation]
-
-        INTERACTIVE --> PROMPTS[Interactive Prompts]
-        INTERACTIVE --> FILE_SCANNER[File Scanner]
-        INTERACTIVE --> WORKFLOW[Workflow Management]
-    end
-```
-
-## Traditional CLI Mode
-
-### Basic Command Structure
+## Component Diagram
 
 ```mermaid
 graph TB
-    subgraph "Traditional CLI Layer"
-        ENTRY[cli/index.ts] --> COMMANDER[Commander.js]
-        COMMANDER --> ARGS[Argument Parsing]
-        COMMANDER --> OPTS[Option Parsing]
+    ENTRY[cli/index.ts]
+    SERVICE[CliService]
+    INTERACTIVE[InteractiveService]
+    PIPELINE[Three-Phase Pipeline]
+    ARCHIVER[ArchiveManager]
+    LOGGER[Logger]
 
-        ARGS --> INPUT_FILE[Input File]
-        ARGS --> OUTPUT_FILE[Output File]
-        OPTS --> PROC_OPTS[Processing Options]
+    ENTRY --> SERVICE
+    ENTRY --> INTERACTIVE
 
-        ENTRY --> SERVICE[CLI Service]
-        SERVICE --> FILE_OPS[File Operations]
-        SERVICE --> PROC_CALL[Processing Call]
-        SERVICE --> OUTPUT_GEN[Output Generation]
+    SERVICE --> PIPELINE
+    SERVICE --> ARCHIVER
+    SERVICE --> LOGGER
 
-        subgraph "Core Options"
-            DEBUG[--debug]
-            INTERACTIVE[--interactive]
-            YAML_ONLY[--yaml]
-            NO_HEADERS[--no-headers]
-            NO_CLAUSES[--no-clauses]
-            NO_REFS[--no-references]
-            NO_IMPORTS[--no-imports]
-            NO_MIXINS[--no-mixins]
-        end
-
-        subgraph "Advanced Options"
-            DISABLE_FRONTMATTER[--disable-frontmatter-merge]
-            VALIDATE_TYPES[--validate-import-types]
-            LOG_IMPORTS[--log-import-operations]
-            ENABLE_TRACKING[--enable-field-tracking]
-            STDIN[--stdin]
-            STDOUT[--stdout]
-        end
-
-        subgraph "Output Options"
-            HTML_OUT[--html]
-            PDF_OUT[--pdf]
-            HIGHLIGHT[--highlight]
-            CSS_PATH[--css]
-            TITLE[--title]
-            EXPORT_YAML[--export-yaml]
-            EXPORT_JSON[--export-json]
-            OUTPUT_PATH[--output-path]
-        end
-
-        subgraph "Archive Options"
-            ARCHIVE[--archive]
-            ARCHIVE_DIR[--archive-dir]
-            NO_ARCHIVE[--no-archive]
-        end
-    end
+    INTERACTIVE --> SERVICE
+    INTERACTIVE --> PIPELINE
+    INTERACTIVE --> ARCHIVER
 ```
 
-## Interactive CLI Mode
-
-### Interactive Processing Flow
+## Batch CLI Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI
-    participant InteractiveService
-    participant FileScanner
-    participant Prompts
-    participant Processor
+    participant CLI as cli/index.ts
+    participant Service as CliService
+    participant Pipeline
 
-    User->>CLI: legal-md --interactive
-    CLI->>InteractiveService: Initialize Interactive Mode
-
-    InteractiveService->>FileScanner: Discover Legal Markdown Files
-    FileScanner->>InteractiveService: Return File List
-
-    InteractiveService->>Prompts: File Selection Prompt
-    Prompts->>User: Display File Options
-    User->>Prompts: Select File(s)
-
-    InteractiveService->>Prompts: Processing Options Prompt
-    Prompts->>User: Configure Processing
-    User->>Prompts: Set Options
-
-    InteractiveService->>Prompts: Output Format Prompt
-    Prompts->>User: Choose Output Format
-    User->>Prompts: Select Format(s)
-
-    alt CSS Required
-        InteractiveService->>Prompts: CSS Selection Prompt
-        Prompts->>User: Choose CSS File
-        User->>Prompts: Select CSS
-    end
-
-    alt Archive Enabled
-        InteractiveService->>Prompts: Archive Options Prompt
-        Prompts->>User: Configure Archive
-        User->>Prompts: Set Archive Options
-    end
-
-    InteractiveService->>Processor: Process with Collected Options
-    Processor->>InteractiveService: Return Results
-    InteractiveService->>User: Display Success/Results
+    User->>CLI: legal-md input.md --pdf --html --highlight
+    CLI->>Service: processFile(inputPath, options)
+    Service->>Pipeline: buildProcessingContext()
+    Pipeline->>Pipeline: processLegalMarkdownWithRemark()
+    Pipeline->>Pipeline: generateAllFormats()
+    Pipeline-->>Service: { files, reports }
+    Service->>User: log results & paths
 ```
 
-## CLI Service Architecture
+Highlights:
 
-### Service Layer Design
+- Force-commands are resolved during context building
+- Remark runs once with `noIndent: true` to serve HTML/PDF
+- Generated files (and highlight variants) are reported back to the user
+- Archive manager optionally saves original/processed copies after completion
+
+## Interactive CLI Flow
 
 ```mermaid
-classDiagram
-    class CliService {
-        -options: CliOptions
-        -interactiveService: InteractiveService
-        +processFile(inputPath, outputPath, options)
-        +processFromStdin(options)
-        +generateHtml(content, options)
-        +generatePdf(content, options)
-        +exportMetadata(metadata, options)
-        +handleArchiving(sourcePath, options)
-    }
+sequenceDiagram
+    participant User
+    participant CLI as legal-md --interactive
+    participant Interactive
+    participant Pipeline
 
-    class InteractiveService {
-        -prompts: PromptCollection
-        -fileScanner: FileScanner
-        +start(): Promise<void>
-        +collectProcessingOptions(): Promise<ProcessingOptions>
-        +selectFiles(): Promise<string[]>
-        +selectOutputFormats(): Promise<OutputFormat[]>
-        +configureCss(): Promise<string>
-        +configureArchive(): Promise<ArchiveOptions>
-    }
-
-    class FileScanner {
-        +scanDirectory(path: string): Promise<FileInfo[]>
-        +validateFile(path: string): boolean
-        +getFileMetadata(path: string): FileMetadata
-        +filterByType(files: FileInfo[], types: string[]): FileInfo[]
-    }
-
-    class PromptCollection {
-        +fileSelector: FileSelector
-        +processingOptions: ProcessingOptionsPrompt
-        +outputFormat: OutputFormatPrompt
-        +cssSelector: CssSelector
-        +archiveOptions: ArchiveOptionsPrompt
-        +confirmation: ConfirmationPrompt
-        +filename: FilenamePrompt
-    }
-
-    CliService --> InteractiveService
-    InteractiveService --> FileScanner
-    InteractiveService --> PromptCollection
+    User->>CLI: start
+    CLI->>Interactive: collect configuration
+    Interactive->>User: prompt for files, formats, CSS, archive options
+    Interactive->>Pipeline: buildProcessingContext(content, options)
+    Pipeline->>Pipeline: processLegalMarkdownWithRemark()
+    Pipeline->>Pipeline: generateAllFormats()
+    Pipeline-->>Interactive: { files, reports }
+    Interactive->>User: display summary + archive results
 ```
 
-## Command Line Options
+Interactive mode reuses the same pipeline methods but wraps them in guided
+prompts, file discovery helpers and diagnostic messaging tailored for non-shell
+users.
 
-### Core Processing Options
+## Service Layer Responsibilities
 
-| Option            | Description                 | Example                           |
-| ----------------- | --------------------------- | --------------------------------- |
-| `--debug`         | Enable debug output         | `legal-md doc.md --debug`         |
-| `--yaml`          | YAML front matter only      | `legal-md doc.md --yaml`          |
-| `--no-headers`    | Disable header processing   | `legal-md doc.md --no-headers`    |
-| `--no-clauses`    | Disable optional clauses    | `legal-md doc.md --no-clauses`    |
-| `--no-references` | Disable cross-references    | `legal-md doc.md --no-references` |
-| `--no-imports`    | Disable file imports        | `legal-md doc.md --no-imports`    |
-| `--no-mixins`     | Disable template processing | `legal-md doc.md --no-mixins`     |
+`CliService` (`src/cli/service.ts`) handles:
 
-### Advanced Options
+- Option normalisation (enable field tracking when highlight is requested,
+  resolve CSS paths, set `noIndent` for format generation)
+- Context building and the single remark execution
+- Coordinating `generateAllFormats` and displaying generated artefacts
+- Archiving processed/original files when requested
+- Error handling + debug logging through the shared logger
 
-| Option                        | Description                 | Example                                       |
-| ----------------------------- | --------------------------- | --------------------------------------------- |
-| `--disable-frontmatter-merge` | Disable frontmatter merging | `legal-md doc.md --disable-frontmatter-merge` |
-| `--validate-import-types`     | Validate imported types     | `legal-md doc.md --validate-import-types`     |
-| `--log-import-operations`     | Log import operations       | `legal-md doc.md --log-import-operations`     |
-| `--enable-field-tracking`     | Enable field tracking       | `legal-md doc.md --enable-field-tracking`     |
-| `--stdin`                     | Read from standard input    | `cat doc.md \| legal-md --stdin`              |
-| `--stdout`                    | Write to standard output    | `legal-md doc.md --stdout`                    |
+`InteractiveService` extends the flow by:
 
-### Output Format Options
+- Translating prompt answers into CLI options
+- Choosing output directories and archive destinations
+- Reusing processed content when archiving to avoid additional pipeline runs
 
-| Option            | Description               | Example                                     |
-| ----------------- | ------------------------- | ------------------------------------------- |
-| `--html`          | Generate HTML output      | `legal-md doc.md --html`                    |
-| `--pdf`           | Generate PDF output       | `legal-md doc.md --pdf`                     |
-| `--highlight`     | Enable field highlighting | `legal-md doc.md --html --highlight`        |
-| `--css <path>`    | Custom CSS file           | `legal-md doc.md --html --css styles.css`   |
-| `--title <title>` | Document title            | `legal-md doc.md --html --title "Contract"` |
-| `--export-yaml`   | Export metadata as YAML   | `legal-md doc.md --export-yaml`             |
-| `--export-json`   | Export metadata as JSON   | `legal-md doc.md --export-json`             |
+## Command-Line Surface
 
-### Archive Options
+Key options (full list available via `legal-md --help`):
 
-| Option                 | Description              | Example                                           |
-| ---------------------- | ------------------------ | ------------------------------------------------- |
-| `--archive`            | Enable source archiving  | `legal-md doc.md --archive`                       |
-| `--archive-dir <path>` | Custom archive directory | `legal-md doc.md --archive --archive-dir backup/` |
-| `--no-archive`         | Disable archiving        | `legal-md doc.md --no-archive`                    |
+- `--html`, `--pdf`, `--highlight`, `--css <path>` - format generation controls
+- `--output <path>` / `--output-dir <path>` - output routing
+- `--export-yaml`, `--export-json` - metadata exports
+- `--debug`, `--validate-plugin-order` - diagnostics
+- `--archive`, `--archive-dir` - archiving behaviour
+- `--interactive` - launch interactive workflow
 
-## Interactive Features
-
-### File Discovery and Selection
-
-The interactive mode provides intelligent file discovery:
-
-- **Automatic Scanning**: Discovers Legal Markdown files in current directory
-- **Recursive Search**: Optionally searches subdirectories
-- **File Validation**: Validates file format and accessibility
-- **Metadata Preview**: Shows basic file information
-- **Multi-selection**: Supports batch processing of multiple files
-
-### Processing Configuration
-
-Interactive prompts guide users through processing options:
-
-```mermaid
-flowchart TD
-    START[Start Interactive Mode] --> SCAN[Scan for Files]
-    SCAN --> SELECT_FILES[Select Files]
-    SELECT_FILES --> PROC_OPTIONS[Processing Options]
-    PROC_OPTIONS --> OUTPUT_FORMAT[Output Format]
-    OUTPUT_FORMAT --> CSS_CONFIG{CSS Required?}
-    CSS_CONFIG -->|Yes| SELECT_CSS[Select CSS]
-    CSS_CONFIG -->|No| ARCHIVE_CONFIG{Archive?}
-    SELECT_CSS --> ARCHIVE_CONFIG
-    ARCHIVE_CONFIG -->|Yes| ARCHIVE_OPTIONS[Archive Options]
-    ARCHIVE_CONFIG -->|No| CONFIRM[Confirm Settings]
-    ARCHIVE_OPTIONS --> CONFIRM
-    CONFIRM --> PROCESS[Process Files]
-    PROCESS --> RESULTS[Show Results]
-```
-
-### Smart Defaults
-
-The interactive system provides intelligent defaults:
-
-- **File Type Detection**: Automatically detects Legal Markdown files
-- **Output Format Suggestions**: Recommends appropriate output formats
-- **CSS Discovery**: Finds available CSS files in common locations
-- **Archive Location**: Suggests sensible archive directories
-- **Processing Options**: Sets appropriate defaults based on file content
-
-The CLI architecture provides both simple command-line usage and sophisticated
-interactive workflows, making Legal Markdown processing accessible to users with
-different levels of expertise and workflow requirements.
+All options ultimately map to the `LegalMarkdownOptions` interface consumed by
+`buildProcessingContext`, keeping feature behaviour consistent between batch and
+interactive modes.

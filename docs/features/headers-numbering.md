@@ -536,8 +536,46 @@ level-four: '(%l3%a)'
 level-five: '(%l3%a%r)'
 ```
 
+## CSS Classes for Styling
+
+Legal headers automatically receive CSS classes that allow you to style them by
+level:
+
+```html
+<!-- Generated HTML for legal headers -->
+<h1 class="legal-header-level-1">Article 1. Introduction</h1>
+<h2 class="legal-header-level-2">Section 1. Scope</h2>
+<h3 class="legal-header-level-3">1. Definitions</h3>
+```
+
+These classes (`legal-header-level-1` through `legal-header-level-9`) allow you
+to:
+
+- Style headers by their hierarchy level
+- Apply consistent formatting across documents
+- Create print-friendly styles for PDF generation
+
+**Example CSS:**
+
+```css
+.legal-header-level-1 {
+  font-size: 1.6em;
+  font-weight: bold;
+  page-break-after: avoid;
+}
+
+.legal-header-level-2 {
+  font-size: 1.3em;
+  font-weight: 600;
+}
+```
+
+For complete documentation on CSS classes and styling options, see the
+[CSS Classes Reference](../output/css-classes.md).
+
 ## See Also
 
+- [CSS Classes Reference](../output/css-classes.md) - Complete CSS styling guide
 - [YAML Frontmatter](yaml-frontmatter.md) - Configuring header formats
 - [Cross-References](cross-references.md) - Referencing numbered sections
 - [CLI Reference](../cli_reference.md) - `--headers` flag for auto-population

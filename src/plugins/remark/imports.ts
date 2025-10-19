@@ -33,38 +33,20 @@
  */
 
 import { Plugin } from 'unified';
-import { Root, Paragraph, Text } from 'mdast';
-import { visit } from 'unist-util-visit';
+import { Root, Paragraph, Text, Content } from 'mdast';
+import { visit, SKIP } from 'unist-util-visit';
 import * as fs from 'fs';
 import * as path from 'path';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
-import { processMixins } from '../../core/processors/mixin-processor';
+import type { PluginMetadata } from './types';
 
 /**
  * Maximum header level supported in legal markdown (l. to lllllllll.)
  */
 const MAX_HEADER_LEVEL = 9;
-
-/**
- * Pattern to detect function calls in field expressions (e.g., formatPercent(...))
- */
-const FUNCTION_CALL_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(/;
-
-/**
- * Pattern to detect conditional expressions in field expressions (e.g., field ? a : b)
- */
-const CONDITIONAL_PATTERN = /\?.*:/;
-
-/**
- * Pattern to match escaped less-than characters from remarkStringify
- */
-const ESCAPED_LT_PATTERN = /\\</g;
-
-/**
- * Pattern to match escaped greater-than characters from remarkStringify
- */
-const ESCAPED_GT_PATTERN = /\\>/g;
 
 /**
  * Options for the remark imports plugin
@@ -221,7 +203,7 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
     importStack = [],
   } = options;
 
-  return (tree: Root) => {
+  return async (tree: Root) => {
     const startTime = Date.now();
 
     if (debug) {
@@ -255,14 +237,47 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
       accumulatedMetadata: {}, // Initialize with empty metadata
     };
 
-    // Process all text nodes that might contain import directives
-    visit(tree, node => {
-      if (node.type === 'text') {
-        processTextNode(node as Text, context);
-      } else if (node.type === 'paragraph') {
-        processParagraphNode(node as Paragraph, context);
+    // Collect all nodes that need replacement
+    type NodeReplacement = {
+      parent: Paragraph | Root;
+      index: number;
+      nodes: Content[];
+    };
+    const replacements: NodeReplacement[] = [];
+
+    // Process all paragraph nodes that might contain import directives
+    visit(tree, 'paragraph', (node: Paragraph, index, parent) => {
+      if (!parent || index === undefined) return;
+
+      // Check if any text children contain import directives
+      for (const child of node.children) {
+        if (child.type === 'text') {
+          const directives = extractImportDirectives(child.value);
+          if (directives.length > 0) {
+            // This paragraph contains imports - we'll need to process it
+            replacements.push({
+              parent: parent as Paragraph | Root,
+              index,
+              nodes: [], // Will be filled in later
+            });
+            return SKIP; // Skip children
+          }
+        }
       }
     });
+
+    // Process replacements (parse imported content to AST)
+    for (const replacement of replacements) {
+      const paragraph = replacement.parent.children[replacement.index] as Paragraph;
+      const processedNodes = await processParagraphWithImports(paragraph, context);
+      replacement.nodes = processedNodes;
+    }
+
+    // Apply replacements (in reverse order to maintain indices)
+    for (let i = replacements.length - 1; i >= 0; i--) {
+      const { parent, index, nodes } = replacements[i];
+      parent.children.splice(index, 1, ...nodes);
+    }
 
     // Perform sequential merge of all imported metadata at the end
     if (context.mergeMetadata && context.importedMetadataList.length > 0) {
@@ -274,44 +289,76 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
 };
 
 /**
- * Process a text node for import directives
+ * Process a paragraph containing import directives and return AST nodes
+ *
+ * This function replaces the old text-based import logic. Instead of replacing
+ * @import directives with plain text (which causes HTML escaping), it parses
+ * imported content into proper AST nodes.
+ *
+ * @param paragraph - Paragraph node containing import directives
+ * @param context - Import processing context
+ * @returns Array of Content nodes to replace the paragraph
  */
-function processTextNode(node: Text, context: ImportContext) {
-  const originalText = node.value;
-  const importDirectives = extractImportDirectives(originalText);
+async function processParagraphWithImports(
+  paragraph: Paragraph,
+  context: ImportContext
+): Promise<Content[]> {
+  const results: Content[] = [];
 
-  if (importDirectives.length === 0) {
-    return;
-  }
-
-  if (context.debug) {
-    console.log(`[remarkImports] Found ${importDirectives.length} import directives in text node`);
-  }
-
-  // Process directives in reverse order to maintain correct positions
-  let processedText = originalText;
-  for (let i = importDirectives.length - 1; i >= 0; i--) {
-    const directive = importDirectives[i];
-    const result = processImportDirective(directive, context);
-
-    // Replace the directive with the result
-    processedText =
-      processedText.substring(0, directive.start) + result + processedText.substring(directive.end);
-  }
-
-  node.value = processedText;
-}
-
-/**
- * Process a paragraph node for import directives
- */
-function processParagraphNode(node: Paragraph, context: ImportContext) {
-  // Process each text child in the paragraph
-  node.children.forEach(child => {
-    if (child.type === 'text') {
-      processTextNode(child as Text, context);
+  // Process each child in the paragraph
+  for (const child of paragraph.children) {
+    if (child.type !== 'text') {
+      results.push(child);
+      continue;
     }
-  });
+
+    const text = child.value;
+    const directives = extractImportDirectives(text);
+
+    if (directives.length === 0) {
+      // No imports, keep the text as is
+      results.push(child);
+      continue;
+    }
+
+    if (context.debug) {
+      console.log(`[remarkImports] Found ${directives.length} import directives`);
+    }
+
+    // Process each import directive and build AST nodes
+    let lastIndex = 0;
+    for (const directive of directives) {
+      // Add text before the import directive (if any)
+      if (directive.start > lastIndex) {
+        const beforeText = text.substring(lastIndex, directive.start);
+        if (beforeText.trim()) {
+          results.push({
+            type: 'text',
+            value: beforeText,
+          });
+        }
+      }
+
+      // Process the import and get AST nodes
+      const importedNodes = await processImportDirectiveToAST(directive, context);
+      results.push(...importedNodes);
+
+      lastIndex = directive.end;
+    }
+
+    // Add remaining text after last import (if any)
+    if (lastIndex < text.length) {
+      const afterText = text.substring(lastIndex);
+      if (afterText.trim()) {
+        results.push({
+          type: 'text',
+          value: afterText,
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 /**
@@ -340,14 +387,46 @@ function extractImportDirectives(text: string): ImportDirective[] {
 }
 
 /**
- * Process an import directive
+ * Parse imported content into AST nodes
+ *
+ * This function parses markdown content into proper AST nodes instead of plain text,
+ * which preserves HTML structure and prevents HTML comments/tags from being escaped.
+ *
+ * @param content - Markdown content to parse
+ * @returns Array of AST nodes (Content[])
  */
-function processImportDirective(directive: ImportDirective, context: ImportContext): string {
+async function parseImportedContentToAST(content: string): Promise<Content[]> {
+  // Create a minimal unified processor with just remark-parse
+  const processor = unified().use(remarkParse);
+
+  // Parse the content to get AST
+  const tree = processor.parse(content) as Root;
+
+  // Return the children nodes (not the root itself)
+  // This allows us to insert them into the parent tree
+  return tree.children;
+}
+
+/**
+ * Process an import directive and return AST nodes
+ *
+ * This replaces the old processImportDirective() which returned plain text.
+ * By returning AST nodes, we preserve HTML structure and prevent escaping.
+ *
+ * @param directive - Import directive information
+ * @param context - Import processing context
+ * @returns Array of AST nodes from the imported content
+ */
+async function processImportDirectiveToAST(
+  directive: ImportDirective,
+  context: ImportContext
+): Promise<Content[]> {
   if (context.depth >= context.maxDepth) {
     console.warn(
       `[remarkImports] Maximum import depth (${context.maxDepth}) reached for file "${directive.filePath}"`
     );
-    return directive.fullMatch; // Return original directive
+    // Return the original directive as text
+    return [{ type: 'text', value: directive.fullMatch }];
   }
 
   // Resolve file path
@@ -357,7 +436,7 @@ function processImportDirective(directive: ImportDirective, context: ImportConte
   // Check for circular imports
   if (context.importStack.includes(normalizedPath)) {
     console.warn(`[remarkImports] Circular import detected: ${normalizedPath}`);
-    return directive.fullMatch; // Return original directive
+    return [{ type: 'text', value: directive.fullMatch }];
   }
 
   if (context.debug) {
@@ -371,7 +450,7 @@ function processImportDirective(directive: ImportDirective, context: ImportConte
 
   if (!fileContent) {
     console.warn(`[remarkImports] Import file not found: ${directive.filePath}`);
-    return directive.fullMatch; // Return original directive
+    return [{ type: 'text', value: directive.fullMatch }];
   }
 
   // Parse YAML frontmatter if mergeMetadata is enabled
@@ -413,7 +492,7 @@ function processImportDirective(directive: ImportDirective, context: ImportConte
     contentToImport = extractSection(contentToImport, directive.section, context.debug);
   }
 
-  // Process nested imports
+  // Process nested imports in the content
   const nestedContext: ImportContext = {
     ...context,
     depth: context.depth + 1,
@@ -421,7 +500,15 @@ function processImportDirective(directive: ImportDirective, context: ImportConte
     basePath: path.dirname(normalizedPath), // Update base path for relative imports
   };
 
-  return processNestedImports(contentToImport, nestedContext);
+  const processedContent = await processNestedImportsToAST(contentToImport, nestedContext);
+
+  // Expand mixins using accumulated metadata
+  // This allows mixins defined in imported file frontmatter to work
+  if (context.mergeMetadata && Object.keys(context.accumulatedMetadata).length > 0) {
+    return await expandMixinsInAST(processedContent, context.accumulatedMetadata);
+  }
+
+  return processedContent;
 }
 
 /**
@@ -560,137 +647,122 @@ function extractSection(content: string, sectionName: string, debug: boolean): s
   return lines.slice(sectionStart, sectionEnd).join('\n').trim();
 }
 
+// expandMixinsWithTracking() removed; see PR for details.
+
 /**
- * Expand mixins with field tracking spans
+ * Process nested imports in content and return AST nodes
  *
- * Expands {{field}} patterns and wraps the results in HTML spans for field tracking,
- * similar to what remarkTemplateFields does. This ensures imported mixins have proper
- * field highlighting support.
+ * This replaces the old processNestedImports() which worked with text.
+ * By returning AST nodes, HTML comments and tags are preserved properly.
  *
- * @param content - Content with {{field}} patterns
- * @param metadata - Metadata to resolve field values
- * @returns Content with expanded mixins wrapped in tracking spans
+ * @param content - Markdown content that may contain import directives
+ * @param context - Import processing context
+ * @returns Array of AST nodes with imports resolved
  */
-function expandMixinsWithTracking(content: string, metadata: Record<string, any>): string {
-  const mixinPattern = /\{\{([^}]+)\}\}/g;
+async function processNestedImportsToAST(
+  content: string,
+  context: ImportContext
+): Promise<Content[]> {
+  // Parse the content to AST first
+  const nodes = await parseImportedContentToAST(content);
 
-  return content.replace(mixinPattern, (match, fieldExpression) => {
-    const trimmedField = fieldExpression.trim();
-
-    // Try to resolve the field value
-    let value: any;
-    let hasValue = false;
-
-    try {
-      // Use processMixins to handle the complex logic (helpers, dot notation, etc.)
-      const expandedValue = processMixins(match, metadata, {});
-
-      // Check if the mixin was actually expanded (processMixins returns original if not found)
-      if (expandedValue !== match) {
-        value = expandedValue;
-        hasValue = true;
-      }
-    } catch (error) {
-      // If resolution fails, leave as is for remarkTemplateFields to process
+  // Check if any of the nodes contain import directives
+  const hasImports = nodes.some(node => {
+    if (node.type === 'paragraph') {
+      return (node as Paragraph).children.some(
+        child => child.type === 'text' && extractImportDirectives(child.value).length > 0
+      );
     }
-
-    // Only expand mixins that we found in imported metadata
-    // Leave others unchanged so remarkTemplateFields can process them with main metadata
-    if (hasValue) {
-      // Detect if this is a formula/helper (contains function call) or a simple field
-      // Helpers: formatPercent(...), formatDate(...), etc.
-      // Conditionals: field ? value1 : value2
-      const hasLogic =
-        FUNCTION_CALL_PATTERN.test(trimmedField) || // Function call: formatPercent(...)
-        CONDITIONAL_PATTERN.test(trimmedField); // Conditional: field ? a : b
-
-      // Use appropriate CSS class based on whether it's a formula or simple field
-      const cssClass = hasLogic ? 'legal-field highlight' : 'legal-field imported-value';
-
-      // Value was found in imported metadata - expand and track
-      return `<span class="${cssClass}" data-field="${trimmedField}">${value}</span>`;
-    } else {
-      // Value not in imported metadata - leave unchanged for main pipeline processing
-      return match;
-    }
+    return false;
   });
-}
 
-/**
- * Strip HTML comments and wrapper tags from imported content
- *
- * This is a temporary workaround because remarkImports inserts content as plain text
- * (not AST nodes), which causes HTML to be escaped when rendered.
- *
- * We strip:
- * - HTML comments: <!-- ... -->
- * - Standalone wrapper tags WITHOUT attributes: <p>, <div>, <span> (only when wrapping headers)
- * - We PRESERVE tags WITH attributes (class, id, style) as they may be needed for styling
- *
- * TODO: Fix the root cause by making remarkImports insert content as proper AST nodes
- * See: https://github.com/petalo/legal-markdown-js/issues/119
- */
-function stripHtmlComments(content: string): string {
-  let processed = content;
+  if (!hasImports) {
+    // No nested imports, return as is
+    return nodes;
+  }
 
-  // Remove HTML comments (<!-- ... -->)
-  // Use non-greedy match to handle multiple comments on same line
-  processed = processed.replace(/<!--[\s\S]*?-->/g, '');
+  // Process paragraphs with imports
+  const processedNodes: Content[] = [];
+  for (const node of nodes) {
+    if (node.type === 'paragraph') {
+      const paragraph = node as Paragraph;
+      const hasDirectives = paragraph.children.some(
+        child => child.type === 'text' && extractImportDirectives(child.value).length > 0
+      );
 
-  // Remove standalone wrapper tags WITHOUT attributes that contain legal headers
-  // Pattern: <p>\nll. Header\n</p> (but NOT <p class="...">\nll. Header\n</p>)
-  // This prevents plain tags from being escaped while preserving styled tags
-  // The negative lookahead (?!\s+[a-z]) ensures we only match tags without attributes
-  const headerPattern = `l{1,${MAX_HEADER_LEVEL}}`;
-  processed = processed.replace(
-    new RegExp(
-      `<(p|div|span)(?!\\s+[a-z])\\s*>\\s*(${headerPattern}\\.\\s+[^\\n]+)\\s*<\\/\\1>`,
-      'gi'
-    ),
-    '$2'
-  );
-
-  // Also remove wrapper tags on same line: <p>ll. Header</p> (but not <p class="...">ll. Header</p>)
-  processed = processed.replace(
-    new RegExp(`<(p|div|span)(?!\\s+[a-z])\\s*>(${headerPattern}\\.\\s+[^<]+)<\\/\\1>`, 'gi'),
-    '$2'
-  );
-
-  return processed;
-}
-
-/**
- * Process nested imports in content
- */
-function processNestedImports(content: string, context: ImportContext): string {
-  const importDirectives = extractImportDirectives(content);
-
-  let processedContent = content;
-
-  if (importDirectives.length > 0) {
-    // Process directives in reverse order to maintain correct positions
-    for (let i = importDirectives.length - 1; i >= 0; i--) {
-      const directive = importDirectives[i];
-      const result = processImportDirective(directive, context);
-
-      // Replace the directive with the result
-      processedContent =
-        processedContent.substring(0, directive.start) +
-        result +
-        processedContent.substring(directive.end);
+      if (hasDirectives) {
+        // Process this paragraph's imports
+        const importedNodes = await processParagraphWithImports(paragraph, context);
+        processedNodes.push(...importedNodes);
+      } else {
+        processedNodes.push(node);
+      }
+    } else {
+      processedNodes.push(node);
     }
   }
 
-  // Expand mixins using accumulated metadata from imported files
-  // This allows mixins defined in imported file frontmatter to work
-  // We use processMixins but then wrap values in HTML spans for field tracking
-  if (context.mergeMetadata && Object.keys(context.accumulatedMetadata).length > 0) {
-    processedContent = expandMixinsWithTracking(processedContent, context.accumulatedMetadata);
+  return processedNodes;
+}
+
+/**
+ * Expand mixins in AST nodes
+ *
+ * This function processes {{field}} patterns in text nodes within the AST,
+ * resolving them using the provided metadata and wrapping them with HTML
+ * for field tracking.
+ *
+ * @param nodes - AST nodes that may contain mixin patterns
+ * @param metadata - Metadata to resolve field values
+ * @returns AST nodes with mixins expanded
+ */
+async function expandMixinsInAST(
+  nodes: Content[],
+  metadata: Record<string, any>
+): Promise<Content[]> {
+  const processedNodes: Content[] = [];
+
+  for (const node of nodes) {
+    if (node.type === 'paragraph') {
+      // Process text children in the paragraph
+      const paragraph = node as Paragraph;
+      const processedChildren: Content[] = [];
+
+      for (const child of paragraph.children) {
+        if (child.type === 'text') {
+          // Let remarkTemplateFields handle all mixin processing with proper metadata
+          processedChildren.push(child);
+        } else {
+          processedChildren.push(child);
+        }
+      }
+
+      processedNodes.push({
+        ...paragraph,
+        children: processedChildren,
+      } as Paragraph);
+    } else {
+      processedNodes.push(node);
+    }
   }
 
-  // Strip HTML comments from imported content to prevent escaping
-  // (temporary workaround - see stripHtmlComments function comment)
-  return stripHtmlComments(processedContent);
+  return processedNodes;
 }
+
+/**
+ * Metadata for remarkImports plugin
+ *
+ * Dependencies:
+ * - Must run BEFORE remarkTemplateFields (fields in imported content need processing)
+ * - Must run BEFORE remarkLegalHeadersParser (legal headers in imported content need parsing)
+ * - Must run BEFORE remarkFieldTracking (imported fields need tracking)
+ */
+export const remarkImportsMetadata: PluginMetadata = {
+  name: 'remarkImports',
+  description: 'Process @import directives and insert content as AST nodes',
+  runBefore: ['remarkTemplateFields', 'remarkLegalHeadersParser', 'remarkFieldTracking'],
+  required: false,
+  version: '2.0.0', // Version 2.0 uses AST-based insertion
+};
 
 export default remarkImports;

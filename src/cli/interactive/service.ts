@@ -14,6 +14,27 @@ import { InteractiveConfig, ProcessingResult } from './types';
 import { ArchiveManager } from '../../utils/archive-manager';
 import { readFileSync } from '../../utils/index';
 import { processLegalMarkdown } from '../../index';
+import {
+  buildProcessingContext,
+  processLegalMarkdownWithRemark,
+  generateAllFormats,
+  buildFormatGenerationOptions,
+} from '../../core/pipeline';
+
+/**
+ * Get the path to the highlight CSS file from the package
+ * Works in both CommonJS and ESM environments
+ */
+function getHighlightCssPath(): string {
+  const isEsm = typeof __filename === 'undefined' || typeof __dirname === 'undefined';
+
+  if (!isEsm && typeof __dirname !== 'undefined') {
+    return path.resolve(__dirname, '..', '..', 'styles', 'highlight.css');
+  }
+
+  // Fallback for ESM environments
+  return path.join(process.cwd(), 'src', 'styles', 'highlight.css');
+}
 
 /**
  * Interactive service for processing documents with user-selected configuration
@@ -52,6 +73,8 @@ export class InteractiveService {
     css?: string;
     title?: string;
     archiveSource?: string | boolean;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
   } {
     const { outputFormats, processingOptions, archiveOptions, cssFile } = config;
 
@@ -78,6 +101,8 @@ export class InteractiveService {
       css: cssFile ? path.join(RESOLVED_PATHS.STYLES_DIR, cssFile) : undefined,
       title: config.outputFilename,
       archiveSource: archiveOptions.enabled ? archiveOptions.directory || true : false,
+      format: undefined, // Interactive CLI doesn't collect this, use default
+      landscape: undefined, // Interactive CLI doesn't collect this, use default
     };
   }
 
@@ -107,86 +132,57 @@ export class InteractiveService {
         outputDir = RESOLVED_PATHS.DEFAULT_OUTPUT_DIR;
       }
 
-      // Create a CliService without archiving for individual format processing
+      // Read file content
+      const content = readFileSync(inputFile);
+      const inputDir = path.dirname(inputFile);
+
+      // Map interactive config to processing options
       const processingOptions = this.mapToCliOptions(this.getConfig());
-      const nonArchivingService = new CliService({
-        ...processingOptions,
-        archiveSource: false, // Disable archiving during format processing
-        exportMetadata: false, // Disable metadata export to prevent duplications
-        silent: true, // Suppress success messages to prevent duplication
+
+      // PHASE 1: Build processing context (parses YAML, resolves force-commands)
+      const context = await buildProcessingContext(content, processingOptions, inputDir);
+
+      // PHASE 2: Process content ONCE (runs remark pipeline, caches AST)
+      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+        ...context.options,
+        additionalMetadata: context.metadata, // Pass YAML metadata for header processing
       });
 
-      // Process for each selected format
-      if (outputFormats.pdf) {
-        const pdfOutput = path.join(outputDir, `${outputFilename}.pdf`);
-        await nonArchivingService.processFile(inputFile, pdfOutput);
-        outputFiles.push(pdfOutput);
+      // PHASE 3: Generate all formats from cached result (NO re-processing!)
+      const highlightCssPath = getHighlightCssPath();
+      const cssPath = context.options.cssPath ?? processingOptions.css;
 
-        // Add highlight version if highlight is enabled
-        if (processingOptions.highlight) {
-          const highlightPdfOutput = path.join(outputDir, `${outputFilename}.HIGHLIGHT.pdf`);
-          outputFiles.push(highlightPdfOutput);
-        }
-      }
+      const formatGenerationOptions = buildFormatGenerationOptions(context.options, {
+        outputDir,
+        baseFilename: outputFilename,
+        pdf: outputFormats.pdf,
+        html: outputFormats.html,
+        markdown: outputFormats.markdown && !archiveOptions.enabled, // Skip if archiving
+        metadata: outputFormats.metadata,
+        highlight: processingOptions.highlight,
+        cssPath,
+        highlightCssPath,
+        title: outputFilename,
+        format: processingOptions.format,
+        landscape: processingOptions.landscape,
+        exportFormat: 'yaml',
+        exportPath: path.join(outputDir, `${outputFilename}-metadata.yaml`),
+      });
 
-      if (outputFormats.html) {
-        const htmlOutput = path.join(outputDir, `${outputFilename}.html`);
-        await nonArchivingService.processFile(inputFile, htmlOutput);
-        outputFiles.push(htmlOutput);
+      const formatResult = await generateAllFormats(processedResult, formatGenerationOptions);
 
-        // Add highlight version if highlight is enabled
-        if (processingOptions.highlight) {
-          const highlightHtmlOutput = path.join(outputDir, `${outputFilename}.HIGHLIGHT.html`);
-          outputFiles.push(highlightHtmlOutput);
-        }
-      }
-
-      if (outputFormats.markdown) {
-        // Only generate normal MD file if archiving is disabled
-        // When archiving is enabled, we'll have .ORIGINAL and .PROCESSED files instead
-        if (!archiveOptions.enabled) {
-          const mdOutput = path.join(outputDir, `${outputFilename}.md`);
-          await nonArchivingService.processFile(inputFile, mdOutput);
-          outputFiles.push(mdOutput);
-        }
-      }
-
-      if (outputFormats.metadata) {
-        const yamlOutput = path.join(outputDir, `${outputFilename}-metadata.yaml`);
-        // Process the file to get metadata only, without going through full pipeline
-        const content = readFileSync(inputFile);
-        const inputDir = path.dirname(inputFile);
-        const metadataOptions = {
-          ...processingOptions,
-          basePath: inputDir,
-          exportMetadata: true,
-          exportFormat: 'yaml' as const,
-          exportPath: yamlOutput,
-        };
-        const result = processLegalMarkdown(content, metadataOptions);
-
-        // Validate that metadata was actually exported
-        if (result.exportedFiles && result.exportedFiles.length > 0) {
-          // Filter out imported files - only include actual exported metadata files
-          const metadataFiles = result.exportedFiles.filter(file => {
-            const fileName = path.basename(file);
-            return fileName.includes('-metadata.') || fileName.includes('metadata.');
-          });
-
-          if (metadataFiles.length > 0) {
-            outputFiles.push(...metadataFiles);
-          } else {
-            throw new Error(`Failed to export metadata to: ${yamlOutput}`);
-          }
-        } else {
-          throw new Error(`Failed to export metadata to: ${yamlOutput}`);
-        }
-      }
+      // Add all generated files to output
+      outputFiles.push(...formatResult.generatedFiles);
 
       // Handle archiving separately after all processing is complete
       let archiveResult;
       if (archiveOptions.enabled) {
-        archiveResult = await this.handleArchiving(inputFile);
+        // Use the already-processed content from Phase 2
+        archiveResult = await this.handleArchivingWithProcessedContent(
+          inputFile,
+          content,
+          processedResult.content
+        );
 
         // Include archived MD files in outputFiles so they appear in the MD section
         if (archiveResult && archiveResult.success) {
@@ -225,12 +221,21 @@ export class InteractiveService {
   }
 
   /**
-   * Handle archiving of source file and capture results
+   * Handle archiving of source file using already-processed content
+   *
+   * This method reuses the processed content from Phase 2 instead of
+   * re-processing the file, eliminating duplicate processing.
    *
    * @param inputFile Path to the source file to archive
+   * @param originalContent Original file content
+   * @param processedContent Already-processed content from Phase 2
    * @returns Archive operation result information
    */
-  private async handleArchiving(inputFile: string): Promise<ProcessingResult['archiveResult']> {
+  private async handleArchivingWithProcessedContent(
+    inputFile: string,
+    originalContent: string,
+    processedContent: string
+  ): Promise<ProcessingResult['archiveResult']> {
     try {
       const archiveManager = new ArchiveManager();
       const { archiveOptions } = this.getConfig();
@@ -246,22 +251,13 @@ export class InteractiveService {
         archiveDir = RESOLVED_PATHS.ARCHIVE_DIR;
       }
 
-      // Read original content
-      const originalContent = readFileSync(inputFile);
-
-      // Process the content to get processed version
-      const inputDir = path.dirname(inputFile);
-      const processedResult = processLegalMarkdown(originalContent, {
-        basePath: inputDir,
-      });
-
-      // Use smart archiving
+      // Use smart archiving with already-processed content (NO re-processing!)
       const result = await archiveManager.smartArchiveFile(inputFile, {
         archiveDir,
         createDirectory: true,
         conflictResolution: 'rename',
         originalContent,
-        processedContent: processedResult.content,
+        processedContent, // Reuse from Phase 2
       });
 
       return {

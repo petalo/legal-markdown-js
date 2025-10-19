@@ -1,295 +1,131 @@
 # Processing Pipeline Architecture
 
-The document processing follows a hybrid architecture approach: a primary
-remark-based AST processor with comprehensive plugin system for all
-functionality and backward compatibility.
+- [Overview](#overview)
+- [Phase 1 - Context Builder](#phase-1--context-builder)
+- [Phase 2 - Remark Content Processing](#phase-2--remark-content-processing)
+- [Phase 3 - Format Generation](#phase-3--format-generation)
+- [Pipeline Entry Points](#pipeline-entry-points)
+- [Performance & Validation](#performance--validation)
+- [Extension & Migration Notes](#extension--migration-notes)
 
-## Modern Remark-based Processing (Primary Architecture)
+## Overview
 
-The primary processing path uses unified/remark ecosystem for AST-based
-processing:
+Legal Markdown JS now ships with a **three-phase processing pipeline** that
+removes duplicate remark executions and lets every consumer share a cached AST.
+The architecture is implemented in `src/core/pipeline` and was introduced while
+working on the incremental pipeline initiative (Issue #122). The phases are:
 
-```mermaid
-flowchart TD
-    START([Document Input]) --> REMARK_PROC[Remark Processor]
-
-    REMARK_PROC --> YAML_PARSE[Parse YAML Frontmatter]
-    YAML_PARSE --> CREATE_PROC[Create Unified Processor]
-
-    CREATE_PROC --> TEMPLATE_PLUGIN[remarkTemplateFields Plugin]
-    TEMPLATE_PLUGIN --> CROSS_REF_PLUGIN[remarkCrossReferences Plugin]
-    CROSS_REF_PLUGIN --> FIELD_TRACK_PLUGIN[remarkFieldTracking Plugin]
-
-    FIELD_TRACK_PLUGIN --> AST_PROCESS[Process AST]
-    AST_PROCESS --> MARKDOWN_OUT[Markdown Output]
-    MARKDOWN_OUT --> FIELD_REPORT[Generate Field Report]
-
-    FIELD_REPORT --> COMPLETE[Processing Complete]
-    COMPLETE --> END([Clean Output])
-
-    subgraph "Remark Plugins"
-        TEMPLATE_PLUGIN --> FIELD_RESOLUTION[Resolve {{fields}}]
-        CROSS_REF_PLUGIN --> REF_RESOLUTION[Resolve |references|]
-        FIELD_TRACK_PLUGIN --> TRACK_FIELDS[Track Field Usage]
-    end
-
-    subgraph "AST Advantages"
-        NO_CONTAMINATION[No Text Contamination]
-        ISOLATED_PROCESSING[Isolated Node Processing]
-        DOUBLE_WRAP_PREVENTION[Double-wrap Prevention]
-        CLEAN_HTML_ESCAPING[Proper HTML Escaping]
-    end
-
-    AST_PROCESS --> NO_CONTAMINATION
-    AST_PROCESS --> ISOLATED_PROCESSING
-    AST_PROCESS --> DOUBLE_WRAP_PREVENTION
-    AST_PROCESS --> CLEAN_HTML_ESCAPING
-```
-
-### Remark Processing Benefits
-
-**AST-based Advantages:**
-
-- **No Text Contamination**: Field highlighting only applies to actual template
-  fields
-- **Context Awareness**: Full understanding of markdown structure prevents false
-  positives
-- **Isolated Processing**: Each AST node processed independently without
-  affecting others
-- **Double-wrap Prevention**: Prevents reprocessing of already processed content
-- **Clean HTML Escaping**: Proper handling of HTML entities within AST nodes
-
-**Plugin Architecture:**
-
-- **Template Fields Plugin**: Resolves `{{field}}` syntax with frontmatter
-  values
-- **Cross-References Plugin**: Handles `|reference|` syntax for internal
-  document linking
-- **Field Tracking Plugin**: Tracks field usage and generates comprehensive
-  reports
-
-## Remark Architecture Benefits
-
-The remark-based architecture provides several advantages:
-
-- **AST-based Processing**: Prevents text contamination and provides surgical
-  modifications
-- **Plugin Ecosystem**: Leverages the extensive unified/remark ecosystem
-- **Composable Architecture**: Plugins can be combined and reordered as needed
-- **Type Safety**: Full TypeScript support with comprehensive error handling
-- **Performance**: Optimized single-pass processing with caching
-- **Extensibility**: Easy addition of new functionality without core changes
-
-### Pipeline Processing Steps
-
-**Format Conversion Steps:**
-
-1. **RST Conversion**: reStructuredText to Markdown conversion
-2. **LaTeX Conversion**: LaTeX to Markdown conversion
-3. **YAML Front Matter**: Parse and validate document metadata
-
-**Content Processing Steps:** 4. **Import Processing**: Handle `@import`
-directives for document composition 5. **Optional Clauses**: Process conditional
-content based on frontmatter flags 6. **Cross-References**: Resolve internal
-document references 7. **Template Loops**: Handle iterative content generation
-
-**Finalization Steps:** 8. **AST Mixin Processing**: Apply advanced AST
-transformations 9. **Header Processing**: Generate structured headers with
-numbering 10. **Metadata Export**: Extract and format document metadata 11.
-**Field Tracking**: Generate field usage reports and highlighting
-
-## Processing Details
-
-### 1. YAML Front Matter Processing with Frontmatter Merging
+| Phase | Responsibility                                           | Key Outputs                                                             |
+| ----- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1     | Parse frontmatter, resolve force-commands, merge options | `ProcessingContext`                                                     |
+| 2     | Run the remark processor exactly once                    | Cached `LegalMarkdownProcessorResult` (content, AST, metadata, exports) |
+| 3     | Generate requested artefacts without re-processing       | HTML, PDF, Markdown, metadata files                                     |
 
 ```mermaid
-flowchart TD
-    START[Document Input] --> CHECK_YAML[Check for YAML Front Matter]
+flowchart LR
+    A[Phase 1\nContext Builder] --> B[Phase 2\nRemark Processor]
+    B --> C[Phase 3\nFormat Generator]
 
-    CHECK_YAML --> HAS_YAML{Has Front Matter?}
-    HAS_YAML -->|Yes| PARSE_YAML[Parse YAML]
-    HAS_YAML -->|No| CREATE_DEFAULT[Create Default Metadata]
-
-    PARSE_YAML --> VALIDATE_YAML[Validate YAML Structure]
-    VALIDATE_YAML --> MERGE_SYSTEM[Merge with System Defaults]
-
-    CREATE_DEFAULT --> MERGE_SYSTEM
-    MERGE_SYSTEM --> FLATTEN_OBJ[Flatten Object Structure]
-    FLATTEN_OBJ --> FILTER_RESERVED[Filter Reserved Fields]
-    FILTER_RESERVED --> READY[Metadata Ready]
-
-    subgraph "Frontmatter Security"
-        SANITIZE[Sanitize Input]
-        VALIDATE_TYPES[Type Validation]
-        PREVENT_INJECTION[Prevent Code Injection]
-    end
-
-    PARSE_YAML --> SANITIZE
-    SANITIZE --> VALIDATE_TYPES
-    VALIDATE_TYPES --> PREVENT_INJECTION
+    A -.->|ProcessingContext| B
+    B -.->|LegalMarkdownProcessorResult| C
+    C -->|Generated files| D[CLI / Integrations]
 ```
 
-**Key Features:**
+The pipeline modules are exported from `src/core/pipeline/index.ts`, making them
+available to CLI services, integrations and future API consumers.
 
-- **YAML Validation**: Comprehensive validation with error reporting
-- **Object Flattening**: Nested objects flattened for template field access
-- **Reserved Field Filtering**: System fields protected from overwrite
-- **Security Measures**: Input sanitization and injection prevention
+## Phase 1 - Context Builder
 
-### 2. Frontmatter Merging System
+Phase 1 lives in `src/core/pipeline/context-builder.ts`. It is responsible for
+transforming raw markdown + CLI options into a normalized `ProcessingContext`:
 
-The frontmatter merging system provides a secure and flexible way to combine
-metadata from multiple sources:
+- Parses YAML frontmatter via `parseYamlFrontMatter`
+- Extracts, renders and applies force-commands (`extractForceCommands`,
+  `parseForceCommands`, `applyForceCommands`)
+- Merges CLI options, force-commands and additional metadata
+- Enables field tracking automatically when highlighting is requested
+- Provides validation helpers (`validateProcessingContext`) and metadata merging
+  (`mergeMetadata`) for downstream code
 
-#### Frontmatter Security Architecture
+The returned `ProcessingContext` bundles the raw content (with and without
+YAML), resolved options, merged metadata and the base path that the remark phase
+uses for relative imports. Debug logging is emitted when `options.debug` is true
+to make tracing easier.
 
-```mermaid
-flowchart TD
-    INPUT[Frontmatter Input] --> VALIDATOR[Input Validator]
+## Phase 2 - Remark Content Processing
 
-    VALIDATOR --> TYPE_CHECK[Type Checking]
-    TYPE_CHECK --> SANITIZE[Content Sanitization]
-    SANITIZE --> RESERVED_FILTER[Reserved Fields Filter]
+Phase 2 reuses the existing remark processor from
+`src/extensions/remark/legal-markdown-processor.ts`. The differences introduced
+by the pipeline work are:
 
-    RESERVED_FILTER --> MERGER[Object Merger]
-    MERGER --> FLATTENER[Object Flattener]
-    FLATTENER --> OUTPUT[Safe Merged Output]
+- `processLegalMarkdownWithRemark` now returns a `LegalMarkdownProcessorResult`
+  that includes the processed markdown, metadata, exported file list **and** a
+  cached AST (`ast?: Root`)
+- Additional metadata gathered in Phase 1 is passed through with the
+  `additionalMetadata` option so header numbering and other plugins see the
+  consolidated state
+- Plugin order validation migrated next to the remark plugins. The validator and
+  registry live in `src/plugins/remark/plugin-order-validator.ts` and
+  `src/plugins/remark/plugin-metadata-registry.ts`, keeping ordering rules close
+  to the implementations (see
+  [Remark Content Processing](04_remark_integration.md))
 
-    subgraph "Security Layers"
-        INJECTION_PREV[Injection Prevention]
-        PROTOTYPE_POLLUTION[Prototype Pollution Protection]
-        XSS_PROTECTION[XSS Protection]
-        EVAL_PROTECTION[Eval Protection]
-    end
+Because Phase 2 only runs **once**, all format generation steps consume the same
+AST and metadata snapshot, eliminating the previous "format × remark runs"
+combinatorial explosion.
 
-    SANITIZE --> INJECTION_PREV
-    MERGER --> PROTOTYPE_POLLUTION
-    FLATTENER --> XSS_PROTECTION
-    OUTPUT --> EVAL_PROTECTION
-```
+## Phase 3 - Format Generation
 
-### 3. Header Processing Workflow
+Phase 3 is implemented by `src/core/pipeline/format-generator.ts` and focuses on
+artefact creation:
 
-```mermaid
-flowchart TD
-    START[Content Input] --> SCAN_HEADERS[Scan for Header Patterns]
+- `generateAllFormats` writes HTML, PDF, Markdown and metadata exports without
+  re-running the remark phase. It orchestrates Html/Pdf generators and simple
+  file writes from the cached AST and processed markdown
+- `processAndGenerateFormats` is a convenience helper that executes Phases 2 and
+  3 together when Phase 1 already provided a `ProcessingContext`
+- Highlight variants share the same cached AST and differ only by the
+  `includeHighlighting` flag passed into the Html/Pdf generators
+- Output directories are created on demand and comprehensive error messages are
+  thrown when creation fails
+- Every invocation returns both the generated file list and timing statistics so
+  callers can present user feedback or feed telemetry
 
-    SCAN_HEADERS --> PARSE_STRUCTURE[Parse Header Structure]
-    PARSE_STRUCTURE --> VALIDATE_HIERARCHY[Validate Hierarchy]
-    VALIDATE_HIERARCHY --> NUMBER_HEADERS[Apply Numbering]
+## Pipeline Entry Points
 
-    NUMBER_HEADERS --> FORMAT_OUTPUT[Format Output]
-    FORMAT_OUTPUT --> GENERATE_TOC[Generate Table of Contents]
-    GENERATE_TOC --> COMPLETE[Processing Complete]
+Two services drive the pipeline at runtime:
 
-    subgraph "Header Patterns"
-        L_PATTERN[l. (Level 1)]
-        LL_PATTERN[ll. (Level 2)]
-        LLL_PATTERN[lll. (Level 3)]
-        LLLL_PATTERN[llll. (Level 4)]
-    end
+- `src/cli/service.ts` - `generateFormattedOutputWithOptions` performs the three
+  phases sequentially, ensuring HTML/PDF/Markdown/metadata artefacts come from a
+  single remark pass and archiving reuses the processed content
+- `src/cli/interactive/service.ts` - the interactive CLI maps user selections to
+  CLI options, builds the processing context, runs the remark phase once, then
+  calls `generateAllFormats` with the resulting AST
 
-    SCAN_HEADERS --> L_PATTERN
-    SCAN_HEADERS --> LL_PATTERN
-    SCAN_HEADERS --> LLL_PATTERN
-    SCAN_HEADERS --> LLLL_PATTERN
-```
+Both services keep their existing single-format behaviour (plain remark output)
+for scenarios where only markdown is requested.
 
-### 4. Pipeline System
+## Performance & Validation
 
-#### Pipeline Step Architecture
+- Integration benchmark tests
+  (`tests/integration/pipeline-3-phase.integration.test.ts`) confirm a ~50-75 %
+  reduction in processing time for multi-format runs by comparing the legacy
+  behaviour with the three-phase pipeline
+- Unit suites in `tests/unit/core/pipeline/context-builder.test.ts` and
+  `tests/unit/core/pipeline/format-generator.test.ts` cover metadata merging,
+  error handling and format generation pathways
+- Additional CLI and remark plugin tests were updated to assert that the AST is
+  preserved across output modes and plugin order validation is enforced when
+  requested (`tests/unit/plugins/remark/imports.unit.test.ts`,
+  `tests/unit/plugins/remark/css-classes.unit.test.ts`)
 
-```mermaid
-graph TB
-    subgraph "Pipeline Architecture"
-        MANAGER[Pipeline Manager]
-        CONFIG[Pipeline Configuration]
-        LOGGER[Pipeline Logger]
+## Extension & Migration Notes
 
-        subgraph "Processing Steps"
-            STEP1[Format Conversion]
-            STEP2[YAML Processing]
-            STEP3[Content Processing]
-            STEP4[Output Generation]
-        end
-
-        subgraph "Error Handling"
-            ERROR_DETECT[Error Detection]
-            ERROR_RECOVERY[Error Recovery]
-            FALLBACK_PROC[Fallback Processing]
-        end
-
-        subgraph "Performance Monitoring"
-            METRICS[Performance Metrics]
-            PROFILING[Step Profiling]
-            TIMING[Execution Timing]
-        end
-    end
-
-    MANAGER --> CONFIG
-    MANAGER --> LOGGER
-    MANAGER --> STEP1
-    STEP1 --> STEP2
-    STEP2 --> STEP3
-    STEP3 --> STEP4
-
-    MANAGER --> ERROR_DETECT
-    ERROR_DETECT --> ERROR_RECOVERY
-    ERROR_RECOVERY --> FALLBACK_PROC
-
-    MANAGER --> METRICS
-    METRICS --> PROFILING
-    PROFILING --> TIMING
-```
-
-#### Key Pipeline Improvements
-
-**Performance Optimizations:**
-
-- **Lazy Loading**: Components loaded only when needed
-- **Caching**: Intermediate results cached for repeated processing
-- **Parallel Processing**: Independent steps executed in parallel
-- **Memory Management**: Efficient memory usage for large documents
-
-**Error Handling:**
-
-- **Graceful Degradation**: Partial processing on non-critical errors
-- **Error Recovery**: Automatic recovery from transient failures
-- **Detailed Reporting**: Comprehensive error context and suggestions
-- **Fallback Processing**: Alternative processing paths for edge cases
-
-**Monitoring and Debugging:**
-
-- **Step Profiling**: Individual step performance measurement
-- **Execution Timing**: Detailed timing information for optimization
-- **Resource Monitoring**: Memory and CPU usage tracking
-- **Debug Logging**: Comprehensive logging for troubleshooting
-
-### 5. Optional Clause Processing
-
-```mermaid
-flowchart TD
-    START[Content Input] --> SCAN_CLAUSES[Scan for Optional Clauses]
-
-    SCAN_CLAUSES --> PARSE_SYNTAX[Parse [content]{condition} Syntax]
-    PARSE_SYNTAX --> EXTRACT_CONDITIONS[Extract Conditions]
-    EXTRACT_CONDITIONS --> EVAL_CONDITIONS[Evaluate Conditions]
-
-    EVAL_CONDITIONS --> CHECK_FRONTMATTER[Check Frontmatter Values]
-    CHECK_FRONTMATTER --> APPLY_LOGIC[Apply Boolean Logic]
-
-    APPLY_LOGIC --> INCLUDE_CONTENT{Include Content?}
-    INCLUDE_CONTENT -->|Yes| INCLUDE[Include Content]
-    INCLUDE_CONTENT -->|No| EXCLUDE[Exclude Content]
-
-    INCLUDE --> PROCESS_NESTED[Process Nested Clauses]
-    EXCLUDE --> CONTINUE[Continue Processing]
-    PROCESS_NESTED --> CONTINUE
-    CONTINUE --> COMPLETE[Processing Complete]
-```
-
-This hybrid pipeline architecture ensures both modern processing capabilities
-through remark-based AST processing and comprehensive backward compatibility
-through the remark-based processor. The system provides comprehensive
-appropriate processing path based on document requirements and available
-features.
+- The pipeline exports are additive; existing consumers that call
+  `processLegalMarkdownWithRemark` directly remain supported
+- New helpers (`buildProcessingContext`, `generateAllFormats`,
+  `processAndGenerateFormats`) provide clear integration points for upcoming API
+  layers or background workers
+- Legacy pipeline code paths tracked in `docs/legacy-deprecation-plan.md` can be
+  migrated incrementally by swapping in the three-phase helpers without touching
+  business logic
