@@ -35,6 +35,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import type { Plugin } from 'unified';
+import type { Root } from 'mdast';
 import type { Unsafe } from 'mdast-util-to-markdown';
 import {
   remarkCrossReferences,
@@ -47,12 +48,16 @@ import {
   remarkLegalHeadersParser,
   remarkDates,
 } from '../../plugins/remark/index';
+import { PluginOrderValidator } from '../../plugins/remark/plugin-order-validator';
+import { GLOBAL_PLUGIN_REGISTRY } from '../../plugins/remark/plugin-metadata-registry';
 import remarkSignatureLines from '../../plugins/remark/signature-lines';
 import { remarkDebugAST } from '../../plugins/remark/debug-ast';
 import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { processTemplateLoops } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
+import type { MarkdownString } from '../../types/content-formats';
+import { asMarkdown } from '../../types/content-formats';
 
 /**
  * Unsafe patterns for markdown serialization, excluding underscore patterns.
@@ -243,6 +248,9 @@ export interface LegalMarkdownProcessorOptions {
   /** Enable debug logging */
   debug?: boolean;
 
+  /** Validate plugin execution order and log warnings */
+  validatePluginOrder?: boolean;
+
   /** Additional metadata to merge with document metadata */
   additionalMetadata?: Record<string, any>;
 
@@ -275,11 +283,14 @@ export interface LegalMarkdownProcessorOptions {
  * @interface LegalMarkdownProcessorResult
  */
 export interface LegalMarkdownProcessorResult {
-  /** Processed markdown content */
-  content: string;
+  /** Processed markdown content (always Markdown format, never HTML) */
+  content: MarkdownString;
 
   /** Extracted and processed metadata */
   metadata: Record<string, any>;
+
+  /** Cached AST for Phase 3 format generation (optional) */
+  ast?: Root;
 
   /** Array of exported metadata files */
   exportedFiles?: string[];
@@ -334,6 +345,9 @@ function createLegalMarkdownProcessor(
   options: LegalMarkdownProcessorOptions
 ) {
   const processor = unified().use(remarkParse);
+
+  // Track plugin names for order validation
+  const pluginOrder: string[] = [];
 
   // Step 1: Add imports plugin FIRST - must load all content before any transformation
   // This ensures that imported files are loaded before any other processing
@@ -449,6 +463,47 @@ function createLegalMarkdownProcessor(
     unsafe: unsafeWithoutUnderscores, // Use filtered unsafe patterns without underscores
   });
 
+  // Build plugin order list for validation (must match actual processor.use() order above)
+  if (!options.noImports) pluginOrder.push('remarkImports');
+  if (!options.noHeaders) pluginOrder.push('remarkLegalHeadersParser');
+  if (!options.noMixins) pluginOrder.push('remarkMixins');
+  if (!options.noClauses) pluginOrder.push('remarkClauses');
+  pluginOrder.push('remarkDates');
+  pluginOrder.push('remarkSignatureLines');
+  pluginOrder.push('remarkTemplateFields');
+  if (!options.disableCrossReferences && !options.noReferences) {
+    pluginOrder.push('remarkCrossReferences');
+  }
+  if (!options.noHeaders) pluginOrder.push('remarkHeaders');
+
+  // Validate plugin order
+  if (options.debug || options.validatePluginOrder) {
+    try {
+      const validator = new PluginOrderValidator(GLOBAL_PLUGIN_REGISTRY);
+      const result = validator.validate(pluginOrder, {
+        throwOnError: false, // Don't throw, just log warnings
+        logWarnings: options.debug || options.validatePluginOrder,
+        strictMode: false,
+        debug: options.debug,
+      });
+
+      if (!result.valid && options.debug) {
+        console.warn('[LegalMarkdownProcessor] Plugin order validation warnings detected');
+        for (const error of result.errors) {
+          console.warn(`  - ${error.message}`);
+        }
+        if (result.suggestedOrder) {
+          console.warn('  Suggested order:', result.suggestedOrder.join(' → '));
+        }
+      }
+    } catch (error) {
+      // If validation fails, just log a warning in debug mode
+      if (options.debug) {
+        console.warn('[LegalMarkdownProcessor] Plugin order validation failed:', error);
+      }
+    }
+  }
+
   return processor;
 }
 
@@ -545,7 +600,7 @@ export async function processLegalMarkdownWithRemark(
       }
 
       return {
-        content: contentWithEscapedTemplates,
+        content: asMarkdown(contentWithEscapedTemplates),
         metadata: { ...yamlMetadata, ...options.additionalMetadata },
         stats: {
           processingTime: Date.now() - startTime,
@@ -560,7 +615,7 @@ export async function processLegalMarkdownWithRemark(
     // If only processing YAML, return early
     if (options.yamlOnly) {
       return {
-        content: contentWithEscapedTemplates,
+        content: asMarkdown(contentWithEscapedTemplates),
         metadata: yamlMetadata,
         stats: {
           processingTime: Date.now() - startTime,
@@ -690,9 +745,13 @@ export async function processLegalMarkdownWithRemark(
     const result = await processor.process(preprocessedContent);
     const processedContent = String(result);
 
+    // Cache the AST for Phase 3 format generation
+    // The AST is available in result.data (after processing)
+    const processedTree = result.value as unknown as Root;
+
     // Extract imported metadata from the processed tree
-    const processedTree = result.history[0] as unknown; // Get the processed tree
-    const importedMetadata = (processedTree as Record<string, unknown>)?._importedMetadata || {};
+    const importedMetadata =
+      (result.history[0] as unknown as Record<string, unknown>)?._importedMetadata || {};
 
     // Merge imported metadata with combined metadata (imported metadata has lower priority)
     const finalMetadata = {
@@ -754,8 +813,9 @@ export async function processLegalMarkdownWithRemark(
     }
 
     return {
-      content: processedContent,
+      content: asMarkdown(processedContent),
       metadata: finalMetadata,
+      ast: processedTree, // Cached AST for Phase 3
       exportedFiles: exportedFiles.length > 0 ? exportedFiles : undefined,
       fieldReport,
       stats: {

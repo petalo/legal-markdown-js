@@ -103,8 +103,11 @@ function convertToHeading(node: Paragraph, level: number, text: string): Heading
     children: parseMarkdownInlineFormatting(text),
   };
 
-  // Mark this as a legal header
-  (heading as any).data = { isLegalHeader: true };
+  // Mark this as a legal header and initialize hProperties for CSS classes
+  (heading as any).data = {
+    isLegalHeader: true,
+    hProperties: {}, // Initialize for remarkHeaders to add CSS classes
+  };
 
   // If the original paragraph had HTML children (like field tracking spans),
   // we need to preserve them

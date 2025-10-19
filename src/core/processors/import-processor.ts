@@ -55,6 +55,11 @@ import { mergeSequentially, MergeOptions } from '../utils/frontmatter-merger';
  * the "source always wins" strategy with flattened granular merging. This can be disabled
  * with the disableFrontmatterMerge option.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkImports` plugin instead.
+ * The remark-based approach inserts content as AST nodes and provides better error handling.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing import statements
  * @param {string} [basePath] - Optional base path for resolving relative imports
  * @param {Record<string, any>} [currentMetadata] - Current document metadata for merging
@@ -96,6 +101,15 @@ export function processPartialImports(
   currentMetadata?: Record<string, any>,
   options?: LegalMarkdownOptions
 ): ImportProcessingResult {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processPartialImports() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkImports plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   const startTime = Date.now();
   const timeoutMs = 30000; // 30 seconds for complete import processing
   // Regular expression to match import statements
@@ -281,6 +295,11 @@ function resolveImportPath(importPath: string, basePath?: string): string {
  * on the filesystem. Returns an array of error messages for any missing files,
  * or an empty array if all imports are valid.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkImports` plugin instead.
+ * The remark-based approach handles validation automatically during import processing.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing import statements to validate
  * @param {string} [basePath] - Optional base path for resolving relative imports
  * @returns {string[]} Array of validation errors, empty if all imports are valid
@@ -308,6 +327,15 @@ function resolveImportPath(importPath: string, basePath?: string): string {
  * ```
  */
 export function validateImports(content: string, basePath?: string): string[] {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] validateImports() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkImports plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   const importPattern = /@import\s+(.+?)(?:\s|$)/g;
   const errors: string[] = [];
 

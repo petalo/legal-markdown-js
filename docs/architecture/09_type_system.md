@@ -1,438 +1,89 @@
 # Type System <!-- omit in toc -->
 
 - [Overview](#overview)
-- [Core Types Module](#core-types-module)
-- [Processing Types](#processing-types)
+- [Processing Options](#processing-options)
+- [Pipeline Types](#pipeline-types)
+- [Plugin Metadata Types](#plugin-metadata-types)
 - [Field Tracking Types](#field-tracking-types)
-- [Import and Pipeline Types](#import-and-pipeline-types)
-- [Global Type Definitions](#global-type-definitions)
-- [Specialized Type Definitions](#specialized-type-definitions)
-- [Type Safety Benefits](#type-safety-benefits)
+- [Error & Diagnostic Types](#error--diagnostic-types)
 
 ## Overview
 
-The project features a comprehensive TypeScript type system with strict typing
-throughout. The type system ensures compile-time safety, provides excellent IDE
-support, and maintains API consistency across all modules.
+Legal Markdown JS is written in TypeScript with project-wide `strict` settings.
+Shared interfaces reside in `src/types.ts`, with specialised definitions
+colocated next to their feature modules (pipeline, plugins, CLI). This section
+captures the most important types and where they live.
 
-## Core Types Module
+## Processing Options
 
-### LegalMarkdownOptions
+`src/types.ts` defines `LegalMarkdownOptions`, the core configuration shape used
+by the CLI, web UI and API consumers.
 
-The primary configuration interface for all processing operations:
+Key groups of options:
 
-```typescript
-interface LegalMarkdownOptions {
-  // Basic Processing Options
-  basePath?: string;
-  yamlOnly?: boolean;
-  noHeaders?: boolean;
-  noClauses?: boolean;
-  noReferences?: boolean;
-  noImports?: boolean;
-  noMixins?: boolean;
+- **Execution behaviour** - `yamlOnly`, `noHeaders`, `noClauses`,
+  `noReferences`, `noImports`, `noMixins`, `noReset`, `noIndent`
+- **Metadata export** - `exportMetadata`, `exportFormat`, `exportPath`
+- **Diagnostics** - `debug`, `throwOnYamlError`, `importTracing`,
+  `validateImportTypes`, `logImportOperations`
+- **Field tracking** - `enableFieldTracking`, `enableFieldTrackingInMarkdown`
+- **Context** - `basePath`, `disableFrontmatterMerge`, `_htmlGeneration`
 
-  // Advanced Processing Options
-  disableFrontmatterMerge?: boolean;
-  validateImportTypes?: boolean;
-  logImportOperations?: boolean;
-  toMarkdown?: boolean;
-  exportMetadata?: boolean;
-  exportFormat?: 'yaml' | 'json';
-  exportPath?: string;
+Phase 1 accepts a `Partial<ProcessingOptions>` (see
+`src/core/pipeline/context-builder.ts`) that extends `LegalMarkdownOptions` with
+CLI-specific flags (`pdf`, `html`, `highlight`, `css`, etc.).
 
-  // Debug and Development Options
-  debug?: boolean;
-  throwOnYamlError?: boolean;
-  noReset?: boolean;
-  noIndent?: boolean;
+## Pipeline Types
 
-  // Field Tracking Options
-  enableFieldTracking?: boolean;
-  enableFieldTrackingInMarkdown?: boolean;
+Pipeline modules introduce additional structures:
 
-  // Output Generation Options
-  _htmlGeneration?: boolean;
-  title?: string;
-  css?: string;
-  html?: boolean;
-  pdf?: boolean;
-  highlight?: boolean;
-}
-```
+- `ProcessingContext` - returned by `buildProcessingContext`, contains
+  `content`, `rawContent`, `metadata`, `options` and `basePath`
+- `ProcessingOptions` - Phase-1 enriched options
+  (`src/core/pipeline/context-builder.ts`)
+- `FormatGenerationOptions` / `FormatGenerationResult` - describe artefact
+  generation (`src/core/pipeline/format-generator.ts`)
 
-### RemarkOptions
+These types ensure Phase 2 and Phase 3 consumers can rely on a consistent,
+validated context.
 
-Configuration for remark-based processing:
+## Plugin Metadata Types
 
-```typescript
-interface RemarkOptions {
-  plugins?: Plugin[];
-  settings?: Settings;
-  data?: Data;
-}
-```
+`src/plugins/remark/types.ts` defines the metadata contract for the plugin
+registry and validator:
 
-## Processing Types
+- `PluginMetadata` - name, description, version, `runBefore`, `runAfter`,
+  `conflicts`, `required`
+- `PluginMetadataRegistry` - `Map<string, PluginMetadata>` wrapper
+- `PluginOrderValidationResult` - `valid`, `errors`, `warnings`,
+  `suggestedOrder`
+- `PluginOrderError` / `PluginOrderWarning` - structured diagnostics surfaced by
+  the validator
 
-### ProcessingResult
-
-Comprehensive result structure for all processing operations:
-
-```typescript
-interface ProcessingResult {
-  content: string;
-  metadata?: Record<string, any>;
-  fieldReport?: FieldReport;
-  exportedFiles?: string[];
-  processingTime?: number;
-  errors?: ProcessingError[];
-  warnings?: string[];
-}
-```
-
-### ProcessingError
-
-Structured error information with context:
-
-```typescript
-interface ProcessingError {
-  type: ErrorType;
-  message: string;
-  step?: string;
-  line?: number;
-  column?: number;
-  context?: Record<string, any>;
-  stack?: string;
-}
-
-type ErrorType =
-  | 'YAML_PARSING_ERROR'
-  | 'FILE_NOT_FOUND'
-  | 'INVALID_SYNTAX'
-  | 'CIRCULAR_REFERENCE'
-  | 'IMPORT_ERROR'
-  | 'TEMPLATE_ERROR'
-  | 'VALIDATION_ERROR';
-```
+These typings are used by `PluginOrderValidator`, tests and the remark processor
+when validating execution order.
 
 ## Field Tracking Types
 
-### FieldReport
+Co-located with the remark plugin and documented in
+`docs/architecture/05_field_tracking.md`:
 
-Comprehensive field usage reporting:
+- `TrackedField` - field name, status (`'filled' | 'empty' | 'logic'`), values
+  and highlight metadata
+- `FieldTrackingReport` - aggregate counts and per-field map
+- Reports are attached to `LegalMarkdownProcessorResult.reports?.fieldTracking`
 
-```typescript
-interface FieldReport {
-  total: number;
-  filled: number;
-  empty: number;
-  logic: number;
-  fields: Map<string, TrackedField>;
-  statusCounts: Record<FieldStatus, number>;
-}
-```
+## Error & Diagnostic Types
 
-### TrackedField
+Additional types worth noting:
 
-Detailed field tracking information:
+- `YamlParsingResult` - content/metadata pair returned by YAML parser
+- `ImportProcessingResult` - structure used by legacy import processor (still
+  referenced by migration work)
+- `CliOptions` - `LegalMarkdownOptions` extension declared in
+  `src/cli/service.ts`
+- `ProcessingResult` - result structure returned by older APIs; still exported
+  for compatibility but superseded by `LegalMarkdownProcessorResult`
 
-```typescript
-interface TrackedField {
-  name: string;
-  status: FieldStatus;
-  value: any;
-  originalValue: any;
-  hasLogic: boolean;
-  mixinUsed: MixinType;
-  resolvedValue?: string;
-  isHighlighted?: boolean;
-}
-
-enum FieldStatus {
-  FILLED = 'filled',
-  EMPTY = 'empty',
-  LOGIC = 'logic',
-}
-
-enum MixinType {
-  SIMPLE = 'simple',
-  HELPER = 'helper',
-  CONDITIONAL = 'conditional',
-  TEMPLATE_LOOP = 'template_loop',
-}
-```
-
-### HeaderOptions
-
-Header processing configuration:
-
-```typescript
-interface HeaderOptions {
-  levelOne?: string;
-  levelTwo?: string;
-  levelThree?: string;
-  levelFour?: string;
-  levelFive?: string;
-  levelSix?: string;
-  levelIndent?: number;
-  noReset?: boolean;
-  noIndent?: boolean;
-  enableFieldTrackingInMarkdown?: boolean;
-}
-```
-
-## Import and Pipeline Types
-
-### ImportProcessingResult
-
-Import operation results with conflict tracking:
-
-```typescript
-interface ImportProcessingResult {
-  content: string;
-  importedFiles: string[];
-  mergedMetadata?: Record<string, any>;
-  frontmatterConflicts?: ConflictInfo[];
-  mergeStatistics?: MergeStatistics;
-  processingErrors?: ImportError[];
-}
-
-interface ConflictInfo {
-  field: string;
-  sourceValue: any;
-  importedValue: any;
-  resolution: 'source' | 'imported' | 'merged';
-}
-
-interface MergeStatistics {
-  totalFields: number;
-  mergedFields: number;
-  conflictedFields: number;
-  filteredFields: number;
-  processingTime: number;
-}
-```
-
-### PipelineResult
-
-Pipeline execution results with step-by-step metrics:
-
-```typescript
-interface PipelineResult {
-  success: boolean;
-  content: string;
-  metadata: Record<string, any>;
-  stepResults: StepResult[];
-  totalDuration: number;
-  errors: ProcessingError[];
-  warnings: string[];
-}
-
-interface StepResult {
-  stepName: string;
-  success: boolean;
-  inputSize: number;
-  outputSize: number;
-  fieldsTracked: number;
-  duration: number;
-  errors: ProcessingError[];
-  warnings: string[];
-}
-```
-
-## Global Type Definitions
-
-### Window Extensions
-
-Browser environment type extensions:
-
-```typescript
-declare global {
-  interface Window {
-    LegalMarkdown?: LegalMarkdownBrowser;
-    hljs?: HighlightJS;
-    CodeMirror?: CodeMirrorEditor;
-  }
-}
-
-interface LegalMarkdownBrowser {
-  process: (
-    content: string,
-    options?: LegalMarkdownOptions
-  ) => Promise<ProcessingResult>;
-  version: string;
-  examples: Record<string, string>;
-}
-```
-
-### Node.js Environment Extensions
-
-```typescript
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      LEGAL_MARKDOWN_INPUT_DIR?: string;
-      LEGAL_MARKDOWN_OUTPUT_DIR?: string;
-      LEGAL_MARKDOWN_CSS_DIR?: string;
-      LEGAL_MARKDOWN_ARCHIVE_DIR?: string;
-      NODE_ENV?: string;
-      DEBUG?: string;
-      LOG_LEVEL?: string;
-    }
-  }
-}
-```
-
-## Specialized Type Definitions
-
-### CLI Types
-
-Command-line interface type definitions:
-
-```typescript
-interface CliOptions {
-  input?: string;
-  output?: string;
-  interactive?: boolean;
-  debug?: boolean;
-  yaml?: boolean;
-  html?: boolean;
-  pdf?: boolean;
-  highlight?: boolean;
-  css?: string;
-  title?: string;
-  archive?: boolean;
-  archiveDir?: string;
-  stdin?: boolean;
-  stdout?: boolean;
-}
-
-interface InteractivePrompts {
-  fileSelector: FilePrompt;
-  processingOptions: OptionsPrompt;
-  outputFormat: FormatPrompt;
-  cssSelector: CssPrompt;
-  archiveOptions: ArchivePrompt;
-  confirmation: ConfirmPrompt;
-}
-
-type OutputFormat = 'markdown' | 'html' | 'pdf';
-```
-
-### Web Interface Types
-
-```typescript
-interface BrowserAPI {
-  process: (
-    content: string,
-    options?: LegalMarkdownOptions
-  ) => Promise<ProcessingResult>;
-  examples: Record<string, DocumentExample>;
-  themes: Record<string, ThemeDefinition>;
-}
-
-interface WebEditorState {
-  content: string;
-  css: string;
-  preview: string;
-  fieldReport?: FieldReport;
-  isDirty: boolean;
-  lastSaved?: Date;
-}
-
-interface PreviewOptions {
-  theme: ThemeMode;
-  highlightFields: boolean;
-  showLineNumbers: boolean;
-  autoRefresh: boolean;
-  debounceMs: number;
-}
-
-type ThemeMode = 'light' | 'dark' | 'auto';
-```
-
-### Validation Types
-
-```typescript
-interface ValidationRule {
-  name: string;
-  validator: (value: any, context: ValidationContext) => ValidationResult;
-  schema?: JSONSchema;
-}
-
-interface ValidationResult {
-  valid: boolean;
-  errors?: ValidationError[];
-  warnings?: string[];
-}
-
-interface ValidationContext {
-  fieldName: string;
-  metadata: Record<string, any>;
-  options: LegalMarkdownOptions;
-}
-
-interface ValidationError {
-  field: string;
-  message: string;
-  value: any;
-  rule: string;
-}
-```
-
-### Generator Types
-
-```typescript
-interface GeneratorOptions {
-  format: OutputFormat;
-  filename?: string;
-  css?: string;
-  title?: string;
-  metadata?: Record<string, any>;
-  highlight?: boolean;
-  theme?: string;
-}
-
-interface GeneratorResult {
-  content: Buffer | string;
-  mimeType: string;
-  filename: string;
-  size: number;
-  metadata?: Record<string, any>;
-}
-```
-
-## Type Safety Benefits
-
-### Compile-time Safety
-
-The comprehensive type system provides:
-
-1. **Parameter Validation**: Function parameters are validated at compile time
-2. **Return Type Safety**: Function return types are guaranteed
-3. **Interface Compliance**: All implementations must comply with defined
-   interfaces
-4. **Null Safety**: Optional properties are properly handled
-
-### IDE Support
-
-TypeScript provides excellent development experience:
-
-1. **IntelliSense**: Auto-completion for all types and properties
-2. **Error Detection**: Real-time error detection during development
-3. **Refactoring Support**: Safe refactoring with type checking
-4. **Documentation**: Type definitions serve as API documentation
-
-### Runtime Benefits
-
-Type definitions enable:
-
-1. **Input Validation**: Runtime validation against type schemas
-2. **Error Messages**: Detailed error messages with type information
-3. **API Consistency**: Consistent interfaces across all modules
-4. **Version Compatibility**: Type-checked compatibility between versions
-
-The comprehensive type system ensures Legal Markdown JS provides a robust,
-maintainable, and developer-friendly API while maintaining strict type safety
-throughout the codebase.
+Strong typing, together with dedicated unit tests for critical conversions,
+keeps the processing pipeline predictable and enables confident refactors.

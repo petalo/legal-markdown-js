@@ -36,16 +36,12 @@ import beautify from 'js-beautify';
 const { html: beautifyHtml } = beautify;
 import { logger } from '../../utils/logger';
 import { RESOLVED_PATHS } from '../../constants/index';
+import type { MarkdownString, HtmlString } from '../../types/content-formats';
+import { isHtml } from '../../types/content-formats';
 
-/**
- * Pattern to match escaped less-than characters from remarkStringify
- */
-const ESCAPED_LT_PATTERN = /\\</g;
-
-/**
- * Pattern to match escaped greater-than characters from remarkStringify
- */
-const ESCAPED_GT_PATTERN = /\\>/g;
+// REMOVED: ESCAPED_LT_PATTERN and ESCAPED_GT_PATTERN (Issue #119)
+// These patterns were used to unescape \< and \> from remarkStringify
+// No longer needed with AST-based imports
 
 /**
  * Configuration options for HTML generation
@@ -171,14 +167,19 @@ export class HtmlGenerator {
    * 4. Injects custom CSS and styling
    * 5. Builds a complete HTML document
    *
-   * @param {string} markdownContent - The processed Legal Markdown content to convert
+   * @param {MarkdownString} markdownContent - The processed Legal Markdown content to convert (MUST be Markdown, NOT HTML)
    * @param {HtmlGeneratorOptions} [options={}] - Configuration options for HTML generation
-   * @returns {Promise<string>} A promise that resolves to the complete HTML document
+   * @returns {Promise<HtmlString>} A promise that resolves to the complete HTML document
    * @throws {Error} When HTML generation fails due to parsing or file system errors
+   * @throws {Error} When HTML content is detected instead of Markdown (indicates a bug)
+   *
    * @example
    * ```typescript
+   * import { asMarkdown } from '../../types/content-formats';
+   *
+   * // ✅ CORRECT - Pass Markdown
    * const html = await generator.generateHtml(
-   *   '# Contract\n\nThis is a {{party.name}} agreement.',
+   *   asMarkdown('# Contract\n\nThis is a {{party.name}} agreement.'),
    *   {
    *     title: 'Service Agreement',
    *     cssPath: './contract-styles.css',
@@ -189,10 +190,30 @@ export class HtmlGenerator {
    *     }
    *   }
    * );
+   *
+   * // ❌ INCORRECT - Don't pass HTML
+   * const html = await generator.generateHtml(
+   *   '<h1>Contract</h1>', // This will throw an error!
+   *   {}
+   * );
    * ```
    */
-  async generateHtml(markdownContent: string, options: HtmlGeneratorOptions = {}): Promise<string> {
+  async generateHtml(
+    markdownContent: MarkdownString,
+    options: HtmlGeneratorOptions = {}
+  ): Promise<HtmlString> {
     try {
+      // Runtime validation: Ensure we're not receiving HTML instead of Markdown
+      if (isHtml(markdownContent)) {
+        throw new Error(
+          'generateHtml expects Markdown input, but received HTML content. ' +
+            'This usually indicates a bug where HTML was passed instead of Markdown. ' +
+            'The format-generator should pass processedResult.content (Markdown) directly ' +
+            'to pdfGenerator.generatePdf(), not pre-convert it to HTML. ' +
+            `Content preview: ${markdownContent.substring(0, 200)}...`
+        );
+      }
+
       logger.debug('Generating HTML from markdown', {
         contentLength: markdownContent.length,
         options,
@@ -201,18 +222,16 @@ export class HtmlGenerator {
       // Remove YAML frontmatter if present
       const contentWithoutFrontmatter = this.removeYamlFrontmatter(markdownContent);
 
-      // Pre-process: unescape backslash-escaped HTML from remarkStringify
-      // remarkStringify escapes HTML as \< and \>, we need to unescape them
-      // Pattern: \<div class="...">\</div> -> <div class="..."></div>
-      const processedMarkdown = contentWithoutFrontmatter
-        .replace(ESCAPED_LT_PATTERN, '<')
-        .replace(ESCAPED_GT_PATTERN, '>');
+      // WORKAROUND REMOVED: No longer need to unescape \< and \> (Issue #119)
+      // Previously, remarkStringify would escape HTML as \< and \> when converting
+      // AST back to markdown, requiring this unescape step. With AST-based imports,
+      // HTML nodes are preserved in the AST and don't go through string escaping.
 
-      // Convert markdown to HTML
-      let htmlContent = await marked.parse(processedMarkdown);
+      // Convert markdown to HTML directly (no pre-processing needed)
+      let htmlContent = await marked.parse(contentWithoutFrontmatter);
 
       // Post-process: unescape specific HTML tags that were escaped in imported content
-      // This is a workaround for issue #119 - imported content is inserted as text
+      // Legacy behavior: imported content may be inserted as text causing HTML to escape
       // We need to unescape certain structural tags like page-break divs
       htmlContent = this.unescapeStructuralTags(htmlContent);
 
@@ -259,7 +278,7 @@ export class HtmlGenerator {
         htmlLength: formattedHtml.length,
       });
 
-      return formattedHtml;
+      return formattedHtml as HtmlString;
     } catch (error) {
       logger.error('Error generating HTML', { error });
       throw new Error(
@@ -394,9 +413,8 @@ ${body}
   /**
    * Unescape specific structural HTML tags that were escaped in imported content
    *
-   * This is a workaround for issue #119 where remarkImports inserts content as text,
-   * causing HTML tags to be escaped. We selectively unescape certain structural tags
-   * that are needed for styling and page breaks.
+   * Legacy behavior: remarkImports may insert content as text, causing HTML tags to be escaped.
+   * We selectively unescape certain structural tags that are needed for styling and page breaks.
    *
    * Tags unescaped:
    * - <div class="page-break-before"></div>

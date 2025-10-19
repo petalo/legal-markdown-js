@@ -14,35 +14,31 @@ Legal Markdown adds CSS classes under specific conditions to help you:
 
 ## 🎨 Legal Header Classes
 
-These classes are automatically applied to headers based on their hierarchy
-level, providing consistent formatting for legal documents.
+These classes are automatically applied to legal headers (created with `l.`,
+`ll.`, `lll.`, etc. syntax) based on their hierarchy level, providing consistent
+formatting for legal documents.
 
 ### Header Level Classes
 
-| Class                   | Purpose                           | Applied To                        |
-| ----------------------- | --------------------------------- | --------------------------------- |
-| `.legal-header-level-1` | Top-level headers (Articles)      | `h1` elements and level 1 headers |
-| `.legal-header-level-2` | Second-level headers (Sections)   | `h2` elements and level 2 headers |
-| `.legal-header-level-3` | Third-level headers (Subsections) | `h3` elements and level 3 headers |
-| `.legal-header-level-4` | Fourth-level headers              | `h4` elements and level 4 headers |
-| `.legal-header-level-5` | Fifth-level headers (Paragraphs)  | `h5` elements and level 5 headers |
-| `.legal-header-level-6` | Sixth-level headers               | `h6` elements and level 6 headers |
+Legal Markdown automatically adds CSS classes to headers to identify their level
+in the document hierarchy. These classes are added to the HTML output when
+generating HTML or PDF files.
 
-### Semantic Header Classes
+| Class                   | Purpose                           | Applied To            | Legal Syntax          |
+| ----------------------- | --------------------------------- | --------------------- | --------------------- |
+| `.legal-header-level-1` | Top-level headers (Articles)      | Level 1 legal headers | `l.` or `l1.`         |
+| `.legal-header-level-2` | Second-level headers (Sections)   | Level 2 legal headers | `ll.` or `l2.`        |
+| `.legal-header-level-3` | Third-level headers (Subsections) | Level 3 legal headers | `lll.` or `l3.`       |
+| `.legal-header-level-4` | Fourth-level headers              | Level 4 legal headers | `llll.` or `l4.`      |
+| `.legal-header-level-5` | Fifth-level headers (Paragraphs)  | Level 5 legal headers | `lllll.` or `l5.`     |
+| `.legal-header-level-6` | Sixth-level headers               | Level 6 legal headers | `llllll.` or `l6.`    |
+| `.legal-header-level-7` | Seventh-level headers             | Level 7 legal headers | `lllllll.` or `l7.`   |
+| `.legal-header-level-8` | Eighth-level headers              | Level 8 legal headers | `llllllll.` or `l8.`  |
+| `.legal-header-level-9` | Ninth-level headers               | Level 9 legal headers | `lllllllll.` or `l9.` |
 
-| Class                   | Purpose                  | Equivalent Level |
-| ----------------------- | ------------------------ | ---------------- |
-| `.legal-article`        | Article-level headers    | Level 1          |
-| `.legal-section`        | Section-level headers    | Level 2          |
-| `.legal-subsection`     | Subsection-level headers | Level 3          |
-| `.legal-sub-subsection` | Sub-subsection headers   | Level 4          |
-| `.legal-paragraph`      | Paragraph-level headers  | Level 5          |
-
-### Base Classes
-
-| Class           | Purpose                                 |
-| --------------- | --------------------------------------- |
-| `.legal-header` | Base class applied to all legal headers |
+**Note:** Regular markdown headers (created with `#`, `##`, etc.) do **not**
+receive these CSS classes. Only headers created using the legal markdown syntax
+(`l.`, `ll.`, etc.) get the `legal-header-level-X` classes.
 
 ## 🔍 Field Review Classes
 
@@ -68,25 +64,38 @@ class. CSS targeting either pattern will work correctly.
 ### Basic Document Formatting
 
 ```markdown
-# Article 1: General Provisions
+---
+level-one: 'Article %n.'
+level-two: 'Section %n.'
+level-three: '%n.'
+---
 
-## Section 1.1: Definitions
+l. General Provisions
 
-### 1.1.1 Interpretation
+ll. Definitions
+
+lll. Interpretation
 ```
 
 **Generated HTML:**
 
 ```html
-<h1 class="legal-header legal-header-level-1 legal-article">
-  Article 1: General Provisions
-</h1>
-<h2 class="legal-header legal-header-level-2 legal-section">
-  Section 1.1: Definitions
-</h2>
-<h3 class="legal-header legal-header-level-3 legal-subsection">
-  1.1.1 Interpretation
-</h3>
+<h1 class="legal-header-level-1">Article 1. General Provisions</h1>
+<h2 class="legal-header-level-2">Section 1. Definitions</h2>
+<h3 class="legal-header-level-3">1. Interpretation</h3>
+```
+
+**With noIndent option (recommended for HTML/PDF output):**
+
+```markdown
+---
+level-one: 'Article %n.'
+level-two: 'Section %n.'
+level-three: '%n.'
+noIndent: true
+---
+
+l. General Provisions ll. Definitions lll. Interpretation
 ```
 
 ### Field Highlighting for Review
@@ -118,20 +127,47 @@ legal-md contract.md --highlight --html -o review.html
 ### Basic Header Styling
 
 ```css
+/* Level 1 - Articles */
 .legal-header-level-1 {
   font-size: 1.6em;
   font-weight: bold;
   color: #1a1a1a;
   margin-top: 2em;
   margin-bottom: 1em;
+  page-break-after: avoid;
 }
 
+/* Level 2 - Sections */
 .legal-header-level-2 {
   font-size: 1.3em;
   font-weight: 600;
   color: #333;
   margin-top: 1.5em;
   margin-bottom: 0.75em;
+  page-break-after: avoid;
+}
+
+/* Level 3 - Subsections */
+.legal-header-level-3 {
+  font-size: 1.15em;
+  font-weight: 600;
+  color: #444;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+}
+
+/* Levels 4-9 - Deeper nesting */
+.legal-header-level-4,
+.legal-header-level-5,
+.legal-header-level-6,
+.legal-header-level-7,
+.legal-header-level-8,
+.legal-header-level-9 {
+  font-size: 1em;
+  font-weight: 500;
+  color: #555;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
 }
 ```
 
@@ -191,12 +227,16 @@ legal-md contract.md --highlight --html -o review.html
 
 ```css
 @media print {
+  /* Prevent page breaks after headers */
   .legal-header-level-1,
   .legal-header-level-2,
   .legal-header-level-3,
   .legal-header-level-4,
   .legal-header-level-5,
-  .legal-header-level-6 {
+  .legal-header-level-6,
+  .legal-header-level-7,
+  .legal-header-level-8,
+  .legal-header-level-9 {
     page-break-after: avoid;
     page-break-inside: avoid;
   }
@@ -238,10 +278,12 @@ legal-md contract.md --highlight --pdf -o review.pdf
 
 ### Document Formatting
 
-- Use semantic header classes (`.legal-article`, `.legal-section`) for better
-  document structure
-- Apply consistent styling across all header levels
+- Use the `legal-header-level-X` classes to style headers by their hierarchy
+  level
+- Apply consistent styling across all 9 header levels
 - Consider print-friendly styles for PDF generation
+- Use `noIndent: true` in YAML frontmatter when generating HTML/PDF output to
+  avoid markdown formatting artifacts
 
 ### Review Workflow
 
@@ -259,12 +301,17 @@ legal-md contract.md --highlight --pdf -o review.pdf
 
 ### Class Application Logic
 
-```javascript
-// Header classes are applied based on header level
-const headerLevel = determineHeaderLevel(element);
-element.className = `legal-header legal-header-level-${headerLevel}`;
+Legal header classes are automatically applied during the remark processing
+pipeline:
 
-// Field classes are applied based on field state
+```javascript
+// Header classes are applied based on legal header level (1-9)
+// Only legal headers (l., ll., lll., etc.) receive these classes
+const headerLevel = node.depth; // 1-9
+const cssClass = `legal-header-level-${headerLevel}`;
+node.data.hProperties = { className: cssClass };
+
+// Field classes are applied based on field state (when using --highlight)
 if (fieldHasValue(field)) {
   element.className = 'imported-value';
 } else if (fieldIsRequired(field)) {
@@ -273,6 +320,9 @@ if (fieldHasValue(field)) {
   element.className = 'highlight';
 }
 ```
+
+**Note:** CSS classes are added via the `hProperties` data attribute in the
+remark AST, which is then converted to HTML by `remark-rehype`.
 
 ### CSS File Locations
 

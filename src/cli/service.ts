@@ -30,7 +30,6 @@
  * @module
  */
 
-import { generateHtml, generatePdf } from '../index';
 import { processLegalMarkdownWithRemark } from '../extensions/remark/legal-markdown-processor';
 import { LegalMarkdownOptions } from '../types';
 import { readFileSync, writeFileSync, resolveFilePath } from '../utils/index';
@@ -43,9 +42,29 @@ import {
 import { parseYamlFrontMatter } from '../core/parsers/yaml-parser';
 import { RESOLVED_PATHS } from '../constants/index';
 import { ArchiveManager } from '../utils/archive-manager';
+import {
+  buildProcessingContext,
+  generateAllFormats,
+  buildFormatGenerationOptions,
+} from '../core/pipeline';
 import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
+
+/**
+ * Get the path to the highlight CSS file from the package
+ * Works in both CommonJS and ESM environments
+ */
+function getHighlightCssPath(): string {
+  const isEsm = typeof __filename === 'undefined' || typeof __dirname === 'undefined';
+
+  if (!isEsm && typeof __dirname !== 'undefined') {
+    return path.resolve(__dirname, '..', 'styles', 'highlight.css');
+  }
+
+  // Fallback for ESM environments
+  return path.join(process.cwd(), 'src', 'styles', 'highlight.css');
+}
 
 /**
  * Extended options interface for CLI operations
@@ -74,6 +93,10 @@ export interface CliOptions extends LegalMarkdownOptions {
   title?: string;
   /** Archive source file after successful processing */
   archiveSource?: string | boolean;
+  /** Page format for PDF */
+  format?: 'A4' | 'Letter' | 'Legal';
+  /** Landscape orientation */
+  landscape?: boolean;
 }
 
 /**
@@ -298,7 +321,12 @@ export class CliService {
   }
 
   /**
-   * Generates formatted output (HTML/PDF) from processed content
+   * Generates formatted output (HTML/PDF) using 3-phase pipeline
+   *
+   * This method uses the new 3-phase pipeline architecture:
+   * - Phase 1: Build context (parse YAML, resolve force-commands)
+   * - Phase 2: Process content ONCE (run remark pipeline, cache AST)
+   * - Phase 3: Generate ALL formats from cached result (no re-processing)
    *
    * @private
    * @param {string} content - The content to format
@@ -330,114 +358,55 @@ export class CliService {
       cssPath = undefined;
     }
 
-    // Use the passed options (already processed for force commands)
-    const generateOptions = {
-      ...options,
-      basePath: inputDir,
-      includeHighlighting: options.highlight,
-      cssPath,
-      highlightCssPath: path.join(process.cwd(), 'src/styles/highlight.css'),
-      title: options.title || baseName,
-      // Force noIndent: true for HTML/PDF generation to prevent indented headers
-      // from being interpreted as code blocks by remark
-      noIndent: true,
-    };
+    // PHASE 1: Build processing context (parses YAML, resolves force-commands)
+    const context = await buildProcessingContext(
+      content,
+      {
+        ...options,
+        basePath: inputDir,
+        enableFieldTracking: options.enableFieldTracking || options.highlight,
+      },
+      inputDir
+    );
 
-    const generatedFiles: string[] = [];
-
-    // Generate HTML if requested
-    if (generateOptions.html) {
-      if (generateOptions.highlight) {
-        // Generate both normal and highlighted versions
-        const htmlPath = path.join(dirName, `${baseName}.html`);
-        const highlightHtmlPath = path.join(dirName, `${baseName}.HIGHLIGHT.html`);
-
-        // Normal version (without highlight CSS)
-        const normalHtmlContent = await generateHtml(content, {
-          ...generateOptions,
-          includeHighlighting: false,
-        });
-        writeFileSync(htmlPath, normalHtmlContent);
-
-        // Highlighted version (with highlight CSS)
-        const highlightHtmlContent = await generateHtml(content, {
-          ...generateOptions,
-          includeHighlighting: true,
-        });
-
-        writeFileSync(highlightHtmlPath, highlightHtmlContent);
-
-        generatedFiles.push(htmlPath, highlightHtmlPath);
-      } else {
-        // Generate single HTML without highlighting
-        const htmlPath = path.join(dirName, `${baseName}.html`);
-        const htmlContent = await generateHtml(content, {
-          ...generateOptions,
-          includeHighlighting: false,
-        });
-        writeFileSync(htmlPath, htmlContent);
-        generatedFiles.push(htmlPath);
-      }
-    }
-
-    // Generate PDF if requested
-    if (generateOptions.pdf) {
-      if (generateOptions.highlight) {
-        // Generate both normal and highlighted versions
-        const pdfPath = path.join(dirName, `${baseName}.pdf`);
-        const highlightPdfPath = path.join(dirName, `${baseName}.HIGHLIGHT.pdf`);
-
-        // Normal version (without highlight CSS)
-        await generatePdf(content, pdfPath, {
-          ...generateOptions,
-          includeHighlighting: false,
-        });
-
-        // Highlighted version (with highlight CSS)
-        await generatePdf(content, highlightPdfPath, {
-          ...generateOptions,
-          includeHighlighting: true,
-        });
-
-        generatedFiles.push(pdfPath, highlightPdfPath);
-      } else {
-        // Generate single PDF without highlighting
-        const pdfPath = path.join(dirName, `${baseName}.pdf`);
-        await generatePdf(content, pdfPath, generateOptions);
-        generatedFiles.push(pdfPath);
-      }
-    }
-
-    // Process markdown using remark processor
-    const markdownResult = await processLegalMarkdownWithRemark(content, {
-      basePath: generateOptions.basePath,
-      enableFieldTracking: generateOptions.enableFieldTracking,
-      debug: generateOptions.debug,
-      yamlOnly: generateOptions.yamlOnly,
-      noHeaders: generateOptions.noHeaders,
-      noClauses: generateOptions.noClauses,
-      noReferences: generateOptions.noReferences,
-      noImports: generateOptions.noImports,
-      noMixins: generateOptions.noMixins,
-      noReset: generateOptions.noReset,
-      noIndent: false, // CLI markdown output should preserve indentation
-      throwOnYamlError: generateOptions.throwOnYamlError,
-      exportMetadata: generateOptions.exportMetadata,
-      exportFormat: generateOptions.exportFormat,
-      exportPath: generateOptions.exportPath,
+    // PHASE 2: Process content ONCE (runs remark pipeline, caches AST)
+    // For HTML/PDF generation, we need noIndent: true to prevent indented headers
+    // from being interpreted as code blocks
+    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      ...context.options,
+      additionalMetadata: context.metadata, // Pass YAML metadata for header processing
+      noIndent: true, // Force noIndent for HTML/PDF generation
     });
 
-    if (options.toMarkdown || (!generateOptions.html && !generateOptions.pdf)) {
-      const mdPath = path.join(dirName, `${baseName}.md`);
-      writeFileSync(mdPath, markdownResult.content);
-      generatedFiles.push(mdPath);
-    }
+    // PHASE 3: Generate all formats from cached result (NO re-processing!)
+    // IMPORTANT: Use context.options instead of options parameter
+    // because force-commands may have modified values (e.g. highlight, pdf, html, css)
+    const highlightCssPath = getHighlightCssPath();
+
+    const formatGenerationOptions = buildFormatGenerationOptions(context.options, {
+      outputDir: dirName,
+      baseFilename: baseName,
+      pdf: options.pdf,
+      html: options.html,
+      markdown: options.toMarkdown || (!options.html && !options.pdf),
+      metadata: options.exportMetadata,
+      highlight: options.highlight,
+      cssPath,
+      highlightCssPath,
+      title: options.title || baseName,
+      format: options.format,
+      landscape: options.landscape,
+      exportFormat: options.exportFormat,
+      exportPath: options.exportPath,
+    });
+
+    const formatResult = await generateAllFormats(processedResult, formatGenerationOptions);
 
     // Show generated files
-    this.showGeneratedFiles(generatedFiles, generateOptions.highlight);
+    this.showGeneratedFiles(formatResult.generatedFiles, formatGenerationOptions.highlight);
 
-    // Archive source file if requested
-    await this.handleArchiving(resolvedInputPath, content, markdownResult.content);
+    // Archive source file if requested (reuse processed content from Phase 2)
+    await this.handleArchiving(resolvedInputPath, content, processedResult.content);
   }
 
   /**

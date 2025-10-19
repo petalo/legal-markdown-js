@@ -73,6 +73,11 @@ function escapeHtmlAttribute(value: string): string {
  * syntax. It supports variable substitution, helper functions, conditional logic,
  * and integrates with field tracking for document validation and highlighting.
  *
+ * @deprecated This function is deprecated and will be removed in v4.0.0.
+ * Use `processLegalMarkdownWithRemark()` with the `remarkTemplateFields` plugin instead.
+ * The remark-based approach provides better AST processing and avoids text contamination.
+ * @see {@link https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md Migration Guide}
+ *
  * @param {string} content - The document content containing mixin references
  * @param {Record<string, any>} metadata - Document metadata with variable values
  * @param {LegalMarkdownOptions} [options={}] - Processing options
@@ -115,6 +120,15 @@ export function processMixins(
   metadata: Record<string, any>,
   options: LegalMarkdownOptions = {}
 ): string {
+  // DEPRECATION WARNING
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(
+      '[DEPRECATION] processMixins() is deprecated and will be removed in v4.0.0. ' +
+        'Use processLegalMarkdownWithRemark() with remarkTemplateFields plugin instead. ' +
+        'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
+    );
+  }
+
   if (options.noMixins) {
     return content;
   }

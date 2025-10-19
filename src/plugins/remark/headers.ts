@@ -207,6 +207,25 @@ function initializeHeaderState(): HeaderState {
 }
 
 /**
+ * Get CSS class name for a header level
+ *
+ * This function generates the CSS class name that should be applied to a header
+ * based on its depth level. This allows styling of headers by their legal level.
+ *
+ * @param level - Header depth level (1-9)
+ * @returns CSS class name (e.g., 'legal-header-level-1')
+ *
+ * @example
+ * ```typescript
+ * getLevelCssClass(1) // => 'legal-header-level-1'
+ * getLevelCssClass(3) // => 'legal-header-level-3'
+ * ```
+ */
+function getLevelCssClass(level: number): string {
+  return `legal-header-level-${level}`;
+}
+
+/**
  * Process a single header node
  */
 function processHeader(
@@ -230,6 +249,39 @@ function processHeader(
   // Format the header text
   const headerText = formatHeaderText(node, format, number, state, { noIndent, debug });
 
+  // Add CSS class for styling
+  // Initialize data.hProperties if not exists
+  if (!node.data) {
+    node.data = {};
+  }
+
+  // Use type assertion for hProperties (not in base mdast types but supported by remark-html)
+  const nodeData = node.data as any;
+  if (!nodeData.hProperties) {
+    nodeData.hProperties = {};
+  }
+
+  // Add the legal header level class
+  const cssClass = getLevelCssClass(level);
+  const existingClass = nodeData.hProperties.className;
+
+  if (existingClass) {
+    // Append to existing classes
+    if (Array.isArray(existingClass)) {
+      if (!existingClass.includes(cssClass)) {
+        existingClass.push(cssClass);
+      }
+    } else if (typeof existingClass === 'string') {
+      const classes = existingClass.split(' ');
+      if (!classes.includes(cssClass)) {
+        nodeData.hProperties.className = [...classes, cssClass];
+      }
+    }
+  } else {
+    // Set new class
+    nodeData.hProperties.className = cssClass;
+  }
+
   // Update the node's children with the new formatted text
   if (headerText !== null) {
     // Check if we need to replace with HTML node due to indentation
@@ -247,6 +299,7 @@ function processHeader(
 
   if (debug) {
     console.log(`[remarkHeaders] Processed level ${level} header:`, headerText);
+    console.log(`[remarkHeaders] Added CSS class:`, cssClass);
   }
 }
 

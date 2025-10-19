@@ -1,192 +1,116 @@
 # Field Tracking System <!-- omit in toc -->
 
 - [Overview](#overview)
-- [Field Tracking Architecture](#field-tracking-architecture)
-- [TrackedField Structure](#trackedfield-structure)
-- [Field Status Classification](#field-status-classification)
-- [Field Tracking Implementation](#field-tracking-implementation)
+- [Tracking Data Structures](#tracking-data-structures)
+- [Status Classification](#status-classification)
+- [Processing Flow](#processing-flow)
 - [Report Generation](#report-generation)
-- [Integration with Processing Pipeline](#integration-with-processing-pipeline)
+- [Pipeline Integration](#pipeline-integration)
 
 ## Overview
 
-The Field Tracking System provides comprehensive monitoring and reporting of
-field usage throughout the Legal Markdown processing pipeline. It tracks
-variable resolution, field status, and generates detailed reports for document
-analysis and debugging.
+Field tracking surfaces how template fields are used across a document. It runs
+as part of the remark pipeline (Phase 2) and powers:
 
-## Field Tracking Architecture
+- Highlighting for HTML/PDF outputs
+- Field usage reports for QA workflows
+- Metadata consumed by the CLI and interactive UI when displaying diagnostics
+
+The tracking logic lives in `src/plugins/remark/field-tracking.ts` and attaches
+results to the `LegalMarkdownProcessorResult.reports` payload.
+
+## Tracking Data Structures
 
 ```mermaid
 classDiagram
-    class FieldTracker {
-        -fields: Map<string, TrackedField>
-        -processedContent: string
-        +trackField(fieldName, options)
-        +applyFieldTracking(content)
-        +generateReport()
-        +clear()
-    }
-
     class TrackedField {
         +name: string
         +status: FieldStatus
-        +value: any
-        +originalValue: any
+        +value: unknown
+        +originalValue: unknown
         +hasLogic: boolean
-        +mixinUsed: string
+        +resolvedValue?: string
+        +isHighlighted?: boolean
     }
 
-    class FieldStatus {
-        <<enumeration>>
-        FILLED
-        EMPTY
-        LOGIC
+    class FieldReport {
+        +total: number
+        +filled: number
+        +empty: number
+        +logic: number
+        +fields: Map<string, TrackedField>
+        +statusCounts: Record<FieldStatus, number>
     }
 
-    FieldTracker --> TrackedField
     TrackedField --> FieldStatus
+    FieldReport --> TrackedField
 ```
 
-## TrackedField Structure
+## Status Classification
 
-Each tracked field contains comprehensive information about its usage:
+Field statuses describe how each template reference resolved:
 
-```typescript
-interface TrackedField {
-  name: string; // Field name (e.g., "client_name")
-  status: FieldStatus; // Classification of field usage
-  value: any; // Resolved value
-  originalValue: any; // Original metadata value
-  hasLogic: boolean; // Whether field contains logic expressions
-  mixinUsed: MixinType; // Type of processing applied
-  resolvedValue?: string; // Final resolved string value
-  isHighlighted?: boolean; // Whether field is highlighted in output
-}
-```
+- **`filled`** - metadata provided a non-empty value
+- **`empty`** - metadata missing or blank, signalling a potential QA issue
+- **`logic`** - expression involves helpers/conditionals and cannot be reduced
+  to a literal value without evaluation context
 
-## Field Status Classification
+Classification happens inside the template-fields plugin, which records an event
+for the tracker whenever a field is visited.
 
-The field tracking system classifies fields into three categories:
-
-### FILLED
-
-- Fields that have non-empty values in the metadata
-- Successfully resolved during processing
-- Contribute meaningful content to the final document
-
-### EMPTY
-
-- Fields referenced in the document but missing from metadata
-- Fields with empty string or null values
-- May need attention from document authors
-
-### LOGIC
-
-- Fields that contain conditional expressions
-- Helper function calls (e.g., `date_helper()`)
-- Complex processing logic that requires evaluation
-
-## Field Tracking Implementation
-
-### Basic Field Tracking
+## Processing Flow
 
 ```mermaid
 sequenceDiagram
-    participant Template
-    participant Tracker
-    participant Metadata
-    participant Reporter
+    participant Parser as Template Fields Plugin
+    participant Tracker as Field Tracking Plugin
+    participant Report as Report Builder
 
-    Template->>Tracker: Encounter {{field_name}}
-    Tracker->>Metadata: Lookup field value
-    Metadata->>Tracker: Return value/empty
-    Tracker->>Tracker: Classify field status
-    Tracker->>Tracker: Record tracking info
-    Tracker->>Template: Continue processing
-    Template->>Reporter: Request report
-    Reporter->>Tracker: Generate field report
+    Parser->>Tracker: track(fieldName, rawValue, context)
+    Tracker->>Tracker: compute status & metadata
+    Tracker->>Report: update aggregate counts
+    Tracker-->Parser: provide highlight span metadata
 ```
 
-### Advanced Tracking Features
+Key behaviours:
 
-1. **Logic Detection**: Automatically identifies complex expressions
-2. **Helper Integration**: Tracks usage of date, number, and string helpers
-3. **Conditional Tracking**: Monitors conditional expression evaluation
-4. **Highlighting Support**: Enables visual field highlighting in output
+1. Template-fields plugin emits tracking events whenever it resolves `{{field}}`
+   expressions
+2. Field-tracking plugin records `TrackedField` entries and, when highlighting
+   is enabled, annotates the AST with span nodes used later by HTML/PDF
+   generators
+3. After traversal the tracker produces `FieldReport` summaries attached to the
+   processor result
 
 ## Report Generation
 
-The field tracking system generates comprehensive reports for analysis:
+`LegalMarkdownProcessorResult.reports?.fieldTracking` contains the structured
+report:
 
 ```typescript
-interface FieldReport {
-  total: number; // Total fields processed
-  filled: number; // Successfully filled fields
-  empty: number; // Empty/missing fields
-  logic: number; // Logic-based fields
-  fields: Map<string, TrackedField>; // Detailed field information
-  statusCounts: Record<FieldStatus, number>; // Status distribution
+interface FieldTrackingReport {
+  total: number;
+  filled: number;
+  empty: number;
+  logic: number;
+  fields: Record<string, TrackedField>;
 }
 ```
 
-### Report Output Example
+Consumers (CLI, integration tests, web UI) use this data to surface missing
+fields or highlight logic-driven sections. Outputs can be rendered as JSON, YAML
+or human-readable tables depending on caller preference.
 
-```yaml
-Field Tracking Report:
-  Total Fields: 15
-  Filled: 12
-  Empty: 2
-  Logic: 1
+## Pipeline Integration
 
-Field Details:
-  client_name: FILLED (John Doe)
-  contract_date: FILLED (2024-01-15)
-  optional_clause: EMPTY
-  calculated_total: LOGIC (sum_helper(amounts))
-```
+- **Phase 1** (`buildProcessingContext`) enables field tracking automatically
+  whenever highlighting is requested, ensuring the tracker receives the proper
+  flag
+- **Phase 2** (`processLegalMarkdownWithRemark`) runs both template-fields and
+  field-tracking plugins in the validated order to keep tracking data in sync
+- **Phase 3** (`generateAllFormats`) reads highlight spans to emit dual HTML/PDF
+  outputs (normal + highlight) when requested and can export reports alongside
+  other metadata
 
-## Integration with Processing Pipeline
-
-### Remark Plugin Integration
-
-The field tracking integrates seamlessly with the remark processing pipeline:
-
-```mermaid
-flowchart TD
-    AST[Document AST] --> VISIT[Visit Nodes]
-    VISIT --> TEMPLATE{Template Node?}
-    TEMPLATE -->|Yes| EXTRACT[Extract Field Name]
-    TEMPLATE -->|No| CONTINUE[Continue Traversal]
-
-    EXTRACT --> TRACK[Track Field Usage]
-    TRACK --> RESOLVE[Resolve Value]
-    RESOLVE --> STATUS[Determine Status]
-    STATUS --> RECORD[Record Information]
-
-    RECORD --> CONTINUE
-    CONTINUE --> VISIT
-    VISIT --> COMPLETE[Processing Complete]
-    COMPLETE --> REPORT[Generate Report]
-```
-
-### Pipeline Step Integration
-
-Field tracking operates as both a plugin and a pipeline step:
-
-1. **Plugin Mode**: Integrated within remark processing for real-time tracking
-2. **Pipeline Mode**: Dedicated step for comprehensive field analysis
-3. **Hybrid Mode**: Combined approach for maximum coverage
-
-### Output Integration
-
-Field tracking information can be integrated into various output formats:
-
-- **HTML**: Field highlighting with CSS classes
-- **Markdown**: Span elements for field identification
-- **JSON**: Structured field reports for analysis
-- **YAML**: Human-readable field summaries
-
-The field tracking system provides essential visibility into document
-processing, enabling authors to identify missing fields, debug processing
-issues, and ensure document completeness.
+Field tracking therefore remains tightly coupled to the remark pipeline while
+still producing reusable artefacts for downstream tooling.

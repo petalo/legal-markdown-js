@@ -56,7 +56,7 @@ import {
 import { fieldTracker } from './extensions/tracking/field-tracker';
 import { htmlGenerator } from './extensions/generators/html-generator';
 import { pdfGenerator } from './extensions/generators/pdf-generator';
-import { LegalMarkdownOptions } from './types';
+import { LegalMarkdownOptions, type MarkdownString, asMarkdown } from './types';
 import { createDefaultPipeline, createHtmlPipeline } from './extensions/pipeline/pipeline-config';
 import { processLegalMarkdownWithRemark } from './extensions/remark/legal-markdown-processor';
 import path from 'path';
@@ -97,7 +97,7 @@ export async function processLegalMarkdownAsync(
   content: string,
   options: LegalMarkdownOptions = {}
 ): Promise<{
-  content: string;
+  content: MarkdownString;
   metadata?: Record<string, any>;
   exportedFiles?: string[];
   fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
@@ -121,7 +121,7 @@ export async function processLegalMarkdownAsync(
 
     // Convert pipeline result to expected format
     return {
-      content: result.content,
+      content: asMarkdown(result.content),
       metadata: result.metadata,
       exportedFiles: result.exportedFiles || [],
       fieldReport: result.fieldReport,
@@ -142,7 +142,7 @@ async function processLegalMarkdownLegacy(
   content: string,
   options: LegalMarkdownOptions = {}
 ): Promise<{
-  content: string;
+  content: MarkdownString;
   metadata?: Record<string, any>;
   exportedFiles?: string[];
   fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
@@ -161,7 +161,7 @@ async function processLegalMarkdownLegacy(
 
   // If only processing YAML, return early
   if (options.yamlOnly) {
-    return { content: contentWithoutYaml, metadata };
+    return { content: asMarkdown(contentWithoutYaml), metadata };
   }
 
   // Process partial imports (must be done early)
@@ -235,7 +235,7 @@ async function processLegalMarkdownLegacy(
   }
 
   return {
-    content: processedContent,
+    content: asMarkdown(processedContent),
     metadata,
     exportedFiles,
     fieldReport: options.enableFieldTracking ? fieldTracker.generateReport() : undefined,
@@ -293,7 +293,7 @@ export function processLegalMarkdown(
 
   // If only processing YAML, return early
   if (options.yamlOnly) {
-    return { content: contentWithoutYaml, metadata };
+    return { content: asMarkdown(contentWithoutYaml), metadata };
   }
 
   // Process partial imports (must be done early)
@@ -365,7 +365,7 @@ export function processLegalMarkdown(
   }
 
   return {
-    content: processedContent,
+    content: asMarkdown(processedContent),
     metadata,
     exportedFiles,
     fieldReport: options.enableFieldTracking ? fieldTracker.generateReport() : undefined,

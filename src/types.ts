@@ -31,6 +31,18 @@
  * @module
  */
 
+// Re-export branded content format types
+export type { MarkdownString, HtmlString, PlainTextString } from './types/content-formats';
+export {
+  isHtml,
+  isMarkdown,
+  asMarkdown,
+  asHtml,
+  asPlainText,
+  toMarkdown,
+  toHtml,
+} from './types/content-formats';
+
 /**
  * Configuration options for processing Legal Markdown documents
  *

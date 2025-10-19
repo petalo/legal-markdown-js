@@ -1,15 +1,12 @@
 /**
  * Tests for HTML comment preservation in remark processing
  *
- * IMPORTANT: This test documents an architectural inconsistency related to Issue #119
- * (https://github.com/Digital-Lawyers/legal-markdown-js/issues/119)
+ * Tests verify that HTML comments are preserved in both:
+ * - Direct remark processing ✅
+ * - Imported content (AST-based imports) ✅
  *
- * Current behavior:
- * - Direct remark processing: HTML comments are PRESERVED ✅
- * - Imported content: HTML comments are STRIPPED (workaround in imports.ts) ❌
- *
- * When Issue #119 is resolved (remarkImports inserts AST instead of text), the
- * stripHtmlComments() workaround should be removed and ALL comments should be preserved.
+ * The remarkImports plugin now inserts AST nodes instead of plain text,
+ * which preserves HTML structure including comments.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -97,16 +94,13 @@ Content here.`;
   });
 });
 
-describe('HTML Comments Preservation - Imported Content (Issue #119 Workaround)', () => {
+describe('HTML Comments Preservation - Imported Content (AST-based)', () => {
   /**
-   * These tests document the CURRENT workaround behavior where HTML comments
-   * are stripped from imported content to prevent remarkStringify escaping issues.
-   *
-   * TODO: When Issue #119 is resolved, these tests should FAIL and be updated
-   * to verify that comments ARE preserved in imported content.
+   * These tests verify that HTML comments are now preserved in imported content.
+   * remarkImports now inserts AST nodes instead of text, preserving HTML comments.
    */
 
-  it('should strip HTML comments from imported files (current workaround)', () => {
+  it('should preserve HTML comments from imported files', async () => {
     // Create temporary directory and files
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-comments-test-'));
     const importedFile = path.join(tempDir, 'imported.md');
@@ -133,7 +127,7 @@ Content from imported file.
 @import imported.md`
       );
 
-      // Process with remarkImports
+      // Process with remarkImports (now async!)
       const processor = unified()
         .use(remarkParse)
         .use(remarkImports, { basePath: tempDir })
@@ -141,29 +135,24 @@ Content from imported file.
         .use(remarkStringify);
 
       const mainContent = fs.readFileSync(mainFile, 'utf-8');
-      const result = processor.processSync(mainContent);
+      const result = await processor.process(mainContent);
       const output = String(result);
 
-      // CURRENT BEHAVIOR (workaround): Comments should be STRIPPED from imported content
-      expect(output).not.toContain('<!-- Comment before header -->');
-      expect(output).not.toContain('<!-- Comment after header -->');
-      expect(output).not.toContain('<!-- Footer comment -->');
+      // Comments should be PRESERVED from imported content
+      expect(output).toContain('<!-- Comment before header -->');
+      expect(output).toContain('<!-- Comment after header -->');
+      expect(output).toContain('<!-- Footer comment -->');
 
-      // But headers should still be converted
+      // Headers should still be converted
       expect(output).toContain('##');
       expect(output).toContain('Imported Section');
-
-      // TODO: When Issue #119 is resolved, update this test to verify comments ARE preserved:
-      // expect(output).toContain('<!-- Comment before header -->');
-      // expect(output).toContain('<!-- Comment after header -->');
-      // expect(output).toContain('<!-- Footer comment -->');
     } finally {
       // Cleanup
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('should document the inconsistency: direct content preserves comments, imported content strips them', () => {
+  it('should preserve comments consistently in both direct and imported content', async () => {
     // Create temporary directory and files
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'html-comments-test-'));
     const importedFile = path.join(tempDir, 'imported.md');
@@ -193,16 +182,12 @@ ll. - Direct Section
         .use(remarkStringify);
 
       const mainContent = fs.readFileSync(mainFile, 'utf-8');
-      const result = processor.processSync(mainContent);
+      const result = await processor.process(mainContent);
       const output = String(result);
 
-      // INCONSISTENCY: Direct comment preserved, imported comment stripped
+      // CONSISTENT BEHAVIOR: Both comments should be preserved
       expect(output).toContain('<!-- Direct comment -->'); // ✅ Preserved
-      expect(output).not.toContain('<!-- Imported comment -->'); // ❌ Stripped (workaround)
-
-      // TODO: When Issue #119 is resolved, both should be preserved:
-      // expect(output).toContain('<!-- Direct comment -->');
-      // expect(output).toContain('<!-- Imported comment -->');
+      expect(output).toContain('<!-- Imported comment -->'); // ✅ Now preserved with AST-based imports
     } finally {
       // Cleanup
       fs.rmSync(tempDir, { recursive: true, force: true });
