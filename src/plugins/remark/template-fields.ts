@@ -138,10 +138,24 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
         continue;
       }
 
+      // Unescape underscores that were escaped by escapeTemplateUnderscores()
+      // in src/extensions/remark/legal-markdown-processor.ts
+      //
+      // Issue #139: Field names with underscores (e.g., "counterparty.legal_name")
+      // are escaped to "counterparty.legal\_name" before markdown parsing to prevent
+      // the underscore from being interpreted as an emphasis delimiter.
+      //
+      // We need to unescape them here so the field path matches the metadata keys.
+      // Example: "counterparty.legal\_name" → "counterparty.legal_name"
+      //
+      // @see https://github.com/petalo/legal-markdown-js/issues/139
+      // @see src/extensions/remark/legal-markdown-processor.ts - escapeTemplateUnderscores()
+      const unescapedExpression = trimmedExpression.replace(/\\_/g, '_');
+
       fields.push({
         pattern: fullMatch,
-        fieldName: trimmedExpression,
-        expression: trimmedExpression,
+        fieldName: unescapedExpression,
+        expression: unescapedExpression,
         startIndex: match.index,
         endIndex: match.index + fullMatch.length,
       });

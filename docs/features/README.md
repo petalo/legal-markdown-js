@@ -11,9 +11,10 @@ This section contains detailed documentation for all Legal Markdown JS features.
   automatic metadata
 - [Optional Clauses](optional-clauses.md) - Conditional content with multiple
   syntaxes
+- [Conditionals](conditionals.md) - Full expression evaluation with comparison
+  and boolean operators
 - [Partial Imports](partial-imports.md) - File inclusion and frontmatter merging
 - [Variables & Mixins](mixins-variables.md) - Template variable substitution
-- [Template Loops](template-loops.md) - Array iteration and conditional blocks
 - [Signature Lines](signature-lines.md) - Automatic detection and CSS styling of
   signature lines
 - [Force Commands](force-commands.md) - Self-configuring documents
@@ -23,8 +24,8 @@ This section contains detailed documentation for all Legal Markdown JS features.
 
 - **New Users**: Start with [YAML Frontmatter](yaml-frontmatter.md) and
   [Headers & Numbering](headers-numbering.md)
-- **Template Authors**: See [Variables & Mixins](mixins-variables.md) and
-  [Optional Clauses](optional-clauses.md)
+- **Template Authors**: See [Variables & Mixins](mixins-variables.md),
+  [Conditionals](conditionals.md), and [Optional Clauses](optional-clauses.md)
 - **Advanced Users**: Check [Force Commands](force-commands.md) and
   [Smart Archiving](smart-archiving.md)
 

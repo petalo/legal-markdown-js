@@ -42,3 +42,23 @@ export {
   FormatGenerationOptions,
   FormatGenerationResult,
 } from './format-generator';
+
+// Pipeline Builder (Phase-based plugin ordering)
+export {
+  buildRemarkPipeline,
+  detectValidationMode,
+  groupPluginsByPhase,
+  validateCapabilities,
+  OrderedPipeline,
+  PipelineConfig,
+  ValidationOptions,
+} from './pipeline-builder';
+
+// Preprocessor Adapters (String-based processing integration)
+export {
+  PreprocessorAdapter,
+  PreprocessorPluginOptions,
+  wrapPreprocessor,
+} from './preprocessor-adapter';
+
+export { templateLoopsAdapter, remarkTemplateLoops, TemplateLoopsOptions } from './loops-adapter';

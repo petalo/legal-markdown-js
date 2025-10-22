@@ -98,7 +98,9 @@ export class PluginOrderValidator {
               type: 'dependency-violation',
               plugin: pluginName,
               relatedPlugin: beforePlugin,
-              message: `"${pluginName}" must run BEFORE "${beforePlugin}", but it appears after it in the pipeline`,
+              message:
+                `"${pluginName}" must run BEFORE "${beforePlugin}", ` +
+                `but it appears after it in the pipeline`,
             });
           }
         }
@@ -113,7 +115,9 @@ export class PluginOrderValidator {
               type: 'dependency-violation',
               plugin: pluginName,
               relatedPlugin: afterPlugin,
-              message: `"${pluginName}" must run AFTER "${afterPlugin}", but it appears before it in the pipeline`,
+              message:
+                `"${pluginName}" must run AFTER "${afterPlugin}", ` +
+                `but it appears before it in the pipeline`,
             });
           }
         }
@@ -127,7 +131,9 @@ export class PluginOrderValidator {
               type: 'conflict',
               plugin: pluginName,
               relatedPlugin: conflictPlugin,
-              message: `"${pluginName}" conflicts with "${conflictPlugin}" - they cannot be used together`,
+              message:
+                `"${pluginName}" conflicts with "${conflictPlugin}" - ` +
+                `they cannot be used together`,
             });
           }
         }
@@ -148,6 +154,10 @@ export class PluginOrderValidator {
     // Check for circular dependencies
     const circularErrors = this.detectCircularDependencies(pluginNames);
     errors.push(...circularErrors);
+
+    // Validate capabilities
+    const capabilityErrors = this.validateCapabilities(pluginNames, { debug });
+    errors.push(...capabilityErrors);
 
     // Log warnings if requested
     if (logWarnings && warnings.length > 0) {
@@ -261,7 +271,7 @@ export class PluginOrderValidator {
    * @returns Sorted list of plugin names
    * @throws Error if plugins have circular dependencies
    */
-  private topologicalSort(pluginNames: string[]): string[] {
+  topologicalSort(pluginNames: string[]): string[] {
     // Build adjacency list and in-degree map
     const adjList = new Map<string, Set<string>>();
     const inDegree = new Map<string, number>();
@@ -349,6 +359,71 @@ export class PluginOrderValidator {
    */
   registerPlugin(metadata: PluginMetadata): void {
     this.registry.set(metadata.name, metadata);
+  }
+
+  /**
+   * Validate that all required capabilities are provided
+   *
+   * Checks that for each plugin's requiresCapabilities, there is at least
+   * one earlier plugin in the execution order that provides that capability.
+   *
+   * @param pluginNames - List of plugin names in execution order
+   * @param options - Validation options
+   * @returns Array of capability validation errors
+   */
+  validateCapabilities(
+    pluginNames: string[],
+    options: { debug?: boolean } = {}
+  ): PluginOrderError[] {
+    const errors: PluginOrderError[] = [];
+    const providedCapabilities = new Set<string>();
+
+    for (const pluginName of pluginNames) {
+      const metadata = this.registry.get(pluginName);
+      if (!metadata) continue;
+
+      // Check if this plugin's required capabilities are available
+      if (metadata.requiresCapabilities) {
+        for (const requiredCap of metadata.requiresCapabilities) {
+          if (!providedCapabilities.has(requiredCap)) {
+            errors.push({
+              type: 'capability-missing',
+              plugin: pluginName,
+              message:
+                `Plugin "${pluginName}" requires capability "${requiredCap}" ` +
+                `but no earlier plugin provides it`,
+            });
+          }
+        }
+      }
+
+      // Check if this plugin's required phases have completed
+      if (metadata.requiresPhases && metadata.phase) {
+        for (const requiredPhase of metadata.requiresPhases) {
+          if (requiredPhase >= metadata.phase) {
+            errors.push({
+              type: 'phase-dependency',
+              plugin: pluginName,
+              message:
+                `Plugin "${pluginName}" (Phase ${metadata.phase}) requires ` +
+                `Phase ${requiredPhase} which runs at the same time or later`,
+            });
+          }
+        }
+      }
+
+      // Add this plugin's capabilities to the available set
+      if (metadata.capabilities) {
+        for (const cap of metadata.capabilities) {
+          providedCapabilities.add(cap);
+          if (options.debug) {
+            console.log(`[PluginOrderValidator] Plugin "${pluginName}" provides: ${cap}`);
+          }
+        }
+      }
+    }
+
+    return errors;
   }
 }
 

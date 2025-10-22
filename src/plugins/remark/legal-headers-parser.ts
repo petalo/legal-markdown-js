@@ -160,8 +160,125 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
     visit(tree, 'paragraph', (node: Paragraph, index, parent) => {
       // Check if this paragraph contains legal headers (simple or complex)
       if (parent && typeof index === 'number') {
+        // Handle HTML nodes that might contain legal header patterns
+        if (node.children.length === 1 && node.children[0].type === 'html') {
+          const htmlNode = node.children[0] as any;
+          const htmlValue = htmlNode.value || '';
+
+          // Check if HTML contains newlines - if so, split and process each line
+          if (htmlValue.includes('\n')) {
+            const lines = htmlValue.split('\n');
+            const hasLegalHeaders = lines.some((line: string) => /^(l{1,9})\.\s+/.test(line));
+
+            if (hasLegalHeaders) {
+              const newNodes: Array<Heading | Paragraph> = [];
+              const nonHeaderLines: string[] = [];
+
+              for (const line of lines) {
+                const match = line.match(/^(l{1,9})\.\s+(.*)$/);
+
+                if (match) {
+                  // If we have accumulated non-header lines, create a paragraph for them
+                  if (nonHeaderLines.length > 0) {
+                    newNodes.push({
+                      type: 'paragraph',
+                      children: [
+                        {
+                          type: 'html',
+                          value: nonHeaderLines.join('\n'),
+                        } as any,
+                      ],
+                    });
+                    nonHeaderLines.length = 0;
+                  }
+
+                  const [, levelPattern, remainingHtml] = match;
+                  const level = getHeadingLevel(levelPattern);
+
+                  if (debug) {
+                    console.log(
+                      `🔄 [remarkLegalHeadersParser] Converting HTML legal header (multiline) to level ${level} heading`
+                    );
+                  }
+
+                  // Create heading node
+                  const headingNode: Heading = {
+                    type: 'heading',
+                    depth: level as 1 | 2 | 3 | 4 | 5 | 6,
+                    children: [
+                      {
+                        type: 'html',
+                        value: remainingHtml.trim(),
+                      } as any,
+                    ],
+                  };
+                  // Mark this as a legal header
+                  (headingNode as any).data = { isLegalHeader: true };
+                  newNodes.push(headingNode);
+
+                  convertedCount++;
+                } else {
+                  // Not a legal header, accumulate for paragraph
+                  nonHeaderLines.push(line);
+                }
+              }
+
+              // Handle any remaining non-header lines
+              if (nonHeaderLines.length > 0) {
+                newNodes.push({
+                  type: 'paragraph',
+                  children: [
+                    {
+                      type: 'html',
+                      value: nonHeaderLines.join('\n'),
+                    } as any,
+                  ],
+                });
+              }
+
+              // Store replacement info
+              if (newNodes.length > 0) {
+                nodesToReplace.push({ parent, index, newNodes });
+              }
+            }
+          } else {
+            // Single line HTML - simple case
+            const match = htmlValue.match(/^(l{1,9})\.\s+(.*)$/);
+            if (match) {
+              const [, levelPattern, remainingHtml] = match;
+              const level = getHeadingLevel(levelPattern);
+
+              if (debug) {
+                console.log(
+                  `🔄 [remarkLegalHeadersParser] Converting HTML legal header to level ${level} heading`
+                );
+              }
+
+              // Create a heading with the HTML content (minus the l. prefix)
+              const heading: Heading = {
+                type: 'heading',
+                depth: level as 1 | 2 | 3 | 4 | 5 | 6,
+                children: [
+                  {
+                    type: 'html',
+                    value: remainingHtml.trim(),
+                  } as any,
+                ],
+              };
+
+              // Mark this as a legal header
+              (heading as any).data = {
+                isLegalHeader: true,
+                hProperties: {},
+              };
+
+              nodesToReplace.push({ parent, index, newNodes: [heading] });
+              convertedCount++;
+            }
+          }
+        }
         // First, try simple case: single text node with newlines
-        if (node.children.length === 1 && node.children[0].type === 'text') {
+        else if (node.children.length === 1 && node.children[0].type === 'text') {
           const textNode = node.children[0];
           const lines = textNode.value.split('\n');
 
@@ -383,11 +500,57 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
 
 /**
  * Parse inline markdown formatting (bold, italic) within text
- * Converts _text_ to emphasis, __text__ to strong, *text* to emphasis, **text** to strong
+ *
+ * Converts markdown syntax to AST nodes:
+ * - `_text_` → emphasis
+ * - `__text__` → strong
+ * - `*text*` → emphasis
+ * - `**text**` → strong
+ *
+ * **Issue #139 Fix**: Excludes template fields `{{...}}` from formatting.
+ *
+ * **Problem**: When legal headers contain template fields with underscores
+ * (e.g., `ll. Party {{counterparty.legal_name}}`), the underscore would be
+ * interpreted as an emphasis delimiter, resulting in incorrect AST nodes.
+ *
+ * **Solution**: Detect all `{{...}}` regions and skip emphasis/strong parsing
+ * within those regions. Template fields are expanded later by remarkTemplateFields.
+ *
+ * @see https://github.com/petalo/legal-markdown-js/issues/139
+ * @see src/plugins/remark/template-fields.ts - Handles template field expansion
+ * @see src/extensions/remark/legal-markdown-processor.ts - escapeTemplateUnderscores()
+ *
+ * @param text - Header text that may contain markdown formatting and template fields
+ * @returns Array of AST nodes (text, emphasis, strong, inlineCode)
  */
 function parseMarkdownInlineFormatting(text: string): Array<any> {
   const children: Array<any> = [];
   const currentPos = 0;
+
+  // Find all template field regions {{...}} to exclude from formatting
+  // These will be processed later by remarkTemplateFields
+  const templateFieldRanges: Array<{ start: number; end: number }> = [];
+  const templateFieldRegex = /\{\{[^}]+\}\}/g;
+  let templateMatch;
+  while ((templateMatch = templateFieldRegex.exec(text)) !== null) {
+    templateFieldRanges.push({
+      start: templateMatch.index,
+      end: templateMatch.index + templateMatch[0].length,
+    });
+  }
+
+  // Helper function to check if a position overlaps with any template field
+  const isInsideTemplateField = (start: number, end: number): boolean => {
+    return templateFieldRanges.some(
+      range =>
+        // Match starts inside range
+        (start >= range.start && start < range.end) ||
+        // Match ends inside range
+        (end > range.start && end <= range.end) ||
+        // Match completely encompasses range
+        (start <= range.start && end >= range.end)
+    );
+  };
 
   // Patterns for markdown formatting (order matters - longer patterns first)
   const patterns = [
@@ -405,9 +568,17 @@ function parseMarkdownInlineFormatting(text: string): Array<any> {
   for (const pattern of patterns) {
     let match;
     while ((match = pattern.regex.exec(text)) !== null) {
+      const matchStart = match.index;
+      const matchEnd = match.index + match[0].length;
+
+      // Skip matches that are inside template fields {{...}}
+      if (isInsideTemplateField(matchStart, matchEnd)) {
+        continue;
+      }
+
       allMatches.push({
-        start: match.index,
-        end: match.index + match[0].length,
+        start: matchStart,
+        end: matchEnd,
         type: pattern.type,
         content: match[1],
       });

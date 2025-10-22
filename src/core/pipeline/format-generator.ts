@@ -410,10 +410,14 @@ async function generatePdfFormats(
     metadata: processedResult.metadata,
   };
 
+  // Extract version from metadata for PDF footer
+  const version = processedResult.metadata?.version;
+
   const pdfGeneratorOptions = {
     format: options.format,
     landscape: options.landscape,
-    // Note: CSS options are not needed here since HTML is pre-generated with CSS already applied
+    version, // For footer display
+    cssPath: options.cssPath, // Needed for logo detection
   };
 
   if (options.highlight) {

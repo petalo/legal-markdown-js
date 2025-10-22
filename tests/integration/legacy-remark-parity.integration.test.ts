@@ -122,6 +122,7 @@ Hello {{name}} from {{company}}!`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should expand fields
@@ -160,6 +161,7 @@ Location: {{user.location.city}}, {{user.location.state}}`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should handle nested access
@@ -189,6 +191,7 @@ show: true
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should include the content
@@ -212,6 +215,7 @@ Before [Hidden content]{hide} After`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should exclude the content
@@ -240,6 +244,7 @@ Document dated @today`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should replace @today
@@ -267,6 +272,7 @@ Long format: @today[long]`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         noHeaders: true,
         noImports: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Both should use long format (contains month name)
@@ -325,6 +331,7 @@ Long format: @today[long]`;
       const remarkResult = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Remark should include imported content

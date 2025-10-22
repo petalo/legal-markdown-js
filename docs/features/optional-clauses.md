@@ -194,6 +194,10 @@ certified attorneys.]
 
 ## Operators and Expressions
 
+> **Note:** For detailed information about comparison and boolean operators,
+> including complex expressions and best practices, see the
+> [Conditionals](./conditionals.md) documentation.
+
 ### Supported Comparison Operators
 
 | Operator | Description           | Example              |
@@ -505,8 +509,9 @@ support]{support_24x7}.
 
 ## See Also
 
+- [Conditionals](conditionals.md) - Complete guide to conditional expressions
+  and operators
 - [YAML Frontmatter](yaml-frontmatter.md) - Defining variables for conditions
 - [Variables & Mixins](mixins-variables.md) - Using variables in content
-- [Template Loops](template-loops.md) - Advanced looping and iteration
 - [Cross-References](cross-references.md) - Using references in conditional
   content

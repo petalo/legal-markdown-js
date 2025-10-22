@@ -93,6 +93,7 @@ Regular paragraph.`
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Verify comments are preserved
@@ -116,6 +117,7 @@ Regular paragraph.`
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // All comments should be preserved
@@ -140,6 +142,7 @@ Regular paragraph.`
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Verify div elements are preserved
@@ -166,6 +169,7 @@ More regular markdown`;
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // HTML should be preserved alongside markdown
@@ -190,6 +194,7 @@ section_title: My Special Section
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Verify template field was expanded
@@ -230,6 +235,7 @@ End of nested section`
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Verify nested import HTML is preserved
@@ -319,6 +325,7 @@ Regular content.`;
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       const htmlOutput = await htmlGenerator.generateHtml(result.content, result.metadata, {
@@ -357,6 +364,7 @@ After`;
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       expect(result.content).toContain('<!-- Comment 1 -->');
@@ -385,6 +393,7 @@ Regular content
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       // Should not crash, should include content
@@ -407,6 +416,7 @@ Regular content
       const result = await processLegalMarkdownWithRemark(content, {
         basePath: tempDir,
         noHeaders: true,
+        noReferences: true, // Disable cross-references since headers are disabled
       });
 
       expect(result.content).toContain('<!--');

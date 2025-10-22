@@ -4,7 +4,7 @@
 - [Current State](#current-state)
 - [Remaining Legacy Surface](#remaining-legacy-surface)
 - [Planned Milestones](#planned-milestones)
-- [Communication & Docs](#communication--docs)
+- [Communication \& Docs](#communication--docs)
 
 ## Overview
 
