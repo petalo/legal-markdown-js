@@ -1,14 +1,25 @@
 /**
- * Remark Plugin: Template Loops (AST-Native)
+ * Remark Plugin: Template Loops (AST-Native) - EXPERIMENTAL
  *
- * This plugin processes template loops and conditionals directly on the AST,
- * preserving node metadata (like data.isLegalHeader) that would be lost with
- * string-based preprocessing.
+ * ⚠️ WARNING: This is experimental/placeholder code for future work.
+ * It is NOT currently used in the pipeline. See #142 for migration plans.
  *
- * Supported syntax:
+ * Current Implementation:
+ * - Uses preprocessor adapter with string-based processing (loops-adapter.ts)
+ * - This file explores pure AST-based processing as a future alternative
+ *
+ * Future Goals:
+ * - Process template loops directly on AST without string serialization
+ * - Preserve node metadata (like data.isLegalHeader) through loop expansion
+ * - Enable better error reporting with AST position info
+ *
+ * Supported syntax (when implemented):
  * - Array loops: {{#items}}...{{/items}}
  * - Conditionals: {{#if condition}}...{{else}}...{{/if}}
  * - Nested loops: {{#outer}}{{#inner}}...{{/inner}}{{/outer}}
+ *
+ * Status: EXPERIMENTAL - Not integrated into pipeline
+ * Related: #142 (Handlebars migration), future AST-native processing
  *
  * @module
  */
@@ -469,6 +480,9 @@ function processConditionalBlock(
 
 /**
  * Remove a block entirely (markers + content)
+ *
+ * NOTE: Currently unused - part of experimental AST-native implementation.
+ * Kept for future development when this plugin is integrated into pipeline.
  */
 function removeBlock(block: TemplateBlock): void {
   const parent = block.startMarker.parent as Parent;
@@ -510,6 +524,9 @@ function resolveVariable(path: string, metadata: Record<string, unknown>): unkno
 
 /**
  * Create metadata for a loop item
+ *
+ * NOTE: Currently unused - part of experimental AST-native implementation.
+ * Will be used when switching from hybrid (serialize→process→parse) to pure AST processing.
  */
 function createItemMetadata(
   baseMetadata: Record<string, unknown>,
@@ -553,8 +570,13 @@ function processVariablesInNodes(
 /**
  * Simple condition evaluator
  *
- * This is a PLACEHOLDER - uses the existing string-based evaluator
- * TODO: Implement true AST-based condition evaluation
+ * NOTE: Currently unused - placeholder for future AST-based condition evaluation.
+ * Current implementation uses string-based evaluator from template-loops.ts via hybrid approach.
+ *
+ * TODO: Implement true AST-based condition evaluation that:
+ * - Parses condition into AST expression tree
+ * - Evaluates without string serialization
+ * - Provides better error messages with source positions
  */
 function evaluateConditionSimple(condition: string, metadata: Record<string, unknown>): boolean {
   // Simple boolean check for now
