@@ -42,6 +42,7 @@ import remarkParse from 'remark-parse';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
 import type { PluginMetadata } from './types';
+import { ProcessingPhase } from './types';
 
 /**
  * Maximum header level supported in legal markdown (l. to lllllllll.)
@@ -759,7 +760,9 @@ async function expandMixinsInAST(
  */
 export const remarkImportsMetadata: PluginMetadata = {
   name: 'remarkImports',
+  phase: ProcessingPhase.CONTENT_LOADING,
   description: 'Process @import directives and insert content as AST nodes',
+  capabilities: ['content:imported', 'metadata:merged'],
   runBefore: ['remarkTemplateFields', 'remarkLegalHeadersParser', 'remarkFieldTracking'],
   required: false,
   version: '2.0.0', // Version 2.0 uses AST-based insertion

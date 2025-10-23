@@ -3,6 +3,7 @@
 - [Remark Integration Architecture](#remark-integration-architecture)
   - [Overview](#overview)
   - [Relationship to the Three-Phase Pipeline](#relationship-to-the-three-phase-pipeline)
+    - [Preventing Reprocessing: PDF Generation](#preventing-reprocessing-pdf-generation)
   - [Plugin Suite](#plugin-suite)
     - [Phase-Aligned Groups](#phase-aligned-groups)
     - [Key Plugin Responsibilities](#key-plugin-responsibilities)
@@ -14,9 +15,10 @@
     - [Plugin Order Validator](#plugin-order-validator)
       - [Validation Result](#validation-result)
     - [Common Plugin Ordering Patterns](#common-plugin-ordering-patterns)
-      - [Pattern 1: Import Processing First](#pattern-1-import-processing-first)
-      - [Pattern 2: Header Parsing Before Processing](#pattern-2-header-parsing-before-processing)
-      - [Pattern 3: Cross-References Before Headers](#pattern-3-cross-references-before-headers)
+      - [Pattern 1: Content Loading First (Phase 1)](#pattern-1-content-loading-first-phase-1)
+      - [Pattern 2: Variables Before Conditionals (Phase 2 → Phase 3)](#pattern-2-variables-before-conditionals-phase-2--phase-3)
+      - [Pattern 3: Header Parsing Before Processing (Within Phase 4)](#pattern-3-header-parsing-before-processing-within-phase-4)
+      - [Pattern 4: Cross-References Before Headers (Within Phase 4)](#pattern-4-cross-references-before-headers-within-phase-4)
     - [Troubleshooting Plugin Order Issues](#troubleshooting-plugin-order-issues)
       - [Problem: Validation Warnings](#problem-validation-warnings)
       - [Problem: Processing Produces Incorrect Output](#problem-processing-produces-incorrect-output)
@@ -88,18 +90,29 @@ Phase 1.
 
 ### Phase-Aligned Groups
 
-| Group                      | Plugins                                                        | Description                                                                                               |
-| -------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Import & Composition       | `remarkImports`, `remarkMixins`                                | Resolve `@import` statements as AST nodes and expand mixin definitions before any field resolution occurs |
-| Field Resolution           | `remarkTemplateFields`, `remarkFieldTracking`                  | Replace `{{field}}` expressions and track usage for highlighting and reports                              |
-| Header Processing          | `remarkLegalHeadersParser`, `remarkHeaders`                    | Parse legal header markers (`l.`, `ll.`, `lll.`) and attach numbering/CSS classes                         |
-| Cross-References & Clauses | `remarkCrossReferences`, `remarkClauses`, `remarkDates`        | Resolve `\|reference\|` patterns, conditional clauses and date helpers                                    |
-| Utility                    | `remarkSignatureLines`, `remarkHtmlComments`, `remarkDebugAst` | Optional helpers for signature markup, comment preservation and debugging                                 |
+The plugin suite is organized into **5 explicit processing phases** to ensure
+deterministic execution order and prevent subtle bugs like variables evaluating
+after conditionals (Issue #120):
+
+| Phase | Group                  | Plugins                                                                                          | Description                                                                                                 |
+| ----- | ---------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| 1     | Content Loading        | `remarkImports`                                                                                  | Load and merge external content via `@import` directives. Must run first to establish complete document AST |
+| 2     | Variable Expansion     | `remarkMixins`, `remarkTemplateFields`                                                           | Expand mixin definitions and resolve `{{field}}` template variables. **Critical: runs BEFORE conditionals** |
+| 3     | Conditional Evaluation | `processTemplateLoops`, `remarkClauses`                                                          | Evaluate conditional logic and loops. Variables are guaranteed to be resolved at this point                 |
+| 4     | Structure Parsing      | `remarkLegalHeadersParser`, `remarkHeaders`, `remarkCrossReferences`, `remarkCrossReferencesAst` | Parse document structure, legal headers and cross-references. Requires fully-expanded content               |
+| 5     | Post-Processing        | `remarkDates`, `remarkSignatureLines`, `remarkFieldTracking`, `remarkDebugAst`                   | Final transformations, date resolution, field tracking and debugging utilities                              |
+
+This phase-based architecture ensures that:
+
+- Variables are **always expanded before** conditional evaluation (fixes Issue
+  #120)
+- Imports load content **before** any transformation plugins run
+- Document structure is parsed **after** all content expansions complete
+- Field tracking and reporting happen **last** to capture the final state
 
 ### Key Plugin Responsibilities
 
 - **AST-based imports** ensure embedded documents retain structure and HTML
-  (Issue #119 completed - AST insertion working correctly)
 - **Template field resolution** integrates helper functions and guards against
   double-processing by modifying nodes directly
 - **Field tracking** differentiates `filled`, `empty` and `logic` fields and is
@@ -123,70 +136,161 @@ with topological sorting to determine the correct plugin execution order.
 
 ### Plugin Metadata Registry
 
-Each plugin registers its dependencies in
-`src/plugins/remark/plugin-metadata-registry.ts`:
+Each plugin registers its metadata including **phase assignment** and
+**capabilities** in `src/plugins/remark/plugin-metadata-registry.ts`:
 
 ```typescript
-export const PLUGIN_METADATA: PluginMetadata[] = [
+export const PLUGIN_METADATA_LIST: PluginMetadata[] = [
+  // PHASE 1: CONTENT_LOADING
   {
     name: 'remarkImports',
-    description: 'Process @import directives for document composition',
-    runBefore: ['remarkLegalHeadersParser', 'remarkTemplateFields'],
-    required: true,
+    phase: ProcessingPhase.CONTENT_LOADING,
+    description: 'Process @import directives and insert content as AST nodes',
+    capabilities: ['content:imported', 'metadata:merged'],
+    runBefore: ['remarkLegalHeadersParser', 'remarkMixins'],
+    required: false,
+    version: '2.0.0',
   },
+
+  // PHASE 2: VARIABLE_EXPANSION
   {
-    name: 'remarkLegalHeadersParser',
-    description: 'Parse legal header syntax (l., ll., lll.) into AST metadata',
-    runAfter: ['remarkImports'],
-    runBefore: ['remarkHeaders'],
+    name: 'remarkMixins',
+    phase: ProcessingPhase.VARIABLE_EXPANSION,
+    description: 'Expand mixin definitions from frontmatter',
+    requiresPhases: [ProcessingPhase.CONTENT_LOADING],
+    requiresCapabilities: ['metadata:merged'],
+    capabilities: ['mixins:expanded'],
+    runBefore: ['remarkTemplateFields'],
     required: false,
   },
   {
     name: 'remarkTemplateFields',
+    phase: ProcessingPhase.VARIABLE_EXPANSION,
     description: 'Expand template fields ({{field}}) with metadata values',
-    runAfter: ['remarkImports'],
+    capabilities: ['fields:expanded', 'variables:resolved'],
+    runAfter: ['remarkMixins'],
+    required: true,
+  },
+
+  // PHASE 3: CONDITIONAL_EVAL
+  {
+    name: 'processTemplateLoops',
+    phase: ProcessingPhase.CONDITIONAL_EVAL,
+    description: 'Process conditional loops and template logic',
+    requiresPhases: [ProcessingPhase.VARIABLE_EXPANSION],
+    requiresCapabilities: ['variables:resolved'],
+    capabilities: ['conditionals:evaluated'],
+    required: true,
+  },
+  {
+    name: 'remarkClauses',
+    phase: ProcessingPhase.CONDITIONAL_EVAL,
+    description: 'Process conditional clauses {{#if condition}}...{{/if}}',
+    required: false,
+  },
+
+  // PHASE 4: STRUCTURE_PARSING
+  {
+    name: 'remarkLegalHeadersParser',
+    phase: ProcessingPhase.STRUCTURE_PARSING,
+    description: 'Parse legal header syntax (l., ll., lll.) into AST metadata',
+    requiresPhases: [ProcessingPhase.CONTENT_LOADING],
+    capabilities: ['headers:parsed'],
+    runBefore: ['remarkHeaders', 'remarkCrossReferences'],
+    required: true,
+  },
+  {
+    name: 'remarkCrossReferences',
+    phase: ProcessingPhase.STRUCTURE_PARSING,
+    description: 'Process cross-references between document sections',
+    requiresCapabilities: ['headers:parsed'],
+    capabilities: ['crossrefs:resolved'],
+    runAfter: ['remarkLegalHeadersParser'],
+    runBefore: ['remarkHeaders'],
     required: false,
   },
   {
     name: 'remarkHeaders',
+    phase: ProcessingPhase.STRUCTURE_PARSING,
     description: 'Process and number legal headers',
-    runAfter: ['remarkLegalHeadersParser'],
-    required: false,
+    requiresCapabilities: ['headers:parsed'],
+    capabilities: ['headers:numbered'],
+    runAfter: ['remarkLegalHeadersParser', 'remarkCrossReferences'],
+    required: true,
   },
-  {
-    name: 'remarkCrossReferences',
-    description: 'Process cross-references between document sections',
-    runBefore: ['remarkHeaders'],
-    runAfter: ['remarkLegalHeadersParser'],
-    required: false,
-  },
-  {
-    name: 'remarkClauses',
-    description: 'Process conditional clauses [content]{condition}',
-    required: false,
-  },
+
+  // PHASE 5: POST_PROCESSING
   {
     name: 'remarkDates',
+    phase: ProcessingPhase.POST_PROCESSING,
     description: 'Process date references (@today syntax)',
     required: false,
   },
   {
-    name: 'remarkHtmlComments',
-    description: 'Preserve HTML comments in output',
+    name: 'remarkFieldTracking',
+    phase: ProcessingPhase.POST_PROCESSING,
+    description: 'Track field usage for highlighting and reporting',
+    requiresCapabilities: ['fields:expanded'],
     required: false,
   },
 ];
 ```
 
+**Key Metadata Fields:**
+
+- **`phase`**: Explicit phase assignment (1-5) ensures deterministic ordering
+- **`capabilities`**: Semantic tags describing what the plugin produces (e.g.,
+  `'variables:resolved'`, `'headers:parsed'`)
+- **`requiresPhases`**: Which phases must complete before this plugin runs
+- **`requiresCapabilities`**: Which capabilities must be available before this
+  plugin runs
+- **`runBefore`/`runAfter`**: Fine-grained ordering within a phase (legacy
+  constraints, still supported)
+- **`required`**: Whether the plugin is mandatory for correct processing
+
 ### Dependency Declarations
 
-Plugins can declare two types of ordering constraints:
+Plugins declare dependencies using a **two-tier system**:
+
+**1. Phase-Level Dependencies (Coarse-Grained)**
+
+- **`phase`**: Mandatory field assigning the plugin to one of 5 phases
+- **`requiresPhases`**: Array of phases that must complete before this plugin
+  runs
+- **`requiresCapabilities`**: Array of semantic capabilities that must be
+  available (e.g., `'variables:resolved'`)
+- **`capabilities`**: Array of semantic tags this plugin provides (e.g.,
+  `'headers:parsed'`)
+
+**2. Plugin-Level Dependencies (Fine-Grained, within phases)**
 
 - **`runBefore`**: Array of plugin names that must run AFTER this plugin
 - **`runAfter`**: Array of plugin names that must run BEFORE this plugin
 
+**Example: Phase-based ordering prevents Issue #120**
+
+```typescript
+// remarkTemplateFields runs in Phase 2 (VARIABLE_EXPANSION)
+{
+  phase: ProcessingPhase.VARIABLE_EXPANSION,
+  capabilities: ['variables:resolved']
+}
+
+// processTemplateLoops runs in Phase 3 (CONDITIONAL_EVAL)
+// and explicitly requires variables to be resolved first
+{
+  phase: ProcessingPhase.CONDITIONAL_EVAL,
+  requiresPhases: [ProcessingPhase.VARIABLE_EXPANSION],
+  requiresCapabilities: ['variables:resolved']
+}
+```
+
+This guarantees that **variables always expand before conditionals evaluate**,
+preventing the subtle bug where conditionals would evaluate against unexpanded
+`{{variable}}` syntax instead of actual values.
+
 These constraints create a dependency graph that the validator resolves using
-topological sorting.
+topological sorting within each phase.
 
 ### Automatic Validation
 
@@ -216,21 +320,36 @@ if (options.validatePluginOrder) {
 
 ### Plugin Order Validator
 
-The `PluginOrderValidator` utility (`src/utils/plugin-order-validator.ts`)
-provides the validation logic:
+The `PluginOrderValidator` class
+(`src/plugins/remark/plugin-order-validator.ts`) provides comprehensive
+validation logic including:
+
+- **Dependency violations**: `runBefore`/`runAfter` constraint violations
+- **Conflicts**: Plugins that cannot be used together
+- **Circular dependencies**: Detects impossible ordering scenarios
+- **Capability validation**: Ensures required capabilities are provided before
+  use
+- **Phase validation**: Verifies plugins don't require later phases
 
 ```typescript
-import { validatePluginOrder } from '../utils/plugin-order-validator';
+import { PluginOrderValidator } from './plugins/remark/plugin-order-validator';
+import { GLOBAL_PLUGIN_REGISTRY } from './plugins/remark/plugin-metadata-registry';
 
-const result = validatePluginOrder([
-  'remarkImports',
-  'remarkTemplateFields',
-  'remarkHeaders',
-]);
+const validator = new PluginOrderValidator(GLOBAL_PLUGIN_REGISTRY);
 
-if (!result.isValid) {
-  console.log('Violations:', result.violations);
-  console.log('Critical:', result.hasCriticalViolations);
+const result = validator.validate(
+  ['remarkImports', 'remarkTemplateFields', 'remarkHeaders'],
+  {
+    throwOnError: false,
+    logWarnings: true,
+    debug: false,
+  }
+);
+
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+  console.warn('Validation warnings:', result.warnings);
+  console.log('Suggested order:', result.suggestedOrder);
 }
 ```
 
@@ -240,49 +359,129 @@ The validator returns a detailed result object:
 
 ```typescript
 interface PluginOrderValidationResult {
-  isValid: boolean; // Overall validation status
-  violations: string[]; // List of violation messages
-  hasCriticalViolations: boolean; // Whether any violations are critical
-  suggestedOrder?: string[]; // Suggested correct order (if violations found)
+  valid: boolean; // Overall validation status
+  errors: PluginOrderError[]; // Critical errors
+  warnings: PluginOrderWarning[]; // Non-critical warnings
+  suggestedOrder?: string[]; // Suggested correct order (if validation failed)
 }
+
+interface PluginOrderError {
+  type:
+    | 'dependency-violation'
+    | 'conflict'
+    | 'circular-dependency'
+    | 'capability-missing' // NEW in Phase 3
+    | 'phase-dependency'; // NEW in Phase 3
+  plugin: string;
+  relatedPlugin?: string;
+  message: string;
+}
+```
+
+**NEW in Phase 3**: The validator now automatically checks:
+
+1. **Capability Dependencies**: Ensures that when a plugin requires a capability
+   (via `requiresCapabilities`), there's at least one earlier plugin in the
+   execution order that provides it (via `capabilities`)
+
+2. **Phase Dependencies**: Validates that plugins with `requiresPhases` only
+   reference earlier phases, preventing impossible dependencies
+
+```typescript
+// Example: Capability validation catches this error
+const result = validator.validate(['processTemplateLoops']); // Missing remarkTemplateFields
+
+// Error: Plugin "processTemplateLoops" requires capability "variables:resolved"
+// but no earlier plugin provides it
 ```
 
 ### Common Plugin Ordering Patterns
 
-#### Pattern 1: Import Processing First
+#### Pattern 1: Content Loading First (Phase 1)
 
-Imports must always run first because they modify the document structure:
+Content imports must always run in Phase 1 to establish the complete document:
 
 ```typescript
-// ✅ CORRECT
-['remarkImports', 'remarkTemplateFields', 'remarkHeaders'][
-  // ❌ INCORRECT - Headers processed before imports
-  ('remarkHeaders', 'remarkImports', 'remarkTemplateFields')
-];
+// ✅ CORRECT - remarkImports in Phase 1
+{
+  phase: ProcessingPhase.CONTENT_LOADING; // Phase 1
+}
+
+// ❌ INCORRECT - Would violate phase ordering
+{
+  phase: ProcessingPhase.VARIABLE_EXPANSION; // Phase 2 - TOO LATE
+}
 ```
 
-#### Pattern 2: Header Parsing Before Processing
+#### Pattern 2: Variables Before Conditionals (Phase 2 → Phase 3)
 
-Header parsing must happen before header processing:
+**Critical for Issue #120**: Variables MUST expand before conditionals evaluate:
 
 ```typescript
-// ✅ CORRECT
-['remarkLegalHeadersParser', 'remarkHeaders'][
-  // ❌ INCORRECT - Processing before parsing
-  ('remarkHeaders', 'remarkLegalHeadersParser')
-];
+// ✅ CORRECT - Variables in Phase 2, Conditionals in Phase 3
+{
+  name: 'remarkTemplateFields',
+  phase: ProcessingPhase.VARIABLE_EXPANSION,  // Phase 2
+  capabilities: ['variables:resolved']
+}
+{
+  name: 'processTemplateLoops',
+  phase: ProcessingPhase.CONDITIONAL_EVAL,  // Phase 3
+  requiresCapabilities: ['variables:resolved']
+}
+
+// ❌ INCORRECT - Would cause conditionals to evaluate against {{var}} syntax
+// (This was the bug in Issue #120)
+{
+  name: 'processTemplateLoops',
+  phase: ProcessingPhase.VARIABLE_EXPANSION,  // Phase 2 - WRONG
+}
+{
+  name: 'remarkTemplateFields',
+  phase: ProcessingPhase.CONDITIONAL_EVAL,  // Phase 3 - WRONG
+}
 ```
 
-#### Pattern 3: Cross-References Before Headers
+#### Pattern 3: Header Parsing Before Processing (Within Phase 4)
 
-Cross-references must extract `|key|` patterns before headers removes them:
+Header parsing must happen before header numbering, both in Phase 4:
 
 ```typescript
-// ✅ CORRECT
-['remarkLegalHeadersParser', 'remarkCrossReferences', 'remarkHeaders'][
-  // ❌ INCORRECT - Headers run first, removing |key| patterns
-  ('remarkHeaders', 'remarkCrossReferences')
-];
+// ✅ CORRECT - Both in Phase 4, but runBefore/runAfter ensures order
+{
+  name: 'remarkLegalHeadersParser',
+  phase: ProcessingPhase.STRUCTURE_PARSING,  // Phase 4
+  runBefore: ['remarkHeaders']
+}
+{
+  name: 'remarkHeaders',
+  phase: ProcessingPhase.STRUCTURE_PARSING,  // Phase 4
+  runAfter: ['remarkLegalHeadersParser']
+}
+
+// ❌ INCORRECT - Wrong phase assignment
+{
+  name: 'remarkHeaders',
+  phase: ProcessingPhase.VARIABLE_EXPANSION,  // Phase 2 - TOO EARLY
+}
+```
+
+#### Pattern 4: Cross-References Before Headers (Within Phase 4)
+
+Cross-references must extract `|key|` patterns before header numbering:
+
+```typescript
+// ✅ CORRECT - Explicit ordering within Phase 4
+{
+  name: 'remarkCrossReferences',
+  phase: ProcessingPhase.STRUCTURE_PARSING,  // Phase 4
+  runBefore: ['remarkHeaders']
+}
+{
+  name: 'remarkHeaders',
+  phase: ProcessingPhase.STRUCTURE_PARSING,  // Phase 4
+  runAfter: ['remarkCrossReferences']
+}
 ```
 
 ### Troubleshooting Plugin Order Issues
@@ -364,19 +563,35 @@ const result = await processLegalMarkdownWithRemark(content, {
 
 When adding a new plugin to the processing pipeline:
 
-1. **Register plugin metadata** in `plugin-metadata-registry.ts`:
+1. **Determine the correct phase** for your plugin:
+   - Phase 1 (CONTENT_LOADING): Loads external content
+   - Phase 2 (VARIABLE_EXPANSION): Expands variables/mixins
+   - Phase 3 (CONDITIONAL_EVAL): Evaluates conditions/loops
+   - Phase 4 (STRUCTURE_PARSING): Parses document structure
+   - Phase 5 (POST_PROCESSING): Final transformations
+
+2. **Register plugin metadata** in `plugin-metadata-registry.ts`:
 
 ```typescript
 {
   name: 'remarkMyNewPlugin',
+  phase: ProcessingPhase.STRUCTURE_PARSING,  // Choose appropriate phase
   description: 'Description of what it does',
-  runAfter: ['remarkImports'],  // Dependencies
-  runBefore: ['remarkHeaders'], // What depends on this
+
+  // Phase-level dependencies
+  requiresPhases: [ProcessingPhase.VARIABLE_EXPANSION],  // If needed
+  requiresCapabilities: ['variables:resolved'],  // If needed
+  capabilities: ['my-feature:processed'],  // What this provides
+
+  // Fine-grained ordering within phase (if needed)
+  runAfter: ['remarkImports'],
+  runBefore: ['remarkHeaders'],
+
   required: false,
 }
 ```
 
-2. **Add plugin to processor** in `legal-markdown-processor.ts`:
+3. **Add plugin to processor** in `legal-markdown-processor.ts`:
 
 ```typescript
 processor.use(remarkMyNewPlugin, {
@@ -385,21 +600,52 @@ processor.use(remarkMyNewPlugin, {
 });
 ```
 
-3. **Run validation** to ensure correct ordering:
+4. **Add unit tests** to verify plugin behavior:
+
+```bash
+# Create test file
+tests/unit/plugins/remark/my-new-plugin.unit.test.ts
+
+# Test phase assignment, capabilities, and interactions
+```
+
+5. **Run validation** to ensure correct ordering:
 
 ```bash
 npm test -- tests/integration/plugin-order-validation.integration.test.ts
+npm test -- tests/unit/plugins/remark/plugin-metadata-registry.unit.test.ts
 ```
 
-4. **Verify behavior** with integration tests showing plugin interactions
+6. **Verify behavior** with integration tests showing plugin interactions
 
 ### Best Practices
 
-1. **Minimal Constraints**: Only declare necessary ordering constraints
-2. **Clear Dependencies**: Document why ordering matters in plugin description
-3. **Test Coverage**: Add integration tests for plugin interaction scenarios
-4. **Enable Validation**: Always validate in development mode
-5. **Monitor Output**: Watch for validation warnings in production logs
+1. **Choose the Right Phase**: Assign plugins to the earliest phase where they
+   can safely run
+2. **Use Capabilities**: Declare semantic capabilities to make dependencies
+   explicit and self-documenting
+3. **Minimal Constraints**: Only declare necessary `runBefore`/`runAfter`
+   constraints within a phase
+4. **Document Dependencies**: Explain why ordering matters in plugin description
+   and comments
+5. **Test Phase Assignment**: Add unit tests to
+   `plugin-metadata-registry.unit.test.ts` for new plugins
+6. **Integration Tests**: Add tests for plugin interaction scenarios, especially
+   cross-phase dependencies
+7. **Enable Validation**: Always validate in development mode to catch ordering
+   issues early
+8. **Monitor Output**: Watch for validation warnings in production logs
+
+**Phase Assignment Guidelines:**
+
+- If your plugin **loads content from files** → Phase 1 (CONTENT_LOADING)
+- If your plugin **expands variables or mixins** → Phase 2 (VARIABLE_EXPANSION)
+- If your plugin **evaluates conditionals or loops** → Phase 3
+  (CONDITIONAL_EVAL)
+- If your plugin **parses structure (headers, refs)** → Phase 4
+  (STRUCTURE_PARSING)
+- If your plugin **does final formatting or tracking** → Phase 5
+  (POST_PROCESSING)
 
 ## Legal Markdown Processor Result
 

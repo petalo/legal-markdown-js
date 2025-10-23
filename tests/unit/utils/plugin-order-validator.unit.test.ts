@@ -553,4 +553,204 @@ describe('PluginOrderValidator', () => {
       expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('Capability Validation', () => {
+    it('should validate that required capabilities are provided', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginA',
+          description: 'Plugin A provides content:loaded',
+          phase: 1,
+          capabilities: ['content:loaded'],
+          required: false,
+        },
+        {
+          name: 'pluginB',
+          description: 'Plugin B requires content:loaded',
+          phase: 2,
+          requiresCapabilities: ['content:loaded'],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginA', 'pluginB'], {
+        throwOnError: false,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should error when required capability is missing', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginB',
+          description: 'Plugin B requires content:loaded',
+          phase: 2,
+          requiresCapabilities: ['content:loaded'],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginB'], { throwOnError: false });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].type).toBe('capability-missing');
+      expect(result.errors[0].plugin).toBe('pluginB');
+      expect(result.errors[0].message).toContain('content:loaded');
+    });
+
+    it('should error when capability is provided too late', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginB',
+          description: 'Plugin B requires content:loaded',
+          phase: 2,
+          requiresCapabilities: ['content:loaded'],
+          required: false,
+        },
+        {
+          name: 'pluginA',
+          description: 'Plugin A provides content:loaded',
+          phase: 1,
+          capabilities: ['content:loaded'],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      // pluginB comes before pluginA, so content:loaded not yet available
+      const result = validator.validate(['pluginB', 'pluginA'], {
+        throwOnError: false,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].type).toBe('capability-missing');
+    });
+
+    it('should validate multiple capabilities correctly', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginA',
+          description: 'Provides cap1',
+          phase: 1,
+          capabilities: ['cap1'],
+          required: false,
+        },
+        {
+          name: 'pluginB',
+          description: 'Provides cap2',
+          phase: 2,
+          capabilities: ['cap2'],
+          required: false,
+        },
+        {
+          name: 'pluginC',
+          description: 'Requires cap1 and cap2',
+          phase: 3,
+          requiresCapabilities: ['cap1', 'cap2'],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginA', 'pluginB', 'pluginC'], {
+        throwOnError: false,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should error when any of multiple required capabilities is missing', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginA',
+          description: 'Provides cap1',
+          phase: 1,
+          capabilities: ['cap1'],
+          required: false,
+        },
+        {
+          name: 'pluginC',
+          description: 'Requires cap1 and cap2',
+          phase: 3,
+          requiresCapabilities: ['cap1', 'cap2'],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginA', 'pluginC'], { throwOnError: false });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].message).toContain('cap2');
+    });
+
+    it('should validate phase dependencies', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginA',
+          description: 'Plugin A in phase 1',
+          phase: 1,
+          required: false,
+        },
+        {
+          name: 'pluginB',
+          description: 'Plugin B in phase 2 requires phase 1',
+          phase: 2,
+          requiresPhases: [1],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginA', 'pluginB'], {
+        throwOnError: false,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should error when plugin requires a phase that runs at same time or later', () => {
+      const metadata: PluginMetadata[] = [
+        {
+          name: 'pluginB',
+          description: 'Plugin B in phase 2 requires phase 3 (invalid)',
+          phase: 2,
+          requiresPhases: [3],
+          required: false,
+        },
+      ];
+
+      const registry = createPluginRegistry(metadata);
+      const validator = new PluginOrderValidator(registry);
+
+      const result = validator.validate(['pluginB'], { throwOnError: false });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].type).toBe('phase-dependency');
+      expect(result.errors[0].message).toContain('Phase 2');
+      expect(result.errors[0].message).toContain('Phase 3');
+    });
+  });
 });

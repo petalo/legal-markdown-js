@@ -74,6 +74,160 @@ Because Phase 2 only runs **once**, all format generation steps consume the same
 AST and metadata snapshot, eliminating the previous "format × remark runs"
 combinatorial explosion.
 
+### Pipeline Builder: Single Source of Truth for Plugin Ordering
+
+**New in Phase 2**: The `buildRemarkPipeline()` function in
+`src/core/pipeline/pipeline-builder.ts` serves as the **single source of truth**
+for determining plugin execution order. This phase-based architecture prevents
+subtle ordering bugs like Issue #120 (conditionals evaluating before variables
+expand).
+
+**How it works:**
+
+1. **Group by Phase** - Plugins are grouped into 5 explicit phases:
+   - Phase 1: CONTENT_LOADING (imports)
+   - Phase 2: VARIABLE_EXPANSION (mixins, template fields)
+   - Phase 3: CONDITIONAL_EVAL (loops, conditionals)
+   - Phase 4: STRUCTURE_PARSING (headers, cross-references)
+   - Phase 5: POST_PROCESSING (dates, field tracking)
+
+2. **Topological Sort Within Phases** - Within each phase, plugins are sorted
+   using Kahn's algorithm based on `runBefore`/`runAfter` constraints
+
+3. **Validate Capabilities** - Ensures required capabilities (e.g.,
+   `variables:resolved`) are provided by earlier plugins
+
+4. **Environment-Aware Validation** - Validation mode adapts automatically:
+   - `strict`: Development/CI (throws on violations)
+   - `warn`: Production (logs warnings, continues)
+   - `silent`: No validation output
+
+**Example Usage:**
+
+```typescript
+import { buildRemarkPipeline } from './core/pipeline';
+import { GLOBAL_PLUGIN_REGISTRY } from './plugins/remark';
+
+const pipeline = buildRemarkPipeline(
+  {
+    enabledPlugins: [
+      'remarkImports',
+      'remarkTemplateFields',
+      'processTemplateLoops',
+    ],
+    metadata: { author: 'Jane Doe' },
+    options: { debug: true },
+    validationMode: 'strict',
+  },
+  GLOBAL_PLUGIN_REGISTRY
+);
+
+// pipeline.names: ['remarkImports', 'remarkTemplateFields', 'processTemplateLoops']
+// pipeline.byPhase: Map { 1 => ['remarkImports'], 2 => ['remarkTemplateFields'], 3 => ['processTemplateLoops'] }
+// pipeline.capabilities: Set { 'content:imported', 'fields:expanded', 'variables:resolved', 'conditionals:evaluated' }
+```
+
+**Critical Guarantee for Issue #120:**
+
+The phase-based ordering **guarantees** that `remarkTemplateFields` (Phase 2)
+always runs before `processTemplateLoops` (Phase 3), ensuring variables are
+expanded before conditionals evaluate. This prevents the bug where conditionals
+would evaluate against unexpanded `{{variable}}` syntax.
+
+### Template Loop Conditional Evaluation
+
+The `processTemplateLoops` plugin (Phase 3) now includes **full expression
+evaluation** for conditional blocks, making Legal Markdown more powerful than
+standard Handlebars templates.
+
+#### Supported Operators
+
+**Comparison Operators:**
+
+- `==` - Equal (loose equality, works with strings and numbers)
+- `!=` - Not equal
+- `>` - Greater than
+- `<` - Less than
+- `>=` - Greater than or equal
+- `<=` - Less than or equal
+
+**Boolean Operators:**
+
+- `&&` - Logical AND (higher precedence)
+- `||` - Logical OR (lower precedence)
+
+#### Examples
+
+**Simple comparison:**
+
+```yaml
+---
+city:
+  legal: 'madrid'
+---
+```
+
+```markdown
+{{#if city.legal == "madrid"}} Clausula de Madrid {{/if}}
+```
+
+**Numeric comparison:**
+
+```yaml
+---
+contract:
+  amount: 50000
+---
+```
+
+```markdown
+{{#if contract.amount > 10000}} High value contract {{/if}}
+```
+
+**Complex boolean expression:**
+
+```yaml
+---
+contract:
+  amount: 50000
+  jurisdiction: 'spain'
+---
+```
+
+```markdown
+{{#if contract.amount > 10000 && contract.jurisdiction == "spain"}} Spanish
+high-value contract {{/if}}
+```
+
+#### Implementation Details
+
+The evaluation happens in `evaluateCondition()` which:
+
+1. Detects boolean operators (`&&`, `||`) → delegates to
+   `evaluateBooleanExpression()`
+2. Detects comparison operators → delegates to `evaluateComparisonExpression()`
+3. Falls back to truthiness check for simple variables
+
+Value parsing in `parseComparisonValue()` handles:
+
+- String literals (quoted with `"` or `'`)
+- Numeric literals (integers and decimals)
+- Boolean literals (`true`, `false`)
+- Null literal (`null`)
+- Variable references (resolved via `resolveVariablePath()`)
+
+This makes Legal Markdown **more expressive than Handlebars**, which requires
+helper functions for comparisons.
+
+#### Comparison with Other Template Engines
+
+| Feature             | Handlebars                 | Liquid                   | Legal Markdown          |
+| ------------------- | -------------------------- | ------------------------ | ----------------------- |
+| Comparison ops      | ❌ (requires helpers)      | ✅                       | ✅                      |
+| Boolean operators   | ❌ (requires helpers)      | ✅                       | ✅                      |
+| Syntax              | `{{#if (eq a b)}}`         | `{% if a == b %}`        | `{{#if a == b}}`        |
+| Numeric comparisons | `{{#if (gt amount 1000)}}` | `{% if amount > 1000 %}` | `{{#if amount > 1000}}` |
+
 ## Phase 3 - Format Generation
 
 Phase 3 is implemented by `src/core/pipeline/format-generator.ts` and focuses on

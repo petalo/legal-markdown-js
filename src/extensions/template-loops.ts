@@ -592,7 +592,7 @@ function resolvePath(obj: Record<string, any>, path: string): any {
  * @param enableFieldTracking - Whether to enable field tracking HTML spans
  * @returns Processed content with mixins resolved
  */
-function processItemMixins(
+export function processItemMixins(
   content: string,
   metadata: Record<string, any>,
   context?: LoopContext,
@@ -658,6 +658,8 @@ function processItemMixins(
       console.log(`Simple variable "${trimmedVar}" resolved to:`, value);
     }
 
+    // Check for missing values: undefined or null
+    // Note: Empty strings ('') are considered valid values and will be returned as-is
     if (value === undefined || value === null) {
       if (enableFieldTracking) {
         return (
@@ -986,6 +988,24 @@ function convertMarkdownListToHtml(content: string): string {
  * @returns Boolean result of the condition
  */
 function evaluateCondition(condition: string, metadata: Record<string, any>): boolean {
+  // Handle boolean expressions (&&, ||)
+  if (condition.includes('&&') || condition.includes('||')) {
+    return evaluateBooleanExpression(condition, metadata);
+  }
+
+  // Handle comparison operators (==, !=, >, <, >=, <=)
+  if (
+    condition.includes('==') ||
+    condition.includes('!=') ||
+    condition.includes('>=') ||
+    condition.includes('<=') ||
+    condition.includes('>') ||
+    condition.includes('<')
+  ) {
+    return evaluateComparisonExpression(condition, metadata);
+  }
+
+  // Simple variable truthiness check
   const value = resolveVariablePath(condition, metadata);
 
   // Consider truthy values: non-empty strings, non-zero numbers, true, non-empty arrays, non-empty objects
@@ -996,6 +1016,151 @@ function evaluateCondition(condition: string, metadata: Record<string, any>): bo
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === 'object') return Object.keys(value).length > 0;
 
+  return Boolean(value);
+}
+
+/**
+ * Evaluate boolean expressions (&&, ||)
+ */
+function evaluateBooleanExpression(condition: string, metadata: Record<string, any>): boolean {
+  // Split by OR operators first (lower precedence)
+  const orParts = condition.split('||');
+
+  for (const orPart of orParts) {
+    // Split by AND operators (higher precedence)
+    const andParts = orPart.split('&&');
+    let allAndTrue = true;
+
+    for (const andPart of andParts) {
+      if (!evaluateSimpleCondition(andPart.trim(), metadata)) {
+        allAndTrue = false;
+        break;
+      }
+    }
+
+    if (allAndTrue) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Evaluate a simple condition (no && or ||)
+ */
+function evaluateSimpleCondition(condition: string, metadata: Record<string, any>): boolean {
+  // Handle comparison operators
+  if (
+    condition.includes('==') ||
+    condition.includes('!=') ||
+    condition.includes('>=') ||
+    condition.includes('<=') ||
+    condition.includes('>') ||
+    condition.includes('<')
+  ) {
+    return evaluateComparisonExpression(condition, metadata);
+  }
+
+  // Simple variable truthiness check
+  const value = resolveVariablePath(condition, metadata);
+  return isTruthy(value);
+}
+
+/**
+ * Evaluate comparison expressions (==, !=, >, <, >=, <=)
+ */
+function evaluateComparisonExpression(condition: string, metadata: Record<string, any>): boolean {
+  // Find the comparison operator (check >= and <= before > and < to avoid partial matches)
+  let operator = '';
+  let leftSide = '';
+  let rightSide = '';
+
+  if (condition.includes('==')) {
+    [leftSide, rightSide] = condition.split('==');
+    operator = '==';
+  } else if (condition.includes('!=')) {
+    [leftSide, rightSide] = condition.split('!=');
+    operator = '!=';
+  } else if (condition.includes('>=')) {
+    [leftSide, rightSide] = condition.split('>=');
+    operator = '>=';
+  } else if (condition.includes('<=')) {
+    [leftSide, rightSide] = condition.split('<=');
+    operator = '<=';
+  } else if (condition.includes('>')) {
+    [leftSide, rightSide] = condition.split('>');
+    operator = '>';
+  } else if (condition.includes('<')) {
+    [leftSide, rightSide] = condition.split('<');
+    operator = '<';
+  }
+
+  if (!operator || !leftSide || !rightSide) {
+    return false;
+  }
+
+  // Get values - left side is usually a variable, right side can be literal or variable
+  const leftValue = resolveVariablePath(leftSide.trim(), metadata);
+  const rightValue = parseComparisonValue(rightSide.trim(), metadata);
+
+  // Perform comparison
+  switch (operator) {
+    case '==':
+      // eslint-disable-next-line eqeqeq
+      return leftValue == rightValue;
+    case '!=':
+      // eslint-disable-next-line eqeqeq
+      return leftValue != rightValue;
+    case '>':
+      return Number(leftValue) > Number(rightValue);
+    case '<':
+      return Number(leftValue) < Number(rightValue);
+    case '>=':
+      return Number(leftValue) >= Number(rightValue);
+    case '<=':
+      return Number(leftValue) <= Number(rightValue);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Parse a value in a comparison (could be a variable reference or a literal)
+ */
+function parseComparisonValue(value: string, metadata: Record<string, any>): any {
+  // Remove quotes if it's a string literal
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+
+  // Check if it's a number
+  if (/^\d+(\.\d+)?$/.test(value)) {
+    return Number(value);
+  }
+
+  // Check if it's a boolean
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value === 'null') return null;
+
+  // Otherwise, treat it as a variable reference
+  return resolveVariablePath(value, metadata);
+}
+
+/**
+ * Check if a value is truthy in the context of conditional evaluation
+ */
+function isTruthy(value: any): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') return value.length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
   return Boolean(value);
 }
 

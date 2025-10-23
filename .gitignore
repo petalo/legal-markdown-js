@@ -70,7 +70,7 @@ packages/
 *.tmp
 *.temp
 *.bak
-*temp*
+*tempor*
 *tmp*
 
 # Log files

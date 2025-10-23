@@ -219,16 +219,45 @@ const unsafeWithoutUnderscores: Array<Unsafe> = [
  * Pre-process content to escape underscores inside {{}} to prevent
  * markdown parser from interpreting them as italic delimiters
  *
- * This solves the issue where {{_field}} or {{field_}} get parsed as
- * {{*field}} or {{field*}} due to underscore-to-italic conversion.
+ * **Problem**: Field names with underscores like `{{counterparty.legal_name}}`
+ * would be parsed by remark as `{{counterparty.legal*name}}` because markdown
+ * treats `_text_` as emphasis (converted to `*text*` during parsing).
+ *
+ * **Solution**: Escape underscores to `\_` before markdown parsing. The escaped
+ * underscores are later unescaped in:
+ * - `remarkTemplateFields` (src/plugins/remark/template-fields.ts)
+ * - `parseMarkdownInlineFormatting` (src/plugins/remark/legal-headers-parser.ts)
+ *
+ * @see https://github.com/petalo/legal-markdown-js/issues/139
+ * @see src/plugins/remark/template-fields.ts - Unescapes underscores during field extraction
+ * @see src/plugins/remark/legal-headers-parser.ts - Excludes template fields from emphasis parsing
  *
  * @param content - Raw markdown content
  * @returns Content with underscores escaped inside template fields
+ *
+ * @example
+ * ```typescript
+ * escapeTemplateUnderscores('{{legal_name}}') // => '{{legal\_name}}'
+ * escapeTemplateUnderscores('{{#if test}}')  // => '{{#if test}}' (unchanged)
+ * ```
  */
 function escapeTemplateUnderscores(content: string): string {
   // Match {{...}} patterns and escape underscores inside them
   return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
-    // Escape any underscores in the template field
+    const trimmed = inner.trim();
+
+    // Don't escape loop/conditional markers - these are processed by processTemplateLoops
+    // and should not have their syntax modified
+    if (
+      trimmed.startsWith('#') || // {{#if}}, {{#each}}, etc.
+      trimmed.startsWith('/') || // {{/if}}, {{/each}}, etc.
+      trimmed === 'else' // {{else}}
+    ) {
+      return match;
+    }
+
+    // Escape underscores to prevent markdown parser from interpreting them as
+    // italic delimiters. These will be unescaped during template field expansion.
     const escaped = inner.replace(/_/g, '\\_');
     return `{{${escaped}}}`;
   });

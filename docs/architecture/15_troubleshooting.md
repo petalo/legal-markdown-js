@@ -3,7 +3,7 @@
 - [Overview](#overview)
 - [Common Failures](#common-failures)
 - [Diagnostics Checklist](#diagnostics-checklist)
-- [Logging & Debug Flags](#logging--debug-flags)
+- [Logging \& Debug Flags](#logging--debug-flags)
 - [Support Runbooks](#support-runbooks)
 
 ## Overview
@@ -19,7 +19,6 @@ usage and the recommended steps to diagnose them.
 | Headings lack numbering / CSS classes | `noHeaders` or `noIndent` options enabled, or metadata missing | Remove disabling flags, ensure YAML metadata includes header config, keep Phase 2 metadata injection enabled |
 | Highlight HTML not generated          | `--highlight` not provided or CSS path unresolved              | Re-run with `--highlight`, ensure CSS file exists and is reachable                                           |
 | Plugin order validation error         | New plugin missing metadata constraints                        | Update `plugin-metadata-registry.ts`, rerun `tests/integration/plugin-order-validation.integration.test.ts`  |
-| Imported HTML stripped or escaped     | Issue #119 (AST insertion) pending                             | Track progress in `docs/pending-work-pipeline-refactor.md`; use local workaround until completed             |
 | PDF generation hangs                  | Puppeteer browser download missing                             | Run `npm run test:pdf-setup` or install Chrome dependencies; ensure environment variables allow downloads    |
 
 ## Diagnostics Checklist
