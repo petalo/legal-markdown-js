@@ -1,3 +1,21 @@
+## <small>3.4.1 (2025-10-23)</small>
+
+- fix: preserve special object types during frontmatter merge (#145)
+  ([9c53242](https://github.com/petalo/legal-markdown-js/commit/9c53242)),
+  closes [#145](https://github.com/petalo/legal-markdown-js/issues/145)
+  [#141](https://github.com/petalo/legal-markdown-js/issues/141)
+- refactor: implement 5-phase plugin pipeline with comprehensive test coverage
+  (#143)
+  ([d4c8534](https://github.com/petalo/legal-markdown-js/commit/d4c8534)),
+  closes [#143](https://github.com/petalo/legal-markdown-js/issues/143)
+  [#120](https://github.com/petalo/legal-markdown-js/issues/120)
+  [#139](https://github.com/petalo/legal-markdown-js/issues/139)
+  [#119](https://github.com/petalo/legal-markdown-js/issues/119)
+  [#121](https://github.com/petalo/legal-markdown-js/issues/121)
+  [#120](https://github.com/petalo/legal-markdown-js/issues/120)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+
 ## 3.4.0 (2025-10-19)
 
 - feat: add version display in PDF footers and fix header/footer regression
