@@ -405,12 +405,18 @@ describe('Pipeline Builder', () => {
 
     it('should use warn mode in production environment', () => {
       const originalEnv = process.env.NODE_ENV;
+      const originalCI = process.env.CI;
+
       process.env.NODE_ENV = 'production';
+      delete process.env.CI; // Ensure CI is not set
 
       const mode = detectValidationMode();
       expect(mode).toBe('warn');
 
       process.env.NODE_ENV = originalEnv;
+      if (originalCI !== undefined) {
+        process.env.CI = originalCI;
+      }
     });
 
     it('should use strict mode in CI environment', () => {
@@ -444,12 +450,18 @@ describe('Pipeline Builder', () => {
 
     it('should use warn mode in test environment', () => {
       const originalEnv = process.env.NODE_ENV;
+      const originalCI = process.env.CI;
+
       process.env.NODE_ENV = 'test';
+      delete process.env.CI; // Ensure CI is not set
 
       const mode = detectValidationMode();
       expect(mode).toBe('warn');
 
       process.env.NODE_ENV = originalEnv;
+      if (originalCI !== undefined) {
+        process.env.CI = originalCI;
+      }
     });
 
     it('should allow manual override of validation mode', () => {
