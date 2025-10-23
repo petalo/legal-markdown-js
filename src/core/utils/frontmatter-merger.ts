@@ -37,7 +37,7 @@
  */
 
 import { flattenObject, unflattenObject } from './object-flattener';
-import { filterReservedFields, isReservedField } from './reserved-fields-filter';
+import { filterReservedFields } from './reserved-fields-filter';
 
 /**
  * Options for frontmatter merging
@@ -325,6 +325,8 @@ export function validateMergeCompatibility(current: any, imported: any, key: str
       ['number', 'string'], // Can parse strings as numbers
       ['boolean', 'string'], // Can convert boolean to string
       ['string', 'boolean'], // Can parse strings as boolean
+      ['date', 'string'], // YAML can serialize Date as string
+      ['string', 'date'], // String can represent a date
     ];
 
     const isCompatible = compatibleCombinations.some(
@@ -348,14 +350,58 @@ export function validateMergeCompatibility(current: any, imported: any, key: str
  * Gets a normalized type string for a value
  *
  * Returns a consistent type identifier for merge compatibility checking.
+ * Distinguishes between plain objects and special object types (Date, RegExp, etc.)
+ * to enable proper type conflict detection.
  *
  * @param value - Value to get type for
  * @returns Normalized type string
+ *
+ * @example
+ * ```typescript
+ * getValueType(null);              // 'null'
+ * getValueType([1, 2, 3]);         // 'array'
+ * getValueType(new Date());        // 'date'
+ * getValueType(/regex/);           // 'regexp'
+ * getValueType({ a: 1 });          // 'object'
+ * ```
  */
 function getValueType(value: any): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return 'array';
+
+  // Special object types
+  if (value instanceof Date) return 'date';
+  if (value instanceof RegExp) return 'regexp';
+  if (value instanceof Error) return 'error';
+
+  // Node.js Buffer (check if Buffer is available)
+  if (typeof Buffer !== 'undefined' && value instanceof Buffer) return 'buffer';
+
+  // Collections
+  if (value instanceof Set || value instanceof WeakSet) return 'set';
+  if (value instanceof Map || value instanceof WeakMap) return 'map';
+
+  // Typed arrays - return generic 'typedarray' type (numeric)
+  const typedArrayTypes = [
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+  ];
+
+  if (typedArrayTypes.some(Type => value instanceof Type)) return 'typedarray';
+
+  // BigInt typed arrays (checked separately due to type incompatibility)
+  if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) return 'typedarray';
+  if (typeof BigUint64Array !== 'undefined' && value instanceof BigUint64Array) return 'typedarray';
+
+  // Default to typeof for primitives and plain objects
   return typeof value;
 }
 

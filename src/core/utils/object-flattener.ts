@@ -39,10 +39,72 @@
  */
 
 /**
+ * Checks if a value should be treated as atomic (not flattened)
+ *
+ * Atomic values include primitives, arrays, and special object types like Date, RegExp,
+ * Error, Buffer, and typed arrays. These should not be recursively flattened because
+ * they have special semantics that would be lost during flattening.
+ *
+ * @param value - Value to check
+ * @returns True if value should be treated as atomic, false if it should be flattened
+ *
+ * @example
+ * ```typescript
+ * isAtomicValue(null);           // true (primitive)
+ * isAtomicValue([1, 2, 3]);      // true (array)
+ * isAtomicValue(new Date());     // true (special object type)
+ * isAtomicValue({ a: 1 });       // false (plain object - should flatten)
+ * ```
+ */
+function isAtomicValue(value: any): boolean {
+  // Primitives and null/undefined
+  if (value === null || value === undefined) return true;
+  if (typeof value !== 'object') return true; // string, number, boolean, etc.
+
+  // Arrays are atomic
+  if (Array.isArray(value)) return true;
+
+  // Special object types that should be treated as atomic (Issue #141)
+  if (value instanceof Date) return true;
+  if (value instanceof RegExp) return true;
+  if (value instanceof Error) return true;
+
+  // Node.js Buffer (check if Buffer is available)
+  if (typeof Buffer !== 'undefined' && value instanceof Buffer) return true;
+
+  // Collections
+  if (value instanceof Set || value instanceof WeakSet) return true;
+  if (value instanceof Map || value instanceof WeakMap) return true;
+
+  // Typed arrays (numeric)
+  const typedArrayTypes = [
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+  ];
+
+  if (typedArrayTypes.some(Type => value instanceof Type)) return true;
+
+  // BigInt typed arrays (checked separately due to type incompatibility)
+  if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) return true;
+  if (typeof BigUint64Array !== 'undefined' && value instanceof BigUint64Array) return true;
+
+  // Regular plain object - should be flattened
+  return false;
+}
+
+/**
  * Converts a hierarchical object to dot notation
  *
  * Recursively traverses object properties and creates flat keys using dot notation.
- * Arrays are treated as atomic values and not flattened.
+ * Arrays and special object types (Date, RegExp, Error, Buffer, etc.) are treated as
+ * atomic values and not flattened.
  *
  * @param obj - Object to flatten
  * @param prefix - Current prefix for nested properties (used internally)
@@ -61,14 +123,16 @@
  *       email: "contact@acme.com"
  *     }
  *   },
- *   tags: ["legal", "contract"]
+ *   tags: ["legal", "contract"],
+ *   created: new Date("2025-01-15")
  * };
  *
  * const result = flattenObject(nested);
  * // {
  * //   "client.name": "Acme Corp",
  * //   "client.contact.email": "contact@acme.com",
- * //   "tags": ["legal", "contract"]
+ * //   "tags": ["legal", "contract"],
+ * //   "created": Date object (preserved, not flattened)
  * // }
  * ```
  */
@@ -93,8 +157,8 @@ export function flattenObject(
 
   const flattened: Record<string, any> = {};
 
-  // Handle non-object types (primitives, arrays, functions, etc.)
-  if (typeof obj !== 'object' || Array.isArray(obj)) {
+  // Handle atomic values (primitives, arrays, special types)
+  if (isAtomicValue(obj)) {
     if (prefix) {
       flattened[prefix] = obj;
     }
@@ -115,18 +179,12 @@ export function flattenObject(
   for (const [key, value] of Object.entries(obj)) {
     const newKey = prefix ? `${prefix}.${key}` : key;
 
-    if (value === null || value === undefined) {
-      // Preserve null/undefined values
+    if (isAtomicValue(value)) {
+      // Treat as atomic value (includes null, undefined, primitives, arrays, Date, RegExp, etc.)
       flattened[newKey] = value;
-    } else if (Array.isArray(value)) {
-      // Arrays are treated as atomic values
-      flattened[newKey] = value;
-    } else if (typeof value === 'object') {
-      // Recursively flatten nested objects
-      Object.assign(flattened, flattenObject(value, newKey, visited, startTime, timeoutMs));
     } else {
-      // Primitive values
-      flattened[newKey] = value;
+      // Recursively flatten nested plain objects only
+      Object.assign(flattened, flattenObject(value, newKey, visited, startTime, timeoutMs));
     }
   }
 
