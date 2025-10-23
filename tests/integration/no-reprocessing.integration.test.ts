@@ -16,7 +16,8 @@ import * as PdfGeneratorModule from '../../src/extensions/generators/pdf-generat
 import * as path from 'path';
 import * as fs from 'fs';
 
-describe('3-Phase Pipeline: No Reprocessing', () => {
+// Use sequential execution to avoid Puppeteer race conditions (Issue #144)
+describe.sequential('3-Phase Pipeline: No Reprocessing', () => {
   const outputDir = path.join(__dirname, '../output/no-reprocessing');
 
   beforeEach(async () => {

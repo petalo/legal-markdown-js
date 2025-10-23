@@ -19,7 +19,8 @@ import * as path from 'path';
 // PDF generation timeout - higher in CI environments for slower systems
 const PDF_TIMEOUT = process.env.CI ? 45000 : 30000;
 
-describe('PDF Generation Integration', () => {
+// Use sequential execution to avoid Puppeteer race conditions (Issue #144)
+describe.sequential('PDF Generation Integration', () => {
   /**
    * Sample legal document content with YAML frontmatter and template variables.
    * Includes conditional rendering and missing field scenarios to test error handling.
