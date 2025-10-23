@@ -36,8 +36,14 @@
  * ```
  */
 
-import { flattenObject, unflattenObject } from './object-flattener';
-import { filterReservedFields, isReservedField } from './reserved-fields-filter';
+import {
+  flattenObject,
+  unflattenObject,
+  NUMERIC_TYPED_ARRAY_TYPES,
+  isBuffer,
+  isBigIntTypedArray,
+} from './object-flattener';
+import { filterReservedFields } from './reserved-fields-filter';
 
 /**
  * Options for frontmatter merging
@@ -325,6 +331,8 @@ export function validateMergeCompatibility(current: any, imported: any, key: str
       ['number', 'string'], // Can parse strings as numbers
       ['boolean', 'string'], // Can convert boolean to string
       ['string', 'boolean'], // Can parse strings as boolean
+      ['date', 'string'], // YAML can serialize Date as string
+      ['string', 'date'], // String can represent a date
     ];
 
     const isCompatible = compatibleCombinations.some(
@@ -348,14 +356,45 @@ export function validateMergeCompatibility(current: any, imported: any, key: str
  * Gets a normalized type string for a value
  *
  * Returns a consistent type identifier for merge compatibility checking.
+ * Distinguishes between plain objects and special object types (Date, RegExp, etc.)
+ * to enable proper type conflict detection.
  *
  * @param value - Value to get type for
  * @returns Normalized type string
+ *
+ * @example
+ * ```typescript
+ * getValueType(null);              // 'null'
+ * getValueType([1, 2, 3]);         // 'array'
+ * getValueType(new Date());        // 'date'
+ * getValueType(/regex/);           // 'regexp'
+ * getValueType({ a: 1 });          // 'object'
+ * ```
  */
 function getValueType(value: any): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return 'array';
+
+  // Special object types
+  if (value instanceof Date) return 'date';
+  if (value instanceof RegExp) return 'regexp';
+  if (value instanceof Error) return 'error';
+
+  // Node.js Buffer (shared check from object-flattener)
+  if (isBuffer(value)) return 'buffer';
+
+  // Collections
+  if (value instanceof Set || value instanceof WeakSet) return 'set';
+  if (value instanceof Map || value instanceof WeakMap) return 'map';
+
+  // Typed arrays - return generic 'typedarray' type (numeric, shared from object-flattener)
+  if (NUMERIC_TYPED_ARRAY_TYPES.some(Type => value instanceof Type)) return 'typedarray';
+
+  // BigInt typed arrays (shared check from object-flattener)
+  if (isBigIntTypedArray(value)) return 'typedarray';
+
+  // Default to typeof for primitives and plain objects
   return typeof value;
 }
 
