@@ -1,3 +1,10 @@
+## <small>3.4.2 (2025-10-23)</small>
+
+- fix: eliminate flaky Puppeteer tests with sequential execution (#146)
+  ([22e04ca](https://github.com/petalo/legal-markdown-js/commit/22e04ca)),
+  closes [#146](https://github.com/petalo/legal-markdown-js/issues/146)
+  [#144](https://github.com/petalo/legal-markdown-js/issues/144)
+
 ## <small>3.4.1 (2025-10-23)</small>
 
 - fix: preserve special object types during frontmatter merge (#145)
