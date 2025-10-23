@@ -50,8 +50,7 @@ export default defineConfig({
       },
       forks: {
         // Force sequential execution for Puppeteer tests (Issue #144)
-        maxForks: 1,
-        singleFork: true
+        maxForks: 1
       }
     },
 
