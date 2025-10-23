@@ -36,7 +36,13 @@
  * ```
  */
 
-import { flattenObject, unflattenObject } from './object-flattener';
+import {
+  flattenObject,
+  unflattenObject,
+  NUMERIC_TYPED_ARRAY_TYPES,
+  isBuffer,
+  isBigIntTypedArray,
+} from './object-flattener';
 import { filterReservedFields } from './reserved-fields-filter';
 
 /**
@@ -375,31 +381,18 @@ function getValueType(value: any): string {
   if (value instanceof RegExp) return 'regexp';
   if (value instanceof Error) return 'error';
 
-  // Node.js Buffer (check if Buffer is available)
-  if (typeof Buffer !== 'undefined' && value instanceof Buffer) return 'buffer';
+  // Node.js Buffer (shared check from object-flattener)
+  if (isBuffer(value)) return 'buffer';
 
   // Collections
   if (value instanceof Set || value instanceof WeakSet) return 'set';
   if (value instanceof Map || value instanceof WeakMap) return 'map';
 
-  // Typed arrays - return generic 'typedarray' type (numeric)
-  const typedArrayTypes = [
-    Int8Array,
-    Uint8Array,
-    Uint8ClampedArray,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-  ];
+  // Typed arrays - return generic 'typedarray' type (numeric, shared from object-flattener)
+  if (NUMERIC_TYPED_ARRAY_TYPES.some(Type => value instanceof Type)) return 'typedarray';
 
-  if (typedArrayTypes.some(Type => value instanceof Type)) return 'typedarray';
-
-  // BigInt typed arrays (checked separately due to type incompatibility)
-  if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) return 'typedarray';
-  if (typeof BigUint64Array !== 'undefined' && value instanceof BigUint64Array) return 'typedarray';
+  // BigInt typed arrays (shared check from object-flattener)
+  if (isBigIntTypedArray(value)) return 'typedarray';
 
   // Default to typeof for primitives and plain objects
   return typeof value;

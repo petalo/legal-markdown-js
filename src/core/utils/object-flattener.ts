@@ -39,6 +39,60 @@
  */
 
 /**
+ * Numeric typed array constructors (Issue #141)
+ * These types should be treated as atomic values during flattening/merging
+ */
+export const NUMERIC_TYPED_ARRAY_TYPES = [
+  Int8Array,
+  Uint8Array,
+  Uint8ClampedArray,
+  Int16Array,
+  Uint16Array,
+  Int32Array,
+  Uint32Array,
+  Float32Array,
+  Float64Array,
+] as const;
+
+/**
+ * Checks if a value is a Buffer instance
+ * Handles Node.js Buffer availability check
+ *
+ * @param value - Value to check
+ * @returns True if value is a Buffer instance
+ */
+export function isBuffer(value: any): boolean {
+  return typeof Buffer !== 'undefined' && value instanceof Buffer;
+}
+
+/**
+ * Checks if a value is a BigInt typed array
+ * Handles BigInt typed array availability and TypeScript type compatibility
+ *
+ * @param value - Value to check
+ * @returns True if value is a BigInt typed array
+ */
+export function isBigIntTypedArray(value: any): boolean {
+  if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) {
+    return true;
+  }
+  if (typeof BigUint64Array !== 'undefined' && value instanceof BigUint64Array) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Checks if a value is any typed array (numeric or BigInt)
+ *
+ * @param value - Value to check
+ * @returns True if value is a typed array
+ */
+export function isTypedArray(value: any): boolean {
+  return NUMERIC_TYPED_ARRAY_TYPES.some(Type => value instanceof Type) || isBigIntTypedArray(value);
+}
+
+/**
  * Checks if a value should be treated as atomic (not flattened)
  *
  * Atomic values include primitives, arrays, and special object types like Date, RegExp,
@@ -69,31 +123,15 @@ function isAtomicValue(value: any): boolean {
   if (value instanceof RegExp) return true;
   if (value instanceof Error) return true;
 
-  // Node.js Buffer (check if Buffer is available)
-  if (typeof Buffer !== 'undefined' && value instanceof Buffer) return true;
+  // Node.js Buffer
+  if (isBuffer(value)) return true;
 
   // Collections
   if (value instanceof Set || value instanceof WeakSet) return true;
   if (value instanceof Map || value instanceof WeakMap) return true;
 
-  // Typed arrays (numeric)
-  const typedArrayTypes = [
-    Int8Array,
-    Uint8Array,
-    Uint8ClampedArray,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-  ];
-
-  if (typedArrayTypes.some(Type => value instanceof Type)) return true;
-
-  // BigInt typed arrays (checked separately due to type incompatibility)
-  if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) return true;
-  if (typeof BigUint64Array !== 'undefined' && value instanceof BigUint64Array) return true;
+  // Typed arrays (numeric and BigInt)
+  if (isTypedArray(value)) return true;
 
   // Regular plain object - should be flattened
   return false;
