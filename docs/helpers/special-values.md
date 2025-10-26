@@ -272,7 +272,7 @@ Engineering at ACME Corp
 Sales at ACME Corp
 ```
 
-###Ancestor Context Access
+### Ancestor Context Access
 
 Use `../../` for grandparent context, `../../../` for great-grandparent, etc.
 

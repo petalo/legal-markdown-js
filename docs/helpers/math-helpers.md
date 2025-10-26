@@ -230,7 +230,7 @@ Savings:
 {{formatDollar (subtract retail sale)}}
 ```
 
-###Output
+### Output
 
 ```
 Discount: 50
