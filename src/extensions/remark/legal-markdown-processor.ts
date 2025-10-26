@@ -54,7 +54,7 @@ import remarkSignatureLines from '../../plugins/remark/signature-lines';
 import { remarkDebugAST } from '../../plugins/remark/debug-ast';
 import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
-import { processTemplateLoops } from '../template-loops';
+import { processTemplateLoops, detectSyntaxType } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
 import type { MarkdownString } from '../../types/content-formats';
 import { asMarkdown } from '../../types/content-formats';
@@ -233,15 +233,30 @@ const unsafeWithoutUnderscores: Array<Unsafe> = [
  * @see src/plugins/remark/legal-headers-parser.ts - Excludes template fields from emphasis parsing
  *
  * @param content - Raw markdown content
- * @returns Content with underscores escaped inside template fields
+ * @returns Content with underscores escaped for legacy syntax, unchanged for Handlebars
  *
  * @example
  * ```typescript
+ * // Legacy syntax - escapes underscores
  * escapeTemplateUnderscores('{{legal_name}}') // => '{{legal\_name}}'
+ *
+ * // Handlebars syntax - no escaping needed
+ * escapeTemplateUnderscores('{{titleCase section_name}}') // => '{{titleCase section_name}}'
  * escapeTemplateUnderscores('{{#if test}}')  // => '{{#if test}}' (unchanged)
  * ```
  */
 function escapeTemplateUnderscores(content: string): string {
+  // Detect if content uses Handlebars syntax
+  const syntaxType = detectSyntaxType(content);
+
+  // Skip escaping for Handlebars and mixed syntax - underscores are valid identifiers
+  // and Handlebars handles them correctly without markdown interference.
+  // For mixed syntax, we prefer not to escape to avoid breaking Handlebars variables.
+  if (syntaxType === 'handlebars' || syntaxType === 'mixed') {
+    return content;
+  }
+
+  // For pure legacy syntax, escape underscores to prevent markdown italic parsing
   // Match {{...}} patterns and escape underscores inside them
   return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
     const trimmed = inner.trim();
