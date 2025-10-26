@@ -264,6 +264,72 @@ function escapeTemplateUnderscores(content: string): string {
 }
 
 /**
+ * Pre-process optional clauses [content]{condition} before remark parsing
+ *
+ * This function processes optional clauses BEFORE the content is parsed by remark,
+ * which allows clauses with multi-line content and markdown formatting to work correctly.
+ * Without this pre-processing, remark would split the clause across multiple AST nodes,
+ * making it impossible for the remarkClauses plugin to find and process them.
+ *
+ * @param content - The markdown content with optional clauses
+ * @param metadata - Document metadata for evaluating conditions
+ * @param debug - Enable debug logging
+ * @returns Content with optional clauses processed
+ */
+function preprocessOptionalClauses(
+  content: string,
+  metadata: Record<string, any>,
+  debug: boolean = false
+): string {
+  // Regex to match optional clauses: [content]{condition}
+  // Uses dotall mode (s flag) to match across newlines
+  // eslint-disable-next-line no-useless-escape
+  const clauseRegex = /\[([^\[\]]*(?:\n[^\[\]]*)*?)\]\{([^{}]+?)\}/gs;
+
+  let processedContent = content;
+  const matches: Array<{ full: string; content: string; condition: string; index: number }> = [];
+
+  // Collect all matches first (to avoid mutation during iteration)
+  let match;
+  while ((match = clauseRegex.exec(content)) !== null) {
+    matches.push({
+      full: match[0],
+      content: match[1],
+      condition: match[2].trim(),
+      index: match.index,
+    });
+  }
+
+  if (debug && matches.length > 0) {
+    console.log(`[preprocessOptionalClauses] Found ${matches.length} optional clauses`);
+  }
+
+  // Process matches in reverse order to maintain correct positions
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const { full, content: clauseContent, condition, index } = matches[i];
+
+    // Evaluate the condition
+    const conditionValue = metadata[condition];
+    const shouldInclude = Boolean(conditionValue);
+
+    if (debug) {
+      console.log(
+        `[preprocessOptionalClauses] Condition "${condition}" = ${conditionValue} (include: ${shouldInclude})`
+      );
+    }
+
+    // Replace the clause with its content if true, or remove it if false
+    const replacement = shouldInclude ? clauseContent : '';
+    processedContent =
+      processedContent.substring(0, index) +
+      replacement +
+      processedContent.substring(index + full.length);
+  }
+
+  return processedContent;
+}
+
+/**
  * Configuration options for the Legal Markdown processor
  * @interface LegalMarkdownProcessorOptions
  */
@@ -393,9 +459,20 @@ function createLegalMarkdownProcessor(
     });
   }
 
-  // Step 2: Add legal headers parser AFTER imports to convert l., ll., etc. to proper headers
+  // Add clauses plugin (conditional content processing)
+  // IMPORTANT: Must run BEFORE remarkLegalHeadersParser to process clauses that contain legal headers
+  if (!options.noClauses) {
+    processor.use(remarkClauses, {
+      metadata,
+      debug: options.debug,
+      enableFieldTracking: options.enableFieldTracking,
+    });
+  }
+
+  // Step 2: Add legal headers parser AFTER imports and clauses to convert l., ll., etc. to proper headers
   // This ensures headers in imported files are also converted
   // WARNING: Do not move this before imports or headers in imported files won't be processed
+  // WARNING: Do not move this before clauses or clauses containing headers won't be processed
   if (!options.noHeaders) {
     processor.use(remarkLegalHeadersParser, {
       debug: options.debug,
@@ -414,15 +491,6 @@ function createLegalMarkdownProcessor(
 
   // Skip loop processing plugins since we pre-process loops
   // Consolidation and loop processing now happen before remark parsing
-
-  // Add clauses plugin (conditional content processing)
-  if (!options.noClauses) {
-    processor.use(remarkClauses, {
-      metadata,
-      debug: options.debug,
-      enableFieldTracking: options.enableFieldTracking,
-    });
-  }
 
   // Add dates plugin (processes @today tokens with arithmetic and formatting)
   processor.use(remarkDates, {
@@ -715,29 +783,46 @@ export async function processLegalMarkdownWithRemark(
       }
     }
 
-    // Pre-process template loops before remark parsing
+    // Pre-process optional clauses [content]{condition} before remark parsing
+    // This must happen BEFORE template loops to allow Handlebars helpers inside clauses
     if (!updatedOptions.noClauses) {
       if (updatedOptions.debug) {
-        console.log('[legal-markdown-processor] Pre-processing template loops...');
+        console.log('[legal-markdown-processor] Pre-processing optional clauses...');
       }
 
-      preprocessedContent = processTemplateLoops(
+      preprocessedContent = preprocessOptionalClauses(
         preprocessedContent,
         combinedMetadata,
-        undefined, // context
-        updatedOptions.enableFieldTracking || false
+        updatedOptions.debug || false
       );
 
       if (updatedOptions.debug) {
-        console.log('[legal-markdown-processor] Content after processTemplateLoops:');
-        console.log(preprocessedContent.substring(0, 800));
+        console.log('[legal-markdown-processor] Optional clauses processed');
       }
+    }
 
-      if (updatedOptions.debug) {
-        console.log('[legal-markdown-processor] Template loops processed');
-        if (preprocessedContent.includes('{{#')) {
-          console.log('[legal-markdown-processor] WARNING: Content has {{# patterns!');
-        }
+    // Pre-process template loops (Handlebars {{#each}}, {{#if}}, etc.) before remark parsing
+    // Note: This always runs unless explicitly disabled, independent of clauses
+    if (updatedOptions.debug) {
+      console.log('[legal-markdown-processor] Pre-processing template loops...');
+    }
+
+    preprocessedContent = processTemplateLoops(
+      preprocessedContent,
+      combinedMetadata,
+      undefined, // context
+      updatedOptions.enableFieldTracking || false
+    );
+
+    if (updatedOptions.debug) {
+      console.log('[legal-markdown-processor] Content after processTemplateLoops:');
+      console.log(preprocessedContent.substring(0, 800));
+    }
+
+    if (updatedOptions.debug) {
+      console.log('[legal-markdown-processor] Template loops processed');
+      if (preprocessedContent.includes('{{#')) {
+        console.log('[legal-markdown-processor] WARNING: Content has {{# patterns!');
       }
     }
 
