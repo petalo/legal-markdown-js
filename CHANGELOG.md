@@ -1,3 +1,10 @@
+## <small>3.4.4 (2025-10-26)</small>
+
+- fix: preserve underscores in Handlebars variable names (#151)
+  ([9ba8ab4](https://github.com/petalo/legal-markdown-js/commit/9ba8ab4)),
+  closes [#151](https://github.com/petalo/legal-markdown-js/issues/151)
+  [#147](https://github.com/petalo/legal-markdown-js/issues/147)
+
 ## <small>3.4.3 (2025-10-26)</small>
 
 - fix: add comprehensive Handlebars tests + enable ISO date parsing
