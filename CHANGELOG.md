@@ -1,3 +1,11 @@
+## <small>3.4.3 (2025-10-26)</small>
+
+- fix: add comprehensive Handlebars tests + enable ISO date parsing
+  ([5751345](https://github.com/petalo/legal-markdown-js/commit/5751345)),
+  closes [#148](https://github.com/petalo/legal-markdown-js/issues/148)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+  [#149](https://github.com/petalo/legal-markdown-js/issues/149)
+
 ## <small>3.4.2 (2025-10-23)</small>
 
 - fix: eliminate flaky Puppeteer tests with sequential execution (#146)
