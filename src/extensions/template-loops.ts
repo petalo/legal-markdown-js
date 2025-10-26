@@ -95,7 +95,7 @@ export interface LoopContext {
  * @param content - The template content to analyze
  * @returns 'handlebars' | 'legacy' | 'mixed'
  */
-function detectSyntaxType(content: string): 'legacy' | 'handlebars' | 'mixed' {
+export function detectSyntaxType(content: string): 'legacy' | 'handlebars' | 'mixed' {
   // Pattern for LEGACY syntax: helper calls with parentheses like helper(arg1, arg2)
   const legacyPattern = /\{\{[^}]*\w+\([^)]*\)[^}]*\}\}/;
 
