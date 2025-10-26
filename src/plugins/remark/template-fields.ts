@@ -5,9 +5,15 @@
  * using AST-based processing. It handles:
  * - Simple variables: {{client.name}}
  * - Nested object access: {{client.contact.email}}
- * - Helper functions: {{formatDate(@today, "YYYY-MM-DD")}}
+ * - Helper functions (Handlebars syntax): {{formatDate date "YYYY-MM-DD"}}
+ * - Helper functions (legacy syntax, deprecated): {{formatDate(@today, "YYYY-MM-DD")}}
+ * - Subexpressions: {{formatDate (addYears today 2) "YYYY-MM-DD"}}
  * - Conditional expressions: {{active ? "Active" : "Inactive"}}
  * - Field tracking integration for highlighting
+ *
+ * Syntax Support (Issue #142):
+ * - **Handlebars syntax** (current standard): {{helper arg1 arg2}}
+ * - **Legacy syntax** (deprecated, removed in v4.0.0): {{helper(arg1, arg2)}}
  *
  * Architecture:
  * 1. Parse template field patterns in text nodes
@@ -21,11 +27,18 @@
  * import remarkParse from 'remark-parse';
  * import remarkTemplateFields from './template-fields';
  *
+ * // Handlebars syntax (current)
  * const processor = unified()
  *   .use(remarkParse)
- *   .use(remarkTemplateFields, { metadata: { client_name: 'ACME Corp' } });
+ *   .use(remarkTemplateFields, {
+ *     metadata: {
+ *       client_name: 'ACME Corp',
+ *       date: new Date('2025-01-15')
+ *     }
+ *   });
  *
- * const result = await processor.process('Hello {{client_name}}!');
+ * const result = await processor.process('Hello {{client_name}}! Date: {{formatDate date "MMMM Do, YYYY"}}');
+ * // Output: Hello ACME Corp! Date: January 15th, 2025
  * ```
  *
  * @module
@@ -215,7 +228,7 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
 function resolveFieldValue(
   fieldName: string,
   metadata: Record<string, any>
-): { value: any; hasLogic: boolean; mixinType?: string } {
+): { value: any; hasLogic: boolean; mixinType?: string; isEmptyCondition?: boolean } {
   // Check if this field path has a bracket value (should be treated as missing)
   const bracketFields = detectBracketValues(metadata);
   const isBracketValue = bracketFields.has(fieldName);
@@ -276,7 +289,54 @@ function resolveFieldValue(
     };
   }
 
-  // Check for helper function pattern
+  // ============================================================================
+  // DUAL SYNTAX SUPPORT: Legacy + Handlebars (Issue #142)
+  // ============================================================================
+  // Support both:
+  // - Legacy syntax (DEPRECATED):  {{helper(arg1, arg2)}}
+  // - Handlebars syntax (CURRENT): {{helper arg1 arg2}}
+  //
+  // Legacy syntax will be removed in v4.0.0
+  // ============================================================================
+
+  // Check for Handlebars helper pattern (current standard syntax)
+  // Format: helperName arg1 arg2 arg3
+  // Example: formatDate date "MMMM Do, YYYY"
+  const handlebarsMatch = fieldName.match(/^(\w+)\s+(.+)$/);
+  if (handlebarsMatch) {
+    const [, helperName, argsString] = handlebarsMatch;
+    const helper = helpers[helperName as keyof typeof helpers];
+
+    if (helper && typeof helper === 'function') {
+      try {
+        // Parse Handlebars-style space-separated arguments
+        const args = parseHandlebarsArguments(argsString, metadata);
+
+        // Call the helper function
+        const result = (helper as any)(...args);
+
+        return {
+          value: result,
+          hasLogic: true,
+          mixinType: 'helper',
+        };
+      } catch (error) {
+        console.warn(`Error calling Handlebars helper '${helperName}':`, error);
+        return {
+          value: undefined,
+          hasLogic: true,
+          mixinType: 'helper',
+        };
+      }
+    }
+    // If helper not found, fall through to check legacy syntax
+  }
+
+  // ============================================================================
+  // LEGACY HELPER SYNTAX - DEPRECATED - TO BE REMOVED IN v4.0.0
+  // ============================================================================
+  // Check for legacy helper function pattern: helperName(arg1, arg2)
+  // @deprecated Use Handlebars syntax instead: {{helperName arg1 arg2}}
   const helperMatch = fieldName.match(/^(\w+)\((.*)?\)$/);
   if (helperMatch) {
     const [, helperName, argsString] = helperMatch;
@@ -284,7 +344,7 @@ function resolveFieldValue(
 
     if (helper && typeof helper === 'function') {
       try {
-        // Parse arguments
+        // Parse arguments (legacy comma-separated)
         const args = parseHelperArguments(argsString || '', metadata);
 
         // Call the helper function
@@ -323,10 +383,14 @@ function resolveFieldValue(
     // Remove quotes from string literals
     const cleanResult = result.replace(/^["']|["']$/g, '');
 
+    // Check if the condition variable itself is empty (for proper field tracking)
+    const isConditionEmpty = isEmptyValue(conditionResult);
+
     return {
       value: cleanResult,
       hasLogic: true,
       mixinType: 'conditional',
+      isEmptyCondition: isConditionEmpty, // Track if the original field was empty
     };
   }
 
@@ -440,7 +504,9 @@ function formatFieldValue(
 
   // Apply field tracking wrapper if enabled
   if (enableFieldTracking) {
-    const status = hasLogic ? 'logic' : isEmptyField ? 'empty' : 'filled';
+    // Priority: empty > logic > filled
+    // This ensures empty fields are marked as missing even if they have conditional logic
+    const status = isEmptyField ? 'empty' : hasLogic ? 'logic' : 'filled';
     const cssClass = getFieldCssClass(status);
     return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${formattedValue}</span>`;
   }
@@ -671,6 +737,190 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
 }
 
 /**
+ * Parse Handlebars-style space-separated arguments from a helper function call
+ *
+ * Parses Handlebars helper arguments (space-separated instead of comma-separated),
+ * resolving metadata references, handling string literals, numbers, booleans,
+ * subexpressions, and nested helper function calls.
+ *
+ * @param argsString - Raw arguments string from Handlebars helper call
+ * @param metadata - Metadata object for resolving references
+ * @returns Array of parsed argument values
+ *
+ * @example
+ * ```typescript
+ * parseHandlebarsArguments('date "MMMM Do, YYYY"', { date: new Date() })
+ * // Returns: [Date, 'MMMM Do, YYYY']
+ *
+ * parseHandlebarsArguments('(addYears today 5) "YYYY-MM-DD"', { today: new Date() })
+ * // Returns: [Date (5 years added), 'YYYY-MM-DD']
+ *
+ * parseHandlebarsArguments('amount "USD"', { amount: 1500 })
+ * // Returns: [1500, 'USD']
+ *
+ * parseHandlebarsArguments('price quantity', { price: 10, quantity: 5 })
+ * // Returns: [10, 5]
+ * ```
+ */
+function parseHandlebarsArguments(argsString: string, metadata: Record<string, any>): any[] {
+  if (!argsString.trim()) {
+    return [];
+  }
+
+  const args: any[] = [];
+  let i = 0;
+
+  while (i < argsString.length) {
+    // Skip whitespace
+    while (i < argsString.length && /\s/.test(argsString[i])) {
+      i++;
+    }
+
+    if (i >= argsString.length) {
+      break;
+    }
+
+    // Handle string literals (double or single quotes)
+    if (argsString[i] === '"' || argsString[i] === "'") {
+      const quoteChar = argsString[i];
+      i++; // Skip opening quote
+      let stringValue = '';
+
+      while (i < argsString.length && argsString[i] !== quoteChar) {
+        // Handle escaped quotes
+        if (
+          argsString[i] === '\\' &&
+          i + 1 < argsString.length &&
+          argsString[i + 1] === quoteChar
+        ) {
+          stringValue += quoteChar;
+          i += 2;
+        } else {
+          stringValue += argsString[i];
+          i++;
+        }
+      }
+
+      if (i < argsString.length) {
+        i++; // Skip closing quote
+      }
+
+      args.push(stringValue);
+      continue;
+    }
+
+    // Handle subexpressions (parentheses): (helperName arg1 arg2)
+    if (argsString[i] === '(') {
+      i++; // Skip opening paren
+      let parenDepth = 1;
+      let subexpr = '';
+
+      while (i < argsString.length && parenDepth > 0) {
+        if (argsString[i] === '(') {
+          parenDepth++;
+        } else if (argsString[i] === ')') {
+          parenDepth--;
+          if (parenDepth === 0) {
+            break;
+          }
+        }
+        subexpr += argsString[i];
+        i++;
+      }
+
+      if (i < argsString.length) {
+        i++; // Skip closing paren
+      }
+
+      // Parse the subexpression
+      const subexprMatch = subexpr.trim().match(/^(\w+)\s+(.+)$/);
+      if (subexprMatch) {
+        const [, helperName, nestedArgsString] = subexprMatch;
+        const helper = helpers[helperName as keyof typeof helpers];
+
+        if (helper && typeof helper === 'function') {
+          try {
+            // Recursively parse nested arguments
+            const nestedArgs = parseHandlebarsArguments(nestedArgsString, metadata);
+
+            // Call the nested helper function
+            const nestedResult = (helper as any)(...nestedArgs);
+            args.push(nestedResult);
+            continue;
+          } catch (error) {
+            console.warn(`Error calling Handlebars subexpression helper '${helperName}':`, error);
+            args.push(undefined);
+            continue;
+          }
+        }
+      }
+
+      // If we couldn't parse the subexpression as a helper, treat it as undefined
+      args.push(undefined);
+      continue;
+    }
+
+    // Handle other tokens (numbers, booleans, variables)
+    let token = '';
+    while (i < argsString.length && !/\s/.test(argsString[i]) && argsString[i] !== ')') {
+      token += argsString[i];
+      i++;
+    }
+
+    if (!token) {
+      continue;
+    }
+
+    // Number literal
+    if (/^-?\d+(\.\d+)?$/.test(token)) {
+      args.push(parseFloat(token));
+      continue;
+    }
+
+    // Boolean literal
+    if (token === 'true') {
+      args.push(true);
+      continue;
+    }
+    if (token === 'false') {
+      args.push(false);
+      continue;
+    }
+
+    // Null/undefined literal
+    if (token === 'null') {
+      args.push(null);
+      continue;
+    }
+    if (token === 'undefined') {
+      args.push(undefined);
+      continue;
+    }
+
+    // Handle @today special case
+    if (token === '@today' || token.startsWith('@today[')) {
+      // Check if @today is defined in metadata first, otherwise use current date
+      const todayValue = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+      args.push(todayValue);
+      continue;
+    }
+
+    // Handle 'today' variable (alias for @today in Handlebars context)
+    if (token === 'today') {
+      const todayValue = metadata['today'] || metadata['@today'] || new Date();
+      args.push(todayValue);
+      continue;
+    }
+
+    // Metadata reference
+    const value = resolveNestedValue(metadata, token);
+    args.push(value);
+  }
+
+  return args;
+}
+
+/**
  * Process template fields in text nodes
  */
 function processTemplateFieldsInAST(
@@ -733,8 +983,12 @@ function processTemplateFieldsInAST(
 
       // Process fields in reverse order to maintain string indices
       for (const field of templateFields) {
-        const { value, hasLogic, mixinType } = resolveFieldValue(field.fieldName, metadata);
-        const isEmptyField = isEmptyValue(value);
+        const resolved = resolveFieldValue(field.fieldName, metadata);
+        const { value, hasLogic, mixinType } = resolved;
+        // For conditionals, check if the original condition was empty
+        const isEmptyCondition = (resolved as any).isEmptyCondition;
+        const isEmptyField =
+          isEmptyCondition !== undefined ? isEmptyCondition : isEmptyValue(value);
 
         // Format value with field tracking applied during AST processing
         const formattedValue = formatFieldValue(

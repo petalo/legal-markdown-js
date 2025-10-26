@@ -259,8 +259,15 @@ export function snakeCase(str: string | undefined | null): string {
  */
 export function camelCase(str: string | undefined | null): string {
   if (!str) return '';
-  return str
+
+  // Split on spaces, hyphens, underscores, or camelCase boundaries
+  const words = str
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // Insert space before capitals in camelCase
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Handle acronyms like "XMLParser"
     .split(/[\s-_]+/)
+    .filter(Boolean);
+
+  return words
     .map((word, index) => {
       if (index === 0) {
         return word.toLowerCase();
@@ -379,7 +386,12 @@ export function clean(str: string | undefined | null): string {
  * pluralize('person', 3, 'people');    // "people"
  * ```
  */
-export function pluralize(word: string, count: number, plural?: string): string {
+export function pluralize(word: string, count: number, plural?: string | object): string {
+  // Handle Handlebars options object as last argument
+  if (typeof plural === 'object') {
+    plural = undefined;
+  }
+
   if (count === 1) return word;
 
   if (plural) return plural;
@@ -424,12 +436,13 @@ export function pluralize(word: string, count: number, plural?: string): string 
  * ```
  */
 export function padStart(
-  str: string | undefined | null,
+  str: string | number | undefined | null,
   length: number,
   char: string = ' '
 ): string {
-  if (!str) return char.repeat(length);
-  return str.padStart(length, char);
+  if (!str && str !== 0) return char.repeat(length);
+  const strValue = String(str);
+  return strValue.padStart(length, char);
 }
 
 /**
@@ -454,9 +467,14 @@ export function padStart(
  * padEnd(null, 5);           // "     "
  * ```
  */
-export function padEnd(str: string | undefined | null, length: number, char: string = ' '): string {
-  if (!str) return char.repeat(length);
-  return str.padEnd(length, char);
+export function padEnd(
+  str: string | number | undefined | null,
+  length: number,
+  char: string = ' '
+): string {
+  if (!str && str !== 0) return char.repeat(length);
+  const strValue = String(str);
+  return strValue.padEnd(length, char);
 }
 
 /**

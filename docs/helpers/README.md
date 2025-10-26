@@ -1,122 +1,195 @@
-# Helper Functions Overview
+# Helper Functions Reference
 
-Helper functions provide powerful data formatting and manipulation capabilities
-for Legal Markdown documents. Use helpers with the `{{helperName(args)}}` syntax
-to create professional, consistent document formatting.
+Complete guide to all helper functions available in Legal Markdown.
 
-## Available Helper Categories
+## Categories
 
 ### 📅 [Date Helpers](date-helpers.md)
 
-Format and manipulate dates for contracts, invoices, and legal documents.
+Format and manipulate dates for legal documents.
 
-- **formatDate()** - Custom date formatting with multiple tokens
-- **addYears()**, **addMonths()**, **addDays()** - Date arithmetic
-- **Predefined formats** - ISO, US, EU, Legal, and international formats
+**Available helpers:**
 
-**Example:**
-
-```markdown
-**Effective Date:** {{formatDate(@today, "MMMM Do, YYYY")}} **Expiry Date:**
-{{formatDate(addYears(@today, 2), "MMMM Do, YYYY")}}
-```
+- `today` - Current date
+- `formatDate` - Format dates with multiple formats
+- `addYears` - Add/subtract years
+- `addMonths` - Add/subtract months
+- `addDays` - Add/subtract days
+- `formatBasicDate` - Simple date formatting
 
 ### 🔢 [Number Helpers](number-helpers.md)
 
-Format currency, percentages, and numbers for financial and legal documents.
+Format currency, percentages, and numbers.
 
-- **formatCurrency()** - Multi-currency formatting (USD, EUR, GBP)
-- **formatPercent()** - Percentage display with precision control
-- **formatInteger()** - Number formatting with separators
-- **numberToWords()** - Convert numbers to written form for legal docs
+**Available helpers:**
 
-**Example:**
-
-```markdown
-**Total Amount:** {{formatCurrency(25000, "USD")}} **Interest Rate:**
-{{formatPercent(0.065, 2)}} **Amount in Words:**
-{{titleCase(numberToWords(25000))}} Dollars
-```
+- `formatCurrency` - Format with currency symbol
+- `formatDollar` - Format as US dollars
+- `formatEuro` - Format as Euros
+- `formatPound` - Format as British Pounds
+- `formatInteger` - Format with thousand separators
+- `formatPercent` - Format as percentage
+- `numberToWords` - Convert numbers to words
+- `round` - Round to decimal places
 
 ### 📝 [String Helpers](string-helpers.md)
 
-Manipulate and format text for professional document presentation.
+Text manipulation and formatting.
 
-- **titleCase()**, **capitalize()** - Professional text formatting
-- **upper()**, **lower()** - Case conversion
-- **truncate()**, **clean()** - Text processing
-- **initials()**, **pluralize()** - Specialized text operations
-- **Advanced case conversion** - camelCase, kebabCase, snakeCase
+**Available helpers:**
 
-**Example:**
+- `capitalize` - Capitalize first letter
+- `capitalizeWords` - Capitalize each word
+- `titleCase` - Smart title casing
+- `upper` - Convert to uppercase
+- `lower` - Convert to lowercase
+- `truncate` - Truncate with suffix
+- `clean` - Remove extra whitespace
+- `pluralize` - Convert to plural
+- `kebabCase` - Convert to kebab-case
+- `snakeCase` - Convert to snake_case
+- `camelCase` - Convert to camelCase
+- `pascalCase` - Convert to PascalCase
+- `padStart` - Pad string at start
+- `padEnd` - Pad string at end
+- `contains` - Check substring
+- `replaceAll` - Replace all occurrences
+- `initials` - Extract initials
 
-```markdown
-**Client:** {{titleCase(client_name)}} **Reference:**
-{{upper(initials(client_name))}}-{{padStart(invoice_number, 4, "0")}}
-**Status:** {{capitalize(status)}}
-```
+### 🧮 [Mathematical Helpers](math-helpers.md)
+
+Arithmetic operations for calculations.
+
+**Available helpers:**
+
+- `multiply` - Multiply two numbers
+- `divide` - Divide two numbers
+- `add` - Add two numbers
+- `subtract` - Subtract two numbers
+
+### 🛠️ [Utility Helpers](utility-helpers.md)
+
+General-purpose utilities.
+
+**Available helpers:**
+
+- `concat` - Concatenate strings
+- `trackField` - Field tracking for highlighting
 
 ### ⭐ [Special Values](special-values.md)
 
-Dynamic values that automatically update during document generation.
+Built-in variables and context values.
 
-- **@today** - Current date with arithmetic and formatting
-- **Format specifiers** - `@today[US]`, `@today[legal]`, `@today[ISO]`
-- **Date arithmetic** - `@today+30`, `@today+1y`, `@today-90d`
-- **Combined operations** - `@today+30[legal]`, `@today+1y[US]`
+**Available:**
 
-**Example:**
+- `@today` - Current date variable
+- `@index` - Loop index (0-based)
+- `@first` - First item boolean
+- `@last` - Last item boolean
+- `@total` - Total items count
+- `this` - Current loop item
+- `../` - Parent context access
 
-```markdown
-**Generated:** @today[legal] **Due Date:** @today+30[US] **Contract Expires:**
-@today+1y[legal]
+### 🔧 [Built-in Handlebars Helpers](handlebars-builtins.md)
+
+Standard Handlebars control structures.
+
+**Available:**
+
+- `#if` - Conditional rendering
+- `#unless` - Inverse conditional
+- `#each` - Array iteration
+- `#with` - Change context
+- `lookup` - Dynamic property access
+
+---
+
+## Syntax
+
+Legal Markdown uses **Handlebars syntax** for all helpers:
+
+```handlebars
+{{helper arg1 arg2}}
+{{formatDate date 'YYYY-MM-DD'}}
+{{formatCurrency amount 'USD'}}
 ```
 
-## Quick Reference
+### Subexpressions
 
-### Most Common Helpers
+Chain helpers together using parentheses:
 
-| Helper                                | Purpose           | Example              |
-| ------------------------------------- | ----------------- | -------------------- |
-| `formatDate(@today, "MMMM Do, YYYY")` | Professional date | July 16th, 2025      |
-| `formatCurrency(amount, "USD")`       | Currency display  | $25,000.00           |
-| `titleCase(text)`                     | Professional text | "Legal Services LLC" |
-| `@today+30[US]`                       | Future date       | 08/15/2025           |
-| `formatPercent(0.065, 1)`             | Percentage        | 6.5%                 |
-| `initials(full_name)`                 | Name initials     | "JMS"                |
-
-### Helper Syntax
-
-```markdown
-<!-- Basic helper usage -->
-
-{{helperName(variable)}}
-
-<!-- Helper with parameters -->
-
-{{helperName(variable, parameter1, parameter2)}}
-
-<!-- Nested helpers -->
-
-{{helperName(otherHelper(variable))}}
-
-<!-- Helper with conditions -->
-
-{{variable ? helperName(variable) : "default"}}
+```handlebars
+{{formatDate (addYears startDate 5) 'legal'}}
+{{formatCurrency (multiply price quantity) 'USD'}}
+{{upper (concat firstName ' ' lastName)}}
 ```
+
+### Conditionals
+
+Use helpers with `#if` for conditional logic:
+
+```handlebars
+{{#if (contains email '@gmail.com')}}
+  Gmail address detected
+{{/if}}
+```
+
+---
+
+## Quick Examples
+
+### Date Formatting
+
+```handlebars
+Effective date:
+{{formatDate startDate 'legal'}}
+Expiration:
+{{formatDate (addYears startDate 2) 'MMMM D, YYYY'}}
+```
+
+### Currency Calculations
+
+```handlebars
+Subtotal:
+{{formatCurrency subtotal 'USD'}}
+Tax ({{formatPercent taxRate 1}}):
+{{formatCurrency (multiply subtotal taxRate) 'USD'}}
+Total:
+{{formatCurrency (add subtotal (multiply subtotal taxRate)) 'USD'}}
+```
+
+### String Manipulation
+
+```handlebars
+Client:
+{{titleCase clientName}}
+Reference:
+{{upper (concat 'REF-' contractId)}}
+```
+
+### Loops
+
+```handlebars
+{{#each items}}
+  {{@index}}.
+  {{titleCase name}}
+  -
+  {{formatCurrency price 'USD'}}
+{{/each}}
+```
+
+---
+
+## See Also
+
+- [Handlebars Migration Guide](../handlebars-migration.md) - Migrating from
+  legacy syntax
+- [Architecture Documentation](../architecture/) - How helpers work internally
+- [Official Handlebars Documentation](https://handlebarsjs.com/) - Handlebars
+  reference
+
+---
 
 ## Navigation
 
 - [← Back to Documentation](../README.md)
-- [Features →](../features/README.md)
-- [Output Formats →](../output/README.md)
-- [Advanced Topics →](../advanced/README.md)
-
-## See Also
-
-- [YAML Frontmatter](../features/yaml-frontmatter.md) - Defining variables for
-  helpers
-- [Variables & Mixins](../features/mixins-variables.md) - Using helpers with
-  variables
-- [Template Loops](../features/template-loops.md) - Helpers in iterations
-- [Optional Clauses](../features/optional-clauses.md) - Conditional helper usage

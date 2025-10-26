@@ -61,6 +61,8 @@ Helper libraries remain pluggable through existing registries:
 
 - **Template helpers** - new functions can be added in `src/core/helpers/*` and
   exposed via the template-fields plugin configuration
+- **Handlebars helpers** - register custom helpers using the Handlebars engine
+  (see details below)
 - **HTML/PDF generators** - extend `HtmlGenerator` / `PdfGenerator` with custom
   templates or post-process the generated markup/files before writing them to
   disk
@@ -69,6 +71,52 @@ Helper libraries remain pluggable through existing registries:
 
 When adding helpers, update typing in `src/types/helpers.ts` and include
 targeted unit tests.
+
+### Handlebars Template Engine
+
+Since v3.5.0, Legal Markdown supports **Handlebars** as the standard template
+engine alongside legacy custom syntax (deprecated).
+
+**Registering Custom Handlebars Helpers:**
+
+```typescript
+import { registerCustomHelper } from './extensions/handlebars-engine';
+
+// Register a custom helper
+registerCustomHelper('formatPhoneNumber', (phoneNumber: string) => {
+  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+});
+```
+
+**Usage in templates:**
+
+```handlebars
+Phone: {{formatPhoneNumber client.phone}}
+```
+
+**Available Helper Categories:**
+
+- **Date helpers**: `formatDate`, `addYears`, `addMonths`, `addDays`, etc.
+- **Number helpers**: `formatCurrency`, `formatPercent`, `numberToWords`, etc.
+- **String helpers**: `capitalize`, `titleCase`, `truncate`, `concat`, etc.
+- **Math helpers**: `multiply`, `divide`, `add`, `subtract`
+
+See `docs/handlebars-helpers-reference.md` for complete reference.
+
+**Architecture:**
+
+- Helper registration: `src/extensions/handlebars-engine.ts`
+- Template processing: `src/extensions/template-loops.ts`
+- Syntax detection: Automatic (Handlebars vs Legacy)
+- Migration path: See `docs/handlebars-migration.md`
+
+**Best Practices:**
+
+1. Use Handlebars syntax for new templates
+2. Register helpers in `handlebars-engine.ts` initialization
+3. Provide TypeScript types for helper arguments
+4. Include unit tests for custom helpers
+5. Document helpers in `handlebars-helpers-reference.md`
 
 ## CLI & Tooling Hooks
 

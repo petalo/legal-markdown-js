@@ -1,9 +1,18 @@
 /**
  * Template Loop Processing Extension for Legal Markdown
  *
- * This extension adds support for template loops and conditional blocks using
- * the {{#variable}}...{{/variable}} syntax. It enables iteration over arrays
- * and conditional rendering of template sections.
+ * This extension supports DUAL SYNTAX (Handlebars + Legacy):
+ *
+ * HANDLEBARS SYNTAX (Recommended - Standard):
+ * - Helper calls: {{helper arg1 arg2}}
+ * - Loops: {{#each items}}...{{/each}}
+ * - Conditionals: {{#if condition}}...{{/if}}
+ * - Subexpressions: {{formatDate (addYears date 2) "legal"}}
+ *
+ * LEGACY SYNTAX (Deprecated - Will be removed in v4.0.0):
+ * - Helper calls: {{helper(arg1, arg2)}}
+ * - Math expressions: {{price * quantity}}
+ * - String concat: {{"$" + price}}
  *
  * Features:
  * - Array iteration: {{#items}}...{{/items}}
@@ -11,21 +20,30 @@
  * - Nested loops support
  * - Context management for loop variables
  * - Integration with field tracking
+ * - Automatic syntax detection
  *
  * @example
  * ```typescript
  * import { processTemplateLoops } from './template-loops';
  *
+ * // Handlebars syntax (recommended)
  * const content = `
+ * {{#each items}}
+ * - {{name}} - {{formatCurrency price "USD"}}
+ * {{/each}}
+ * `;
+ *
+ * // Legacy syntax (deprecated)
+ * const legacyContent = `
  * {{#items}}
- * - {{name}} {{onSale ? "(ON SALE!)" : ""}} - ${{price}}
+ * - {{name}} - {{formatCurrency(price, "USD")}}
  * {{/items}}
  * `;
  *
  * const metadata = {
  *   items: [
- *     { name: "Product A", price: 10.99, onSale: true },
- *     { name: "Product B", price: 15.50, onSale: false }
+ *     { name: "Product A", price: 10.99 },
+ *     { name: "Product B", price: 15.50 }
  *   ]
  * };
  *
@@ -35,6 +53,7 @@
 
 import { fieldTracker } from './tracking/field-tracker';
 import { extensionHelpers as helpers } from './helpers/index';
+import { compileHandlebarsTemplate } from './handlebars-engine';
 
 /**
  * Escapes HTML attribute values to prevent breaking HTML structure
@@ -66,6 +85,237 @@ export interface LoopContext {
   parent?: LoopContext;
 }
 
+// ============================================================================
+// SYNTAX DETECTION - Automatic detection of Handlebars vs Legacy syntax
+// ============================================================================
+
+/**
+ * Detects which template syntax is used in the content
+ *
+ * @param content - The template content to analyze
+ * @returns 'handlebars' | 'legacy' | 'mixed'
+ */
+function detectSyntaxType(content: string): 'legacy' | 'handlebars' | 'mixed' {
+  // Pattern for LEGACY syntax: helper calls with parentheses like helper(arg1, arg2)
+  const legacyPattern = /\{\{[^}]*\w+\([^)]*\)[^}]*\}\}/;
+
+  // Pattern for HANDLEBARS syntax:
+  // 1. Helper calls without parentheses: helper arg1 arg2
+  // 2. Handlebars blocks: {{#each}}, {{#if}}, etc.
+  // 3. Block closings: {{/each}}, {{/if}}
+  // Excludes: @special variables, simple variables
+  const handlebarsHelperPattern = /\{\{(?!#|\/|@)\w+\s+[^}]+\}\}/;
+  const handlebarsBlockPattern = /\{\{#(each|if|unless|with)\b/;
+  const handlebarsClosingPattern = /\{\{\/(each|if|unless|with)\}\}/;
+
+  const hasLegacy = legacyPattern.test(content);
+  const hasHandlebars =
+    handlebarsHelperPattern.test(content) ||
+    handlebarsBlockPattern.test(content) ||
+    handlebarsClosingPattern.test(content);
+
+  if (hasLegacy && hasHandlebars) return 'mixed';
+  if (hasHandlebars) return 'handlebars';
+  return 'legacy'; // Default to legacy for backward compatibility
+}
+
+/**
+ * Collects all legacy syntax patterns found in content for migration hints
+ *
+ * @param content - The template content to analyze
+ * @returns Array of legacy patterns with suggested replacements
+ */
+function collectLegacySyntaxPatterns(content: string): Array<{
+  legacy: string;
+  suggestion: string;
+  line: number;
+}> {
+  const patterns: Array<{ legacy: string; suggestion: string; line: number }> = [];
+
+  // Split content into lines for line numbers
+  const lines = content.split('\n');
+
+  lines.forEach((line, index) => {
+    // Match helper calls with parentheses: {{helper(arg1, arg2)}}
+    const helperMatches = line.matchAll(/\{\{([^}]*\w+)\(([^)]*)\)([^}]*)\}\}/g);
+    for (const match of helperMatches) {
+      const fullMatch = match[0];
+      const helperName = match[1].trim();
+      const args = match[2];
+
+      // Convert args: remove commas between arguments
+      const handlebarsArgs = args.replace(/,\s*/g, ' ');
+      const suggestion = `{{${helperName} ${handlebarsArgs}}}`;
+
+      patterns.push({
+        legacy: fullMatch,
+        suggestion,
+        line: index + 1,
+      });
+    }
+
+    // Match mathematical expressions: {{a * b}}, {{a + b}}, etc.
+    const mathMatches = line.matchAll(/\{\{([^}]*[*/+-][^}]*)\}\}/g);
+    for (const match of mathMatches) {
+      const fullMatch = match[0];
+      const expression = match[1].trim();
+
+      // Try to convert to helper syntax
+      if (expression.includes('*')) {
+        const [a, b] = expression.split('*').map(s => s.trim());
+        patterns.push({
+          legacy: fullMatch,
+          suggestion: `{{multiply ${a} ${b}}}`,
+          line: index + 1,
+        });
+      } else if (expression.includes('+') && !expression.includes('"')) {
+        const [a, b] = expression.split('+').map(s => s.trim());
+        patterns.push({
+          legacy: fullMatch,
+          suggestion: `{{add ${a} ${b}}}`,
+          line: index + 1,
+        });
+      }
+    }
+
+    // Match string concatenation: {{"text" + variable}}
+    const concatMatches = line.matchAll(/\{\{["']([^"']+)["']\s*\+\s*(\w+)\}\}/g);
+    for (const match of concatMatches) {
+      const fullMatch = match[0];
+      const text = match[1];
+      const variable = match[2];
+
+      patterns.push({
+        legacy: fullMatch,
+        suggestion: `{{concat "${text}" ${variable}}}`,
+        line: index + 1,
+      });
+    }
+  });
+
+  return patterns;
+}
+
+/**
+ * Logs detailed migration hints for legacy syntax
+ *
+ * @param patterns - Array of detected legacy patterns
+ * @param documentPath - Optional document path for context
+ */
+function logLegacySyntaxMigrationHints(
+  patterns: Array<{ legacy: string; suggestion: string; line: number }>,
+  documentPath?: string
+): void {
+  if (patterns.length === 0) return;
+
+  const location = documentPath ? ` in ${documentPath}` : '';
+
+  console.warn(`
+╔════════════════════════════════════════════════════════════════════════════╗
+║  ⚠️  DEPRECATED: Legacy Template Syntax Detected${location.padEnd(28)}║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Found ${patterns.length} legacy syntax pattern(s) that should be migrated to Handlebars:
+`);
+
+  patterns.forEach((pattern, index) => {
+    console.warn(`
+${index + 1}. Line ${pattern.line}:
+   ❌ Legacy:     ${pattern.legacy}
+   ✅ Handlebars: ${pattern.suggestion}
+`);
+  });
+
+  console.warn(`
+Migration Guide: https://github.com/petalo/legal-markdown-js/blob/main/docs/handlebars-migration.md
+
+Legacy syntax will be REMOVED in v4.0.0
+Please update your templates to use Handlebars syntax.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`);
+}
+
+// ============================================================================
+// HANDLEBARS PROCESSING - New standard way (keeps in v4.0.0+)
+// ============================================================================
+
+/**
+ * Processes templates using Handlebars engine
+ *
+ * @param content - The template content
+ * @param metadata - The data context
+ * @param context - Optional loop context
+ * @param enableFieldTracking - Whether to track field usage
+ * @returns Processed content
+ */
+function processWithHandlebars(
+  content: string,
+  metadata: Record<string, any>,
+  context?: LoopContext,
+  enableFieldTracking: boolean = true
+): string {
+  try {
+    // Prepare Handlebars data context
+    const handlebarsData: Record<string, any> = {
+      ...metadata,
+    };
+
+    // Add loop context variables if present
+    if (context) {
+      handlebarsData['@index'] = context.index;
+      handlebarsData['@total'] = context.total;
+      handlebarsData['@first'] = context.index === 0;
+      handlebarsData['@last'] = context.index === context.total - 1;
+
+      // For parent context access
+      if (context.parent) {
+        handlebarsData['@parent'] = {
+          ...metadata,
+          '@index': context.parent.index,
+          '@total': context.parent.total,
+        };
+      }
+    }
+
+    // Compile and render with Handlebars
+    const result = compileHandlebarsTemplate(content, handlebarsData);
+
+    // Apply field tracking if enabled
+    if (enableFieldTracking) {
+      return applyFieldTrackingToOutput(result, metadata);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error processing Handlebars template:', error);
+    console.warn('Falling back to legacy processing...');
+    // Fallback to legacy on error
+    return processWithLegacy(content, metadata, context, enableFieldTracking);
+  }
+}
+
+/**
+ * Applies field tracking to Handlebars output
+ *
+ * @param content - Rendered content
+ * @param metadata - Metadata used
+ * @returns Content with field tracking applied
+ */
+function applyFieldTrackingToOutput(content: string, metadata: Record<string, any>): string {
+  // Track fields that appear in the output
+  Object.keys(metadata).forEach(key => {
+    const value = metadata[key];
+    if (typeof value === 'string' || typeof value === 'number') {
+      const valueStr = String(value);
+      if (content.includes(valueStr)) {
+        fieldTracker.trackField(key, { value, hasLogic: false });
+      }
+    }
+  });
+
+  return content;
+}
+
 /**
  * Result of parsing a template loop block
  */
@@ -85,6 +335,11 @@ interface LoopBlock {
 /**
  * Processes template loops and conditional blocks in content
  *
+ * DUAL SYNTAX SUPPORT:
+ * - Automatically detects Handlebars vs Legacy syntax
+ * - Routes to appropriate processor
+ * - Logs migration hints for legacy syntax
+ *
  * @param content - The template content containing loop patterns
  * @param metadata - The metadata object containing loop data
  * @param context - Current loop context for nested loops
@@ -92,6 +347,69 @@ interface LoopBlock {
  * @returns Processed content with loops expanded
  */
 export function processTemplateLoops(
+  content: string,
+  metadata: Record<string, any>,
+  context?: LoopContext,
+  enableFieldTracking: boolean = true
+): string {
+  // STEP 1: Detect syntax type
+  const syntaxType = detectSyntaxType(content);
+
+  // STEP 2: Log migration hints for legacy syntax
+  if (syntaxType === 'legacy' || syntaxType === 'mixed') {
+    const patterns = collectLegacySyntaxPatterns(content);
+    logLegacySyntaxMigrationHints(patterns);
+
+    if (syntaxType === 'mixed') {
+      console.error(`
+❌ ERROR: Mixed template syntax detected!
+   Your document contains BOTH legacy and Handlebars syntax.
+   Please use one syntax consistently throughout the document.
+
+   Falling back to legacy processing...
+`);
+    }
+  }
+
+  // STEP 3: Route to appropriate processor
+  if (syntaxType === 'handlebars') {
+    // Use Handlebars engine (modern, standard)
+    return processWithHandlebars(content, metadata, context, enableFieldTracking);
+  } else {
+    // Use legacy processor (deprecated, will be removed in v4.0.0)
+    return processWithLegacy(content, metadata, context, enableFieldTracking);
+  }
+}
+
+// ============================================================================
+// ⚠️ LEGACY PROCESSING - DEPRECATED - TO BE REMOVED IN v4.0.0
+// ============================================================================
+// Everything below this line is legacy code that will be removed in version 4.0.0
+// This code is kept for backward compatibility with old template syntax.
+//
+// LEGACY SYNTAX (Deprecated):
+// - {{helper(arg1, arg2)}}  ← Function-style helper calls
+// - {{price * quantity}}     ← Mathematical expressions
+// - {{"$" + price}}          ← String concatenation
+//
+// Please migrate to Handlebars syntax:
+// - {{helper arg1 arg2}}     ← Standard Handlebars
+// - {{multiply price quantity}} ← Helper functions
+// - {{concat "$" price}}     ← concat helper
+// ============================================================================
+
+/**
+ * @deprecated Use processWithHandlebars instead. Will be removed in v4.0.0
+ *
+ * Processes template loops using legacy custom parsing logic
+ *
+ * @param content - The template content
+ * @param metadata - The metadata object
+ * @param context - Current loop context
+ * @param enableFieldTracking - Whether to enable field tracking
+ * @returns Processed content
+ */
+function processWithLegacy(
   content: string,
   metadata: Record<string, any>,
   context?: LoopContext,
@@ -124,6 +442,8 @@ export function processTemplateLoops(
 }
 
 /**
+ * @deprecated Legacy function. Will be removed in v4.0.0. Use Handlebars instead.
+ *
  * Finds all loop blocks in the content using regex pattern matching
  *
  * @param content - The content to search for loop blocks
@@ -170,6 +490,8 @@ function findLoopBlocks(content: string): LoopBlock[] {
 }
 
 /**
+ * @deprecated Legacy function. Will be removed in v4.0.0. Use Handlebars instead.
+ *
  * Expands a single loop block into its final content
  *
  * @param loopBlock - The loop block to expand

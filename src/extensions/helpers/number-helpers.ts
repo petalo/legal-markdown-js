@@ -61,7 +61,7 @@ export function formatInteger(value: number | string, separator: string = ','): 
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return String(value);
 
-  return Math.floor(num)
+  return Math.round(num)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, separator);
 }
@@ -181,8 +181,10 @@ export function formatCurrency(
  * formatEuro('500');       // "500.00 €"
  * ```
  */
-export function formatEuro(value: number | string, decimals: number = 2): string {
-  return formatCurrency(value, 'EUR', decimals);
+export function formatEuro(value: number | string, decimals: number | object = 2): string {
+  // Handle Handlebars options object
+  const decimalCount = typeof decimals === 'object' ? 2 : decimals;
+  return formatCurrency(value, 'EUR', decimalCount);
 }
 
 /**
@@ -202,8 +204,10 @@ export function formatEuro(value: number | string, decimals: number = 2): string
  * formatDollar('500');       // "$500.00"
  * ```
  */
-export function formatDollar(value: number | string, decimals: number = 2): string {
-  return formatCurrency(value, 'USD', decimals);
+export function formatDollar(value: number | string, decimals: number | object = 2): string {
+  // Handle Handlebars options object
+  const decimalCount = typeof decimals === 'object' ? 2 : decimals;
+  return formatCurrency(value, 'USD', decimalCount);
 }
 
 /**
@@ -223,8 +227,10 @@ export function formatDollar(value: number | string, decimals: number = 2): stri
  * formatPound('500');       // "£500.00"
  * ```
  */
-export function formatPound(value: number | string, decimals: number = 2): string {
-  return formatCurrency(value, 'GBP', decimals);
+export function formatPound(value: number | string, decimals: number | object = 2): string {
+  // Handle Handlebars options object
+  const decimalCount = typeof decimals === 'object' ? 2 : decimals;
+  return formatCurrency(value, 'GBP', decimalCount);
 }
 
 /**

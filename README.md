@@ -235,6 +235,8 @@ const result = await processLegalMarkdownAsync(content, options);
   documentation
 - **[Features Guide](docs/features/README.md)** - All features, helpers, and
   advanced usage
+- **[Handlebars Helpers](docs/helpers/README.md)** - Complete reference of all
+  available Handlebars helpers (30+ helpers)
 - **[Headers & Numbering](docs/features/headers-numbering.md)** - Hierarchical
   numbering system guide
 - **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and
