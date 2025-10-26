@@ -136,9 +136,33 @@ would evaluate against unexpanded `{{variable}}` syntax.
 
 ### Template Loop Conditional Evaluation
 
-The `processTemplateLoops` plugin (Phase 3) now includes **full expression
-evaluation** for conditional blocks, making Legal Markdown more powerful than
-standard Handlebars templates.
+The `processTemplateLoops` plugin (Phase 3) supports **dual syntax**:
+
+- **Handlebars syntax** (recommended, standard): Uses native Handlebars engine
+- **Legacy syntax** (deprecated): Custom expression evaluation (to be removed in
+  v4.0.0)
+
+**Since v3.5.0**, Legal Markdown automatically detects which syntax is used and
+routes to the appropriate processor. The system logs detailed migration hints
+when legacy syntax is detected.
+
+#### Handlebars Engine (New Standard)
+
+Templates using Handlebars syntax benefit from:
+
+- Industry-standard template features
+- Subexpressions: `{{formatDate (addYears date 2) "legal"}}`
+- Parent context access: `{{../parentVariable}}`
+- Native loop helpers: `{{@index}}`, `{{@first}}`, `{{@last}}`
+- 30+ registered helpers (date, number, string, math)
+
+See `docs/handlebars-helpers-reference.md` for complete reference.
+
+#### Legacy Expression Evaluation (Deprecated)
+
+The legacy processor includes **full expression evaluation** for conditional
+blocks, providing features beyond standard Handlebars (these will be removed in
+v4.0.0).
 
 #### Supported Operators
 
