@@ -40,6 +40,55 @@ import * as yaml from 'js-yaml';
 import { YamlParsingResult } from '../../types';
 import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-date-helpers';
 
+// ============================================================================
+// CUSTOM YAML SCHEMA FOR ISO DATE PARSING
+// ============================================================================
+// This schema automatically parses ISO date strings (YYYY-MM-DD) as Date objects
+// Fixes Issue #142: Allows date helpers to work with YAML date fields without @today
+//
+// Example:
+// ---
+// startDate: 2025-01-15  # ← Automatically parsed as Date object
+// ---
+// {{addYears startDate 2}}  # ← Now works!
+
+/**
+ * Custom YAML type for automatic ISO date parsing
+ * Converts ISO date strings to Date objects during YAML parsing
+ */
+const DateType = new yaml.Type('tag:yaml.org,2002:timestamp', {
+  kind: 'scalar',
+  resolve: (data: any) => {
+    if (typeof data === 'string') {
+      // Match ISO date patterns: YYYY-MM-DD or full ISO datetime
+      const isoDatePattern = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/;
+      return isoDatePattern.test(data);
+    }
+    return false;
+  },
+  construct: (data: any) => {
+    // Parse ISO string to Date object
+    const date = new Date(data);
+    // Validate that the date is valid
+    if (isNaN(date.getTime())) {
+      throw new Error(`Invalid date: ${data}`);
+    }
+    return date;
+  },
+  instanceOf: Date,
+  represent: (data: any) => {
+    if (data instanceof Date) {
+      return data.toISOString();
+    }
+    return String(data);
+  },
+});
+
+/**
+ * Custom YAML schema extending default schema with ISO date parsing
+ */
+const LEGAL_MARKDOWN_SCHEMA = yaml.DEFAULT_SCHEMA.extend([DateType]);
+
 /**
  * Parses YAML Front Matter from a markdown document
  *
@@ -107,8 +156,10 @@ export function parseYamlFrontMatter(
   yamlContent = processDateReferencesInYaml(yamlContent);
 
   try {
-    // Parse YAML
-    const metadata = yaml.load(yamlContent) as Record<string, any>;
+    // Parse YAML with custom schema that auto-parses ISO dates
+    const metadata = yaml.load(yamlContent, {
+      schema: LEGAL_MARKDOWN_SCHEMA,
+    }) as Record<string, any>;
 
     // Handle empty YAML
     if (!metadata || typeof metadata !== 'object') {
