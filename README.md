@@ -237,6 +237,8 @@ const result = await processLegalMarkdownAsync(content, options);
   advanced usage
 - **[Handlebars Helpers](docs/helpers/README.md)** - Complete reference of all
   available Handlebars helpers (30+ helpers)
+- **[Handlebars Migration Guide](docs/handlebars-migration.md)** - ⚠️ Migrating
+  from legacy syntax to Handlebars (legacy syntax deprecated)
 - **[Headers & Numbering](docs/features/headers-numbering.md)** - Hierarchical
   numbering system guide
 - **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and

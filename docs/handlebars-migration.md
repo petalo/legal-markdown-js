@@ -343,6 +343,115 @@ Status: {{#if isPremium}}Premium Member{{else}}Standard Member{{/if}}
 
 ---
 
+## Complete Example: Service Agreement
+
+Here's a real-world example showing both syntaxes side-by-side:
+
+### Legacy Syntax (Deprecated)
+
+```markdown
+---
+clientName: John Doe
+companyName: ACME Corp
+startDate: 2025-01-15
+monthlyFee: 5000
+taxRate: 0.15
+services:
+  - name: Consulting
+    hours: 40
+    rate: 150
+  - name: Development
+    hours: 80
+    rate: 125
+---
+
+# SERVICE AGREEMENT
+
+**Client**: {{clientName}} **Company**: {{companyName}} **Start Date**:
+{{formatDate(startDate, "legal")}} **Monthly Fee**:
+{{formatCurrency(monthlyFee, "USD")}}
+
+## Services Provided
+
+{{#services}}
+
+- **{{name}}**: {{hours}} hours @ {{formatCurrency(rate, "USD")}}/hour Total:
+  {{formatCurrency(hours * rate, "USD")}} {{/services}}
+
+## Total Cost
+
+Base Fee: {{formatCurrency(monthlyFee, "USD")}} Tax
+({{formatPercent(taxRate, 1)}}): {{formatCurrency(monthlyFee * taxRate, "USD")}}
+**Grand Total**: {{formatCurrency(monthlyFee + (monthlyFee * taxRate), "USD")}}
+```
+
+### Handlebars Syntax (Recommended)
+
+```markdown
+---
+clientName: John Doe
+companyName: ACME Corp
+startDate: 2025-01-15
+monthlyFee: 5000
+taxRate: 0.15
+services:
+  - name: Consulting
+    hours: 40
+    rate: 150
+  - name: Development
+    hours: 80
+    rate: 125
+---
+
+# SERVICE AGREEMENT
+
+**Client**: {{clientName}} **Company**: {{companyName}} **Start Date**:
+{{formatDate startDate "legal"}} **Monthly Fee**:
+{{formatCurrency monthlyFee "USD"}}
+
+## Services Provided
+
+{{#each services}}
+
+- **{{name}}**: {{hours}} hours @ {{formatCurrency rate "USD"}}/hour Total:
+  {{formatCurrency (multiply hours rate) "USD"}} {{/each}}
+
+## Total Cost
+
+Base Fee: {{formatCurrency monthlyFee "USD"}} Tax ({{formatPercent taxRate 1}}):
+{{formatCurrency (multiply monthlyFee taxRate) "USD"}} **Grand Total**:
+{{formatCurrency (add monthlyFee (multiply monthlyFee taxRate)) "USD"}}
+```
+
+### Key Differences
+
+1. **Helper Calls**: Removed `()` and `,` → `formatDate(startDate, "legal")`
+   becomes `formatDate startDate "legal"`
+2. **Math Operations**: Used helpers → `hours * rate` becomes
+   `multiply hours rate`
+3. **Subexpressions**: Enabled → `(multiply hours rate)` for nested calculations
+4. **Loop Syntax**: `{{#services}}` → `{{#each services}}` (recommended)
+
+### Output (Both Produce Same Result)
+
+```markdown
+# SERVICE AGREEMENT
+
+**Client**: John Doe **Company**: ACME Corp **Start Date**: January 15, 2025
+**Monthly Fee**: $5,000.00
+
+## Services Provided
+
+- **Consulting**: 40 hours @ $150.00/hour Total: $6,000.00
+- **Development**: 80 hours @ $125.00/hour Total: $10,000.00
+
+## Total Cost
+
+Base Fee: $5,000.00 Tax (15.0%): $750.00 **Grand Total**: $5,750.00
+```
+
+---
+
 ## Automated Migration (Coming Soon)
 
 We're working on an automated migration tool:
