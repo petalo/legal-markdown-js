@@ -1,7 +1,17 @@
 /**
- * Template Loop Processing Extension for Legal Markdown
+ * Template Loop Processing - Phase 2 String Transformation Module
  *
- * This extension supports DUAL SYNTAX (Handlebars + Legacy):
+ * ⚠️ IMPORTANT: This is NOT a remark plugin!
+ * This module runs in Phase 2 (String Transformations) BEFORE remark AST parsing.
+ *
+ * Why String-Level Processing?
+ * ────────────────────────────
+ * Template loops with Handlebars blocks ({{#each}}, {{#if}}) can span multiple lines
+ * and contain markdown formatting. When remark parses markdown into an AST, it fragments
+ * these patterns across multiple nodes, making it impossible for an AST plugin to match
+ * complete loop structures.
+ *
+ * This module supports DUAL SYNTAX (Handlebars + Legacy):
  *
  * HANDLEBARS SYNTAX (Recommended - Standard):
  * - Helper calls: {{helper arg1 arg2}}
@@ -49,6 +59,10 @@
  *
  * const result = processTemplateLoops(content, metadata);
  * ```
+ *
+ * @module
+ * @see docs/architecture/string-transformations.md
+ * @see Issue #149 - https://github.com/petalo/legal-markdown-js/issues/149
  */
 
 import { fieldTracker } from './tracking/field-tracker';
@@ -334,6 +348,8 @@ interface LoopBlock {
 
 /**
  * Processes template loops and conditional blocks in content
+ *
+ * ⚠️ RUNS IN PHASE 2 (String Transformations) - BEFORE remark AST parsing
  *
  * DUAL SYNTAX SUPPORT:
  * - Automatically detects Handlebars vs Legacy syntax

@@ -2,37 +2,48 @@
 
 - [Overview](#overview)
 - [Phase 1 - Context Builder](#phase-1--context-builder)
-- [Phase 2 - Remark Content Processing](#phase-2--remark-content-processing)
-- [Phase 3 - Format Generation](#phase-3--format-generation)
+- [Phase 2 - String Transformations](#phase-2--string-transformations)
+- [Phase 3 - AST Processing](#phase-3--ast-processing)
+- [Phase 4 - Format Generation](#phase-4--format-generation)
 - [Pipeline Entry Points](#pipeline-entry-points)
 - [Performance & Validation](#performance--validation)
 - [Extension & Migration Notes](#extension--migration-notes)
 
 ## Overview
 
-Legal Markdown JS now ships with a **three-phase processing pipeline** that
-removes duplicate remark executions and lets every consumer share a cached AST.
-The architecture is implemented in `src/core/pipeline` and was introduced while
-working on the incremental pipeline initiative (Issue #122). The phases are:
+Legal Markdown JS ships with a **four-phase processing pipeline** that removes
+duplicate remark executions and lets every consumer share a cached AST. The
+architecture is implemented in `src/core/pipeline` and was introduced while
+working on the incremental pipeline initiative (Issue #122), with Phase 2
+formalized in Issue #149. The phases are:
 
 | Phase | Responsibility                                           | Key Outputs                                                             |
 | ----- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
 | 1     | Parse frontmatter, resolve force-commands, merge options | `ProcessingContext`                                                     |
-| 2     | Run the remark processor exactly once                    | Cached `LegalMarkdownProcessorResult` (content, AST, metadata, exports) |
-| 3     | Generate requested artefacts without re-processing       | HTML, PDF, Markdown, metadata files                                     |
+| 2     | Apply string transformations before AST parsing          | Preprocessed content, field mappings                                    |
+| 3     | Run the remark processor exactly once                    | Cached `LegalMarkdownProcessorResult` (content, AST, metadata, exports) |
+| 4     | Generate requested artefacts without re-processing       | HTML, PDF, Markdown, metadata files                                     |
 
 ```mermaid
 flowchart LR
-    A[Phase 1\nContext Builder] --> B[Phase 2\nRemark Processor]
-    B --> C[Phase 3\nFormat Generator]
+    A[Phase 1\nContext Builder] --> B[Phase 2\nString Transformations]
+    B --> C[Phase 3\nAST Processing]
+    C --> D[Phase 4\nFormat Generator]
 
     A -.->|ProcessingContext| B
-    B -.->|LegalMarkdownProcessorResult| C
-    C -->|Generated files| D[CLI / Integrations]
+    B -.->|Preprocessed Content| C
+    C -.->|LegalMarkdownProcessorResult| D
+    D -->|Generated files| E[CLI / Integrations]
 ```
 
 The pipeline modules are exported from `src/core/pipeline/index.ts`, making them
 available to CLI services, integrations and future API consumers.
+
+**See Also:**
+
+- [String Transformations](./string-transformations.md) - Detailed Phase 2
+  documentation
+- [Remark Integration](./04_remark_integration.md) - Phase 3 AST plugins
 
 ## Phase 1 - Context Builder
 
@@ -52,16 +63,64 @@ YAML), resolved options, merged metadata and the base path that the remark phase
 uses for relative imports. Debug logging is emitted when `options.debug` is true
 to make tracing easier.
 
-## Phase 2 - Remark Content Processing
+## Phase 2 - String Transformations
 
-Phase 2 reuses the existing remark processor from
+**Added in Issue #149** - Formalizes the previously undocumented "Phase 1.5"
+
+Phase 2 performs string-level transformations on raw markdown content BEFORE
+remark AST parsing. These transformations are implemented in
+`src/core/pipeline/string-transformations.ts` and handle patterns that would be
+fragmented and impossible to match once the content is parsed into an AST.
+
+### Why String Transformations Are Necessary
+
+Some features cannot work as remark plugins because the AST fragments multi-line
+patterns. For example, a multi-line optional clause with markdown formatting:
+
+```markdown
+[l. **Warranties**
+
+The seller provides warranties.]{includeWarranties}
+```
+
+When remark parses this into an AST, it splits the pattern across multiple nodes
+(paragraph, text, strong, etc.), making it impossible for a plugin to match the
+complete `[content]{condition}` pattern.
+
+### Transformation Order
+
+Phase 2 applies transformations in a specific order:
+
+1. **Field Pattern Normalization** - Convert custom patterns (like `|field|`) to
+   standard `{{field}}` format
+2. **Optional Clauses Processing** - Evaluate `[content]{condition}` patterns
+   and conditionally include/exclude content
+3. **Template Loops Processing** - Expand Handlebars blocks (`{{#each}}`,
+   `{{#if}}`) with data
+
+### Key Features
+
+- **Optional Clauses:** `[content]{condition}` - Can span multiple lines with
+  markdown formatting
+- **Template Loops:** `{{#each items}}...{{/each}}` - Handlebars-powered
+  iteration and conditionals
+- **Field Normalization:** Ensures all fields use consistent `{{field}}` syntax
+  before Handlebars compilation
+
+See [String Transformations](./string-transformations.md) for detailed
+documentation and decision tree for when to use string transforms vs AST
+plugins.
+
+## Phase 3 - AST Processing
+
+Phase 3 uses the existing remark processor from
 `src/extensions/remark/legal-markdown-processor.ts`. The differences introduced
 by the pipeline work are:
 
 - `processLegalMarkdownWithRemark` now returns a `LegalMarkdownProcessorResult`
   that includes the processed markdown, metadata, exported file list **and** a
   cached AST (`ast?: Root`)
-- Additional metadata gathered in Phase 1 is passed through with the
+- Additional metadata gathered in Phase 1 and Phase 2 is passed through with the
   `additionalMetadata` option so header numbering and other plugins see the
   consolidated state
 - Plugin order validation migrated next to the remark plugins. The validator and
@@ -70,13 +129,13 @@ by the pipeline work are:
   to the implementations (see
   [Remark Content Processing](04_remark_integration.md))
 
-Because Phase 2 only runs **once**, all format generation steps consume the same
+Because Phase 3 only runs **once**, all format generation steps consume the same
 AST and metadata snapshot, eliminating the previous "format × remark runs"
 combinatorial explosion.
 
 ### Pipeline Builder: Single Source of Truth for Plugin Ordering
 
-**New in Phase 2**: The `buildRemarkPipeline()` function in
+**New in Phase 3**: The `buildRemarkPipeline()` function in
 `src/core/pipeline/pipeline-builder.ts` serves as the **single source of truth**
 for determining plugin execution order. This phase-based architecture prevents
 subtle ordering bugs like Issue #120 (conditionals evaluating before variables
@@ -136,7 +195,7 @@ would evaluate against unexpanded `{{variable}}` syntax.
 
 ### Template Loop Conditional Evaluation
 
-The `processTemplateLoops` plugin (Phase 3) supports **dual syntax**:
+The `processTemplateLoops` transformation (Phase 2) supports **dual syntax**:
 
 - **Handlebars syntax** (recommended, standard): Uses native Handlebars engine
 - **Legacy syntax** (deprecated): Custom expression evaluation (to be removed in
@@ -245,23 +304,26 @@ helper functions for comparisons.
 
 #### Comparison with Other Template Engines
 
-| Feature             | Handlebars                 | Liquid                   | Legal Markdown          |
+| Feature             | Handlebars                 | Liquid                   | Legal Markdown (Legacy) |
 | ------------------- | -------------------------- | ------------------------ | ----------------------- |
 | Comparison ops      | ❌ (requires helpers)      | ✅                       | ✅                      |
 | Boolean operators   | ❌ (requires helpers)      | ✅                       | ✅                      |
 | Syntax              | `{{#if (eq a b)}}`         | `{% if a == b %}`        | `{{#if a == b}}`        |
 | Numeric comparisons | `{{#if (gt amount 1000)}}` | `{% if amount > 1000 %}` | `{{#if amount > 1000}}` |
 
-## Phase 3 - Format Generation
+**Note:** This comparison applies to the legacy syntax only. Standard Handlebars
+syntax is now recommended and uses Handlebars' own conditional system.
 
-Phase 3 is implemented by `src/core/pipeline/format-generator.ts` and focuses on
+## Phase 4 - Format Generation
+
+Phase 4 is implemented by `src/core/pipeline/format-generator.ts` and focuses on
 artefact creation:
 
 - `generateAllFormats` writes HTML, PDF, Markdown and metadata exports without
   re-running the remark phase. It orchestrates Html/Pdf generators and simple
   file writes from the cached AST and processed markdown
-- `processAndGenerateFormats` is a convenience helper that executes Phases 2 and
-  3 together when Phase 1 already provided a `ProcessingContext`
+- `processAndGenerateFormats` is a convenience helper that executes Phases 2, 3,
+  and 4 together when Phase 1 already provided a `ProcessingContext`
 - Highlight variants share the same cached AST and differ only by the
   `includeHighlighting` flag passed into the Html/Pdf generators
 - Output directories are created on demand and comprehensive error messages are
@@ -273,12 +335,13 @@ artefact creation:
 
 Two services drive the pipeline at runtime:
 
-- `src/cli/service.ts` - `generateFormattedOutputWithOptions` performs the three
+- `src/cli/service.ts` - `generateFormattedOutputWithOptions` performs the four
   phases sequentially, ensuring HTML/PDF/Markdown/metadata artefacts come from a
   single remark pass and archiving reuses the processed content
 - `src/cli/interactive/service.ts` - the interactive CLI maps user selections to
-  CLI options, builds the processing context, runs the remark phase once, then
-  calls `generateAllFormats` with the resulting AST
+  CLI options, builds the processing context, applies string transformations,
+  runs the remark phase once, then calls `generateAllFormats` with the resulting
+  AST
 
 Both services keep their existing single-format behaviour (plain remark output)
 for scenarios where only markdown is requested.
@@ -288,7 +351,7 @@ for scenarios where only markdown is requested.
 - Integration benchmark tests
   (`tests/integration/pipeline-3-phase.integration.test.ts`) confirm a ~50-75 %
   reduction in processing time for multi-format runs by comparing the legacy
-  behaviour with the three-phase pipeline
+  behaviour with the four-phase pipeline
 - Unit suites in `tests/unit/core/pipeline/context-builder.test.ts` and
   `tests/unit/core/pipeline/format-generator.test.ts` cover metadata merging,
   error handling and format generation pathways
@@ -301,9 +364,12 @@ for scenarios where only markdown is requested.
 
 - The pipeline exports are additive; existing consumers that call
   `processLegalMarkdownWithRemark` directly remain supported
-- New helpers (`buildProcessingContext`, `generateAllFormats`,
-  `processAndGenerateFormats`) provide clear integration points for upcoming API
-  layers or background workers
+- New helpers (`buildProcessingContext`, `applyStringTransformations`,
+  `generateAllFormats`, `processAndGenerateFormats`) provide clear integration
+  points for upcoming API layers or background workers
 - Legacy pipeline code paths tracked in `docs/legacy-deprecation-plan.md` can be
-  migrated incrementally by swapping in the three-phase helpers without touching
+  migrated incrementally by swapping in the four-phase helpers without touching
   business logic
+- **Issue #149:** The `remarkClauses` plugin has been removed. Optional clauses
+  are now processed in Phase 2 (String Transformations), enabling proper
+  handling of multi-line content with markdown formatting

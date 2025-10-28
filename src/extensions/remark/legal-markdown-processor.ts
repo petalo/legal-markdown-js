@@ -1,9 +1,15 @@
 /**
- * Legal Markdown Processor with Remark Pipeline
+ * Legal Markdown Processor with Remark Pipeline (Phase 3: AST Processing)
  *
  * This module provides a comprehensive processor for Legal Markdown documents
  * using the remark ecosystem. It combines multiple remark plugins to provide
  * AST-based processing that avoids text contamination issues.
+ *
+ * Processing Flow:
+ * - Phase 1: Context building (YAML parsing, metadata merging) - done in context-builder.ts
+ * - Phase 2: String transformations (field normalization, clauses, loops) - done in string-transformations.ts
+ * - Phase 3: AST processing (THIS MODULE - remark plugins)
+ * - Phase 4: Format generation (HTML, PDF) - done in format-generator.ts
  *
  * Features:
  * - Complete remark pipeline with all Legal Markdown plugins
@@ -28,6 +34,8 @@
  * console.log(result.fieldReport); // Field tracking report
  * ```
  *
+ * @see docs/architecture/03_processing_pipeline.md
+ * @see docs/architecture/string-transformations.md
  * @module
  */
 
@@ -42,7 +50,6 @@ import {
   remarkFieldTracking,
   remarkTemplateFields,
   remarkHeaders,
-  remarkClauses,
   remarkMixins,
   remarkImports,
   remarkLegalHeadersParser,
@@ -54,10 +61,11 @@ import remarkSignatureLines from '../../plugins/remark/signature-lines';
 import { remarkDebugAST } from '../../plugins/remark/debug-ast';
 import { fieldTracker } from '../tracking/field-tracker';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
-import { processTemplateLoops, detectSyntaxType } from '../template-loops';
+import { detectSyntaxType } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
 import type { MarkdownString } from '../../types/content-formats';
 import { asMarkdown } from '../../types/content-formats';
+import { applyStringTransformations } from '../../core/pipeline/string-transformations';
 
 /**
  * Unsafe patterns for markdown serialization, excluding underscore patterns.
@@ -279,72 +287,6 @@ function escapeTemplateUnderscores(content: string): string {
 }
 
 /**
- * Pre-process optional clauses [content]{condition} before remark parsing
- *
- * This function processes optional clauses BEFORE the content is parsed by remark,
- * which allows clauses with multi-line content and markdown formatting to work correctly.
- * Without this pre-processing, remark would split the clause across multiple AST nodes,
- * making it impossible for the remarkClauses plugin to find and process them.
- *
- * @param content - The markdown content with optional clauses
- * @param metadata - Document metadata for evaluating conditions
- * @param debug - Enable debug logging
- * @returns Content with optional clauses processed
- */
-function preprocessOptionalClauses(
-  content: string,
-  metadata: Record<string, any>,
-  debug: boolean = false
-): string {
-  // Regex to match optional clauses: [content]{condition}
-  // Uses dotall mode (s flag) to match across newlines
-  // eslint-disable-next-line no-useless-escape
-  const clauseRegex = /\[([^\[\]]*(?:\n[^\[\]]*)*?)\]\{([^{}]+?)\}/gs;
-
-  let processedContent = content;
-  const matches: Array<{ full: string; content: string; condition: string; index: number }> = [];
-
-  // Collect all matches first (to avoid mutation during iteration)
-  let match;
-  while ((match = clauseRegex.exec(content)) !== null) {
-    matches.push({
-      full: match[0],
-      content: match[1],
-      condition: match[2].trim(),
-      index: match.index,
-    });
-  }
-
-  if (debug && matches.length > 0) {
-    console.log(`[preprocessOptionalClauses] Found ${matches.length} optional clauses`);
-  }
-
-  // Process matches in reverse order to maintain correct positions
-  for (let i = matches.length - 1; i >= 0; i--) {
-    const { full, content: clauseContent, condition, index } = matches[i];
-
-    // Evaluate the condition
-    const conditionValue = metadata[condition];
-    const shouldInclude = Boolean(conditionValue);
-
-    if (debug) {
-      console.log(
-        `[preprocessOptionalClauses] Condition "${condition}" = ${conditionValue} (include: ${shouldInclude})`
-      );
-    }
-
-    // Replace the clause with its content if true, or remove it if false
-    const replacement = shouldInclude ? clauseContent : '';
-    processedContent =
-      processedContent.substring(0, index) +
-      replacement +
-      processedContent.substring(index + full.length);
-  }
-
-  return processedContent;
-}
-
-/**
  * Configuration options for the Legal Markdown processor
  * @interface LegalMarkdownProcessorOptions
  */
@@ -474,20 +416,10 @@ function createLegalMarkdownProcessor(
     });
   }
 
-  // Add clauses plugin (conditional content processing)
-  // IMPORTANT: Must run BEFORE remarkLegalHeadersParser to process clauses that contain legal headers
-  if (!options.noClauses) {
-    processor.use(remarkClauses, {
-      metadata,
-      debug: options.debug,
-      enableFieldTracking: options.enableFieldTracking,
-    });
-  }
-
-  // Step 2: Add legal headers parser AFTER imports and clauses to convert l., ll., etc. to proper headers
+  // Step 2: Add legal headers parser AFTER imports to convert l., ll., etc. to proper headers
   // This ensures headers in imported files are also converted
   // WARNING: Do not move this before imports or headers in imported files won't be processed
-  // WARNING: Do not move this before clauses or clauses containing headers won't be processed
+  // NOTE: Optional clauses are processed in Phase 2 (string transformations) before AST parsing
   if (!options.noHeaders) {
     processor.use(remarkLegalHeadersParser, {
       debug: options.debug,
@@ -576,10 +508,10 @@ function createLegalMarkdownProcessor(
   });
 
   // Build plugin order list for validation (must match actual processor.use() order above)
+  // NOTE: Optional clauses (remarkClauses) are now processed in Phase 2 (string transformations)
   if (!options.noImports) pluginOrder.push('remarkImports');
   if (!options.noHeaders) pluginOrder.push('remarkLegalHeadersParser');
   if (!options.noMixins) pluginOrder.push('remarkMixins');
-  if (!options.noClauses) pluginOrder.push('remarkClauses');
   pluginOrder.push('remarkDates');
   pluginOrder.push('remarkSignatureLines');
   pluginOrder.push('remarkTemplateFields');
@@ -776,73 +708,38 @@ export async function processLegalMarkdownWithRemark(
       );
     }
 
-    // Preprocess custom field patterns to avoid HTML parsing issues
-    let preprocessedContent = contentWithEscapedTemplates;
-    const fieldMappings = new Map<string, string>(); // Maps normalized patterns to original patterns
+    // ──────────────────────────────────────────────────────────────────────────
+    // Phase 2: String Transformations
+    // ──────────────────────────────────────────────────────────────────────────
+    // Apply all string-level transformations BEFORE remark AST parsing
+    // This includes: field normalization, optional clauses, template loops
+    // See: docs/architecture/string-transformations.md
+    if (updatedOptions.debug) {
+      console.log('[legal-markdown-processor] Starting Phase 2: String Transformations');
+    }
+
+    const stringTransformResult = await applyStringTransformations(contentWithEscapedTemplates, {
+      metadata: combinedMetadata,
+      debug: updatedOptions.debug,
+      enableFieldTracking: updatedOptions.enableFieldTracking,
+      noClauses: updatedOptions.noClauses,
+      fieldPatterns: updatedOptions.fieldPatterns,
+    });
+
+    const preprocessedContent = stringTransformResult.content;
+
+    // Merge updated metadata from string transformations (includes field mappings)
+    Object.assign(combinedMetadata, stringTransformResult.metadata);
 
     if (updatedOptions.debug) {
-      console.log('[legal-markdown-processor] About to check for pre-processing...');
-    }
-
-    if (updatedOptions.fieldPatterns && updatedOptions.fieldPatterns.length > 0) {
-      for (const pattern of updatedOptions.fieldPatterns) {
-        if (pattern !== '{{(.+?)}}') {
-          // Skip default pattern
-          const regex = new RegExp(pattern, 'g');
-          preprocessedContent = preprocessedContent.replace(regex, (match, fieldName) => {
-            const normalizedPattern = `{{${fieldName}}}`;
-            fieldMappings.set(normalizedPattern, match);
-            return normalizedPattern;
-          });
-        }
-      }
-    }
-
-    // Pre-process optional clauses [content]{condition} before remark parsing
-    // This must happen BEFORE template loops to allow Handlebars helpers inside clauses
-    if (!updatedOptions.noClauses) {
-      if (updatedOptions.debug) {
-        console.log('[legal-markdown-processor] Pre-processing optional clauses...');
-      }
-
-      preprocessedContent = preprocessOptionalClauses(
-        preprocessedContent,
-        combinedMetadata,
-        updatedOptions.debug || false
+      console.log(
+        '[legal-markdown-processor] Phase 2 complete. Content length:',
+        preprocessedContent.length
       );
-
-      if (updatedOptions.debug) {
-        console.log('[legal-markdown-processor] Optional clauses processed');
-      }
-    }
-
-    // Pre-process template loops (Handlebars {{#each}}, {{#if}}, etc.) before remark parsing
-    // Note: This always runs unless explicitly disabled, independent of clauses
-    if (updatedOptions.debug) {
-      console.log('[legal-markdown-processor] Pre-processing template loops...');
-    }
-
-    preprocessedContent = processTemplateLoops(
-      preprocessedContent,
-      combinedMetadata,
-      undefined, // context
-      updatedOptions.enableFieldTracking || false
-    );
-
-    if (updatedOptions.debug) {
-      console.log('[legal-markdown-processor] Content after processTemplateLoops:');
-      console.log(preprocessedContent.substring(0, 800));
-    }
-
-    if (updatedOptions.debug) {
-      console.log('[legal-markdown-processor] Template loops processed');
       if (preprocessedContent.includes('{{#')) {
-        console.log('[legal-markdown-processor] WARNING: Content has {{# patterns!');
+        console.log('[legal-markdown-processor] WARNING: Content still has {{# patterns!');
       }
     }
-
-    // Store field mappings in metadata for later use
-    combinedMetadata['_field_mappings'] = fieldMappings;
 
     // Ensure default pattern is always included for template field processing
     // since preprocessing normalizes all patterns to {{field}} format
