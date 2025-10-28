@@ -350,30 +350,3 @@ function preprocessOptionalClauses(
 
   return processedContent;
 }
-
-/**
- * Synchronous wrapper for string transformations
- *
- * @param content - Raw markdown content
- * @param options - Transformation options
- * @returns Transformed content and metadata
- */
-export function applyStringTransformationsSync(
-  content: string,
-  options: StringTransformationOptions
-): StringTransformationResult {
-  // All current transformations are synchronous, so we can just
-  // unwrap the async function. If async transformations are added
-  // in the future, this will need to be updated.
-  let result: StringTransformationResult = {
-    content,
-    metadata: options.metadata,
-  };
-
-  // Execute the async function synchronously (safe because all transforms are sync)
-  applyStringTransformations(content, options).then(r => {
-    result = r;
-  });
-
-  return result;
-}

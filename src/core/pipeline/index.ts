@@ -34,7 +34,6 @@ export {
 // Phase 2: String Transformations
 export {
   applyStringTransformations,
-  applyStringTransformationsSync,
   StringTransformationOptions,
   StringTransformationResult,
 } from './string-transformations';
