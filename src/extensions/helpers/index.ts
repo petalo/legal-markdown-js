@@ -9,18 +9,20 @@
  * - Advanced date manipulation and formatting
  * - Currency and number formatting utilities
  * - String manipulation and text processing
+ * - Mathematical operations for template expressions
  * - Legal document specific formatting functions
  *
  * For basic Ruby-compatible helpers, see src/core/helpers/
  *
  * @example
  * ```typescript
- * import { formatCurrency, addYears, capitalize } from '@extensions/helpers';
+ * import { formatCurrency, addYears, capitalize, multiply } from '@extensions/helpers';
  *
  * // Advanced functionality not in Ruby legal-markdown
  * const price = formatCurrency(1234.56, 'USD');
  * const futureDate = addYears(new Date(), 5);
  * const title = capitalize('legal document');
+ * const total = multiply(10, 5);
  * ```
  */
 
@@ -28,6 +30,7 @@
 export * from './advanced-date-helpers';
 export * from './number-helpers';
 export * from './string-helpers';
+export * from './math-helpers';
 
 // Individual imports for convenience and registry
 import { addYears, addMonths, addDays, formatDate, DateFormats } from './advanced-date-helpers';
@@ -62,6 +65,8 @@ import {
   replaceAll,
   initials,
 } from './string-helpers';
+
+import { multiply, divide, add, subtract, modulo, power } from './math-helpers';
 
 /**
  * Registry of extension helper functions for template processing
@@ -98,6 +103,14 @@ export const extensionHelpers = {
   formatPound,
   numberToWords,
   round,
+
+  // Math helpers
+  multiply,
+  divide,
+  add,
+  subtract,
+  modulo,
+  power,
 
   // String helpers
   capitalize,
@@ -170,6 +183,14 @@ export const EXTENSION_HELPER_NAMES = [
   'formatPound',
   'numberToWords',
   'round',
+
+  // Math helpers
+  'multiply',
+  'divide',
+  'add',
+  'subtract',
+  'modulo',
+  'power',
 
   // String helpers
   'capitalize',

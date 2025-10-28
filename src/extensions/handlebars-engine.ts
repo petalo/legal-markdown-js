@@ -56,7 +56,19 @@ handlebarsInstance.registerHelper('formatInteger', function (value: any, separat
   }
   return extensionHelpers.formatInteger(value, separator);
 });
-handlebarsInstance.registerHelper('formatPercent', extensionHelpers.formatPercent);
+handlebarsInstance.registerHelper(
+  'formatPercent',
+  function (value: any, decimals?: any, symbol?: any) {
+    // Handlebars passes options object as last arg - filter it out
+    if (typeof symbol === 'object' && symbol?.hash !== undefined) {
+      symbol = undefined;
+    }
+    if (typeof decimals === 'object' && decimals?.hash !== undefined) {
+      decimals = undefined;
+    }
+    return extensionHelpers.formatPercent(value, decimals, symbol);
+  }
+);
 handlebarsInstance.registerHelper('formatEuro', extensionHelpers.formatEuro);
 handlebarsInstance.registerHelper('formatDollar', extensionHelpers.formatDollar);
 handlebarsInstance.registerHelper('formatPound', extensionHelpers.formatPound);
@@ -102,28 +114,42 @@ handlebarsInstance.registerHelper('multiply', function (a: number | string, b: a
   if (typeof b === 'object' && b?.hash !== undefined) {
     return NaN;
   }
-  return Number(a) * Number(b);
+  return extensionHelpers.multiply(a, b);
 });
 handlebarsInstance.registerHelper('divide', function (a: number | string, b: any, options?: any) {
   // Filter out Handlebars options if passed as b
   if (typeof b === 'object' && b?.hash !== undefined) {
     return NaN;
   }
-  return Number(a) / Number(b);
+  return extensionHelpers.divide(a, b);
 });
 handlebarsInstance.registerHelper('add', function (a: number | string, b: any, options?: any) {
   // Filter out Handlebars options if passed as b
   if (typeof b === 'object' && b?.hash !== undefined) {
     return NaN;
   }
-  return Number(a) + Number(b);
+  return extensionHelpers.add(a, b);
 });
 handlebarsInstance.registerHelper('subtract', function (a: number | string, b: any, options?: any) {
   // Filter out Handlebars options if passed as b
   if (typeof b === 'object' && b?.hash !== undefined) {
     return NaN;
   }
-  return Number(a) - Number(b);
+  return extensionHelpers.subtract(a, b);
+});
+handlebarsInstance.registerHelper('modulo', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return extensionHelpers.modulo(a, b);
+});
+handlebarsInstance.registerHelper('power', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return extensionHelpers.power(a, b);
 });
 
 // ============================================================================
