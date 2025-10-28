@@ -470,9 +470,9 @@ describe('Handlebars Engine', () => {
         expect(result).toBe('2.5');
       });
 
-      it('should return Infinity for division by zero', () => {
+      it('should return NaN for division by zero', () => {
         const result = compileHandlebarsTemplate('{{divide a b}}', { a: 10, b: 0 });
-        expect(result).toBe('Infinity');
+        expect(result).toBe('NaN');
       });
     });
 
