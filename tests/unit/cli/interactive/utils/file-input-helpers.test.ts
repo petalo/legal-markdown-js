@@ -326,6 +326,8 @@ describe('File Input Helpers', () => {
     });
 
     it.skip('should validate folder path exists', async () => {
+      // Skip: The actual validation function returns different error messages
+      // than expected by this test. Validation logic may have changed.
       let validationFn: any;
 
       vi.mocked(input).mockImplementation(async (config: any) => {
