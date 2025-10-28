@@ -17,8 +17,8 @@ applied during processing.
 ---
 title: My Document
 force_commands: >
-  --css theme.css  --pdf --highlight --output-name {{title}}_{{formatDate(date,
-  "YYYYMMDD")}}.pdf
+  --css theme.css  --pdf --highlight --output-name {{title}}_{{formatDate date
+  "YYYYMMDD"}}.pdf
 ---
 ```
 
@@ -55,16 +55,16 @@ metadata:
 
 ```yaml
 force_commands: >
-  --output-name Contract_{{client}}_{{formatDate(date, "YYYYMMDD")}}.pdf --title
-  "{{titleCase(document_type)}} - {{client}}"
+  --output-name Contract_{{client}}_{{formatDate date "YYYYMMDD"}}.pdf --title
+  "{{titleCase document_type}} - {{client}}"
 ```
 
 All Legal Markdown template helpers are available:
 
-- `{{formatDate(date, "format")}}`
-- `{{titleCase(text)}}`
-- `{{formatCurrency(amount, currency)}}`
-- `{{numberToWords(number)}}`
+- `{{formatDate date "format"}}`
+- `{{titleCase text}}`
+- `{{formatCurrency amount currency}}`
+- `{{numberToWords number}}`
 - And more...
 
 ## Security Features
@@ -104,8 +104,8 @@ title: Service Agreement
 client: Acme Corporation
 effective_date: 2024-01-01
 force_commands: >
-  --output-name {{title}}_{{client}}_{{formatDate(effective_date,
-  "YYYYMMDD")}}.pdf --pdf --export-yaml
+  --output-name {{title}}_{{client}}_{{formatDate effective_date
+  "YYYYMMDD"}}.pdf --pdf --export-yaml
 ---
 ```
 
@@ -118,7 +118,7 @@ force_commands: |
   --css theme.css
   --pdf --highlight
   --export-json
-  --title "{{title}} - Generated {{formatDate(today, "YYYY-MM-DD")}}"
+  --title "{{title}} - Generated {{formatDate today "YYYY-MM-DD"}}"
 ---
 ```
 
