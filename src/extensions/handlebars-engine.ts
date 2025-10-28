@@ -56,16 +56,19 @@ handlebarsInstance.registerHelper('formatInteger', function (value: any, separat
   }
   return extensionHelpers.formatInteger(value, separator);
 });
-handlebarsInstance.registerHelper('formatPercent', function (value: any, decimals?: any, symbol?: any) {
-  // Handlebars passes options object as last arg - filter it out
-  if (typeof symbol === 'object' && symbol?.hash !== undefined) {
-    symbol = undefined;
+handlebarsInstance.registerHelper(
+  'formatPercent',
+  function (value: any, decimals?: any, symbol?: any) {
+    // Handlebars passes options object as last arg - filter it out
+    if (typeof symbol === 'object' && symbol?.hash !== undefined) {
+      symbol = undefined;
+    }
+    if (typeof decimals === 'object' && decimals?.hash !== undefined) {
+      decimals = undefined;
+    }
+    return extensionHelpers.formatPercent(value, decimals, symbol);
   }
-  if (typeof decimals === 'object' && decimals?.hash !== undefined) {
-    decimals = undefined;
-  }
-  return extensionHelpers.formatPercent(value, decimals, symbol);
-});
+);
 handlebarsInstance.registerHelper('formatEuro', extensionHelpers.formatEuro);
 handlebarsInstance.registerHelper('formatDollar', extensionHelpers.formatDollar);
 handlebarsInstance.registerHelper('formatPound', extensionHelpers.formatPound);
