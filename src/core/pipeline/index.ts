@@ -1,13 +1,14 @@
 /**
- * Pipeline Architecture - 3-Phase Processing System
+ * Pipeline Architecture - 4-Phase Processing System
  *
  * This module provides a modern, incremental processing pipeline for Legal Markdown
  * that eliminates duplicate processing and improves performance.
  *
  * Architecture:
  * - **Phase 1 (Context Building)**: Parse document, resolve force-commands, create context
- * - **Phase 2 (Content Processing)**: Run remark pipeline once, cache result
- * - **Phase 3 (Format Generation)**: Generate all output formats from cached result
+ * - **Phase 2 (String Transformations)**: Apply string-level transformations before AST parsing
+ * - **Phase 3 (AST Processing)**: Run remark pipeline once, cache result
+ * - **Phase 4 (Format Generation)**: Generate all output formats from cached result
  *
  * Benefits:
  * - Single pipeline run regardless of output formats
@@ -16,6 +17,8 @@
  * - Better error handling and debugging
  * - Compatible with existing force-commands feature
  *
+ * @see docs/architecture/03_processing_pipeline.md
+ * @see docs/architecture/string-transformations.md
  * @module core/pipeline
  */
 
@@ -28,13 +31,20 @@ export {
   ProcessingOptions,
 } from './context-builder';
 
-// Phase 2: Content Processing (uses existing legal-markdown-processor)
+// Phase 2: String Transformations
+export {
+  applyStringTransformations,
+  StringTransformationOptions,
+  StringTransformationResult,
+} from './string-transformations';
+
+// Phase 3: AST Processing (uses existing legal-markdown-processor)
 export {
   processLegalMarkdownWithRemark,
   LegalMarkdownProcessorResult,
 } from '../../extensions/remark/legal-markdown-processor';
 
-// Phase 3: Format Generation
+// Phase 4: Format Generation
 export {
   generateAllFormats,
   processAndGenerateFormats,
