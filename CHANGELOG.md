@@ -1,3 +1,22 @@
+## 3.5.0 (2025-10-28)
+
+- feat: formalize Phase 2 string transformations in pipeline (#149) (#157)
+  ([83c8f9c](https://github.com/petalo/legal-markdown-js/commit/83c8f9c)),
+  closes [#149](https://github.com/petalo/legal-markdown-js/issues/149)
+  [#157](https://github.com/petalo/legal-markdown-js/issues/157)
+  [#149](https://github.com/petalo/legal-markdown-js/issues/149)
+  [#149](https://github.com/petalo/legal-markdown-js/issues/149)
+- test: comprehensive Handlebars test coverage for v4.0 preparation (#156)
+  ([42ed564](https://github.com/petalo/legal-markdown-js/commit/42ed564)),
+  closes [#156](https://github.com/petalo/legal-markdown-js/issues/156)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+- docs: finalize Handlebars migration documentation for Issue #142
+  ([af12637](https://github.com/petalo/legal-markdown-js/commit/af12637)),
+  closes [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+  [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+
 ## <small>3.4.4 (2025-10-26)</small>
 
 - fix: preserve underscores in Handlebars variable names (#151)
