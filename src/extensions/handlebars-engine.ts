@@ -36,8 +36,26 @@ handlebarsInstance.registerHelper('formatDate', extensionHelpers.formatDate);
 // EXTENSION HELPERS REGISTRATION - Number
 // ============================================================================
 
-handlebarsInstance.registerHelper('formatCurrency', extensionHelpers.formatCurrency);
-handlebarsInstance.registerHelper('formatInteger', extensionHelpers.formatInteger);
+handlebarsInstance.registerHelper(
+  'formatCurrency',
+  function (value: any, currency?: any, decimals?: any) {
+    // Handlebars passes options object as last arg - filter it out
+    if (typeof decimals === 'object' && decimals?.hash !== undefined) {
+      decimals = undefined;
+    }
+    if (typeof currency === 'object' && currency?.hash !== undefined) {
+      currency = undefined;
+    }
+    return extensionHelpers.formatCurrency(value, currency, decimals);
+  }
+);
+handlebarsInstance.registerHelper('formatInteger', function (value: any, separator?: any) {
+  // Handlebars passes options object as last arg - filter it out
+  if (typeof separator === 'object' && separator?.hash !== undefined) {
+    separator = undefined;
+  }
+  return extensionHelpers.formatInteger(value, separator);
+});
 handlebarsInstance.registerHelper('formatPercent', extensionHelpers.formatPercent);
 handlebarsInstance.registerHelper('formatEuro', extensionHelpers.formatEuro);
 handlebarsInstance.registerHelper('formatDollar', extensionHelpers.formatDollar);
@@ -58,7 +76,13 @@ handlebarsInstance.registerHelper('kebabCase', extensionHelpers.kebabCase);
 handlebarsInstance.registerHelper('snakeCase', extensionHelpers.snakeCase);
 handlebarsInstance.registerHelper('camelCase', extensionHelpers.camelCase);
 handlebarsInstance.registerHelper('pascalCase', extensionHelpers.pascalCase);
-handlebarsInstance.registerHelper('truncate', extensionHelpers.truncate);
+handlebarsInstance.registerHelper('truncate', function (str: any, length: any, suffix?: any) {
+  // Handlebars passes options object as last arg - filter it out
+  if (typeof suffix === 'object' && suffix?.hash !== undefined) {
+    suffix = undefined;
+  }
+  return extensionHelpers.truncate(str, length, suffix);
+});
 handlebarsInstance.registerHelper('clean', extensionHelpers.clean);
 handlebarsInstance.registerHelper('pluralize', extensionHelpers.pluralize);
 handlebarsInstance.registerHelper('padStart', extensionHelpers.padStart);
@@ -73,22 +97,34 @@ handlebarsInstance.registerHelper('initials', extensionHelpers.initials);
 // These helpers replace legacy mathematical expressions like {{price * quantity}}
 // Migration: {{price * quantity}} → {{multiply price quantity}}
 
-handlebarsInstance.registerHelper(
-  'multiply',
-  (a: number | string, b: number | string) => Number(a) * Number(b)
-);
-handlebarsInstance.registerHelper(
-  'divide',
-  (a: number | string, b: number | string) => Number(a) / Number(b)
-);
-handlebarsInstance.registerHelper(
-  'add',
-  (a: number | string, b: number | string) => Number(a) + Number(b)
-);
-handlebarsInstance.registerHelper(
-  'subtract',
-  (a: number | string, b: number | string) => Number(a) - Number(b)
-);
+handlebarsInstance.registerHelper('multiply', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return Number(a) * Number(b);
+});
+handlebarsInstance.registerHelper('divide', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return Number(a) / Number(b);
+});
+handlebarsInstance.registerHelper('add', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return Number(a) + Number(b);
+});
+handlebarsInstance.registerHelper('subtract', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
+  }
+  return Number(a) - Number(b);
+});
 
 // ============================================================================
 // STRING CONCATENATION HELPER (for migrating legacy expressions)

@@ -9,30 +9,28 @@ jurisdiction: California
 
 # Force specific processing options for this document
 force_commands: >
-  --css corporate-theme.css  --output-name
-  Contract_{{titleCase(client_name)}}_{{formatDate(effective_date,
-  "YYYYMMDD")}}.pdf --pdf --highlight --export-yaml --export-json --title
-  "{{title}} - {{client_name}}" --format A4
+  --css corporate-theme.css  --output-name Contract_{{titleCase
+  client_name}}_{{formatDate effective_date "YYYYMMDD"}}.pdf --pdf --highlight
+  --export-yaml --export-json --title "{{title}} - {{client_name}}" --format A4
 ---
 
 # {{title}}
 
 **Document Auto-Generated with Force Commands**
 
-This {{title}} is entered into on
-{{formatDate(effective_date, "MMMM Do, YYYY")}} between:
+This {{title}} is entered into on {{formatDate effective_date "MMMM Do, YYYY"}}
+between:
 
-**CLIENT**: {{titleCase(client_name)}}  
-**PROVIDER**: {{provider_name}}
+**CLIENT**: {{titleCase client_name}} **PROVIDER**: {{provider_name}}
 
 ## Terms and Conditions
 
 l. **Contract Value** The total contract value is
-{{formatCurrency(contract_value, currency)}} ({{numberToWords(contract_value)}}
+{{formatCurrency contract_value currency}} ({{numberToWords contract_value}}
 {{currency}}).
 
 l. **Effective Date** This agreement becomes effective on
-{{formatDate(effective_date, "MMMM Do, YYYY")}}.
+{{formatDate effective_date "MMMM Do, YYYY"}}.
 
 l. **Jurisdiction** This agreement shall be governed by the laws of
 {{jurisdiction}}.
@@ -53,16 +51,16 @@ This document demonstrates the `force_commands` feature which automatically:
 The force commands themselves support template processing:
 
 - **Client**: `{{client_name}}` → "{{client_name}}"
-- **Formatted Date**: `{{formatDate(effective_date, "YYYYMMDD")}}` →
-  "{{formatDate(effective_date, "YYYYMMDD")}}"
-- **Title Case**: `{{titleCase(client_name)}}` → "{{titleCase(client_name)}}"
+- **Formatted Date**: `{{formatDate effective_date "YYYYMMDD"}}` →
+  "{{formatDate effective_date "YYYYMMDD"}}"
+- **Title Case**: `{{titleCase client_name}}` → "{{titleCase client_name}}"
 
 ## Expected Outputs
 
 When processed, this document will automatically:
 
 1. **PDF File**:
-   `Contract_{{titleCase(client_name)}}_{{formatDate(effective_date, "YYYYMMDD")}}.pdf`
+   `Contract_{{titleCase client_name}}_{{formatDate effective_date "YYYYMMDD"}}.pdf`
 2. **YAML Metadata**: Document metadata exported to YAML
 3. **JSON Metadata**: Document metadata exported to JSON
 4. **CSS Styling**: Applied from `corporate-theme.css`
