@@ -317,7 +317,8 @@ services:
 {{/services.included}}`;
 
       // Generate PDF
-      const pdfBuffer = await generatePdf(content, './test-template-loops.pdf', {
+      const pdfPath = '/tmp/test-template-loops.pdf';
+      const pdfBuffer = await generatePdf(content, pdfPath, {
         enableFieldTrackingInMarkdown: false,
         format: 'A4'
       });
@@ -328,7 +329,7 @@ services:
 
       // Clean up
       try {
-        fs.unlinkSync('./test-template-loops.pdf');
+        fs.unlinkSync(pdfPath);
       } catch (e) {
         // File might not exist, that's ok
       }
@@ -371,7 +372,8 @@ insurance:
 - {{.}}
 {{/insurance.required}}`;
 
-      const pdfBuffer = await generatePdf(content, './test-complex-template-loops.pdf', {
+      const pdfPath = '/tmp/test-complex-template-loops.pdf';
+      const pdfBuffer = await generatePdf(content, pdfPath, {
         enableFieldTrackingInMarkdown: false,
         format: 'A4'
       });
@@ -381,7 +383,7 @@ insurance:
 
       // Clean up
       try {
-        fs.unlinkSync('./test-complex-template-loops.pdf');
+        fs.unlinkSync(pdfPath);
       } catch (e) {
         // File might not exist, that's ok
       }
