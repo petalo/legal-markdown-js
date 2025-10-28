@@ -106,7 +106,8 @@ describe('Template Fields Plugin', () => {
         .use(remarkStringify);
 
       const result = await processor.process('Date: {{contractDate}}');
-      expect(result.toString().trim()).toContain('2025-03-15');
+      // Use ISO format to avoid timezone issues
+      expect(result.toString().trim()).toContain(date.toISOString().split('T')[0]);
     });
 
     it('should preserve template pattern for undefined variables', async () => {

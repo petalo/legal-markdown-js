@@ -25,7 +25,6 @@ import * as puppeteer from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { asMarkdown } from '../../../../src/types/content-formats';
 
 // Mock all external dependencies
