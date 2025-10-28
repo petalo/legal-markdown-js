@@ -97,46 +97,34 @@ handlebarsInstance.registerHelper('initials', extensionHelpers.initials);
 // These helpers replace legacy mathematical expressions like {{price * quantity}}
 // Migration: {{price * quantity}} → {{multiply price quantity}}
 
-handlebarsInstance.registerHelper(
-  'multiply',
-  function (a: number | string, b: number | string, options?: any) {
-    // Filter out Handlebars options if passed as b
-    if (typeof b === 'object' && b?.hash !== undefined) {
-      return NaN;
-    }
-    return Number(a) * Number(b);
+handlebarsInstance.registerHelper('multiply', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
   }
-);
-handlebarsInstance.registerHelper(
-  'divide',
-  function (a: number | string, b: number | string, options?: any) {
-    // Filter out Handlebars options if passed as b
-    if (typeof b === 'object' && b?.hash !== undefined) {
-      return NaN;
-    }
-    return Number(a) / Number(b);
+  return Number(a) * Number(b);
+});
+handlebarsInstance.registerHelper('divide', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
   }
-);
-handlebarsInstance.registerHelper(
-  'add',
-  function (a: number | string, b: number | string, options?: any) {
-    // Filter out Handlebars options if passed as b
-    if (typeof b === 'object' && b?.hash !== undefined) {
-      return NaN;
-    }
-    return Number(a) + Number(b);
+  return Number(a) / Number(b);
+});
+handlebarsInstance.registerHelper('add', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
   }
-);
-handlebarsInstance.registerHelper(
-  'subtract',
-  function (a: number | string, b: number | string, options?: any) {
-    // Filter out Handlebars options if passed as b
-    if (typeof b === 'object' && b?.hash !== undefined) {
-      return NaN;
-    }
-    return Number(a) - Number(b);
+  return Number(a) + Number(b);
+});
+handlebarsInstance.registerHelper('subtract', function (a: number | string, b: any, options?: any) {
+  // Filter out Handlebars options if passed as b
+  if (typeof b === 'object' && b?.hash !== undefined) {
+    return NaN;
   }
-);
+  return Number(a) - Number(b);
+});
 
 // ============================================================================
 // STRING CONCATENATION HELPER (for migrating legacy expressions)

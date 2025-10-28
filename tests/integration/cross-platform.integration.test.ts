@@ -133,7 +133,7 @@ name: "café"
 
       // On Windows: backslash (\)
       // On Unix: forward slash (/)
-      expect(['/','\\\\'].includes(sep)).toBe(true);
+      expect(['/', '\\'].includes(sep)).toBe(true);
     });
 
     it('should normalize paths correctly', () => {

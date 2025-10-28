@@ -391,7 +391,7 @@ prices:
     });
   });
 
-  describe('White space Handling', () => {
+  describe('Whitespace Handling', () => {
     it('should handle whitespace in templates', async () => {
       const input = `---
 value: "test"
