@@ -8,5 +8,5 @@
  * (src/browser-modern.ts), so no manual polyfill is needed here.
  */
 
-import * as lib from '/legal-markdown-browser.js';
+import * as lib from './legal-markdown-browser.js';
 window.LegalMarkdown = lib.default ?? lib;
