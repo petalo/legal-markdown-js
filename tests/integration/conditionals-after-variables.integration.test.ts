@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Issue #120: Conditionals should evaluate AFTER variables', () => {
   it('should expand variables before evaluating conditionals', async () => {
@@ -35,7 +35,7 @@ SUCCESS
 FAIL
 {{/if}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -60,7 +60,7 @@ User is active
 User is admin
 {{/if}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -89,7 +89,7 @@ Spanish Law Applies
 High Value Contract
 {{/if}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -111,7 +111,7 @@ WRONG
 CORRECT: Employment Contract
 {{/if}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -130,7 +130,7 @@ contract:
 Contract is active
 {{/unless}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -149,7 +149,7 @@ contract:
 Madrid Service Contract
 {{/if}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -175,7 +175,7 @@ parties:
 {{/if}}
 {{/parties}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });

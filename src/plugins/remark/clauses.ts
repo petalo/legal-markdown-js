@@ -34,6 +34,8 @@ import { Plugin } from 'unified';
 import { Root, Paragraph, Text } from 'mdast';
 import { visit } from 'unist-util-visit';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { fieldSpan } from '../../extensions/tracking/field-span';
+import type { YamlValue } from '../../types';
 
 /**
  * Options for the remark clauses plugin
@@ -41,7 +43,7 @@ import { fieldTracker } from '../../extensions/tracking/field-tracker';
  */
 export interface RemarkClausesOptions {
   /** Document metadata for condition evaluation */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Enable debug logging */
   debug?: boolean;
@@ -92,7 +94,7 @@ export const remarkClauses: Plugin<[RemarkClausesOptions], Root> = options => {
         processTextNode(node as Text, metadata, debug, enableFieldTracking);
       } else if (node.type === 'html' && 'value' in node) {
         // Also process HTML nodes that might contain conditional blocks
-        processHtmlNode(node as any, metadata, debug, enableFieldTracking);
+        processHtmlNode(node as { value: string }, metadata, debug, enableFieldTracking);
       } else if (node.type === 'paragraph') {
         processParagraphNode(node as Paragraph, metadata, debug, enableFieldTracking);
       }
@@ -105,7 +107,7 @@ export const remarkClauses: Plugin<[RemarkClausesOptions], Root> = options => {
  */
 function processTextNode(
   node: Text,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean,
   enableFieldTracking: boolean
 ) {
@@ -143,7 +145,7 @@ function processTextNode(
   // If we processed any loops/conditionals and field tracking is enabled,
   // we need to mark this as HTML to prevent escaping
   if (conditionalBlocks.length > 0 && processedText.includes('<span class="legal-field')) {
-    (node as any).type = 'html';
+    (node as unknown as { type: string }).type = 'html';
   }
 }
 
@@ -151,8 +153,8 @@ function processTextNode(
  * Process an HTML node for conditional blocks
  */
 function processHtmlNode(
-  node: any,
-  metadata: Record<string, any>,
+  node: { value: string },
+  metadata: Record<string, YamlValue>,
   debug: boolean,
   enableFieldTracking: boolean
 ) {
@@ -188,7 +190,7 @@ function processHtmlNode(
  */
 function processParagraphNode(
   node: Paragraph,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean,
   enableFieldTracking: boolean
 ) {
@@ -287,7 +289,7 @@ function extractConditionalBlocks(text: string): ConditionalBlock[] {
  */
 function evaluateConditionalBlock(
   block: ConditionalBlock,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean,
   enableFieldTracking: boolean
 ): string {
@@ -351,7 +353,7 @@ function evaluateConditionalBlock(
 /**
  * Evaluate a condition expression against metadata
  */
-function evaluateCondition(condition: string, metadata: Record<string, any>): boolean {
+function evaluateCondition(condition: string, metadata: Record<string, YamlValue>): boolean {
   // Check for empty condition first - this should be treated as an error
   if (!condition.trim()) {
     throw new Error('Empty condition provided');
@@ -402,7 +404,7 @@ function sanitizeCondition(condition: string): string | null {
 /**
  * Evaluate simple condition expressions
  */
-function evaluateSimpleCondition(condition: string, metadata: Record<string, any>): boolean {
+function evaluateSimpleCondition(condition: string, metadata: Record<string, YamlValue>): boolean {
   // Handle boolean operators
   if (condition.includes('&&') || condition.includes('||')) {
     return evaluateBooleanExpression(condition, metadata);
@@ -431,7 +433,10 @@ function evaluateSimpleCondition(condition: string, metadata: Record<string, any
 /**
  * Evaluate boolean expressions (&&, ||)
  */
-function evaluateBooleanExpression(condition: string, metadata: Record<string, any>): boolean {
+function evaluateBooleanExpression(
+  condition: string,
+  metadata: Record<string, YamlValue>
+): boolean {
   // Split by OR operators first (lower precedence)
   const orParts = condition.split('||');
 
@@ -458,7 +463,10 @@ function evaluateBooleanExpression(condition: string, metadata: Record<string, a
 /**
  * Evaluate comparison expressions (==, !=, >, <)
  */
-function evaluateComparisonExpression(condition: string, metadata: Record<string, any>): boolean {
+function evaluateComparisonExpression(
+  condition: string,
+  metadata: Record<string, YamlValue>
+): boolean {
   // Find the comparison operator
   let operator = '';
   let leftSide = '';
@@ -514,7 +522,7 @@ function evaluateComparisonExpression(condition: string, metadata: Record<string
 /**
  * Evaluate nested variable access (e.g., client.name)
  */
-function evaluateNestedVariable(condition: string, metadata: Record<string, any>): boolean {
+function evaluateNestedVariable(condition: string, metadata: Record<string, YamlValue>): boolean {
   const value = getNestedValue(metadata, condition.trim());
   return isTruthy(value);
 }
@@ -522,7 +530,10 @@ function evaluateNestedVariable(condition: string, metadata: Record<string, any>
 /**
  * Get variable value from metadata
  */
-function getVariableValue(variable: string, metadata: Record<string, any>): any {
+function getVariableValue(
+  variable: string,
+  metadata: Record<string, YamlValue>
+): YamlValue | undefined {
   if (variable.includes('.')) {
     return getNestedValue(metadata, variable);
   }
@@ -532,16 +543,32 @@ function getVariableValue(variable: string, metadata: Record<string, any>): any 
 /**
  * Get nested value from object using dot notation
  */
-function getNestedValue(obj: any, path: string): any {
-  return path.split('.').reduce((current, key) => {
-    return current && current[key] !== undefined ? current[key] : undefined;
-  }, obj);
+function getNestedValue(
+  obj: Record<string, YamlValue> | YamlValue,
+  path: string
+): YamlValue | undefined {
+  return path
+    .split('.')
+    .reduce((current: YamlValue | undefined, key: string): YamlValue | undefined => {
+      if (current === null || current === undefined) return undefined;
+      if (Array.isArray(current)) {
+        if (key === 'length') return current.length;
+        const index = Number(key);
+        if (Number.isInteger(index)) return current[index] as YamlValue;
+        return undefined;
+      }
+      if (typeof current === 'object') {
+        const record = current as Record<string, YamlValue>;
+        return record[key];
+      }
+      return undefined;
+    }, obj as YamlValue);
 }
 
 /**
  * Parse a value (could be a variable reference or a literal)
  */
-function parseValue(value: string, metadata: Record<string, any>): any {
+function parseValue(value: string, metadata: Record<string, YamlValue>): YamlValue | undefined {
   // Remove quotes if it's a string literal
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
@@ -566,7 +593,7 @@ function parseValue(value: string, metadata: Record<string, any>): any {
 /**
  * Check if a value is truthy in the context of conditional evaluation
  */
-function isTruthy(value: any): boolean {
+function isTruthy(value: YamlValue | undefined): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value !== 0;
@@ -580,10 +607,10 @@ function isTruthy(value: any): boolean {
  * Process an array loop, iterating over each item
  */
 function processArrayLoop(
-  variable: string,
+  _variable: string,
   content: string,
-  items: any[],
-  metadata: Record<string, any>,
+  items: YamlValue[],
+  metadata: Record<string, YamlValue>,
   debug: boolean,
   enableFieldTracking: boolean
 ): string {
@@ -652,7 +679,6 @@ function processArrayLoop(
           value === null ||
           value === '' ||
           (typeof value === 'string' && value.trim() === '');
-        const cssClass = isEmptyValue ? 'legal-field missing-value' : 'legal-field imported-value';
         const formattedValue = value !== undefined ? String(value) : match;
 
         // Track the field
@@ -663,7 +689,7 @@ function processArrayLoop(
           mixinUsed: 'loop',
         });
 
-        return `<span class="${cssClass}" data-field="${trimmedField.replace(/"/g, '&quot;')}">${formattedValue}</span>`;
+        return fieldSpan(trimmedField, formattedValue, isEmptyValue ? 'missing' : 'imported');
       }
 
       return value !== undefined ? String(value) : match;
@@ -675,4 +701,15 @@ function processArrayLoop(
   return results.join('');
 }
 
-export default remarkClauses;
+// Exported for testing - not part of public API
+export {
+  processTextNode as _processTextNode,
+  processHtmlNode as _processHtmlNode,
+  extractConditionalBlocks as _extractConditionalBlocks,
+  evaluateConditionalBlock as _evaluateConditionalBlock,
+  sanitizeCondition as _sanitizeCondition,
+  evaluateSimpleCondition as _evaluateSimpleCondition,
+  evaluateBooleanExpression as _evaluateBooleanExpression,
+  evaluateComparisonExpression as _evaluateComparisonExpression,
+  processArrayLoop as _processArrayLoop,
+};

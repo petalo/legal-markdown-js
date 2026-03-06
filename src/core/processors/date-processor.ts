@@ -43,7 +43,7 @@
  * ```
  */
 
-import { LegalMarkdownOptions } from '../../types';
+import { ParseError } from '../../errors';
 
 /**
  * Date format options that can be specified in YAML front matter
@@ -93,7 +93,7 @@ export interface DateFormatOptions {
  * // Output: "Generated January 15th, 2024"
  * ```
  */
-export function processDateReferences(content: string, metadata: Record<string, any>): string {
+export function processDateReferences(content: string, metadata: Record<string, unknown>): string {
   // DEPRECATION WARNING
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
     console.warn(
@@ -140,11 +140,12 @@ export function processDateReferences(content: string, metadata: Record<string, 
  * // Returns: { dateFormat: 'legal', timezone: 'America/New_York', locale: 'en-US' }
  * ```
  */
-function extractDateOptions(metadata: Record<string, any>): DateFormatOptions {
+function extractDateOptions(metadata: Record<string, unknown>): DateFormatOptions {
+  const asString = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
   return {
-    dateFormat: metadata['date-format'] || metadata.dateFormat,
-    timezone: metadata['timezone'] || metadata.tz,
-    locale: metadata['locale'] || metadata.lang,
+    dateFormat: asString(metadata['date-format']) || asString(metadata.dateFormat),
+    timezone: asString(metadata['timezone']) || asString(metadata.tz),
+    locale: asString(metadata['locale']) || asString(metadata.lang),
   };
 }
 
@@ -232,12 +233,12 @@ function formatDate(date: Date, format: string, timezone: string, locale: string
         // Try to parse custom format patterns
         try {
           return parseCustomFormat(date, format, timezone, locale);
-        } catch (error) {
+        } catch {
           // If custom format parsing fails, fallback to ISO
           return date.toISOString().split('T')[0];
         }
     }
-  } catch (error) {
+  } catch {
     // Fallback to ISO format if there's an error
     return date.toISOString().split('T')[0];
   }
@@ -379,7 +380,7 @@ function parseCustomFormat(date: Date, format: string, timezone: string, locale:
 
   // If result still contains unreplaced tokens of our pattern, it's an invalid format
   if (result.match(/\b[YMDH]+\b/) || result === format) {
-    throw new Error('Invalid format pattern');
+    throw new ParseError('Invalid format pattern', { format });
   }
 
   return result;

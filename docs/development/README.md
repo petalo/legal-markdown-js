@@ -118,17 +118,17 @@ npm run test:e2e
 ### Release Quick Reference
 
 ```bash
-# Prepare release
-npm run release:prepare
+# Pre-release validation
+npm run validate
 
-# Create release candidate
-npm run release:rc
+# Package validation
+npm run validate:package
 
-# Execute release
-npm run release
+# Dry-run semantic-release
+npm run release:dry
 
-# Post-release tasks
-npm run release:post
+# Execute semantic-release (typically in CI)
+npx semantic-release
 ```
 
 ## Development Workflow
@@ -245,10 +245,10 @@ cd legal-markdown-js
 npm install
 
 # Setup development environment
-npm run setup:dev
+npm run setup-config
 
 # Verify installation
-npm run verify
+npm run validate
 ```
 
 ## Getting Help

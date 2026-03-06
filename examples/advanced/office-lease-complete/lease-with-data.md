@@ -123,10 +123,10 @@ And:
 
 **{{lessee.company_name}}**, with registered office at
 {{lessee.registered_address}}, and Tax ID
-{{lessee.tax_id ? lessee.tax_id : "[TAX ID REQUIRED]"}}, hereinafter referred to
-as "THE LESSEE". And on its behalf,
-{{lessee.representative.full_name ? lessee.representative.full_name : "[REPRESENTATIVE NAME REQUIRED]"}}
-with ID {{lessee.representative.id_number}}.
+{{#if lessee.tax_id}}{{lessee.tax_id}}{{else}}[TAX ID REQUIRED]{{/if}},
+hereinafter referred to as "THE LESSEE". And on its behalf,
+{{#if lessee.representative.full_name}}{{lessee.representative.full_name}}{{else}}[REPRESENTATIVE
+NAME REQUIRED]{{/if}} with ID {{lessee.representative.id_number}}.
 
 **The following is hereby agreed**:
 
@@ -220,14 +220,14 @@ The LESSOR shall maintain the following insurance coverage:
 ### 6.2. Lessee's Insurance
 
 The LESSEE shall obtain and maintain: {{#insurance.lessee_requirements}}
-{{. ? "- " + . : ""}} {{/insurance.lessee_requirements}}
+{{#if .}}- {{.}}{{/if}} {{/insurance.lessee_requirements}}
 
 ## 7. Default and Remedies
 
 ### 7.1. Events of Default
 
-The following shall constitute events of default: {{#default.events}}
-{{. ? "- " + . : ""}} {{/default.events}}
+The following shall constitute events of default: {{#default.events}} {{#if .}}-
+{{.}}{{/if}} {{/default.events}}
 
 ### 7.2. Remedies
 
@@ -277,7 +277,7 @@ Date: **\*\***\_**\*\***
 
 ---
 
-{{lessee.representative.full_name ? lessee.representative.full_name : "[Name]"}}  
+{{#if lessee.representative.full_name}}{{lessee.representative.full_name}}{{else}}[Name]{{/if}}  
 ID:
 {{lessee.representative.id_number}}  
 Date: **\*\***\_**\*\***

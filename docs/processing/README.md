@@ -12,6 +12,9 @@ handles various content types.
 
 ## Processing Modes
 
+> The remark async pipeline is now the only active runtime pipeline. "Legacy
+> Mode" below is retained as historical context for migration readers.
+
 ### Legacy Mode
 
 - String-based processing

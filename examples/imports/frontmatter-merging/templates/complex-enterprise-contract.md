@@ -48,7 +48,7 @@ l. {{title}}
 
 **Contract Number:** ENT-{{version}}-{{@year}}  
 **Document Type:** {{document_type}}  
-**Contract Value:** ${{contract_value | currency}}  
+**Contract Value:** {{formatCurrency contract_value project.currency}}  
 **Effective:** {{effective_date}} - {{expiration_date}}
 
 ---
@@ -56,7 +56,7 @@ l. {{title}}
 ## Executive Summary
 
 This {{document_type}} establishes the framework for {{project.name}}, a
-{{project.duration}} engagement valued at **${{project.budget | currency}}**
+{{project.duration}} engagement valued at **{{formatCurrency project.budget project.currency}}**
 between {{parties.provider.name}} and {{parties.client.name}}.
 
 ### Key Contract Parameters
@@ -64,11 +64,11 @@ between {{parties.provider.name}} and {{parties.client.name}}.
 - **Project Manager:** {{project.project_manager}}
 - **Phases:** {{project.phases}} major delivery phases
 - **Payment Terms:** {{payment_terms}}
-- **Liability Cap:** ${{liability_cap | currency}}
+- **Liability Cap:** {{formatCurrency liability_cap project.currency}}
 - **Governing Law:** {{governing_law}}
 
-{{#security_classification}} **Security Classification:**
-{{security_classification | upcase}} {{/security_classification}}
+{{#if security_classification}} **Security Classification:**
+{{upper security_classification}} {{/if}}
 
 ---
 
@@ -80,8 +80,8 @@ to be delivered over {{project.phases}} phases from {{project.start_date}} to
 
 ll. Financial Framework
 
-- **Total Contract Value:** ${{contract_value | currency}}
-- **Project Budget:** ${{project.budget | currency}} {{project.currency}}
+- **Total Contract Value:** {{formatCurrency contract_value project.currency}}
+- **Project Budget:** {{formatCurrency project.budget project.currency}} {{project.currency}}
 - **Payment Schedule:** Milestone-based with {{payment_terms}} terms
 
 ---
@@ -102,15 +102,15 @@ l. Enterprise Requirements
 
 ll. Security and Compliance
 
-{{#compliance_level}} This engagement requires **{{compliance_level}}** level
-compliance including: {{/compliance_level}}
+{{#if compliance_level}} This engagement requires **{{compliance_level}}** level
+compliance including: {{/if}}
 
-{{#audit_requirements}}
+{{#if audit_requirements}}
 
 - Annual third-party security audits
 - Quarterly compliance reviews
 - Monthly security reporting
-- Continuous monitoring and alerting {{/audit_requirements}}
+- Continuous monitoring and alerting {{/if}}
 
 ll. Performance Standards
 
@@ -120,7 +120,7 @@ The service provider must maintain:
 - **Response Time:** {{service_levels.performance.response_time_target}} average
   API response
 - **Support:** {{support.hours}} coverage in
-  {{support.languages | join: " and "}}
+  {{support.languages}}
 
 ll. Enterprise Governance
 
@@ -134,12 +134,12 @@ ll. Enterprise Governance
 l. Financial Terms and Conditions
 
 ll. Contract Value Structure The total contract value of
-**${{contract_value | currency}}** is allocated as follows:
+**{{formatCurrency contract_value project.currency}}** is allocated as follows:
 
-- **Development:** {{project.budget | times: 0.7 | currency}} (70%)
-- **Testing & QA:** {{project.budget | times: 0.15 | currency}} (15%)
-- **Project Management:** {{project.budget | times: 0.10 | currency}} (10%)
-- **Risk Contingency:** {{project.budget | times: 0.05 | currency}} (5%)
+- **Development:** {{formatCurrency (multiply project.budget 0.7) project.currency}} (70%)
+- **Testing & QA:** {{formatCurrency (multiply project.budget 0.15) project.currency}} (15%)
+- **Project Management:** {{formatCurrency (multiply project.budget 0.10) project.currency}} (10%)
+- **Risk Contingency:** {{formatCurrency (multiply project.budget 0.05) project.currency}} (5%)
 
 ll. Payment Terms
 
@@ -149,7 +149,7 @@ ll. Payment Terms
 
 ll. Liability and Insurance
 
-- **Liability Cap:** ${{liability_cap | currency}} aggregate
+- **Liability Cap:** {{formatCurrency liability_cap project.currency}} aggregate
 - **Insurance Requirements:** As specified in client requirements
 - **Indemnification:** Mutual indemnification for third-party claims
 
@@ -176,7 +176,7 @@ ll. Intellectual Property
 
 l. Contract Execution
 
-{{#signature_required}} ll. Authorized Signatures
+{{#if signature_required}} ll. Authorized Signatures
 
 **PROVIDER:** {{parties.provider.name}} {{parties.provider.address}}
 
@@ -185,10 +185,10 @@ Name: [Name]
 Title: Chief Executive Officer  
 Date: ******\_\_\_******
 
-{{#witnesses_required}} **WITNESS:** Signature:
+{{#if witnesses_required}} **WITNESS:** Signature:
 ****************\_****************  
 Name: [Witness Name]  
-Date: ******\_\_\_****** {{/witnesses_required}}
+Date: ******\_\_\_****** {{/if}}
 
 **CLIENT:** {{parties.client.name}} {{address.headquarters.street}}
 {{address.headquarters.city}}, {{address.headquarters.state}}
@@ -199,12 +199,12 @@ Name: {{contact.legal.name}}
 Title: {{contact.legal.title}}  
 Date: ******\_\_\_******
 
-{{#witnesses_required}} **WITNESS:** Signature:
+{{#if witnesses_required}} **WITNESS:** Signature:
 ****************\_****************  
 Name: [Witness Name]  
-Date: ******\_\_\_****** {{/witnesses_required}}
+Date: ******\_\_\_****** {{/if}}
 
-{{#notarization_required}} ll. Notarization
+{{#if notarization_required}} ll. Notarization
 
 **State of New York**  
 **County of New York**
@@ -217,9 +217,9 @@ acknowledged to me that they executed the same in their authorized capacities.
 ---
 
 Notary Public  
-My Commission Expires: ****\_\_\_**** {{/notarization_required}}
+My Commission Expires: ****\_\_\_**** {{/if}}
 
-{{/signature_required}}
+{{/if}}
 
 ---
 
@@ -251,10 +251,10 @@ Security classification: {{security_classification}}._
 
 - **Governing Law:** {{governing_law}} _(enterprise preference overrides
   standard)_
-- **Liability Cap:** ${{liability_cap | currency}} _(enterprise-level
+- **Liability Cap:** {{formatCurrency liability_cap project.currency}} _(enterprise-level
   protection)_
 - **Payment Terms:** {{payment_terms}} _(accelerated for enterprise)_
 - **Service Level:** {{service_levels.availability.uptime_guarantee}}%
   availability guarantee
 - **Client:** {{client.name}} ({{client.industry}} industry)
-- **Support:** {{support.hours}} in {{support.locations | join: ", "}}
+- **Support:** {{support.hours}} in {{support.locations}}

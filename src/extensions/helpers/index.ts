@@ -44,6 +44,10 @@ import {
   formatPound,
   numberToWords,
   round,
+  ordinal,
+  abs,
+  max,
+  min,
 } from './number-helpers';
 
 import {
@@ -64,6 +68,9 @@ import {
   contains,
   replaceAll,
   initials,
+  join,
+  length,
+  defaultVal,
 } from './string-helpers';
 
 import { multiply, divide, add, subtract, modulo, power } from './math-helpers';
@@ -103,6 +110,10 @@ export const extensionHelpers = {
   formatPound,
   numberToWords,
   round,
+  ordinal,
+  abs,
+  max,
+  min,
 
   // Math helpers
   multiply,
@@ -130,6 +141,9 @@ export const extensionHelpers = {
   contains,
   replaceAll,
   initials,
+  join,
+  length,
+  defaultVal,
 };
 
 /**
@@ -183,6 +197,10 @@ export const EXTENSION_HELPER_NAMES = [
   'formatPound',
   'numberToWords',
   'round',
+  'ordinal',
+  'abs',
+  'max',
+  'min',
 
   // Math helpers
   'multiply',
@@ -210,6 +228,9 @@ export const EXTENSION_HELPER_NAMES = [
   'contains',
   'replaceAll',
   'initials',
+  'join',
+  'length',
+  'defaultVal',
 ] as const;
 
 /**

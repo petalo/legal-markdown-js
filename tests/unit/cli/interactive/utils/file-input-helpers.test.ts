@@ -66,30 +66,6 @@ describe('File Input Helpers', () => {
       );
     });
 
-    it('should accept valid rst file path', async () => {
-      const testPath = '/test/file.rst';
-      const resolvedPath = path.resolve(testPath);
-
-      vi.mocked(input).mockResolvedValue(testPath);
-      vi.mocked(isValidFile).mockReturnValue(true);
-
-      const result = await handleManualInput();
-
-      expect(result).toBe(resolvedPath);
-    });
-
-    it('should accept valid tex file path', async () => {
-      const testPath = '/test/file.tex';
-      const resolvedPath = path.resolve(testPath);
-
-      vi.mocked(input).mockResolvedValue(testPath);
-      vi.mocked(isValidFile).mockReturnValue(true);
-
-      const result = await handleManualInput();
-
-      expect(result).toBe(resolvedPath);
-    });
-
     it('should resolve relative paths to absolute', async () => {
       const relativePath = './test.md';
       const absolutePath = path.resolve(relativePath);
@@ -167,7 +143,6 @@ describe('File Input Helpers', () => {
       const result = validationFn('/test/file.pdf');
       expect(result).toContain('Unsupported file type');
       expect(result).toContain('.md');
-      expect(result).toContain('.rst');
     });
 
     it('should accept all supported extensions', async () => {
@@ -185,9 +160,6 @@ describe('File Input Helpers', () => {
 
       expect(validationFn('/test/file.md')).toBe(true);
       expect(validationFn('/test/file.markdown')).toBe(true);
-      expect(validationFn('/test/file.rst')).toBe(true);
-      expect(validationFn('/test/file.tex')).toBe(true);
-      expect(validationFn('/test/file.latex')).toBe(true);
       expect(validationFn('/test/file.txt')).toBe(true);
     });
   });

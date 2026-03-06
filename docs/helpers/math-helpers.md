@@ -8,6 +8,11 @@ Helpers for arithmetic operations and calculations in legal documents.
 - [`divide`](#divide) - Divide two numbers
 - [`add`](#add) - Add two numbers
 - [`subtract`](#subtract) - Subtract two numbers
+- [`modulo`](#modulo) - Remainder of division
+- [`power`](#power) - Exponentiation
+- [`abs`](#abs) - Absolute value
+- [`max`](#max) - Maximum of two values
+- [`min`](#min) - Minimum of two values
 
 ---
 
@@ -400,6 +405,113 @@ Always format currency and percentages:
 # Control decimals
 {{formatDollar (divide amount 12)}}
 # Auto-formats to 2 decimals
+```
+
+---
+
+## `modulo`
+
+Returns the remainder of dividing two numbers.
+
+### Syntax
+
+```handlebars
+{{modulo a b}}
+```
+
+### Examples
+
+```handlebars
+Invoice parity:
+{{modulo invoice_number 2}}
+# 0 = even, 1 = odd Quarter of year:
+{{add (modulo month 4) 1}}
+```
+
+---
+
+## `power`
+
+Raises a number to a power (exponentiation).
+
+### Syntax
+
+```handlebars
+{{power base exponent}}
+```
+
+### Examples
+
+```handlebars
+Compound factor:
+{{power 1.05 3}}
+# 1.157625 Area of square:
+{{power side 2}}
+Compound interest:
+{{multiply principal (power rate years)}}
+```
+
+---
+
+## `abs`
+
+Returns the absolute value of a number.
+
+### Syntax
+
+```handlebars
+{{abs value}}
+```
+
+### Examples
+
+```handlebars
+Outstanding balance:
+{{abs balance}}
+# -1500 -> 1500 Adjustment amount:
+{{abs (subtract actual expected)}}
+```
+
+---
+
+## `max`
+
+Returns the greater of two values.
+
+### Syntax
+
+```handlebars
+{{max a b}}
+```
+
+### Examples
+
+```handlebars
+Best offer:
+{{formatEuro (max offer_a offer_b)}}
+Minimum fee or percentage:
+{{max flat_fee (multiply amount rate)}}
+```
+
+---
+
+## `min`
+
+Returns the lesser of two values.
+
+### Syntax
+
+```handlebars
+{{min a b}}
+```
+
+### Examples
+
+```handlebars
+Capped penalty:
+{{formatEuro (min penalty max_penalty)}}
+Lower rate:
+{{formatPercent (min rate_a rate_b)}}
 ```
 
 ---

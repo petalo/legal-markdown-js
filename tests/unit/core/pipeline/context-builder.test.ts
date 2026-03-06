@@ -12,9 +12,8 @@ import {
   buildProcessingContext,
   mergeMetadata,
   validateProcessingContext,
-  type ProcessingContext,
-  type ProcessingOptions,
 } from '../../../../src/core/pipeline/context-builder';
+import type { ProcessingContext, ProcessingOptions } from '../../../../src/types';
 
 // Mock the parsers
 vi.mock('../../../../src/core/parsers/yaml-parser', () => ({

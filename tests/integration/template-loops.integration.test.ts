@@ -1,6 +1,6 @@
 /**
  * @fileoverview Integration tests for template loops functionality
- * 
+ *
  * This test suite verifies that template loops work correctly in the context
  * of complete document processing, including:
  * - Processing full documents with YAML front matter
@@ -11,11 +11,14 @@
  */
 
 import { processLegalMarkdown, generatePdf } from '../../src/index';
+import { isPdfAvailable } from '../../src/extensions/generators';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // PDF generation timeout - higher in CI environments for slower systems
 const PDF_TIMEOUT = process.env.CI ? 45000 : 30000;
+const pdfAvailable = await isPdfAvailable();
+const describePdf = pdfAvailable ? describe : describe.skip;
 
 describe('Template Loops Integration', () => {
   describe('Complete Document Processing', () => {
@@ -79,17 +82,17 @@ default:
 
 The following services are included in the monthly rent:
 
-{{#services.included}}
-- {{.}}
-{{/services.included}}
+{{#each services.included}}
+- {{this}}
+{{/each}}
 
 ### 4.2. Additional Services
 
 The following services shall be contracted and paid for separately by the LESSEE:
 
-{{#services.additional}}
-- {{.}}
-{{/services.additional}}
+{{#each services.additional}}
+- {{this}}
+{{/each}}
 
 ## 5. Maintenance and Repairs
 
@@ -97,17 +100,17 @@ The following services shall be contracted and paid for separately by the LESSEE
 
 The LESSOR shall be responsible for maintaining:
 
-{{#maintenance.lessor_obligations}}
-- {{.}}
-{{/maintenance.lessor_obligations}}
+{{#each maintenance.lessor_obligations}}
+- {{this}}
+{{/each}}
 
 ### 5.2. Lessee's Obligations
 
 The LESSEE shall be responsible for maintaining:
 
-{{#maintenance.lessee_obligations}}
-- {{.}}
-{{/maintenance.lessee_obligations}}
+{{#each maintenance.lessee_obligations}}
+- {{this}}
+{{/each}}
 
 ## 6. Insurance Requirements
 
@@ -115,17 +118,17 @@ The LESSEE shall be responsible for maintaining:
 
 The LESSOR shall maintain the following insurance coverage:
 
-{{#insurance.lessor_requirements}}
-- {{.}}
-{{/insurance.lessor_requirements}}
+{{#each insurance.lessor_requirements}}
+- {{this}}
+{{/each}}
 
 ### 6.2. Lessee's Insurance
 
 The LESSEE shall obtain and maintain:
 
-{{#insurance.lessee_requirements}}
-- {{.}}
-{{/insurance.lessee_requirements}}
+{{#each insurance.lessee_requirements}}
+- {{this}}
+{{/each}}
 
 ## 7. Default and Remedies
 
@@ -133,20 +136,20 @@ The LESSEE shall obtain and maintain:
 
 The following shall constitute events of default:
 
-{{#default.events}}
-- {{.}}
-{{/default.events}}
+{{#each default.events}}
+- {{this}}
+{{/each}}
 
 ### 7.2. Remedies
 
 Upon an event of default, the LESSOR may exercise the following remedies:
 
-{{#default.remedies}}
-- {{.}}
-{{/default.remedies}}`;
+{{#each default.remedies}}
+- {{this}}
+{{/each}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: false
+      const result = await processLegalMarkdown(content, {
+        enableFieldTrackingInMarkdown: false,
       });
 
       // Verify metadata is properly parsed
@@ -156,65 +159,65 @@ Upon an event of default, the LESSOR may exercise the following remedies:
       expect(result.metadata!.services.included).toHaveLength(8);
 
       // Verify all template loops are processed
-      expect(result.content).toContain('<li>Water</li>');
-      expect(result.content).toContain('<li>Electricity</li>');
-      expect(result.content).toContain('<li>Internet</li>');
-      expect(result.content).toContain('<li>Heating</li>');
-      expect(result.content).toContain('<li>Air Conditioning</li>');
-      expect(result.content).toContain('<li>Cleaning</li>');
-      expect(result.content).toContain('<li>Security</li>');
-      expect(result.content).toContain('<li>Maintenance</li>');
+      expect(result.content).toContain('- Water');
+      expect(result.content).toContain('- Electricity');
+      expect(result.content).toContain('- Internet');
+      expect(result.content).toContain('- Heating');
+      expect(result.content).toContain('- Air Conditioning');
+      expect(result.content).toContain('- Cleaning');
+      expect(result.content).toContain('- Security');
+      expect(result.content).toContain('- Maintenance');
 
       // Verify additional services
-      expect(result.content).toContain('<li>Electricity consumption</li>');
-      expect(result.content).toContain('<li>Internet and telecommunications</li>');
-      expect(result.content).toContain('<li>Additional cleaning services</li>');
-      expect(result.content).toContain('<li>Contents insurance</li>');
-      expect(result.content).toContain('<li>Business rates</li>');
+      expect(result.content).toContain('- Electricity consumption');
+      expect(result.content).toContain('- Internet and telecommunications');
+      expect(result.content).toContain('- Additional cleaning services');
+      expect(result.content).toContain('- Contents insurance');
+      expect(result.content).toContain('- Business rates');
 
       // Verify maintenance obligations
-      expect(result.content).toContain('<li>Structural elements</li>');
-      expect(result.content).toContain('<li>Building envelope</li>');
-      expect(result.content).toContain('<li>Common areas</li>');
-      expect(result.content).toContain('<li>HVAC systems</li>');
-      expect(result.content).toContain('<li>Elevators</li>');
+      expect(result.content).toContain('- Structural elements');
+      expect(result.content).toContain('- Building envelope');
+      expect(result.content).toContain('- Common areas');
+      expect(result.content).toContain('- HVAC systems');
+      expect(result.content).toContain('- Elevators');
 
-      expect(result.content).toContain('<li>Interior walls and finishes</li>');
-      expect(result.content).toContain('<li>Floor coverings</li>');
-      expect(result.content).toContain('<li>Light fixtures</li>');
-      expect(result.content).toContain('<li>Internal electrical systems</li>');
-      expect(result.content).toContain('<li>Office furniture and equipment</li>');
+      expect(result.content).toContain('- Interior walls and finishes');
+      expect(result.content).toContain('- Floor coverings');
+      expect(result.content).toContain('- Light fixtures');
+      expect(result.content).toContain('- Internal electrical systems');
+      expect(result.content).toContain('- Office furniture and equipment');
 
       // Verify insurance requirements
-      expect(result.content).toContain('<li>Building insurance</li>');
-      expect(result.content).toContain('<li>Public liability insurance</li>');
-      expect(result.content).toContain('<li>Property damage insurance</li>');
+      expect(result.content).toContain('- Building insurance');
+      expect(result.content).toContain('- Public liability insurance');
+      expect(result.content).toContain('- Property damage insurance');
 
-      expect(result.content).toContain('<li>General liability insurance</li>');
-      expect(result.content).toContain('<li>Professional indemnity insurance</li>');
-      expect(result.content).toContain('<li>Workers\' compensation insurance</li>');
+      expect(result.content).toContain('- General liability insurance');
+      expect(result.content).toContain('- Professional indemnity insurance');
+      expect(result.content).toContain("- Workers' compensation insurance");
 
       // Verify default events and remedies
-      expect(result.content).toContain('<li>Failure to pay rent within 5 days of due date</li>');
-      expect(result.content).toContain('<li>Filing for bankruptcy or insolvency</li>');
-      expect(result.content).toContain('<li>Abandonment of the premises</li>');
+      expect(result.content).toContain('- Failure to pay rent within 5 days of due date');
+      expect(result.content).toContain('- Filing for bankruptcy or insolvency');
+      expect(result.content).toContain('- Abandonment of the premises');
 
-      expect(result.content).toContain('<li>Right to terminate the lease</li>');
-      expect(result.content).toContain('<li>Right to recover all unpaid rent</li>');
-      expect(result.content).toContain('<li>Right to recover damages</li>');
-      expect(result.content).toContain('<li>Right to re-enter and take possession</li>');
+      expect(result.content).toContain('- Right to terminate the lease');
+      expect(result.content).toContain('- Right to recover all unpaid rent');
+      expect(result.content).toContain('- Right to recover damages');
+      expect(result.content).toContain('- Right to re-enter and take possession');
 
       // Verify no raw template loops remain
-      expect(result.content).not.toContain('{{#services.included}}');
-      expect(result.content).not.toContain('{{#maintenance.lessor_obligations}}');
-      expect(result.content).not.toContain('{{#default.events}}');
-      expect(result.content).not.toContain('{{.}}');
+      expect(result.content).not.toContain('{{#each services.included}}');
+      expect(result.content).not.toContain('{{#each maintenance.lessor_obligations}}');
+      expect(result.content).not.toContain('{{#each default.events}}');
+      expect(result.content).not.toContain('{{this}}');
 
       // Verify content length indicates full processing
-      expect(result.content.length).toBeGreaterThan(1900);
+      expect(result.content.length).toBeGreaterThan(1600);
     });
 
-    it('should handle complex nested template loops', () => {
+    it('should handle complex nested template loops', async () => {
       const content = `---
 contract:
   parties:
@@ -229,28 +232,28 @@ contract:
 
 # Contract Parties
 
-{{#contract.parties}}
+{{#each contract.parties}}
 ## {{name}}
 
 Addresses:
-{{#addresses}}
-- {{.}}
-{{/addresses}}
+{{#each addresses}}
+- {{this}}
+{{/each}}
 
-{{/contract.parties}}`;
+{{/each}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: false
+      const result = await processLegalMarkdown(content, {
+        enableFieldTrackingInMarkdown: false,
       });
 
       expect(result.content).toContain('## Company A');
       expect(result.content).toContain('## Company B');
-      expect(result.content).toContain('<li>123 Main St</li>');
-      expect(result.content).toContain('<li>456 Oak Ave</li>');
-      expect(result.content).toContain('<li>789 Pine St</li>');
+      expect(result.content).toContain('- 123 Main St');
+      expect(result.content).toContain('- 456 Oak Ave');
+      expect(result.content).toContain('- 789 Pine St');
     });
 
-    it('should work with field tracking disabled (Ruby compatibility)', () => {
+    it('should work with field tracking disabled (Ruby compatibility)', async () => {
       const content = `---
 items:
   - Item 1
@@ -258,12 +261,12 @@ items:
   - Item 3
 ---
 
-{{#items}}
-- {{.}}
-{{/items}}`;
+{{#each items}}
+- {{this}}
+{{/each}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: false
+      const result = await processLegalMarkdown(content, {
+        enableFieldTrackingInMarkdown: false,
       });
 
       // Should not contain field tracking spans
@@ -272,24 +275,24 @@ items:
       expect(result.content).not.toContain('class="missing-value"');
 
       // Should contain processed content
-      expect(result.content).toContain('<li>Item 1</li>');
-      expect(result.content).toContain('<li>Item 2</li>');
-      expect(result.content).toContain('<li>Item 3</li>');
+      expect(result.content).toContain('- Item 1');
+      expect(result.content).toContain('- Item 2');
+      expect(result.content).toContain('- Item 3');
     });
 
-    it('should work with field tracking enabled', () => {
+    it('should work with field tracking enabled', async () => {
       const content = `---
 items:
   - Item 1
   - Item 2
 ---
 
-{{#items}}
-- {{.}}
-{{/items}}`;
+{{#each items}}
+- {{this}}
+{{/each}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTrackingInMarkdown: true,
       });
 
       // Should contain field tracking spans for the loop items
@@ -298,9 +301,11 @@ items:
     });
   });
 
-  describe('PDF Generation Integration', () => {
-    it('should generate PDF with processed template loops', async () => {
-      const content = `---
+  describePdf('PDF Generation Integration', () => {
+    it(
+      'should generate PDF with processed template loops',
+      async () => {
+        const content = `---
 services:
   included:
     - Water
@@ -312,31 +317,35 @@ services:
 
 ## Included Services
 
-{{#services.included}}
-- {{.}}
-{{/services.included}}`;
+{{#each services.included}}
+- {{this}}
+{{/each}}`;
 
-      // Generate PDF
-      const pdfPath = '/tmp/test-template-loops.pdf';
-      const pdfBuffer = await generatePdf(content, pdfPath, {
-        enableFieldTrackingInMarkdown: false,
-        format: 'A4'
-      });
+        // Generate PDF
+        const pdfPath = '/tmp/test-template-loops.pdf';
+        const pdfBuffer = await generatePdf(content, pdfPath, {
+          enableFieldTrackingInMarkdown: false,
+          format: 'A4',
+        });
 
-      // Verify PDF was generated
-      expect(pdfBuffer).toBeInstanceOf(Buffer);
-      expect(pdfBuffer.length).toBeGreaterThan(1000); // Should be substantial size
+        // Verify PDF was generated
+        expect(pdfBuffer).toBeInstanceOf(Buffer);
+        expect(pdfBuffer.length).toBeGreaterThan(1000); // Should be substantial size
 
-      // Clean up
-      try {
-        fs.unlinkSync(pdfPath);
-      } catch (e) {
-        // File might not exist, that's ok
-      }
-    }, PDF_TIMEOUT);
+        // Clean up
+        try {
+          fs.unlinkSync(pdfPath);
+        } catch (e) {
+          // File might not exist, that's ok
+        }
+      },
+      PDF_TIMEOUT
+    );
 
-    it('should generate larger PDF for complex documents with many template loops', async () => {
-      const content = `---
+    it(
+      'should generate larger PDF for complex documents with many template loops',
+      async () => {
+        const content = `---
 services:
   included: [Water, Electricity, Internet, Heating, Air Conditioning]
   additional: [Phone, Cable TV, Parking]
@@ -350,48 +359,50 @@ insurance:
 # Complex Service Agreement
 
 ## Services
-{{#services.included}}
-- {{.}}
-{{/services.included}}
+{{#each services.included}}
+- {{this}}
+{{/each}}
 
-{{#services.additional}}
-- Additional: {{.}}
-{{/services.additional}}
+{{#each services.additional}}
+- Additional: {{this}}
+{{/each}}
 
 ## Maintenance
-{{#maintenance.lessor}}
-- Lessor: {{.}}
-{{/maintenance.lessor}}
+{{#each maintenance.lessor}}
+- Lessor: {{this}}
+{{/each}}
 
-{{#maintenance.lessee}}
-- Lessee: {{.}}
-{{/maintenance.lessee}}
+{{#each maintenance.lessee}}
+- Lessee: {{this}}
+{{/each}}
 
 ## Insurance
-{{#insurance.required}}
-- {{.}}
-{{/insurance.required}}`;
+{{#each insurance.required}}
+- {{this}}
+{{/each}}`;
 
-      const pdfPath = '/tmp/test-complex-template-loops.pdf';
-      const pdfBuffer = await generatePdf(content, pdfPath, {
-        enableFieldTrackingInMarkdown: false,
-        format: 'A4'
-      });
+        const pdfPath = '/tmp/test-complex-template-loops.pdf';
+        const pdfBuffer = await generatePdf(content, pdfPath, {
+          enableFieldTrackingInMarkdown: false,
+          format: 'A4',
+        });
 
-      expect(pdfBuffer).toBeInstanceOf(Buffer);
-      expect(pdfBuffer.length).toBeGreaterThan(5000); // Should be larger due to more content
+        expect(pdfBuffer).toBeInstanceOf(Buffer);
+        expect(pdfBuffer.length).toBeGreaterThan(5000); // Should be larger due to more content
 
-      // Clean up
-      try {
-        fs.unlinkSync(pdfPath);
-      } catch (e) {
-        // File might not exist, that's ok
-      }
-    }, PDF_TIMEOUT);
+        // Clean up
+        try {
+          fs.unlinkSync(pdfPath);
+        } catch (e) {
+          // File might not exist, that's ok
+        }
+      },
+      PDF_TIMEOUT
+    );
   });
 
   describe('Error Handling Integration', () => {
-    it('should handle documents with missing template loop data gracefully', () => {
+    it('should handle documents with missing template loop data gracefully', async () => {
       const content = `---
 services:
   included:
@@ -402,38 +413,38 @@ services:
 # Service Agreement
 
 ## Included Services
-{{#services.included}}
-- {{.}}
-{{/services.included}}
+{{#each services.included}}
+- {{this}}
+{{/each}}
 
 ## Missing Services
-{{#services.missing}}
-- {{.}}
-{{/services.missing}}
+{{#each services.missing}}
+- {{this}}
+{{/each}}
 
 ## Non-existent Section
-{{#nonexistent.items}}
-- {{.}}
-{{/nonexistent.items}}`;
+{{#each nonexistent.items}}
+- {{this}}
+{{/each}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: false
+      const result = await processLegalMarkdown(content, {
+        enableFieldTrackingInMarkdown: false,
       });
 
       // Should process existing data
-      expect(result.content).toContain('<li>Water</li>');
-      expect(result.content).toContain('<li>Electricity</li>');
+      expect(result.content).toContain('- Water');
+      expect(result.content).toContain('- Electricity');
 
       // Should handle missing data gracefully (empty sections)
       expect(result.content).toContain('## Missing Services');
       expect(result.content).toContain('## Non-existent Section');
 
       // Should not contain unprocessed template loops
-      expect(result.content).not.toContain('{{#services.missing}}');
-      expect(result.content).not.toContain('{{#nonexistent.items}}');
+      expect(result.content).not.toContain('{{#each services.missing}}');
+      expect(result.content).not.toContain('{{#each nonexistent.items}}');
     });
 
-    it('should handle malformed template loops gracefully', () => {
+    it('should throw on malformed Handlebars loop syntax', async () => {
       const content = `---
 items:
   - Item 1
@@ -443,28 +454,21 @@ items:
 # Test Document
 
 Good loop:
-{{#items}}
-- {{.}}
-{{/items}}
+{{#each items}}
+- {{this}}
+{{/each}}
 
 Malformed loops (should be left unchanged):
 {{#unclosed
-{{#items} - {{.}} {{/wrong}}
+{{#each items} - {{this}} {{/wrong}}
 {{#}}
 {{/}}`;
 
-      const result = processLegalMarkdown(content, {
-        enableFieldTrackingInMarkdown: false
-      });
-
-      // Should process good loops
-      expect(result.content).toContain('<li>Item 1</li>');
-      expect(result.content).toContain('<li>Item 2</li>');
-
-      // Should leave malformed loops unchanged
-      expect(result.content).toContain('{{#unclosed');
-      expect(result.content).toContain('{{#}}');
-      expect(result.content).toContain('{{/}}');
+      await expect(
+        processLegalMarkdown(content, {
+          enableFieldTrackingInMarkdown: false,
+        })
+      ).rejects.toThrow();
     });
   });
 });

@@ -29,15 +29,12 @@ describe('File Scanner Utilities', () => {
     it('should scan directory and return supported files', () => {
       const mockDirEntries = [
         { name: 'document.md', isDirectory: () => false, isFile: () => true },
-        { name: 'contract.rst', isDirectory: () => false, isFile: () => true },
-        { name: 'legal.tex', isDirectory: () => false, isFile: () => true },
         { name: 'readme.txt', isDirectory: () => false, isFile: () => true },
         { name: 'image.png', isDirectory: () => false, isFile: () => true }, // Should be ignored
         { name: 'subdirectory', isDirectory: () => true, isFile: () => false },
       ];
 
       const subDirEntries = [
-        { name: 'nested.latex', isDirectory: () => false, isFile: () => true },
         { name: 'another.markdown', isDirectory: () => false, isFile: () => true },
       ];
 
@@ -52,16 +49,13 @@ describe('File Scanner Utilities', () => {
 
       const result = scanDirectory('/test/path');
 
-      expect(result).toHaveLength(6); // 4 files + 2 nested files
-      
+      expect(result).toHaveLength(3); // document.md, readme.txt, another.markdown
+
       // Check that all expected files are present
       const fileNames = result.map(item => item.name);
       expect(fileNames).toEqual(expect.arrayContaining([
         expect.stringContaining('another.markdown'),
-        expect.stringContaining('contract.rst'),
         expect.stringContaining('document.md'),
-        expect.stringContaining('legal.tex'),
-        expect.stringContaining('nested.latex'),
         expect.stringContaining('readme.txt'),
       ]));
 

@@ -1,7 +1,7 @@
 ---
 storeName: TechMart Store
 cashierName: Alice Johnson
-ticketNumber: "{{ticketNumber ? ticketNumber : '00000'}}"
+ticketNumber: "{{default ticketNumber '00000'}}"
 receiptId: RCP-2024-{{ticketNumber}}
 taxRate: 8.5
 ---
@@ -15,8 +15,8 @@ taxRate: 8.5
 
 {{#items}}
 
-- {{name}} {{price ? "$" + price : "[Price Missing]"}}
-  {{onSale ? "(ON SALE!)" : ""}} {{/items}}
+- {{name}} {{#if price}}${{price}}{{else}}[Price Missing]{{/if}}
+  {{#if onSale}}(ON SALE!){{/if}} {{/items}}
 
 ## Payment Details
 

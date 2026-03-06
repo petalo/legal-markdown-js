@@ -8,9 +8,8 @@
 import * as fsSync from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { spawn } from 'child_process';
 
-export interface ChromeStatus {
+interface ChromeStatus {
   hasSystemChrome: boolean;
   hasPuppeteerCache: boolean;
   chromePaths: string[];
@@ -91,93 +90,4 @@ export function checkChromeStatus(): ChromeStatus {
   }
 
   return status;
-}
-
-/**
- * Attempts to automatically install Chrome for Puppeteer in global cache
- */
-export async function autoInstallChrome(): Promise<boolean> {
-  try {
-    console.log('🔧 Auto-installing Chrome for PDF generation in global cache...');
-
-    // Use global cache directory to avoid multiple downloads
-    const globalCacheDir = path.join(os.homedir(), '.cache', 'puppeteer-global');
-
-    // Ensure cache directory exists
-    if (!fsSync.existsSync(globalCacheDir)) {
-      fsSync.mkdirSync(globalCacheDir, { recursive: true });
-    }
-
-    // Use spawn with explicit arguments to avoid command injection
-    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const args = ['puppeteer', 'browsers', 'install', 'chrome'];
-
-    return new Promise(resolve => {
-      const childProcess = spawn(command, args, {
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
-          PUPPETEER_CACHE_DIR: globalCacheDir,
-        },
-      });
-
-      // Set timeout manually since spawn doesn't have built-in timeout
-      const timeout = setTimeout(() => {
-        childProcess.kill('SIGTERM');
-        console.error('❌ Chrome installation timed out after 5 minutes');
-        resolve(false);
-      }, 300000); // 5 minutes
-
-      childProcess.on('close', code => {
-        clearTimeout(timeout);
-        if (code === 0) {
-          console.log(`✅ Chrome installed successfully in global cache: ${globalCacheDir}`);
-          resolve(true);
-        } else {
-          console.error(`❌ Chrome installation failed with exit code: ${code}`);
-          resolve(false);
-        }
-      });
-
-      childProcess.on('error', error => {
-        clearTimeout(timeout);
-        console.error('❌ Failed to install Chrome automatically:', error.message);
-        resolve(false);
-      });
-    });
-  } catch (error) {
-    console.error(
-      '❌ Failed to install Chrome automatically:',
-      error instanceof Error ? error.message : error
-    );
-    return false;
-  }
-}
-
-/**
- * Displays helpful Chrome setup information to the user
- */
-export function displayChromeHelp(): void {
-  const status = checkChromeStatus();
-
-  console.log('\n📋 Chrome Setup Status:');
-  console.log(`   System Chrome: ${status.hasSystemChrome ? '✅ Found' : '❌ Not found'}`);
-  console.log(`   Puppeteer Cache: ${status.hasPuppeteerCache ? '✅ Found' : '❌ Not found'}`);
-
-  if (status.chromePaths.length > 0) {
-    console.log('   Chrome locations:');
-    status.chromePaths.forEach(p => console.log(`     - ${p}`));
-  }
-
-  if (status.suggestions.length > 0) {
-    console.log('\n🔧 To enable PDF generation, try:');
-    status.suggestions.forEach((suggestion, i) => {
-      console.log(`   ${i + 1}. ${suggestion}`);
-    });
-  }
-
-  console.log(
-    '\n💡 For more help, see: https://github.com/petalo/legal-markdown-js/blob/main/docs/MACOS_PDF_SETUP.md'
-  );
 }

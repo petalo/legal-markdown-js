@@ -24,13 +24,14 @@ CSS.
 **Input:**
 
 ```markdown
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 **Output:**
 
 ```markdown
-Signature: <span class="signature-line">************\_\_************</span>
+Signature:
+<span class="signature-line">****\*\*\*\*****\_\_****\*\*\*\*****</span>
 ```
 
 ## Basic Usage
@@ -40,9 +41,9 @@ Signature: <span class="signature-line">************\_\_************</span>
 ```markdown
 **Client Representative**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 ```
 
 The longer underscore sequence (26 underscores) and shorter one (20 underscores)
@@ -53,11 +54,11 @@ are both detected and wrapped with CSS classes.
 ```markdown
 **Party A**
 
-Signature: ************\_\_************ Date: ****\_\_****
+Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date: \***\*\_\_\*\***
 
 **Party B**
 
-Signature: ************\_\_************ Date: ****\_\_****
+Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date: \***\*\_\_\*\***
 ```
 
 All signature lines in the document are automatically detected and styled.
@@ -71,19 +72,19 @@ All signature lines in the document are automatically detected and styled.
 
 **Client Representative**
 
-Name: ************\_\_************
+Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 
 **Service Provider**
 
-Name: ************\_\_************
+Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 ```
 
 ## Configuration
@@ -99,7 +100,7 @@ You can adjust this threshold:
 ```typescript
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import remarkSignatureLines from '@legal-markdown/signature-lines';
+import remarkSignatureLines from './src/plugins/remark/signature-lines';
 
 const processor = unified()
   .use(remarkParse)
@@ -199,19 +200,19 @@ The parties have executed this agreement as of the date first written above.
 
 **CLIENT**
 
-Name: ************\_\_************
+Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 
 **SERVICE PROVIDER**
 
-Name: ************\_\_************
+Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 ```
 
 ### Witness Section
@@ -223,15 +224,15 @@ The undersigned witnesses have witnessed the execution of this document.
 
 **Witness 1**
 
-Signature: ************\_\_************ Date: ****\_\_****
+Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date: \***\*\_\_\*\***
 
-Print Name: ************\_\_************
+Print Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
 **Witness 2**
 
-Signature: ************\_\_************ Date: ****\_\_****
+Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date: \***\*\_\_\*\***
 
-Print Name: ************\_\_************
+Print Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 ### Notary Block
@@ -241,23 +242,23 @@ Print Name: ************\_\_************
 
 **Notary Public**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Print Name: ************\_\_************
+Print Name: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-My Commission Expires: ********\_\_\_\_********
+My Commission Expires: **\*\*\*\***\_\_\_\_**\*\*\*\***
 
-Notary Seal: ************\_\_************
+Notary Seal: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 ### Table Format
 
 ```markdown
-| Party   | Signature                    | Date         |
-| ------- | ---------------------------- | ------------ |
-| Party A | ************\_\_************ | ****\_\_**** |
-| Party B | ************\_\_************ | ****\_\_**** |
-| Witness | ************\_\_************ | ****\_\_**** |
+| Party   | Signature                            | Date             |
+| ------- | ------------------------------------ | ---------------- |
+| Party A | ****\*\*\*\*****\_\_****\*\*\*\***** | \***\*\_\_\*\*** |
+| Party B | ****\*\*\*\*****\_\_****\*\*\*\***** | \***\*\_\_\*\*** |
+| Witness | ****\*\*\*\*****\_\_****\*\*\*\***** | \***\*\_\_\*\*** |
 ```
 
 ## Best Practices
@@ -269,11 +270,12 @@ Use consistent underscore lengths for signature lines throughout your document:
 ```markdown
 <!-- ✅ Good - consistent lengths -->
 
-Signature: ************\_\_************ Date: ********\_\_\_\_********
+Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date:
+**\*\*\*\***\_\_\_\_**\*\*\*\***
 
 <!-- ❌ Avoid - inconsistent lengths -->
 
-Signature: ******\_****** Date: **\_\_\_**
+Signature: **\*\***\_**\*\*** Date: **\_\_\_**
 ```
 
 ### 2. Minimum 10 Underscores
@@ -283,11 +285,11 @@ Use at least 10 underscores to ensure detection:
 ```markdown
 <!-- ✅ Good - 10+ underscores -->
 
-Signature: ****\_\_****
+Signature: \***\*\_\_\*\***
 
 <!-- ❌ Won't be detected - only 9 underscores -->
 
-Signature: ****\_****
+Signature: \***\*\_\*\***
 ```
 
 ### 3. Label Signature Lines
@@ -297,8 +299,8 @@ Always label what each signature line is for:
 ```markdown
 <!-- ✅ Good - clear labels -->
 
-**Client Representative** Signature: ************\_\_************ Date:
-********\_\_\_\_********
+**Client Representative** Signature: ****\*\*\*\*****\_\_****\*\*\*\***** Date:
+**\*\*\*\***\_\_\_\_**\*\*\*\***
 
 <!-- ❌ Avoid - unlabeled -->
 
@@ -314,8 +316,8 @@ Keep related signature lines together:
 ```markdown
 **Party A**
 
-Name: ************\_\_************ Signature: ************\_\_************ Date:
-********\_\_\_\_********
+Name: ****\*\*\*\*****\_\_****\*\*\*\***** Signature:
+****\*\*\*\*****\_\_****\*\*\*\***** Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 ```
 
 ### 5. Add Spacing
@@ -329,13 +331,13 @@ Add whitespace around signature blocks for readability:
 
 **Client**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
 ---
 
 **Provider**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 ### 6. Print Considerations
@@ -345,7 +347,8 @@ Test your signature lines in print preview to ensure adequate space:
 ```markdown
 <!-- Provide enough underscores for physical signatures -->
 
-Signature: ************\_\_************ <!-- ~26 underscores = ~3 inches -->
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
+<!-- ~26 underscores = ~3 inches -->
 ```
 
 ### 7. Accessibility
@@ -355,7 +358,7 @@ Include descriptive text near signature lines:
 ```markdown
 **Sign below to indicate agreement:**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 ## Advanced Usage
@@ -369,7 +372,7 @@ When field tracking is enabled, signature lines are preserved:
 enableFieldTracking: true
 ---
 
-Client: {{client_name}} Signature: ************\_\_************
+Client: {{client_name}} Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 The signature line will be wrapped with CSS while the `{{client_name}}` field is
@@ -392,9 +395,9 @@ parties:
 ```markdown
 {{#parties}} **{{name}}** ({{role}})
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_********
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\***
 
 {{/parties}}
 ```
@@ -406,9 +409,9 @@ Show signature lines only when needed:
 ```markdown
 {{#if requires_witness}} **Witness**
 
-Signature: ************\_\_************
+Signature: ****\*\*\*\*****\_\_****\*\*\*\*****
 
-Date: ********\_\_\_\_******** {{/if}}
+Date: **\*\*\*\***\_\_\_\_**\*\*\*\*** {{/if}}
 ```
 
 ## Integration with Other Features
@@ -420,7 +423,7 @@ As stated in Section |introduction|, the parties agree to the terms below.
 
 **Signatures** (see |signatures|)
 
-|signatures| **Client**: ************\_\_************
+|signatures| **Client**: ****\*\*\*\*****\_\_****\*\*\*\*****
 ```
 
 ### With Headers

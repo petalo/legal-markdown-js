@@ -13,11 +13,11 @@ import { OutputFormat } from '../types';
 const NO_CSS_OPTION = 'No custom CSS';
 
 /**
- * Prompt user to select a CSS file if HTML or PDF formats are selected
+ * Prompt user to select a CSS file if HTML, PDF, or DOCX formats are selected
  */
 export async function selectCssFile(outputFormats: OutputFormat): Promise<string | undefined> {
-  // Only show CSS selection if HTML or PDF is selected
-  if (!outputFormats.html && !outputFormats.pdf) {
+  // Only show CSS selection if HTML, PDF, or DOCX is selected
+  if (!outputFormats.html && !outputFormats.pdf && !outputFormats.docx) {
     return undefined;
   }
 

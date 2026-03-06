@@ -24,7 +24,7 @@ Current date variable with format specifiers and arithmetic.
 ### Basic Usage
 
 ```handlebars
-@today
+{{@today}}
 ```
 
 Returns the current date.
@@ -35,13 +35,13 @@ Apply format specifiers using square brackets:
 
 | Syntax           | Format          | Example Output   |
 | ---------------- | --------------- | ---------------- |
-| `@today[ISO]`    | ISO format      | 2025-10-26       |
-| `@today[US]`     | US format       | 10/26/2025       |
-| `@today[EU]`     | European format | 26/10/2025       |
-| `@today[legal]`  | Legal format    | October 26, 2025 |
-| `@today[long]`   | Long format     | October 26, 2025 |
-| `@today[medium]` | Medium format   | Oct 26, 2025     |
-| `@today[short]`  | Short format    | Oct 26, 25       |
+| `{{@today[ISO]}}`    | ISO format      | 2025-10-26       |
+| `{{@today[US]}}`     | US format       | 10/26/2025       |
+| `{{@today[EU]}}`     | European format | 26/10/2025       |
+| `{{@today[legal]}}`  | Legal format    | October 26, 2025 |
+| `{{@today[long]}}`   | Long format     | October 26, 2025 |
+| `{{@today[medium]}}` | Medium format   | Oct 26, 2025     |
+| `{{@today[short]}}`  | Short format    | Oct 26, 25       |
 
 ### Date Arithmetic
 
@@ -49,26 +49,30 @@ Add or subtract time using arithmetic operators:
 
 | Syntax        | Operation                | Example           |
 | ------------- | ------------------------ | ----------------- |
-| `@today+30`   | 30 days from now         | November 25, 2025 |
-| `@today-90`   | 90 days ago              | July 28, 2025     |
-| `@today+1y`   | 1 year from now          | October 26, 2026  |
-| `@today+2m`   | 2 months from now        | December 26, 2025 |
-| `@today+1y6m` | 1 year 6 months from now | April 26, 2027    |
+| `{{@today+30d}}`   | 30 days from now         | November 25, 2025 |
+| `{{@today-90d}}`   | 90 days ago              | July 28, 2025     |
+| `{{@today+1y}}`    | 1 year from now          | October 26, 2026  |
+| `{{@today+2m}}`    | 2 months from now        | December 26, 2025 |
+| `{{@today+1y6m}}`  | 1 year 6 months from now | April 26, 2027    |
 
 ### Combined Operations
 
 Combine arithmetic with format specifiers:
 
 ```handlebars
-@today+30[US] → 11/25/2025 @today+1y[legal] → October 26, 2026 @today-90d[ISO] →
-2025-07-28 @today+2m15d[EU] → 10/01/2026
+{{@today+30d[US]}}    → 11/25/2025
+{{@today+1y[legal]}}  → October 26, 2026
+{{@today-90d[ISO]}}   → 2025-07-28
+{{@today+2m15d[EU]}}  → 10/01/2026
 ```
 
 ### Examples
 
 ```handlebars
-**Document Date:** @today[legal] **Due Date:** @today+30[US] **Contract
-Expires:** @today+1y[ISO] **Grace Period Ends:** @today+15d[EU]
+**Document Date:** {{@today[legal]}}
+**Due Date:** {{@today+30d[US]}}
+**Contract Expires:** {{@today+1y[ISO]}}
+**Grace Period Ends:** {{@today+15d[EU]}}
 ```
 
 **Output:**
@@ -326,8 +330,8 @@ items:
     rate: 120
 ---
 
-**Invoice Date:** @today[legal]
-**Due Date:** @today+{{paymentDays}}[US]
+**Invoice Date:** {{@today[legal]}}
+**Due Date:** {{formatDate (addDays @today paymentDays) "US"}}
 
 {{#each items}}
 {{add @index 1}}. {{desc}}: {{qty}} × {{formatDollar rate}} = {{formatDollar (multiply qty rate)}}
@@ -340,11 +344,28 @@ items:
 ### Contract with Nested Loops
 
 ```handlebars
---- contractStart: 2025-01-15 term: 12 parties: - role: "Provider" name: "Tech
-Services Inc" contacts: - type: "Email" value: "info@techservices.com" - type:
-"Phone" value: "555-1234" - role: "Client" name: "ACME Corp" contacts: - type:
-"Email" value: "legal@acme.com" --- **Contract Period:** @contractStart[legal]
-to @contractStart+{{term}}m[legal] **Parties:**
+---
+contractStart: 2025-01-15
+term: 12
+parties:
+  - role: "Provider"
+    name: "Tech Services Inc"
+    contacts:
+      - type: "Email"
+        value: "info@techservices.com"
+      - type: "Phone"
+        value: "555-1234"
+  - role: "Client"
+    name: "ACME Corp"
+    contacts:
+      - type: "Email"
+        value: "legal@acme.com"
+---
+
+**Contract Period:** {{formatDate contractStart "legal"}} to
+{{formatDate (addMonths contractStart term) "legal"}}
+
+**Parties:**
 {{#each parties}}
 
   **{{role}}:**

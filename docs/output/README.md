@@ -35,6 +35,28 @@ Create responsive HTML documents with interactive features.
 legal-md document.md --html --highlight --css ./styles/responsive.css
 ```
 
+### 🧾 [DOCX Generation](docx-generation.md)
+
+Generate native Word documents with CSS-to-style mapping.
+
+- **Word-Compatible Output** - `.docx` packages ready for Office/LibreOffice
+- **Style Mapping** - `default.css`/`highlight.css` mapped to DOCX paragraph/run
+  styles
+- **Document Classes** - Support for `.confidential`, `.separator`,
+  `.algorithm`, `.signatures`, `.table-of-contents`
+- **List + Break Mapping** - `list-style-type` and `page-break-before/after`
+  adaptation
+- **Headers/Footers** - Version + page numbers + optional logo, or custom API
+  templates
+- **Highlight Variants** - Optional `.HIGHLIGHT.docx` reviewer copy
+- **Pipeline Reuse** - Same 3-phase processing path as HTML/PDF
+
+**Example:**
+
+```bash
+legal-md contract.md --docx --highlight --css ./styles/legal.css
+```
+
 ### 🎯 [Field Highlighting](field-highlighting.md)
 
 Visual indicators for template field status and data validation.
@@ -47,9 +69,8 @@ Visual indicators for template field status and data validation.
 **Example:**
 
 ```typescript
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   enableFieldTracking: true,
-  outputFormat: 'html',
 });
 console.log(result.fieldReport); // Detailed field analysis
 ```
@@ -83,12 +104,14 @@ Complete reference for styling and customization.
 
 ```bash
 # Generate all formats simultaneously
-legal-md contract.md --pdf --html --highlight --css ./styles/legal.css
+legal-md contract.md --pdf --html --docx --highlight --css ./styles/legal.css
 
 # Output:
 # - contract.pdf (PDF with highlighting)
 # - contract.html (HTML with highlighting)
+# - contract.docx (normal DOCX)
 # - contract.HIGHLIGHT.pdf (Highlighted PDF version)
+# - contract.HIGHLIGHT.docx (Highlighted DOCX version)
 ```
 
 ### Programmatic Generation
@@ -97,6 +120,8 @@ legal-md contract.md --pdf --html --highlight --css ./styles/legal.css
 import {
   generatePdf,
   generateHtml,
+  generateDocx,
+  generateDocxVersions,
   processLegalMarkdown,
 } from 'legal-markdown-js';
 
@@ -114,10 +139,25 @@ const html = await generateHtml(content, {
   includeHighlighting: true,
 });
 
+// Generate DOCX
+const docxBuffer = await generateDocx(content, 'contract.docx', {
+  title: 'Service Agreement',
+  cssPath: './styles/legal.css',
+  includeHighlighting: true,
+  headerTemplate: '<p class="text-center">ACME</p>',
+  footerTemplate: '<p class="text-center text-muted">Internal</p>',
+});
+
+// Generate both normal and highlight DOCX versions
+const docxVersions = await generateDocxVersions(content, 'contract.docx', {
+  title: 'Service Agreement',
+  cssPath: './styles/legal.css',
+});
+console.log(docxVersions.normal.length, docxVersions.highlighted.length);
+
 // Get field tracking report
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   enableFieldTracking: true,
-  outputFormat: 'html',
 });
 console.log(
   `Document ${(result.fieldReport.filled / result.fieldReport.total) * 100}% complete`

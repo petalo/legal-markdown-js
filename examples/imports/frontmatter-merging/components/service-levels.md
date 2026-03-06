@@ -98,9 +98,9 @@ measured {{service_levels.availability.measurement_period}}.
 #### Coverage
 
 - **Hours**: {{support.hours}}
-- **Languages**: {{support.languages | join: ", "}}
-- **Channels**: {{support.channels | join: ", "}}
-- **Locations**: {{support.locations | join: ", "}}
+- **Languages**: {{support.languages}}
+- **Channels**: {{support.channels}}
+- **Locations**: {{support.locations}}
 
 #### Escalation Path
 
@@ -131,23 +131,22 @@ measured {{service_levels.availability.measurement_period}}.
 
 ### Monitoring and Alerting
 
-{{#monitoring.uptime_tracking}}
+{{#if monitoring.uptime_tracking}}
 
 - **Uptime Monitoring**: Continuous monitoring with {{monitoring.alerting}}
-  alerts {{/monitoring.uptime_tracking}} {{#monitoring.performance_monitoring}}
-- **Performance Monitoring**: Real-time performance metrics and alerting
-  {{/monitoring.performance_monitoring}} {{#monitoring.security_monitoring}}
-- **Security Monitoring**: 24/7 security event monitoring and response
-  {{/monitoring.security_monitoring}}
+  alerts {{/if}} {{#if monitoring.performance_monitoring}}
+- **Performance Monitoring**: Real-time performance metrics and alerting {{/if}}
+  {{#if monitoring.security_monitoring}}
+- **Security Monitoring**: 24/7 security event monitoring and response {{/if}}
 - **Log Retention**: {{monitoring.log_retention}}
-  {{#monitoring.dashboard_access}}
+  {{#if monitoring.dashboard_access}}
 - **Dashboard Access**: Real-time visibility into system status and metrics
-  {{/monitoring.dashboard_access}}
+  {{/if}}
 
 ### Reporting
 
 - **Frequency**: {{reporting.frequency}} reports
-- **Metrics**: {{reporting.metrics | join: ", "}}
+- **Metrics**: {{reporting.metrics}}
 - **Format**: {{reporting.format}}
 - **Delivery**: {{reporting.delivery}}
 
@@ -155,17 +154,15 @@ measured {{service_levels.availability.measurement_period}}.
 
 The following service credits apply for SLA breaches:
 
-{{#penalties.availability_below_99_percent}}
+{{#if penalties.availability_below_99_percent}}
 
-- **Availability < 99%**: {{penalties.availability_below_99_percent}}
-  {{/penalties.availability_below_99_percent}}
-  {{#penalties.availability_below_95_percent}}
-- **Availability < 95%**: {{penalties.availability_below_95_percent}}
-  {{/penalties.availability_below_95_percent}}
-  {{#penalties.critical_response_miss}}
-- **Missed Critical Response**: {{penalties.critical_response_miss}}
-  {{/penalties.critical_response_miss}} {{#penalties.data_loss}}
-- **Data Loss**: {{penalties.data_loss}} {{/penalties.data_loss}}
+- **Availability < 99%**: {{penalties.availability_below_99_percent}} {{/if}}
+  {{#if penalties.availability_below_95_percent}}
+- **Availability < 95%**: {{penalties.availability_below_95_percent}} {{/if}}
+  {{#if penalties.critical_response_miss}}
+- **Missed Critical Response**: {{penalties.critical_response_miss}} {{/if}}
+  {{#if penalties.data_loss}}
+- **Data Loss**: {{penalties.data_loss}} {{/if}}
 
 ### Exclusions
 

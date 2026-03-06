@@ -38,6 +38,8 @@
  * ```
  */
 
+import { ProcessingError } from '../../errors';
+
 /**
  * Numeric typed array constructors (Issue #141)
  * These types should be treated as atomic values during flattening/merging
@@ -61,7 +63,7 @@ export const NUMERIC_TYPED_ARRAY_TYPES = [
  * @param value - Value to check
  * @returns True if value is a Buffer instance
  */
-export function isBuffer(value: any): boolean {
+export function isBuffer(value: unknown): boolean {
   return typeof Buffer !== 'undefined' && value instanceof Buffer;
 }
 
@@ -72,7 +74,7 @@ export function isBuffer(value: any): boolean {
  * @param value - Value to check
  * @returns True if value is a BigInt typed array
  */
-export function isBigIntTypedArray(value: any): boolean {
+export function isBigIntTypedArray(value: unknown): boolean {
   if (typeof BigInt64Array !== 'undefined' && value instanceof BigInt64Array) {
     return true;
   }
@@ -88,7 +90,7 @@ export function isBigIntTypedArray(value: any): boolean {
  * @param value - Value to check
  * @returns True if value is a typed array
  */
-export function isTypedArray(value: any): boolean {
+function isTypedArray(value: unknown): boolean {
   return NUMERIC_TYPED_ARRAY_TYPES.some(Type => value instanceof Type) || isBigIntTypedArray(value);
 }
 
@@ -110,7 +112,7 @@ export function isTypedArray(value: any): boolean {
  * isAtomicValue({ a: 1 });       // false (plain object - should flatten)
  * ```
  */
-function isAtomicValue(value: any): boolean {
+function isAtomicValue(value: unknown): boolean {
   // Primitives and null/undefined
   if (value === null || value === undefined) return true;
   if (typeof value !== 'object') return true; // string, number, boolean, etc.
@@ -175,25 +177,25 @@ function isAtomicValue(value: any): boolean {
  * ```
  */
 export function flattenObject(
-  obj: any,
+  obj: unknown,
   prefix = '',
   visited = new WeakSet(),
   startTime = Date.now(),
   timeoutMs = 5000
-): Record<string, any> {
+): Record<string, unknown> {
   // Timeout safety check
   if (Date.now() - startTime > timeoutMs) {
     const message =
       `Object flattening timed out after ${timeoutMs}ms. ` +
       'This may indicate a complex nested structure or circular references.';
-    throw new Error(message);
+    throw new ProcessingError(message);
   }
 
   if (obj === null || obj === undefined) {
     return {};
   }
 
-  const flattened: Record<string, any> = {};
+  const flattened: Record<string, unknown> = {};
 
   // Handle atomic values (primitives, arrays, special types)
   if (isAtomicValue(obj)) {
@@ -203,18 +205,21 @@ export function flattenObject(
     return flattened;
   }
 
+  // At this point obj is a plain object (not atomic, not null/undefined)
+  const objRecord = obj as Record<string, unknown>;
+
   // Circular reference detection
-  if (visited.has(obj)) {
+  if (visited.has(objRecord)) {
     console.warn(`Circular reference detected at path '${prefix}'. Replacing with placeholder.`);
     if (prefix) {
       flattened[prefix] = '[Circular Reference]';
     }
     return flattened;
   }
-  visited.add(obj);
+  visited.add(objRecord);
 
   // Process object properties
-  for (const [key, value] of Object.entries(obj)) {
+  for (const [key, value] of Object.entries(objRecord)) {
     const newKey = prefix ? `${prefix}.${key}` : key;
 
     if (isAtomicValue(value)) {
@@ -226,7 +231,7 @@ export function flattenObject(
     }
   }
 
-  visited.delete(obj);
+  visited.delete(objRecord);
   return flattened;
 }
 
@@ -261,16 +266,16 @@ export function flattenObject(
  * // }
  * ```
  */
-export function unflattenObject(flattened: Record<string, any>): any {
+export function unflattenObject(flattened: Record<string, unknown>): unknown {
   if (!flattened || typeof flattened !== 'object') {
     return flattened;
   }
 
-  const result: any = {};
+  const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(flattened)) {
     const parts = key.split('.');
-    let current = result;
+    let current: Record<string, unknown> = result;
 
     // Navigate/create the nested structure
     for (let i = 0; i < parts.length - 1; i++) {
@@ -283,7 +288,7 @@ export function unflattenObject(flattened: Record<string, any>): any {
         current[part] = {};
       }
 
-      current = current[part];
+      current = current[part] as Record<string, unknown>;
     }
 
     // Set the final value
@@ -312,14 +317,14 @@ export function unflattenObject(flattened: Record<string, any>): any {
  * console.log(isReversible(objWithArray)); // true
  * ```
  */
-export function isReversible(original: any): boolean {
+export function isReversible(original: unknown): boolean {
   try {
     const flattened = flattenObject(original);
     const restored = unflattenObject(flattened);
 
     // Deep comparison (simplified for basic types)
     return JSON.stringify(original) === JSON.stringify(restored);
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -350,7 +355,10 @@ export function isReversible(original: any): boolean {
  * // ["user.profile.name", "user.settings.theme"]
  * ```
  */
-export function getObjectPaths(obj: any, prefix = '', timeoutMs = 5000): string[] {
+export function getObjectPaths(obj: unknown, prefix = '', timeoutMs = 5000): string[] {
   const flattened = flattenObject(obj, prefix, new WeakSet(), Date.now(), timeoutMs);
   return Object.keys(flattened);
 }
+
+// Exported for testing - not part of public API
+export { isAtomicValue as _isAtomicValue };

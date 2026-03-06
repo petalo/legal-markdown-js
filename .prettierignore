@@ -1,0 +1,6 @@
+dist/
+node_modules/
+coverage/
+tests/fixtures/
+tests/golden/fixtures/
+examples/playground/

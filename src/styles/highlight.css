@@ -7,14 +7,28 @@
  * - Logic fields (yellow): Fields with conditional logic or mixins
  */
 
+:root {
+  --highlight-imported-border: #0066cc;
+  --highlight-imported-bg: #e6f3ff;
+  --highlight-imported-text: #004085;
+
+  --highlight-missing-border: #dc3545;
+  --highlight-missing-bg: #fff5f5;
+  --highlight-missing-text: #dc3545;
+
+  --highlight-logic-border: #ffc107;
+  --highlight-logic-bg: #f9f3df;
+  --highlight-logic-text: #856404;
+}
+
 /* Imported values - Successfully filled from data */
 .imported-value,
 .legal-field.imported-value {
-  border: 1px solid #0066cc;
+  border: 1px solid var(--highlight-imported-border);
   border-radius: 2px;
   padding: 1px 3px;
-  background-color: #e6f3ff;
-  color: #004085;
+  background-color: var(--highlight-imported-bg);
+  color: var(--highlight-imported-text);
   display: inline;
   vertical-align: baseline;
   white-space: normal;
@@ -33,9 +47,9 @@
 @media print {
   .imported-value,
   .legal-field.imported-value {
-    border-color: #0066cc;
-    background-color: #e6f3ff;
-    color: #004085;
+    border-color: var(--highlight-imported-border);
+    background-color: var(--highlight-imported-bg);
+    color: var(--highlight-imported-text);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -44,11 +58,11 @@
 /* Missing values - Required fields without data */
 .missing-value,
 .legal-field.missing-value {
-  border: 1px solid #dc3545;
+  border: 1px solid var(--highlight-missing-border);
   border-radius: 2px;
   padding: 1px 3px;
-  background-color: #fff5f5;
-  color: #dc3545;
+  background-color: var(--highlight-missing-bg);
+  color: var(--highlight-missing-text);
   display: inline;
   vertical-align: baseline;
   white-space: normal;
@@ -68,9 +82,9 @@
 @media print {
   .missing-value,
   .legal-field.missing-value {
-    border-color: #dc3545;
-    background-color: #fff5f5;
-    color: #dc3545;
+    border-color: var(--highlight-missing-border);
+    background-color: var(--highlight-missing-bg);
+    color: var(--highlight-missing-text);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -79,11 +93,11 @@
 /* Logic fields - Fields with conditional logic or mixins */
 .highlight,
 .legal-field.highlight {
-  border: 1px solid #ffc107;
+  border: 1px solid var(--highlight-logic-border);
   border-radius: 2px;
   padding: 3px 3px;
-  background-color: #f9f3df;
-  color: #856404;
+  background-color: var(--highlight-logic-bg);
+  color: var(--highlight-logic-text);
   display: inline;
   vertical-align: baseline;
   white-space: normal;
@@ -104,9 +118,9 @@
 @media print {
   .highlight,
   .legal-field.highlight {
-    border-color: #ffc107;
-    background-color: #f9f3df;
-    color: #856404;
+    border-color: var(--highlight-logic-border);
+    background-color: var(--highlight-logic-bg);
+    color: var(--highlight-logic-text);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -142,21 +156,21 @@
 }
 
 .highlight-legend .imported-example {
-  background-color: #e6f3ff;
-  border: 1px solid #0066cc;
-  color: #004085;
+  background-color: var(--highlight-imported-bg);
+  border: 1px solid var(--highlight-imported-border);
+  color: var(--highlight-imported-text);
 }
 
 .highlight-legend .missing-example {
-  background-color: #fff5f5;
-  border: 1px solid #dc3545;
-  color: #dc3545;
+  background-color: var(--highlight-missing-bg);
+  border: 1px solid var(--highlight-missing-border);
+  color: var(--highlight-missing-text);
 }
 
 .highlight-legend .logic-example {
-  background-color: #f9f3df;
-  border: 1px solid #ffc107;
-  color: #856404;
+  background-color: var(--highlight-logic-bg);
+  border: 1px solid var(--highlight-logic-border);
+  color: var(--highlight-logic-text);
 }
 
 /* Ensure visibility in different contexts */

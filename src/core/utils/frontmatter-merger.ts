@@ -43,7 +43,9 @@ import {
   isBuffer,
   isBigIntTypedArray,
 } from './object-flattener';
+import { ProcessingError } from '../../errors';
 import { filterReservedFields } from './reserved-fields-filter';
+import type { YamlValue } from '../../types';
 
 /**
  * Options for frontmatter merging
@@ -68,7 +70,7 @@ export interface MergeOptions {
  */
 export interface MergeResult {
   /** Merged metadata object */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
   /** Statistics about the merge operation */
   stats?: MergeStats;
 }
@@ -145,25 +147,25 @@ export class MergeValidationError extends Error {
  * ```
  */
 export function mergeFlattened(
-  current: Record<string, any>,
-  imported: Record<string, any>,
-  options?: MergeOptions
-): Record<string, any>;
-export function mergeFlattened(
-  current: Record<string, any>,
-  imported: Record<string, any>,
+  current: Record<string, YamlValue>,
+  imported: Record<string, YamlValue>,
   options: MergeOptions & { includeStats: true }
 ): MergeResult;
 export function mergeFlattened(
-  current: Record<string, any>,
-  imported: Record<string, any>,
+  current: Record<string, YamlValue>,
+  imported: Record<string, YamlValue>,
+  options?: MergeOptions
+): Record<string, YamlValue>;
+export function mergeFlattened(
+  current: Record<string, YamlValue>,
+  imported: Record<string, YamlValue>,
   options: MergeOptions = {}
-): Record<string, any> | MergeResult {
+): Record<string, YamlValue> | MergeResult {
   const {
     filterReserved = true,
     validateTypes = true,
     logOperations = false,
-    conflictStrategy = 'source-wins',
+    conflictStrategy: _conflictStrategy = 'source-wins',
     includeStats = false,
     timeoutMs = 10000,
   } = options;
@@ -194,7 +196,10 @@ export function mergeFlattened(
   let filteredImported = imported;
   if (filterReserved) {
     const originalKeys = Object.keys(imported);
-    filteredImported = filterReservedFields(imported, { logFiltered: logOperations });
+    filteredImported = filterReservedFields(imported, { logFiltered: logOperations }) as Record<
+      string,
+      YamlValue
+    >;
     const filteredKeys = Object.keys(filteredImported);
 
     stats.reservedFieldsFiltered = originalKeys.length - filteredKeys.length;
@@ -202,8 +207,18 @@ export function mergeFlattened(
   }
 
   // Flatten both objects for granular comparison with timeout protection
-  const currentFlat = flattenObject(current, '', new WeakSet(), startTime, timeoutMs);
-  const importedFlat = flattenObject(filteredImported, '', new WeakSet(), Date.now(), timeoutMs);
+  // Both inputs are Record<string, YamlValue>; cast from unknown for downstream type safety
+  const currentFlat = flattenObject(current, '', new WeakSet(), startTime, timeoutMs) as Record<
+    string,
+    YamlValue
+  >;
+  const importedFlat = flattenObject(
+    filteredImported,
+    '',
+    new WeakSet(),
+    Date.now(),
+    timeoutMs
+  ) as Record<string, YamlValue>;
 
   stats.currentProperties = Object.keys(currentFlat).length;
   stats.importedProperties = Object.keys(importedFlat).length;
@@ -215,12 +230,12 @@ export function mergeFlattened(
   }
 
   // Merge using "source always wins" strategy
-  const mergedFlat: Record<string, any> = { ...currentFlat };
+  const mergedFlat: Record<string, YamlValue> = { ...currentFlat };
 
   for (const [key, importedValue] of Object.entries(importedFlat)) {
     // Timeout safety check during merge loop
     if (Date.now() - startTime > timeoutMs) {
-      throw new Error(
+      throw new ProcessingError(
         `Frontmatter merge timed out after ${timeoutMs}ms. ` +
           'This may indicate complex nested structures or circular references.'
       );
@@ -276,8 +291,8 @@ export function mergeFlattened(
     }
   }
 
-  // Unflatten back to hierarchical structure
-  const mergedMetadata = unflattenObject(mergedFlat);
+  // Unflatten back to hierarchical structure; cast from unknown since input was YamlValue
+  const mergedMetadata = unflattenObject(mergedFlat) as Record<string, YamlValue>;
 
   if (includeStats) {
     return {
@@ -314,7 +329,7 @@ export function mergeFlattened(
  * }
  * ```
  */
-export function validateMergeCompatibility(current: any, imported: any, key: string): void {
+export function validateMergeCompatibility(current: unknown, imported: unknown, key: string): void {
   const currentType = getValueType(current);
   const importedType = getValueType(imported);
 
@@ -371,7 +386,7 @@ export function validateMergeCompatibility(current: any, imported: any, key: str
  * getValueType({ a: 1 });          // 'object'
  * ```
  */
-function getValueType(value: any): string {
+function getValueType(value: unknown): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return 'array';
@@ -418,11 +433,12 @@ function getValueType(value: any): string {
  * ```
  */
 export function previewMerge(
-  current: Record<string, any>,
-  imported: Record<string, any>,
+  current: Record<string, YamlValue>,
+  imported: Record<string, YamlValue>,
   options: MergeOptions = {}
 ): MergeResult {
-  return mergeFlattened(current, imported, { ...options, includeStats: true }) as MergeResult;
+  const mergeOpts: MergeOptions & { includeStats: true } = { ...options, includeStats: true };
+  return mergeFlattened(current, imported, mergeOpts);
 }
 
 /**
@@ -451,8 +467,8 @@ export function previewMerge(
  * ```
  */
 export function mergeSequentially(
-  initial: Record<string, any>,
-  imports: Record<string, any>[],
+  initial: Record<string, YamlValue>,
+  imports: Record<string, YamlValue>[],
   options: MergeOptions = {}
 ): MergeResult {
   const startTime = Date.now();
@@ -475,16 +491,17 @@ export function mergeSequentially(
       const message =
         `Sequential merge timed out after ${timeoutMs}ms ` +
         `while processing import ${i + 1}/${imports.length}.`;
-      throw new Error(message);
+      throw new ProcessingError(message);
     }
 
     const importedData = imports[i];
     const remainingTime = Math.max(1000, timeoutMs - (Date.now() - startTime));
-    const result = mergeFlattened(currentMetadata, importedData, {
+    const mergeOpts: MergeOptions & { includeStats: true } = {
       ...options,
       includeStats: true,
       timeoutMs: remainingTime,
-    });
+    };
+    const result = mergeFlattened(currentMetadata, importedData, mergeOpts);
 
     currentMetadata = result.metadata;
 
@@ -526,8 +543,8 @@ export function mergeSequentially(
  */
 function checkNestedConflicts(
   key: string,
-  importedValue: any,
-  currentFlat: Record<string, any>,
+  importedValue: unknown,
+  currentFlat: Record<string, YamlValue>,
   logOperations: boolean
 ): { hasConflict: boolean; conflictedField: string } {
   // Case 1: current has 'config.debug' but import has 'config'
@@ -566,3 +583,6 @@ function checkNestedConflicts(
 
   return { hasConflict: false, conflictedField: '' };
 }
+
+// Exported for testing - not part of public API
+export { checkNestedConflicts as _checkNestedConflicts };

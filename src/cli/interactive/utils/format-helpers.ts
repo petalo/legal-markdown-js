@@ -36,6 +36,7 @@ export function formatConfigSummary(config: InteractiveConfig): string {
   const formats = [];
   if (outputFormats.pdf) formats.push('PDF');
   if (outputFormats.html) formats.push('HTML');
+  if (outputFormats.docx) formats.push('DOCX');
   if (outputFormats.markdown) formats.push('Markdown');
   if (outputFormats.metadata) formats.push('Metadata');
 
@@ -44,7 +45,7 @@ export function formatConfigSummary(config: InteractiveConfig): string {
   // CSS file
   if (cssFile) {
     summary += `🎨 ${chalk.bold('CSS file:')} ${cssFile}\n`;
-  } else if (outputFormats.html || outputFormats.pdf) {
+  } else if (outputFormats.html || outputFormats.pdf || outputFormats.docx) {
     summary += `🎨 ${chalk.bold('CSS file:')} None\n`;
   }
 
@@ -122,7 +123,7 @@ export function formatSuccessMessage(
       Array.from(grouped.keys()).map(key => key.split('.').pop()?.toLowerCase())
     );
 
-    for (const ext of ['md', 'html', 'pdf']) {
+    for (const ext of ['md', 'html', 'pdf', 'docx']) {
       if (!extensions.has(ext)) continue;
 
       message += chalk.gray(`\n   ${ext.toUpperCase()}:\n`);

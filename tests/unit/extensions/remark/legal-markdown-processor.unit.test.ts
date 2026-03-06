@@ -8,10 +8,9 @@
  * @module
  */
 
-import { 
-  processLegalMarkdownWithRemark,
-  processLegalMarkdownWithRemarkSync,
-  createReusableLegalMarkdownProcessor
+import {
+  processLegalMarkdown,
+  createReusableLegalMarkdownProcessor,
 } from '@extensions/remark/legal-markdown-processor';
 import { fieldTracker } from '@extensions/tracking/field-tracker';
 
@@ -33,8 +32,8 @@ client_name: ACME Corp
 This is a test document for {{client_name}}.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
       });
 
       expect(result.content).toBeDefined();
@@ -57,18 +56,20 @@ amount: 1000
 This content should not be processed.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        yamlOnly: true
+      const result = await processLegalMarkdown(content, {
+        yamlOnly: true,
       });
 
-      expect(result.content.trim()).toBe('# Content that should be ignored\n\nThis content should not be processed.');
+      expect(result.content.trim()).toBe(
+        '# Content that should be ignored\n\nThis content should not be processed.'
+      );
       expect(result.metadata.title).toBe('Test Document');
       expect(result.metadata.amount).toBe(1000);
       expect(result.stats.pluginsUsed).toEqual([]);
     });
 
     it('should handle empty content gracefully', async () => {
-      const result = await processLegalMarkdownWithRemark('');
+      const result = await processLegalMarkdown('');
 
       expect(result.content).toBe('');
       // Metadata may contain internal fields like _cross_references and _field_mappings
@@ -93,19 +94,19 @@ l. General Provisions
 As specified in |payment|, all payments must be made promptly.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
       });
 
       // Check that cross-references were processed
       expect(result.metadata['_cross_references']).toBeDefined();
       expect(result.metadata['_cross_references']).toHaveLength(1);
       expect(result.metadata['_cross_references'][0].key).toBe('payment');
-      
+
       // Check statistics
       expect(result.stats.crossReferencesFound).toBe(1);
       expect(result.stats.pluginsUsed).toContain('remarkCrossReferences');
-      
+
       // Check that the content was processed
       expect(result.content).toContain('# Article 1 Payment Terms'); // Legal header processed with numbering
       expect(result.content).not.toContain('|payment|'); // Should be cleaned from header
@@ -126,19 +127,19 @@ l. General Provisions
 As specified in |payment|, all payments must be made promptly.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
       });
 
       // Check that cross-references were processed
       expect(result.metadata['_cross_references']).toBeDefined();
       expect(result.metadata['_cross_references']).toHaveLength(1);
       expect(result.metadata['_cross_references'][0].key).toBe('payment');
-      
+
       // Check statistics
       expect(result.stats.crossReferencesFound).toBe(1);
       expect(result.stats.pluginsUsed).toContain('remarkCrossReferences');
-      
+
       // Check that the content was processed
       expect(result.content).toContain('# Article 1. Payment Terms'); // Legal header processed with numbering and dot
       expect(result.content).not.toContain('|payment|'); // Should be cleaned from header
@@ -150,8 +151,8 @@ As specified in |payment|, all payments must be made promptly.
 
 Reference to |payment| should remain unchanged.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        disableCrossReferences: true
+      const result = await processLegalMarkdown(content, {
+        disableCrossReferences: true,
       });
 
       expect(result.metadata['_cross_references']).toBeUndefined();
@@ -172,17 +173,17 @@ Contract for {{client_name}} with amount {{contract_amount}}.
 Delivery to {{client_name}} on {{delivery_date}}.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
       });
 
       // Check field tracking statistics
       expect(result.fieldReport).toBeDefined();
       expect(result.fieldReport!.totalFields).toBe(4); // client_name appears twice, plus contract_amount and delivery_date
-      expect(result.fieldReport!.uniqueFields).toBe(3); // 3 unique fields: client_name, contract_amount, delivery_date  
+      expect(result.fieldReport!.uniqueFields).toBe(3); // 3 unique fields: client_name, contract_amount, delivery_date
       expect(result.stats.fieldsTracked).toBe(4); // Total field occurrences including duplicates
-      expect(result.stats.pluginsUsed).toContain('remarkFieldTracking');
-      
+      expect(result.stats.pluginsUsed).toContain('remarkTemplateFields');
+
       // Check metadata statistics - skip for now while debugging
       // expect(result.metadata['_field_tracking_stats']).toBeDefined();
       // expect(result.metadata['_field_tracking_stats'].totalFieldsTracked).toBe(3);
@@ -192,8 +193,8 @@ Delivery to {{client_name}} on {{delivery_date}}.
     it('should not track fields when field tracking is disabled', async () => {
       const content = `Contract for {{client_name}}.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: false
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: false,
       });
 
       expect(result.fieldReport).toBeUndefined();
@@ -209,16 +210,72 @@ client_name: ACME Corp
 Contract for <<client_name>> with standard {{field}}.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true,
-        fieldPatterns: ['<<(.+?)>>'] // Only match << >> patterns
+        fieldPatterns: ['<<(.+?)>>'], // Only match << >> patterns
       });
 
       // The processor currently always includes the default {{}} pattern alongside custom patterns
       // So both client_name (from <<>>) and field (from {{}}) are tracked
-      expect(result.fieldReport!.uniqueFields).toBe(2); 
+      expect(result.fieldReport!.uniqueFields).toBe(2);
       expect(result.fieldReport!.fields.has('client_name')).toBe(true);
       expect(result.fieldReport!.fields.has('field')).toBe(true);
+    });
+
+    it('should serialize inline tracking spans in both paragraphs and list items', async () => {
+      const content = `---
+name: Alice
+---
+
+Name: {{name}}
+
+- {{name}}`;
+
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
+      });
+
+      expect(result.content).toContain('Name: <span class="legal-field imported-value" data-field="name">Alice</span>');
+      expect(result.content).toContain('- <span class="legal-field imported-value" data-field="name">Alice</span>');
+    });
+
+    it('should keep escaped [[...]] placeholders inside tracking spans for markdown serialization', async () => {
+      const content = `---
+items:
+  - ''
+---
+
+{{#each items}}
+- {{.}}
+{{/each}}`;
+
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
+      });
+
+      expect(result.content).toContain('class="legal-field missing-value"');
+      expect(result.content).toContain('\\[\\[items\\[0]]]');
+    });
+
+    it('should not re-process helper spans produced in Phase 2 while still resolving adjacent Phase 3 fields', async () => {
+      const content = `---
+provider:
+  contact:
+    name: eleanor voss
+  address: 123 Legal Ave
+---
+
+Contact: {{titleCase provider.contact.name}}, {{provider.address}}`;
+
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
+      });
+
+      expect(result.content).toContain('data-field="provider.contact.name"');
+      expect(result.content).toContain('Eleanor Voss');
+      expect(result.content).toContain('data-field="provider.address"');
+      expect(result.content).toContain('123 Legal Ave');
+      expect(result.content).not.toContain('{{provider.address}}');
     });
   });
 
@@ -238,22 +295,22 @@ l. General
 As per |payment|, {{client_name}} must pay promptly.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        enableFieldTracking: true
+      const result = await processLegalMarkdown(content, {
+        enableFieldTracking: true,
       });
 
       // Both plugins should have run
       expect(result.stats.pluginsUsed).toContain('remarkCrossReferences');
-      expect(result.stats.pluginsUsed).toContain('remarkFieldTracking');
-      
+      expect(result.stats.pluginsUsed).toContain('remarkTemplateFields');
+
       // Cross-references should be processed
       expect(result.stats.crossReferencesFound).toBe(1);
       expect(result.metadata['_cross_references']).toHaveLength(1);
-      
+
       // Fields should be tracked (client_name appears twice + cross-references)
       expect(result.stats.fieldsTracked).toBeGreaterThanOrEqual(2);
       expect(result.fieldReport!.uniqueFields).toBeGreaterThanOrEqual(1);
-      
+
       // Content should be processed by both plugins
       expect(result.content).toContain('Section 1'); // Cross-reference resolved
       expect(result.content).not.toContain('|payment|'); // Definition cleaned from header
@@ -273,8 +330,8 @@ invalid: yaml: content:
 This should still work.
 `;
 
-      const result = await processLegalMarkdownWithRemark(content, {
-        throwOnYamlError: false
+      const result = await processLegalMarkdown(content, {
+        throwOnYamlError: false,
       });
 
       expect(result.content).toBeDefined();
@@ -290,20 +347,10 @@ invalid: yaml: content
 # Content`;
 
       await expect(
-        processLegalMarkdownWithRemark(content, {
-          throwOnYamlError: true
+        processLegalMarkdown(content, {
+          throwOnYamlError: true,
         })
       ).rejects.toThrow();
-    });
-  });
-
-  describe('Synchronous Version', () => {
-    it('should throw error suggesting async usage', () => {
-      const content = `# Simple Content`;
-
-      expect(() => {
-        processLegalMarkdownWithRemarkSync(content);
-      }).toThrow('Synchronous processing is not available with the remark-based processor');
     });
   });
 
@@ -311,7 +358,7 @@ invalid: yaml: content
     it('should create reusable processor with default options', async () => {
       const processor = createReusableLegalMarkdownProcessor({
         enableFieldTracking: true,
-        debug: false
+        debug: false,
       });
 
       const content = `---
@@ -329,7 +376,7 @@ Field: {{test}}`;
 
     it('should allow overriding options per call', async () => {
       const processor = createReusableLegalMarkdownProcessor({
-        enableFieldTracking: false
+        enableFieldTracking: false,
       });
 
       const content = `Field: {{test}}`;
@@ -337,7 +384,7 @@ Field: {{test}}`;
       // Override to enable field tracking for this call
       const result = await processor.process(content, {
         enableFieldTracking: true,
-        additionalMetadata: { test: 'overridden' }
+        additionalMetadata: { test: 'overridden' },
       });
 
       expect(result.fieldReport).toBeDefined();

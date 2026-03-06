@@ -42,6 +42,23 @@ vi.mock('../../../../src/extensions/generators/pdf-generator', () => ({
   },
 }));
 
+vi.mock('../../../../src/extensions/generators/pdf-connectors', () => ({
+  resolvePdfConnector: vi.fn(async () => ({
+    name: 'mock-connector',
+    isAvailable: vi.fn(async () => true),
+    generatePdf: vi.fn(async () => undefined),
+    getInfo: vi.fn(),
+  })),
+}));
+
+vi.mock('../../../../src/extensions/generators/docx-generator', () => ({
+  DocxGenerator: class {
+    async generateDocxFromHtml() {
+      return Buffer.from('docx');
+    }
+  },
+}));
+
 vi.mock('../../../../src/utils', () => ({
   writeFileSync: vi.fn(),
 }));
@@ -168,6 +185,25 @@ describe('Phase 3: Format Generator', () => {
         sampleProcessedResult.content
       );
       expect(result.results.markdown).toContain('document.md');
+    });
+
+    it('should generate DOCX output', async () => {
+      const options: FormatGenerationOptions = {
+        outputDir: '/test/output',
+        baseFilename: 'document',
+        html: false,
+        pdf: false,
+        docx: true,
+        markdown: false,
+        metadata: false,
+      };
+
+      const result = await generateAllFormats(sampleProcessedResult, options);
+
+      expect(result.generatedFiles).toHaveLength(1);
+      expect(result.generatedFiles[0]).toContain('document.docx');
+      expect(result.results.docx?.normal).toContain('document.docx');
+      expect(result.results.docx?.highlight).toBeUndefined();
     });
 
     it('should include metadata files when available', async () => {

@@ -41,31 +41,32 @@
 
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
-import type { Plugin } from 'unified';
 import type { Root } from 'mdast';
 import type { Unsafe } from 'mdast-util-to-markdown';
 import {
   remarkCrossReferences,
-  remarkFieldTracking,
   remarkTemplateFields,
   remarkHeaders,
   remarkMixins,
   remarkImports,
   remarkLegalHeadersParser,
   remarkDates,
+  remarkSignatureLines,
 } from '../../plugins/remark/index';
 import { PluginOrderValidator } from '../../plugins/remark/plugin-order-validator';
 import { GLOBAL_PLUGIN_REGISTRY } from '../../plugins/remark/plugin-metadata-registry';
-import remarkSignatureLines from '../../plugins/remark/signature-lines';
-import { remarkDebugAST } from '../../plugins/remark/debug-ast';
-import { fieldTracker } from '../tracking/field-tracker';
+import { fieldTracker, FieldStatus } from '../tracking/field-tracker';
+import { flattenObject } from '../../core/utils/object-flattener';
 import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
-import { detectSyntaxType } from '../template-loops';
 import { exportMetadata } from '../../core/exporters/metadata-exporter';
 import type { MarkdownString } from '../../types/content-formats';
 import { asMarkdown } from '../../types/content-formats';
+import type { YamlValue } from '../../types';
 import { applyStringTransformations } from '../../core/pipeline/string-transformations';
+import { detectSyntaxType } from '../template-loops';
+import { parseForceCommands, applyForceCommands } from '../../core/parsers/force-commands-parser';
 
 /**
  * Unsafe patterns for markdown serialization, excluding underscore patterns.
@@ -254,18 +255,12 @@ const unsafeWithoutUnderscores: Array<Unsafe> = [
  * ```
  */
 function escapeTemplateUnderscores(content: string): string {
-  // Detect if content uses Handlebars syntax
   const syntaxType = detectSyntaxType(content);
 
-  // Skip escaping for Handlebars and mixed syntax - underscores are valid identifiers
-  // and Handlebars handles them correctly without markdown interference.
-  // For mixed syntax, we prefer not to escape to avoid breaking Handlebars variables.
   if (syntaxType === 'handlebars' || syntaxType === 'mixed') {
     return content;
   }
 
-  // For pure legacy syntax, escape underscores to prevent markdown italic parsing
-  // Match {{...}} patterns and escape underscores inside them
   return content.replace(/\{\{([^}]+)\}\}/g, (match, inner) => {
     const trimmed = inner.trim();
 
@@ -297,6 +292,12 @@ export interface LegalMarkdownProcessorOptions {
   /** Enable field tracking and highlighting */
   enableFieldTracking?: boolean;
 
+  /** Use AST-first field tracking pipeline */
+  astFieldTracking?: boolean;
+
+  /** Highlight winner branch content for conditional blocks */
+  logicBranchHighlighting?: boolean;
+
   /** Enable debug logging */
   debug?: boolean;
 
@@ -304,7 +305,7 @@ export interface LegalMarkdownProcessorOptions {
   validatePluginOrder?: boolean;
 
   /** Additional metadata to merge with document metadata */
-  additionalMetadata?: Record<string, any>;
+  additionalMetadata?: Record<string, YamlValue>;
 
   /** Custom field patterns for field tracking */
   fieldPatterns?: string[];
@@ -328,6 +329,18 @@ export interface LegalMarkdownProcessorOptions {
   noReset?: boolean;
   noIndent?: boolean;
   throwOnYamlError?: boolean;
+
+  /** Whether to add HTML comments showing import boundaries in output */
+  importTracing?: boolean;
+
+  /** Whether to validate type compatibility during frontmatter merging */
+  validateImportTypes?: boolean;
+
+  /** Whether to log detailed frontmatter merge operations */
+  logImportOperations?: boolean;
+
+  /** Disable automatic frontmatter merging from imported files */
+  disableFrontmatterMerge?: boolean;
 }
 
 /**
@@ -339,7 +352,7 @@ export interface LegalMarkdownProcessorResult {
   content: MarkdownString;
 
   /** Extracted and processed metadata */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Cached AST for Phase 3 format generation (optional) */
   ast?: Root;
@@ -351,7 +364,7 @@ export interface LegalMarkdownProcessorResult {
   fieldReport?: {
     totalFields: number;
     uniqueFields: number;
-    fields: Map<string, any>;
+    fields: Map<string, import('../../extensions/tracking/field-tracker').TrackedField>;
   };
 
   /** Processing statistics and debugging info */
@@ -364,6 +377,23 @@ export interface LegalMarkdownProcessorResult {
 
   /** Any warnings or non-fatal errors encountered */
   warnings: string[];
+}
+
+function resolveTrackingOptions(options: {
+  enableFieldTracking?: boolean;
+  astFieldTracking?: boolean;
+  logicBranchHighlighting?: boolean;
+}): { astFieldTracking: boolean; logicBranchHighlighting: boolean } {
+  const trackingEnabled = options.enableFieldTracking ?? false;
+  const explicitAst = options.astFieldTracking;
+  const explicitLogic = options.logicBranchHighlighting;
+  const astFieldTracking = explicitAst ?? (explicitLogic === true ? true : trackingEnabled);
+  const logicBranchHighlighting = explicitLogic ?? astFieldTracking;
+
+  return {
+    astFieldTracking,
+    logicBranchHighlighting,
+  };
 }
 
 /**
@@ -393,10 +423,11 @@ export interface LegalMarkdownProcessorResult {
  * @internal
  */
 function createLegalMarkdownProcessor(
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   options: LegalMarkdownProcessorOptions
 ) {
-  const processor = unified().use(remarkParse);
+  const trackingOptions = resolveTrackingOptions(options);
+  const processor = unified().use(remarkParse).use(remarkGfm);
 
   // Track plugin names for order validation
   const pluginOrder: string[] = [];
@@ -411,8 +442,9 @@ function createLegalMarkdownProcessor(
       maxDepth: 10,
       timeoutMs: 30000,
       filterReserved: true,
-      validateTypes: true,
-      logImportOperations: options.debug,
+      validateTypes: options.validateImportTypes ?? true,
+      logImportOperations: options.logImportOperations ?? options.debug,
+      importTracing: options.importTracing,
     });
   }
 
@@ -459,6 +491,8 @@ function createLegalMarkdownProcessor(
     metadata,
     fieldPatterns: options.fieldPatterns,
     enableFieldTracking: options.enableFieldTracking,
+    astFieldTracking: trackingOptions.astFieldTracking,
+    logicBranchHighlighting: trackingOptions.logicBranchHighlighting,
     debug: options.debug,
   });
 
@@ -481,19 +515,6 @@ function createLegalMarkdownProcessor(
     });
   }
 
-  // Add field tracking plugin unless disabled
-  // Note: remarkTemplateFields already handles field tracking, so we only
-  // use remarkFieldTracking if template field processing is disabled
-  // Currently disabled as remarkTemplateFields handles this functionality
-  // eslint-disable-next-line no-constant-condition
-  if (false && !options.disableFieldTracking && options.enableFieldTracking) {
-    processor.use(remarkFieldTracking, {
-      metadata,
-      patterns: options.fieldPatterns,
-      debug: options.debug,
-    });
-  }
-
   // Add stringify plugin with proper markdown formatting
   processor.use(remarkStringify, {
     emphasis: '*', // Use * for _italic_
@@ -504,7 +525,28 @@ function createLegalMarkdownProcessor(
     incrementListMarker: true, // Increment list markers (1. 2. 3.)
     rule: '-', // Use --- for horizontal rules (not ***)
     ruleRepetition: 3, // Use exactly 3 dashes for horizontal rules
-    unsafe: unsafeWithoutUnderscores, // Use filtered unsafe patterns without underscores
+    unsafe: unsafeWithoutUnderscores, // Filtered unsafe patterns (no underscore rules)
+    handlers: {
+      // Override text node serialization to prevent underscore escaping.
+      // mdast-util-to-markdown's `unsafe` option is ADDITIVE - it merges with
+      // hardcoded defaults that include underscore escaping rules. There is no
+      // public API to REMOVE default unsafe patterns. Since we configure
+      // emphasis:'*' and strong:'*', underscores in output text are never
+      // markdown syntax - escaped \_  is always a serialization artifact.
+      // See: https://github.com/syntax-tree/mdast-util-to-markdown/blob/2.1.2/lib/unsafe.js
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mdast-util-to-markdown handler parameters are not publicly typed
+      text(node: any, _parent: any, state: any, info: any) {
+        const result = state.safe(node.value, {
+          before: info.before,
+          after: info.after,
+          encode: info.encode,
+        });
+        // Strip backslash escapes that are not valid markdown syntax:
+        // - \_ : underscores never form emphasis when using emphasis:'*' / strong:'*'
+        // - \@ : email @-signs are plain text in legal docs (not GFM @mentions)
+        return result.replaceAll('\\_', '_').replaceAll('\\@', '@');
+      },
+    },
   });
 
   // Build plugin order list for validation (must match actual processor.use() order above)
@@ -579,7 +621,7 @@ function createLegalMarkdownProcessor(
  * console.log(result.stats.fieldsTracked); // Number of tracked fields
  * ```
  */
-export async function processLegalMarkdownWithRemark(
+export async function processLegalMarkdown(
   content: string,
   options: LegalMarkdownProcessorOptions = {}
 ): Promise<LegalMarkdownProcessorResult> {
@@ -678,9 +720,6 @@ export async function processLegalMarkdownWithRemark(
     };
 
     // Process force commands and metadata options
-    const { parseForceCommands, applyForceCommands } = await import(
-      '../../core/parsers/force-commands-parser'
-    );
 
     let updatedOptions = { ...options };
 
@@ -708,6 +747,8 @@ export async function processLegalMarkdownWithRemark(
       );
     }
 
+    const trackingOptions = resolveTrackingOptions(updatedOptions);
+
     // ──────────────────────────────────────────────────────────────────────────
     // Phase 2: String Transformations
     // ──────────────────────────────────────────────────────────────────────────
@@ -722,11 +763,14 @@ export async function processLegalMarkdownWithRemark(
       metadata: combinedMetadata,
       debug: updatedOptions.debug,
       enableFieldTracking: updatedOptions.enableFieldTracking,
+      astFieldTracking: trackingOptions.astFieldTracking,
+      logicBranchHighlighting: trackingOptions.logicBranchHighlighting,
       noClauses: updatedOptions.noClauses,
       fieldPatterns: updatedOptions.fieldPatterns,
     });
 
     const preprocessedContent = stringTransformResult.content;
+    const escapedTemplates = stringTransformResult.escapedTemplates;
 
     // Merge updated metadata from string transformations (includes field mappings)
     Object.assign(combinedMetadata, stringTransformResult.metadata);
@@ -745,6 +789,8 @@ export async function processLegalMarkdownWithRemark(
     // since preprocessing normalizes all patterns to {{field}} format
     const processingOptions = {
       ...updatedOptions,
+      astFieldTracking: trackingOptions.astFieldTracking,
+      logicBranchHighlighting: trackingOptions.logicBranchHighlighting,
       fieldPatterns:
         updatedOptions.fieldPatterns && updatedOptions.fieldPatterns.length > 0
           ? ['{{(.+?)}}', ...updatedOptions.fieldPatterns]
@@ -759,9 +805,6 @@ export async function processLegalMarkdownWithRemark(
     if (!updatedOptions.disableCrossReferences && !updatedOptions.noReferences) {
       pluginsUsed.push('remarkCrossReferences');
     }
-    if (!updatedOptions.disableFieldTracking && updatedOptions.enableFieldTracking) {
-      pluginsUsed.push('remarkFieldTracking');
-    }
 
     if (updatedOptions.debug) {
       console.log(`📋 Using plugins: ${pluginsUsed.join(', ')}`);
@@ -769,8 +812,18 @@ export async function processLegalMarkdownWithRemark(
 
     // Process the content (field highlighting is now done during AST processing)
     const result = await processor.process(preprocessedContent);
-    const processedContent = String(result);
+    let processedContent = String(result);
 
+    // Restore escaped template literals: __LMESC_N__ → {{...}}
+    // These were collected from \{{...}} patterns before Phase 2 string transformations.
+    if (escapedTemplates.length > 0) {
+      for (let i = 0; i < escapedTemplates.length; i++) {
+        processedContent = processedContent.replace(
+          new RegExp(`__LMESC_${i}__`, 'g'),
+          escapedTemplates[i]
+        );
+      }
+    }
     // Cache the AST for Phase 3 format generation
     // The AST is available in result.data (after processing)
     const processedTree = result.value as unknown as Root;
@@ -793,7 +846,8 @@ export async function processLegalMarkdownWithRemark(
     }
 
     // Extract processing statistics
-    const crossReferencesFound = combinedMetadata['_cross_references']?.length || 0;
+    const crossRefsValue = combinedMetadata['_cross_references'];
+    const crossReferencesFound = Array.isArray(crossRefsValue) ? crossRefsValue.length : 0;
     const fieldsTracked = updatedOptions.enableFieldTracking
       ? fieldTracker.getTotalOccurrences()
       : 0;
@@ -802,6 +856,20 @@ export async function processLegalMarkdownWithRemark(
     let fieldReport;
     if (updatedOptions.enableFieldTracking) {
       const fields = fieldTracker.getFields();
+
+      // Add YAML keys that were declared but never used as template fields
+      const flatMeta = flattenObject(finalMetadata);
+      for (const [key, value] of Object.entries(flatMeta)) {
+        if (!key.startsWith('_') && !fields.has(key)) {
+          fields.set(key, {
+            name: key,
+            status: FieldStatus.DECLARED,
+            value: value as YamlValue,
+            hasLogic: false,
+          });
+        }
+      }
+
       fieldReport = {
         totalFields: fieldsTracked,
         uniqueFields: fields.size,
@@ -862,31 +930,9 @@ export async function processLegalMarkdownWithRemark(
       `Legal Markdown processing failed: ${error instanceof Error ? error.message : String(error)}`
     );
     // Store the original error for debugging (avoiding .cause for compatibility)
-    (enhancedError as any).originalError = error;
+    (enhancedError as unknown as Record<string, unknown>).originalError = error;
     throw enhancedError;
   }
-}
-
-/**
- * Synchronous version of the Legal Markdown processor
- *
- * Note: This is not truly synchronous as remark is async.
- * This is a simplified fallback that throws an error suggesting async usage.
- * For real sync processing, use the legacy processor.
- */
-export function processLegalMarkdownWithRemarkSync(
-  content: string,
-  options: LegalMarkdownProcessorOptions = {}
-): Omit<LegalMarkdownProcessorResult, 'fieldReport'> & { fieldReport?: any } {
-  // Suppress ESLint warning for unused parameter
-  void content;
-  void options;
-
-  throw new Error(
-    'Synchronous processing is not available with the remark-based processor. ' +
-      'Please use processLegalMarkdownWithRemark() (async) instead, ' +
-      'or use the legacy processor for sync operations.'
-  );
 }
 
 /**
@@ -912,19 +958,27 @@ export function processLegalMarkdownWithRemarkSync(
 export function createReusableLegalMarkdownProcessor(options: LegalMarkdownProcessorOptions = {}) {
   return {
     async process(content: string, additionalOptions: Partial<LegalMarkdownProcessorOptions> = {}) {
-      return processLegalMarkdownWithRemark(content, {
+      return processLegalMarkdown(content, {
         ...options,
         ...additionalOptions,
       });
     },
 
     processSync(content: string, additionalOptions: Partial<LegalMarkdownProcessorOptions> = {}) {
-      return processLegalMarkdownWithRemarkSync(content, {
-        ...options,
-        ...additionalOptions,
-      });
+      void content;
+      void additionalOptions;
+      throw new Error(
+        'Synchronous processing is not available with the remark-based processor. ' +
+          'Please use processLegalMarkdown() (async) instead.'
+      );
     },
   };
 }
 
 // Types are already exported inline, no need for separate export
+
+// Exported for testing - not part of public API
+export {
+  escapeTemplateUnderscores as _escapeTemplateUnderscores,
+  createLegalMarkdownProcessor as _createLegalMarkdownProcessor,
+};

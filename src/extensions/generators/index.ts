@@ -8,4 +8,6 @@
 
 export * from './html-generator';
 export * from './pdf-generator';
+export * from './docx-generator';
 export * from './pdf-templates';
+export * from './pdf-connectors';

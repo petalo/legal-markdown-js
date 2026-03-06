@@ -36,5 +36,5 @@ sources.
 
 ## 💡 Learn more
 
-- [Complex Templates Guide](../../../docs/complex-templates.md)
-- [Legal Document Automation](../../../docs/legal-automation.md)
+- [Advanced Guide](../../../docs/advanced/README.md)
+- [Force Commands](../../../docs/features/force-commands.md)

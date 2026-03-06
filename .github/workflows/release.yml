@@ -21,13 +21,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
@@ -36,11 +36,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install WeasyPrint for PDF generation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weasyprint
+          weasyprint --version
+
+      - name: Install Chrome for PDF generation
+        run: |
+          mkdir -p ~/.cache/puppeteer-global
+          timeout 300 bash -c 'PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome' || \
+          timeout 300 bash -c 'PUPPETEER_CACHE_DIR=~/.cache/puppeteer-global npx puppeteer browsers install chrome'
+          find ~/.cache -name "*chrome*" -type d | head -5 || echo "No chrome directories found"
+
       - name: Build
         run: npm run build
 
+      - name: Validate test settings
+        run: npm run test:settings
+
       - name: Test
         run: npm run test
+        env:
+          VITEST_TEST_TIMEOUT: 45000
+          PUPPETEER_CACHE_DIR: ~/.cache/puppeteer-global
 
       - name: Build packages
         run: npm run build:packages
@@ -65,10 +84,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
@@ -76,8 +95,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Build packages
         run: npm run build:packages
+
+      - name: Build macOS binaries
+        run: npm run build:binary:all
 
       - name: Get package info
         id: package-info
@@ -127,3 +152,67 @@ jobs:
           asset_path: ./packages/release-info.json
           asset_name: release-info.json
           asset_content_type: application/json
+
+      - name: Upload install script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./scripts/install.sh
+          asset_name: install.sh
+          asset_content_type: text/plain
+
+      - name: Upload macOS binary (Apple Silicon)
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('dist/bin/legal-md-macos-arm64') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./dist/bin/legal-md-macos-arm64
+          asset_name: legal-md-macos-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS binary (Intel)
+        uses: actions/upload-release-asset@v1
+        if: ${{ hashFiles('dist/bin/legal-md-macos-x64') != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./dist/bin/legal-md-macos-x64
+          asset_name: legal-md-macos-x64
+          asset_content_type: application/octet-stream
+
+      - name: Update Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.package-info.outputs.version }}
+          SHA256_ARM64=$(sha256sum dist/bin/legal-md-macos-arm64 | awk '{print $1}')
+          SHA256_X64=$(sha256sum dist/bin/legal-md-macos-x64 | awk '{print $1}')
+
+          git clone https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/petalo/homebrew-legal-markdown.git tap
+          cd tap
+
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" Formula/legal-md.rb
+
+          # Update arm64 sha256 (first occurrence)
+          awk -v sha="${SHA256_ARM64}" '
+            /sha256 "/ && !arm_done { sub(/"[a-f0-9]+"/, "\"" sha "\""); arm_done=1 }
+            { print }
+          ' Formula/legal-md.rb > tmp && mv tmp Formula/legal-md.rb
+
+          # Update x64 sha256 (second occurrence)
+          awk -v sha="${SHA256_X64}" '
+            /sha256 "/ && !x64_done && arm_done { sub(/"[a-f0-9]+"/, "\"" sha "\""); x64_done=1 }
+            /sha256 "/ && !arm_done { arm_done=1 }
+            { print }
+          ' Formula/legal-md.rb > tmp && mv tmp Formula/legal-md.rb
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add Formula/legal-md.rb
+          git commit -m "legal-md ${VERSION}"
+          git push

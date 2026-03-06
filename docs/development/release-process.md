@@ -115,16 +115,16 @@ git log v1.2.0..HEAD --oneline
 ```markdown
 # Release notes are auto-generated from commits:
 
-## [1.3.0](v1.2.0...v1.3.0) (2024-01-15)
+## 1.3.0 (2024-01-15; compare v1.2.0...v1.3.0)
 
 ### Features
 
-- add new export format ([abc123](commit-link))
+- add new export format (abc123)
 
 ### Bug Fixes
 
-- resolve import path issue ([def456](commit-link))
-- handle edge case in parser ([ghi789](commit-link))
+- resolve import path issue (def456)
+- handle edge case in parser (ghi789)
 ```
 
 ### 4. Create Release Artifacts

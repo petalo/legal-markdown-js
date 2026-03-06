@@ -12,6 +12,27 @@ Legal Markdown adds CSS classes under specific conditions to help you:
 - **Format documents** with consistent legal document styling
 - **Review contracts** by highlighting field states and data integration
 
+## 📄 DOCX Compatibility Matrix
+
+The table below summarizes classes with explicit DOCX behavior.
+
+| Class                   | HTML/PDF | DOCX                                           |
+| ----------------------- | -------- | ---------------------------------------------- |
+| `.legal-header-level-*` | ✅       | ✅ (mapped via heading styles)                 |
+| `.imported-value`       | ✅       | ✅ (run style)                                 |
+| `.missing-value`        | ✅       | ✅ (run style)                                 |
+| `.highlight`            | ✅       | ✅ (run style)                                 |
+| `.text-center`          | ✅       | ✅ (paragraph alignment)                       |
+| `.text-muted`           | ✅       | ✅ (run color)                                 |
+| `.confidential`         | ✅       | ✅ (banner paragraph style)                    |
+| `.separator`            | ✅       | ✅ (banner paragraph style)                    |
+| `.algorithm`            | ✅       | ✅ (algorithm block style)                     |
+| `.table-of-contents`    | ✅       | ✅ (container style + list marker suppression) |
+| `.signatures` (table)   | ✅       | ✅ (signature table adaptation)                |
+| `.page-break-before`    | ✅       | ✅                                             |
+| `.page-break-after`     | ✅       | ✅                                             |
+| `.page-break`           | ✅       | ✅ (page break before)                         |
+
 ## 🎨 Legal Header Classes
 
 These classes are automatically applied to legal headers (created with `l.`,
@@ -332,12 +353,12 @@ remark AST, which is then converted to HTML by `remark-rehype`.
 | `src/styles/headers.css`       | Enhanced legal header styles with data attributes |
 | `src/styles/highlight.css`     | Field highlighting and review styles              |
 | `examples/styles/contract.css` | Contract-specific styling example                 |
-| `src/web/styles.css`           | Web interface specific styles                     |
+| `src/web/src/index.css`        | Web interface specific styles                     |
 
 ## 📖 See Also
 
 - [Headers Numbering Guide](../features/headers-numbering.md) - Learn about
   header numbering systems
 - [Features Guide](../features/README.md) - Complete feature documentation
-- [CLI Reference](cli_reference.md) - Command-line options and flags
-- [Getting Started](getting_started.md) - Basic usage examples
+- [CLI Reference](../cli_reference.md) - Command-line options and flags
+- [Getting Started](../getting_started.md) - Basic usage examples

@@ -50,6 +50,12 @@
   --max-width: 210mm; /* A4 width */
   --border-radius: 6px;
   --border-width: 1px;
+
+  /* DOCX style adapter hints */
+  --docx-table-border-color: #e2e8f0;
+  --docx-table-header-fill: #f8fafc;
+  --docx-table-header-text: #1e293b;
+  --docx-table-cell-fill: #ffffff;
 }
 
 /* Base document configuration
@@ -148,6 +154,15 @@ p {
   page-break-inside: avoid;
 }
 
+/* Blockquotes */
+blockquote {
+  margin: var(--spacing-medium) 0;
+  padding: var(--spacing-small) var(--spacing-medium);
+  border-left: 4px solid var(--color-accent);
+  background-color: #f8fafc;
+  color: var(--color-muted);
+}
+
 /* Links */
 a {
   color: var(--color-link);
@@ -200,6 +215,13 @@ hr {
   border: none;
   border-top: 2px solid var(--color-accent);
   margin: var(--spacing-large) 0;
+}
+
+/* Explicit pagination markers (also consumed by DOCX converter) */
+.page-break,
+.page-break-before {
+  break-before: page;
+  page-break-before: always;
 }
 
 /* Empty fields and missing values */
@@ -363,6 +385,10 @@ th {
 
 .page-break-before {
   page-break-before: always !important;
+}
+
+.page-break-after {
+  page-break-after: always !important;
 }
 
 .text-center {

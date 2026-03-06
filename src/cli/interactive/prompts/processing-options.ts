@@ -3,14 +3,14 @@
  */
 
 import { checkbox } from '@inquirer/prompts';
-import { ProcessingOptions, OutputFormat } from '../types';
+import { CliProcessingOptions, OutputFormat } from '../types';
 
 /**
  * Prompt user for processing options based on selected output formats
  */
 export async function promptProcessingOptions(
   outputFormats: OutputFormat
-): Promise<ProcessingOptions> {
+): Promise<CliProcessingOptions> {
   console.log('\n⚙️  Processing Options:\n');
 
   // Build choices based on selected output formats
@@ -25,10 +25,10 @@ export async function promptProcessingOptions(
     });
   }
 
-  // Add highlight only if HTML or PDF is selected - pre-selected by default
-  if (outputFormats.html || outputFormats.pdf) {
+  // Add highlight only if HTML, PDF, or DOCX is selected - pre-selected by default
+  if (outputFormats.html || outputFormats.pdf || outputFormats.docx) {
     choices.push({
-      name: '🎯 Field highlighting in HTML/PDF output',
+      name: '🎯 Field highlighting in HTML/PDF/DOCX output',
       value: 'highlight',
       checked: true,
     });

@@ -1,0 +1,7 @@
+_cross_references: []
+_field_mappings: {}
+include_warranty: true
+level-one: Article %n.
+level-three: (%n)
+level-two: Section %n.
+warranty_term: 12

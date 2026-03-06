@@ -253,7 +253,7 @@ The frontmatter merging system includes built-in security protections:
 ## 📚 Related Examples
 
 - [Basic Imports](../partial-imports/) - Simple file inclusion without metadata
-- [Nested Imports](../nested-imports/) - Complex import hierarchies
+- [Frontmatter Merging Guide](../../../docs/features/partial-imports.md) - Complex import hierarchies
 - [Optional Clauses](../../optional-clauses/) - Conditional content rendering
 - [Metadata Export](../../output-formats/metadata-export/) - Working with merged
   metadata

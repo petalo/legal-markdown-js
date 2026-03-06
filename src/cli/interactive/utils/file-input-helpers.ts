@@ -98,7 +98,7 @@ export async function handleManualInput(): Promise<string> {
       }
 
       const ext = path.extname(resolvedPath).toLowerCase();
-      const supportedExts = ['.md', '.markdown', '.rst', '.tex', '.latex', '.txt'];
+      const supportedExts = ['.md', '.markdown', '.txt'];
 
       if (!supportedExts.includes(ext)) {
         return `Unsupported file type. Supported: ${supportedExts.join(', ')}`;

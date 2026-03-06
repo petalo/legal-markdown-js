@@ -32,5 +32,5 @@ Exporting processed metadata to external files in YAML and JSON formats.
 
 ## 💡 Learn more
 
-- [Metadata Export Guide](../../../docs/metadata-export.md)
-- [Data Integration](../../../docs/data-integration.md)
+- [YAML Frontmatter](../../../docs/features/yaml-frontmatter.md)
+- [Output Overview](../../../docs/output/README.md)

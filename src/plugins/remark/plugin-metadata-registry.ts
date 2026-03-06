@@ -50,24 +50,6 @@ const PLUGIN_METADATA_LIST: PluginMetadata[] = [
     required: true,
   },
 
-  // ========== PHASE 3: CONDITIONAL EVALUATION ==========
-  {
-    name: 'processTemplateLoops',
-    phase: ProcessingPhase.CONDITIONAL_EVAL,
-    description: 'Evaluate {{#if}}, {{#unless}}, {{#each}} conditionals',
-    requiresPhases: [ProcessingPhase.VARIABLE_EXPANSION],
-    requiresCapabilities: ['variables:resolved'],
-    capabilities: ['conditionals:evaluated'],
-    required: true,
-  },
-  {
-    name: 'remarkClauses',
-    phase: ProcessingPhase.CONDITIONAL_EVAL,
-    description: 'Process conditional clauses',
-    capabilities: ['clauses:processed'],
-    required: false,
-  },
-
   // ========== PHASE 4: STRUCTURE PARSING ==========
   {
     name: 'remarkLegalHeadersParser',
@@ -86,16 +68,6 @@ const PLUGIN_METADATA_LIST: PluginMetadata[] = [
     runBefore: ['remarkHeaders'],
     requiresCapabilities: ['headers:parsed'],
     capabilities: ['crossrefs:resolved'],
-    required: false,
-  },
-  {
-    name: 'remarkCrossReferencesAst',
-    phase: ProcessingPhase.STRUCTURE_PARSING,
-    description: 'AST-based cross-reference processing (alternative to remarkCrossReferences)',
-    runAfter: ['remarkHeaders', 'remarkLegalHeadersParser'],
-    requiresCapabilities: ['headers:parsed'],
-    capabilities: ['crossrefs:resolved'],
-    conflicts: ['remarkCrossReferences'], // Can't use both
     required: false,
   },
   {
@@ -124,23 +96,6 @@ const PLUGIN_METADATA_LIST: PluginMetadata[] = [
     phase: ProcessingPhase.POST_PROCESSING,
     description: 'Process signature line markers',
     capabilities: ['signatures:processed'],
-    required: false,
-  },
-  {
-    name: 'remarkFieldTracking',
-    phase: ProcessingPhase.POST_PROCESSING,
-    description: 'Track template fields for highlighting and analysis',
-    requiresPhases: [ProcessingPhase.VARIABLE_EXPANSION],
-    requiresCapabilities: ['fields:expanded'],
-    capabilities: ['tracking:enabled'],
-    required: false,
-  },
-
-  // Utility Plugins
-  {
-    name: 'remarkDebugAst',
-    phase: ProcessingPhase.POST_PROCESSING,
-    description: 'Debug plugin for visualizing AST structure',
     required: false,
   },
 ];

@@ -3,7 +3,7 @@
  *
  * This module provides the primary API for processing Legal Markdown documents
  * with support for YAML front matter, cross-references, optional clauses, mixins,
- * header processing, and multi-format output generation (HTML, PDF).
+ * header processing, and multi-format output generation (HTML, PDF, DOCX).
  *
  * Features:
  * - YAML front matter parsing and metadata extraction
@@ -12,7 +12,7 @@
  * - Mixin system for reusable content blocks
  * - Header numbering and formatting
  * - Field tracking for document highlighting
- * - HTML and PDF generation with styling
+ * - HTML, PDF, and DOCX generation with styling
  * - RST and LaTeX preprocessing support
  * - Metadata export capabilities
  *
@@ -21,7 +21,7 @@
  * import { processLegalMarkdown, generateHtml, generatePdf } from 'legal-markdown-js';
  *
  * // Basic document processing
- * const result = processLegalMarkdown(content, {
+ * const result = await processLegalMarkdown(content, {
  *   enableFieldTracking: true,
  *   basePath: './documents'
  * });
@@ -40,337 +40,40 @@
  * ```
  */
 
-import { parseYamlFrontMatter } from './core/parsers/yaml-parser';
-import { processHeaders } from './core/processors/header-processor';
-import { processOptionalClauses } from './core/processors/clause-processor';
-import { processCrossReferences } from './core/processors/reference-processor';
-import { processPartialImports } from './core/processors/import-processor';
-import { processMixins } from './extensions/ast-mixin-processor';
-import { processTemplateLoops } from './extensions/template-loops';
-import { exportMetadata } from './core/exporters/metadata-exporter';
-import { convertRstToLegalMarkdownSync, convertRstToLegalMarkdown } from './extensions/rst-parser';
-import {
-  convertLatexToLegalMarkdownSync,
-  convertLatexToLegalMarkdown,
-} from './extensions/latex-parser';
-import { fieldTracker } from './extensions/tracking/field-tracker';
 import { htmlGenerator } from './extensions/generators/html-generator';
 import { pdfGenerator } from './extensions/generators/pdf-generator';
-import { LegalMarkdownOptions, type MarkdownString, asMarkdown } from './types';
-import { createDefaultPipeline, createHtmlPipeline } from './extensions/pipeline/pipeline-config';
-import { processLegalMarkdownWithRemark } from './extensions/remark/legal-markdown-processor';
+import { LegalMarkdownOptions } from './types';
+import { processLegalMarkdown as processLegalMarkdownImpl } from './extensions/remark/legal-markdown-processor';
+import { docxGenerator } from './extensions/generators/docx-generator';
+import {
+  resolvePdfConnector,
+  type PdfConnectorPreference,
+  type PdfOptions,
+} from './extensions/generators/pdf-connectors';
+import * as fs from 'fs/promises';
 import path from 'path';
-import { getCurrentDir } from './utils/esm-utils.js';
-
-// ESM/CJS compatible directory resolution
-const currentDir = getCurrentDir();
 
 /**
- * Main function to process a Legal Markdown document (async version)
+ * Process Legal Markdown content using the canonical async remark pipeline.
  *
- * This function orchestrates the complete processing pipeline for Legal Markdown
- * documents, including YAML parsing, content preprocessing, clause processing,
- * cross-reference resolution, mixin expansion, header formatting, and metadata export.
- *
- * @param {string} content - The raw Legal Markdown content to process
- * @param {LegalMarkdownOptions} [options={}] - Configuration options for processing
- * @returns {Promise<Object>} Processing result containing processed content, metadata, and reports
- * @returns {string} returns.content - The processed document content
- * @returns {Record<string, any>} [returns.metadata] - Extracted YAML metadata
- * @returns {string[]} [returns.exportedFiles] - Array of exported metadata files
- * @returns {Object} [returns.fieldReport] - Field tracking report if enabled
+ * @param content - Raw Legal Markdown document content.
+ * @param options - Optional processing settings for parsing, plugins, tracking, and exports.
+ * @returns Promise resolving to processed markdown, metadata, and optional tracking statistics.
+ * @throws {ValidationError | PipelineError | ParseError | ImportError | ProcessingError | YamlParsingError | PdfDependencyError}
+ * Throws typed processing errors when parsing, import resolution, or pipeline execution fails.
  * @example
  * ```typescript
- * const result = await processLegalMarkdownAsync(content, {
+ * import { processLegalMarkdown } from 'legal-markdown-js';
+ *
+ * const result = await processLegalMarkdown(markdown, {
+ *   basePath: './docs',
  *   enableFieldTracking: true,
- *   basePath: './documents',
- *   noClauses: false,
- *   noReferences: false
  * });
  *
- * console.log(result.content); // Processed markdown
- * console.log(result.metadata); // YAML front matter
- * console.log(result.fieldReport); // Field usage report
+ * console.log(result.content);
  * ```
  */
-export async function processLegalMarkdownAsync(
-  content: string,
-  options: LegalMarkdownOptions = {}
-): Promise<{
-  content: MarkdownString;
-  metadata?: Record<string, any>;
-  exportedFiles?: string[];
-  fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
-}> {
-  try {
-    // Use the new pipeline system for processing
-    const pipeline = createDefaultPipeline();
-    const metadata: Record<string, any> = {};
-
-    const pipelineOptions = {
-      legalMarkdownOptions: options,
-      enableStepProfiling: process.env.NODE_ENV === 'development',
-    };
-
-    const result = await pipeline.execute(content, metadata, pipelineOptions);
-
-    if (!result.success) {
-      console.warn('Pipeline execution had errors, falling back to legacy processing');
-      return processLegalMarkdownLegacy(content, options);
-    }
-
-    // Convert pipeline result to expected format
-    return {
-      content: asMarkdown(result.content),
-      metadata: result.metadata,
-      exportedFiles: result.exportedFiles || [],
-      fieldReport: result.fieldReport,
-    };
-  } catch (error) {
-    console.warn('Pipeline system failed, falling back to legacy processing:', error);
-    return processLegalMarkdownLegacy(content, options);
-  }
-}
-
-/**
- * Legacy processing function as fallback
- *
- * This function contains the original processing logic and serves as a
- * reliable fallback if the new pipeline system encounters issues.
- */
-async function processLegalMarkdownLegacy(
-  content: string,
-  options: LegalMarkdownOptions = {}
-): Promise<{
-  content: MarkdownString;
-  metadata?: Record<string, any>;
-  exportedFiles?: string[];
-  fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
-}> {
-  // Clear field tracker for new document
-  fieldTracker.clear();
-  // Convert RST or LaTeX to legal markdown if needed (before YAML parsing)
-  let preprocessedContent = await convertRstToLegalMarkdown(content);
-  preprocessedContent = await convertLatexToLegalMarkdown(preprocessedContent);
-
-  // Parse YAML Front Matter
-  const { content: contentWithoutYaml, metadata } = parseYamlFrontMatter(
-    preprocessedContent,
-    options.throwOnYamlError
-  );
-
-  // If only processing YAML, return early
-  if (options.yamlOnly) {
-    return { content: asMarkdown(contentWithoutYaml), metadata };
-  }
-
-  // Process partial imports (must be done early)
-  let processedContent = contentWithoutYaml;
-  let exportedFiles: string[] = [];
-
-  if (!options.noImports) {
-    const importResult = processPartialImports(
-      processedContent,
-      options.basePath,
-      metadata,
-      options
-    );
-    processedContent = importResult.content;
-    exportedFiles = importResult.importedFiles;
-
-    // Merge imported frontmatter unless explicitly disabled
-    if (options.disableFrontmatterMerge !== true && importResult.mergedMetadata) {
-      Object.assign(metadata, importResult.mergedMetadata);
-    }
-  }
-
-  // Process optional clauses
-  if (!options.noClauses) {
-    processedContent = processOptionalClauses(processedContent, metadata);
-  }
-
-  // Process cross references
-  if (!options.noReferences) {
-    processedContent = processCrossReferences(processedContent, metadata);
-  }
-
-  // Process mixins first (AST-based, no contamination)
-  if (!options.noMixins) {
-    processedContent = processMixins(processedContent, metadata, options);
-  }
-
-  // Process template loops after mixins (now separated from mixin processor)
-  processedContent = processTemplateLoops(
-    processedContent,
-    metadata,
-    undefined,
-    options.enableFieldTrackingInMarkdown || false
-  );
-
-  // Process headers (numbering, etc)
-  if (!options.noHeaders) {
-    processedContent = processHeaders(processedContent, metadata, {
-      noReset: options.noReset,
-      noIndent: options.noIndent,
-      enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
-    });
-  }
-
-  // Export metadata if requested or specified in metadata
-  if (
-    options.exportMetadata ||
-    (metadata as any)['meta-yaml-output'] ||
-    (metadata as any)['meta-json-output']
-  ) {
-    const exportResult = exportMetadata(metadata, options.exportFormat, options.exportPath);
-    exportedFiles = [...exportedFiles, ...exportResult.exportedFiles];
-  }
-
-  // Apply field tracking to content if highlighting is enabled
-  // NOTE: This applies post-processing field tracking for HTML/PDF output
-  // Individual processors use enableFieldTrackingInMarkdown for markdown output
-  // Skip if enableFieldTrackingInMarkdown is true (already processed by AST processor)
-  if (options.enableFieldTracking && !options.enableFieldTrackingInMarkdown) {
-    processedContent = fieldTracker.applyFieldTracking(processedContent);
-  }
-
-  return {
-    content: asMarkdown(processedContent),
-    metadata,
-    exportedFiles,
-    fieldReport: options.enableFieldTracking ? fieldTracker.generateReport() : undefined,
-  };
-}
-
-/**
- * Main function to process a Legal Markdown document (sync version with fallback)
- *
- * This function uses the legacy processing approach to maintain synchronous operation.
- * For better performance, debugging, and features, consider using the async version
- * `processLegalMarkdownAsync` which uses the new pipeline system.
- *
- * @param {string} content - The raw Legal Markdown content to process
- * @param {LegalMarkdownOptions} [options={}] - Configuration options for processing
- * @returns {Object} Processing result containing processed content, metadata, and reports
- * @returns {string} returns.content - The processed document content
- * @returns {Record<string, any>} [returns.metadata] - Extracted YAML metadata
- * @returns {string[]} [returns.exportedFiles] - Array of exported metadata files
- * @returns {Object} [returns.fieldReport] - Field tracking report if enabled
- * @example
- * ```typescript
- * const result = processLegalMarkdown(content, {
- *   enableFieldTracking: true,
- *   basePath: './documents',
- *   noClauses: false,
- *   noReferences: false
- * });
- *
- * console.log(result.content); // Processed markdown
- * console.log(result.metadata); // YAML front matter
- * console.log(result.fieldReport); // Field usage report
- * ```
- */
-export function processLegalMarkdown(
-  content: string,
-  options: LegalMarkdownOptions = {}
-): {
-  content: string;
-  metadata?: Record<string, any>;
-  exportedFiles?: string[];
-  fieldReport?: ReturnType<typeof fieldTracker.generateReport>;
-} {
-  // Clear field tracker for new document
-  fieldTracker.clear();
-  // Convert RST or LaTeX to legal markdown if needed (before YAML parsing)
-  let preprocessedContent = convertRstToLegalMarkdownSync(content);
-  preprocessedContent = convertLatexToLegalMarkdownSync(preprocessedContent);
-
-  // Parse YAML Front Matter
-  const { content: contentWithoutYaml, metadata } = parseYamlFrontMatter(
-    preprocessedContent,
-    options.throwOnYamlError
-  );
-
-  // If only processing YAML, return early
-  if (options.yamlOnly) {
-    return { content: asMarkdown(contentWithoutYaml), metadata };
-  }
-
-  // Process partial imports (must be done early)
-  let processedContent = contentWithoutYaml;
-  let exportedFiles: string[] = [];
-
-  if (!options.noImports) {
-    const importResult = processPartialImports(
-      processedContent,
-      options.basePath,
-      metadata,
-      options
-    );
-    processedContent = importResult.content;
-    exportedFiles = importResult.importedFiles;
-
-    // Merge imported frontmatter unless explicitly disabled
-    if (options.disableFrontmatterMerge !== true && importResult.mergedMetadata) {
-      Object.assign(metadata, importResult.mergedMetadata);
-    }
-  }
-
-  // Process optional clauses
-  if (!options.noClauses) {
-    processedContent = processOptionalClauses(processedContent, metadata);
-  }
-
-  // Process cross references
-  if (!options.noReferences) {
-    processedContent = processCrossReferences(processedContent, metadata);
-  }
-
-  // Process mixins first (AST-based, no contamination)
-  if (!options.noMixins) {
-    processedContent = processMixins(processedContent, metadata, options);
-  }
-
-  // Process template loops after mixins (now separated from mixin processor)
-  processedContent = processTemplateLoops(
-    processedContent,
-    metadata,
-    undefined,
-    options.enableFieldTrackingInMarkdown || false
-  );
-
-  // Process headers (numbering, etc)
-  if (!options.noHeaders) {
-    processedContent = processHeaders(processedContent, metadata, {
-      noReset: options.noReset,
-      noIndent: options.noIndent,
-      enableFieldTrackingInMarkdown: options.enableFieldTrackingInMarkdown,
-    });
-  }
-
-  // Export metadata if requested or specified in metadata
-  if (options.exportMetadata || metadata['meta-yaml-output'] || metadata['meta-json-output']) {
-    // Use exportPath if specified, otherwise fall back to basePath for better relative path resolution
-    const effectiveExportPath = options.exportPath || options.basePath;
-    const exportResult = exportMetadata(metadata, options.exportFormat, effectiveExportPath);
-    exportedFiles = [...exportedFiles, ...exportResult.exportedFiles];
-  }
-
-  // Apply field tracking to content if highlighting is enabled
-  // NOTE: This applies post-processing field tracking for HTML/PDF output
-  // Individual processors use enableFieldTrackingInMarkdown for markdown output
-  // Skip if enableFieldTrackingInMarkdown is true (already processed by AST processor)
-  if (options.enableFieldTracking && !options.enableFieldTrackingInMarkdown) {
-    processedContent = fieldTracker.applyFieldTracking(processedContent);
-  }
-
-  return {
-    content: asMarkdown(processedContent),
-    metadata,
-    exportedFiles,
-    fieldReport: options.enableFieldTracking ? fieldTracker.generateReport() : undefined,
-  };
-}
+export const processLegalMarkdown = processLegalMarkdownImpl;
 
 /**
  * Generate HTML from Legal Markdown content
@@ -409,7 +112,7 @@ export async function generateHtml(
   try {
     // Always use remark processor for HTML generation to ensure field tracking works
     // Field tracking is essential for HTML structure (headers, mixins, etc.)
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       ...options,
       enableFieldTracking: true, // Always enabled for HTML generation (structure)
       debug: options.debug || false,
@@ -420,7 +123,9 @@ export async function generateHtml(
       highlightCssPath:
         options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
       includeHighlighting: options.includeHighlighting,
-      title: options.title || result.metadata?.title,
+      title:
+        options.title ||
+        (typeof result.metadata?.title === 'string' ? result.metadata.title : undefined),
       metadata: result.metadata,
     });
   } catch (error) {
@@ -442,10 +147,9 @@ async function generateHtmlLegacy(
   } = {}
 ): Promise<string> {
   // Process the legal markdown first (use async version for better RST/LaTeX support)
-  const processed = await processLegalMarkdownAsync(content, {
+  const processed = await processLegalMarkdown(content, {
     ...options,
     enableFieldTracking: true,
-    enableFieldTrackingInMarkdown: true, // Always enabled for HTML legacy generation (structure)
   });
 
   // Generate HTML
@@ -457,6 +161,72 @@ async function generateHtmlLegacy(
     title: options.title,
     metadata: processed.metadata,
   });
+}
+
+type PublicPdfGenerationOptions = LegalMarkdownOptions & {
+  cssPath?: string;
+  highlightCssPath?: string;
+  includeHighlighting?: boolean;
+  title?: string;
+  format?: 'A4' | 'Letter' | 'Legal';
+  landscape?: boolean;
+  basePath?: string;
+  headerTemplate?: string;
+  footerTemplate?: string;
+  pdfConnector?: PdfConnectorPreference;
+};
+
+async function generatePdfFromProcessedMarkdown(
+  processedContent: Parameters<typeof pdfGenerator.generatePdf>[0],
+  outputPath: string,
+  metadata: Record<string, unknown> | undefined,
+  options: PublicPdfGenerationOptions
+): Promise<Buffer> {
+  const connectorPreference: PdfConnectorPreference = options.pdfConnector ?? 'auto';
+  const connector = await resolvePdfConnector(connectorPreference);
+  const title =
+    options.title || (typeof metadata?.title === 'string' ? (metadata.title as string) : undefined);
+
+  // Keep historical behavior for the Puppeteer connector, including template handling.
+  if (connector.name === 'puppeteer') {
+    return pdfGenerator.generatePdf(processedContent, outputPath, {
+      cssPath: options.cssPath,
+      highlightCssPath:
+        options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
+      includeHighlighting: options.includeHighlighting,
+      title,
+      metadata,
+      format: options.format,
+      landscape: options.landscape,
+      headerTemplate: options.headerTemplate,
+      footerTemplate: options.footerTemplate,
+    });
+  }
+
+  const html = await htmlGenerator.generateHtml(processedContent, {
+    cssPath: options.cssPath,
+    highlightCssPath:
+      options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
+    includeHighlighting: options.includeHighlighting,
+    title,
+    metadata,
+  });
+
+  const pdfOptions: PdfOptions = {
+    format: options.format || 'A4',
+    margin: {
+      top: '1cm',
+      right: '1cm',
+      bottom: '1cm',
+      left: '1cm',
+    },
+    landscape: options.landscape,
+    headerTemplate: options.headerTemplate,
+    footerTemplate: options.footerTemplate,
+  };
+
+  await connector.generatePdf(html, outputPath, pdfOptions);
+  return fs.readFile(outputPath);
 }
 
 /**
@@ -475,6 +245,7 @@ async function generateHtmlLegacy(
  * @param {string} [options.title] - Document title for PDF
  * @param {'A4' | 'Letter' | 'Legal'} [options.format] - Page format
  * @param {boolean} [options.landscape] - Whether to use landscape orientation
+ * @param {'auto' | 'puppeteer' | 'system-chrome' | 'weasyprint'} [options.pdfConnector] - PDF backend connector
  * @returns {Promise<Buffer>} A promise that resolves to the PDF buffer
  * @throws {Error} When PDF generation fails
  * @example
@@ -490,35 +261,18 @@ async function generateHtmlLegacy(
 export async function generatePdf(
   content: string,
   outputPath: string,
-  options: LegalMarkdownOptions & {
-    cssPath?: string;
-    highlightCssPath?: string;
-    includeHighlighting?: boolean;
-    title?: string;
-    format?: 'A4' | 'Letter' | 'Legal';
-    landscape?: boolean;
-  } = {}
+  options: PublicPdfGenerationOptions = {}
 ): Promise<Buffer> {
   try {
     // Always use remark processor for PDF generation to ensure field tracking works
     // Field tracking is essential for PDF structure (headers, mixins, cross-references)
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       ...options,
       enableFieldTracking: true, // Always enabled for PDF generation (structure)
       debug: options.debug || false,
     });
 
-    // Generate PDF using the processed content
-    return pdfGenerator.generatePdf(result.content, outputPath, {
-      cssPath: options.cssPath,
-      highlightCssPath:
-        options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
-      includeHighlighting: options.includeHighlighting,
-      title: options.title || result.metadata?.title,
-      metadata: result.metadata,
-      format: options.format,
-      landscape: options.landscape,
-    });
+    return generatePdfFromProcessedMarkdown(result.content, outputPath, result.metadata, options);
   } catch (error) {
     console.warn('PDF generation pipeline failed, falling back to legacy processing:', error);
     return generatePdfLegacy(content, outputPath, options);
@@ -531,33 +285,20 @@ export async function generatePdf(
 async function generatePdfLegacy(
   content: string,
   outputPath: string,
-  options: LegalMarkdownOptions & {
-    cssPath?: string;
-    highlightCssPath?: string;
-    includeHighlighting?: boolean;
-    title?: string;
-    format?: 'A4' | 'Letter' | 'Legal';
-    landscape?: boolean;
-  } = {}
+  options: PublicPdfGenerationOptions = {}
 ): Promise<Buffer> {
   // Process the legal markdown first (use async version for better RST/LaTeX support)
-  const processed = await processLegalMarkdownAsync(content, {
+  const processed = await processLegalMarkdown(content, {
     ...options,
     enableFieldTracking: true,
-    enableFieldTrackingInMarkdown: true, // Always enabled for PDF legacy generation (structure)
   });
 
-  // Generate PDF
-  return pdfGenerator.generatePdf(processed.content, outputPath, {
-    cssPath: options.cssPath,
-    highlightCssPath:
-      options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
-    includeHighlighting: options.includeHighlighting,
-    title: options.title,
-    metadata: processed.metadata,
-    format: options.format,
-    landscape: options.landscape,
-  });
+  return generatePdfFromProcessedMarkdown(
+    processed.content,
+    outputPath,
+    processed.metadata,
+    options
+  );
 }
 
 /**
@@ -576,6 +317,7 @@ async function generatePdfLegacy(
  * @param {string} [options.title] - Document title for PDFs
  * @param {'A4' | 'Letter' | 'Legal'} [options.format] - Page format
  * @param {boolean} [options.landscape] - Whether to use landscape orientation
+ * @param {'auto' | 'puppeteer' | 'system-chrome' | 'weasyprint'} [options.pdfConnector] - PDF backend connector
  * @returns {Promise<Object>} A promise that resolves to both PDF buffers
  * @returns {Buffer} returns.normal - The normal PDF without highlighting
  * @returns {Buffer} returns.highlighted - The highlighted PDF with field annotations
@@ -592,13 +334,7 @@ async function generatePdfLegacy(
 export async function generatePdfVersions(
   content: string,
   outputPath: string,
-  options: LegalMarkdownOptions & {
-    cssPath?: string;
-    highlightCssPath?: string;
-    title?: string;
-    format?: 'A4' | 'Letter' | 'Legal';
-    landscape?: boolean;
-  } = {}
+  options: Omit<PublicPdfGenerationOptions, 'includeHighlighting'> = {}
 ): Promise<{
   normal: Buffer;
   highlighted: Buffer;
@@ -609,6 +345,136 @@ export async function generatePdfVersions(
   const [normal, highlighted] = await Promise.all([
     generatePdf(content, normalPath, { ...options, includeHighlighting: false }),
     generatePdf(content, highlightedPath, { ...options, includeHighlighting: true }),
+  ]);
+
+  return { normal, highlighted };
+}
+
+/**
+ * Generate DOCX from Legal Markdown content
+ *
+ * @param {string} content - The raw Legal Markdown content to convert
+ * @param {string} outputPath - File path where the DOCX will be saved
+ * @param {LegalMarkdownOptions & Object} [options={}] - Configuration options
+ * @param {string} [options.cssPath] - Path to custom CSS file
+ * @param {string} [options.highlightCssPath] - Path to field highlighting CSS
+ * @param {boolean} [options.includeHighlighting] - Whether to include field highlighting
+ * @param {string} [options.title] - Document title for DOCX
+ * @param {'A4' | 'Letter' | 'Legal'} [options.format] - Page format
+ * @param {boolean} [options.landscape] - Whether to use landscape orientation
+ * @returns {Promise<Buffer>} A promise that resolves to the DOCX buffer
+ * @throws {Error} When DOCX generation fails
+ */
+export async function generateDocx(
+  content: string,
+  outputPath: string,
+  options: LegalMarkdownOptions & {
+    cssPath?: string;
+    highlightCssPath?: string;
+    includeHighlighting?: boolean;
+    title?: string;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
+    basePath?: string;
+    headerTemplate?: string;
+    footerTemplate?: string;
+  } = {}
+): Promise<Buffer> {
+  try {
+    const result = await processLegalMarkdown(content, {
+      ...options,
+      enableFieldTracking: true,
+      debug: options.debug || false,
+    });
+
+    return docxGenerator.generateDocx(result.content, outputPath, {
+      cssPath: options.cssPath,
+      highlightCssPath:
+        options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
+      includeHighlighting: options.includeHighlighting,
+      title:
+        options.title ||
+        (typeof result.metadata?.title === 'string' ? result.metadata.title : undefined),
+      metadata: result.metadata,
+      format: options.format,
+      landscape: options.landscape,
+      basePath: options.basePath,
+      headerTemplate: options.headerTemplate,
+      footerTemplate: options.footerTemplate,
+      version: typeof result.metadata?.version === 'string' ? result.metadata.version : undefined,
+    });
+  } catch (error) {
+    console.warn('DOCX generation pipeline failed, falling back to legacy processing:', error);
+    return generateDocxLegacy(content, outputPath, options);
+  }
+}
+
+/**
+ * Legacy DOCX generation as fallback
+ */
+async function generateDocxLegacy(
+  content: string,
+  outputPath: string,
+  options: LegalMarkdownOptions & {
+    cssPath?: string;
+    highlightCssPath?: string;
+    includeHighlighting?: boolean;
+    title?: string;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
+    basePath?: string;
+    headerTemplate?: string;
+    footerTemplate?: string;
+  } = {}
+): Promise<Buffer> {
+  const processed = await processLegalMarkdown(content, {
+    ...options,
+    enableFieldTracking: true,
+  });
+
+  return docxGenerator.generateDocx(processed.content, outputPath, {
+    cssPath: options.cssPath,
+    highlightCssPath:
+      options.highlightCssPath || path.join(process.cwd(), 'src/styles/highlight.css'),
+    includeHighlighting: options.includeHighlighting,
+    title: options.title,
+    metadata: processed.metadata,
+    format: options.format,
+    landscape: options.landscape,
+    basePath: options.basePath,
+    headerTemplate: options.headerTemplate,
+    footerTemplate: options.footerTemplate,
+    version:
+      typeof processed.metadata?.version === 'string' ? processed.metadata.version : undefined,
+  });
+}
+
+/**
+ * Generate both normal and highlighted DOCX versions
+ */
+export async function generateDocxVersions(
+  content: string,
+  outputPath: string,
+  options: LegalMarkdownOptions & {
+    cssPath?: string;
+    highlightCssPath?: string;
+    title?: string;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
+    basePath?: string;
+    headerTemplate?: string;
+    footerTemplate?: string;
+  } = {}
+): Promise<{
+  normal: Buffer;
+  highlighted: Buffer;
+}> {
+  const normalPath = outputPath;
+  const highlightedPath = outputPath.replace('.docx', '.HIGHLIGHT.docx');
+
+  const [normal, highlighted] = await Promise.all([
+    generateDocx(content, normalPath, { ...options, includeHighlighting: false }),
+    generateDocx(content, highlightedPath, { ...options, includeHighlighting: true }),
   ]);
 
   return { normal, highlighted };
@@ -626,21 +492,4 @@ export * from './extensions/index';
 export { fieldTracker } from './extensions/tracking/field-tracker';
 export { htmlGenerator } from './extensions/generators/html-generator';
 export { pdfGenerator } from './extensions/generators/pdf-generator';
-
-// Remark-based processing functions
-export {
-  processLegalMarkdownWithRemark,
-  processLegalMarkdownWithRemarkSync,
-} from './extensions/remark/legal-markdown-processor';
-
-/**
- * Wrapper function that provides legacy API compatibility with remark processing
- *
- * This function bridges the gap between the legacy `processLegalMarkdown` interface
- * and the new remark-based processor. It maintains 100% API compatibility while
- * internally using the modern remark pipeline.
- *
- * @param content - The raw Legal Markdown content to process
- * @param options - Legacy LegalMarkdownOptions (will be mapped to remark options)
- * @returns Processing result in legacy format
- */
+export { docxGenerator } from './extensions/generators/docx-generator';

@@ -1,0 +1,9 @@
+_cross_references: []
+_field_mappings: {}
+client:
+  contact:
+    email: main@example.com
+  name: Main Client
+policy:
+  limits:
+    max_users: 10

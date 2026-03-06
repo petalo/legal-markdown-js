@@ -34,7 +34,8 @@ license to use the Software.
 ll. Payment Terms
 
 Payment is due within {{payment_days}} days of invoice date.
-{{late_fees_apply ? Late fees of 1.5% per month will apply to overdue amounts : Payments must be made on time}}.
+{{#if late_fees_apply}}Late fees of 1.5% per month will apply to overdue
+amounts{{else}}Payments must be made on time{{/if}}.
 
 ll. Support
 
@@ -42,4 +43,6 @@ ll. Support
 
 ll. Warranty
 
-{{include_warranty ? The Software is provided with a limited warranty as described in Exhibit A : THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND}}.
+{{#if include_warranty}}The Software is provided with a limited warranty as
+described in Exhibit A{{else}}THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY
+OF ANY KIND{{/if}}.

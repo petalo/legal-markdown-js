@@ -15,7 +15,7 @@ describe('CLI Headers Auto-Population Integration', () => {
     it('should auto-populate YAML front matter with basic structure', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -27,7 +27,7 @@ l. Introduction
 ll. Terms and Conditions`;
 
       const result = await service.processContent(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article 1."');
       expect(result).toContain('level-2: "Section 1."');
@@ -41,7 +41,7 @@ ll. Terms and Conditions`;
     it('should create YAML front matter when none exists', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `l. Introduction
@@ -49,11 +49,11 @@ ll. Terms and Conditions
 lll. Payment Terms`;
 
       const result = await service.processContent(input);
-      
+
       expect(result.startsWith('---\n')).toBe(true);
       expect(result).toContain('# Structured Headers');
-      expect(result).toContain('level-1: "Article %n."');
-      expect(result).toContain('level-2: "Section %n."');
+      expect(result).toContain('level-1: "%n."');
+      expect(result).toContain('level-2: "%n."');
       expect(result).toContain('level-3: "%n."');
       expect(result).toContain('# Properties');
       expect(result).toContain('---\n\nl. Introduction');
@@ -62,7 +62,7 @@ lll. Payment Terms`;
     it('should preserve existing metadata and add Properties section', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -76,7 +76,7 @@ custom-property: "custom value"
 l. Main Content`;
 
       const result = await service.processContent(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article %n."');
       expect(result).toContain('level-2: "Section %n."');
@@ -91,7 +91,7 @@ l. Main Content`;
     it('should handle all 9 header levels', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -102,16 +102,16 @@ level-5: "(%A)"
 Content here`;
 
       const result = await service.processContent(input);
-      
+
       // Should infer missing levels 2, 3, 4, 6, 7, 8, 9
       expect(result).toContain('level-1: "Article (1)"');
-      expect(result).toContain('level-2: "Section %n."');
+      expect(result).toContain('level-2: "%n."');
       expect(result).toContain('level-3: "%n."');
-      expect(result).toContain('level-4: "(%n)"');
+      expect(result).toContain('level-4: "%n."');
       expect(result).toContain('level-5: "(%A)"');
-      expect(result).toContain('level-6: "(%a)"');
-      expect(result).toContain('level-7: "(%R)"');
-      expect(result).toContain('level-8: "(%r)"');
+      expect(result).toContain('level-6: "%n."');
+      expect(result).toContain('level-7: "%n."');
+      expect(result).toContain('level-8: "%n."');
       expect(result).toContain('level-9: "%n."');
     });
 
@@ -119,7 +119,7 @@ Content here`;
       // Based on 20.block_no_addons.headers fixture
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -131,7 +131,7 @@ level-3: 1.
 l. Introduction`;
 
       const result = await service.processContent(input);
-      
+
       expect(result).toMatch(/# Structured Headers\s*\n/);
       expect(result).toContain('level-1: "Article 1."');
       expect(result).toContain('level-2: "Section 1."');
@@ -145,7 +145,7 @@ l. Introduction`;
     it('should handle complex no-indent patterns like 30.block_all_leader_types', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -164,12 +164,14 @@ no-indent: "l., ll., lll., llll., lllll., lllll., lllllll., llllllll., lllllllll
 l. Content`;
 
       const result = await service.processContent(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article (1)"');
       expect(result).toContain('level-9: "(I)"');
       expect(result).toContain('# Properties');
-      expect(result).toContain('no-indent: "l., ll., lll., llll., lllll., lllll., lllllll., llllllll., lllllllll."');
+      expect(result).toContain(
+        'no-indent: "l., ll., lll., llll., lllll., lllll., lllllll., llllllll., lllllllll."'
+      );
       expect(result).toContain('no-reset: ""');
       expect(result).toContain('level-style: ""');
     });
@@ -179,7 +181,7 @@ l. Content`;
     it('should not process document content when in auto-populate mode', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -191,12 +193,12 @@ Client: {{client_name}}
 Today: @today`;
 
       const result = await service.processContent(input);
-      
+
       // Content should remain unprocessed (no template/date processing)
       expect(result).toContain('Client: {{client_name}}');
       expect(result).toContain('Today: @today');
       expect(result).toContain('l. Introduction'); // Headers not processed
-      
+
       // But YAML should be enhanced
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('# Properties');
@@ -205,7 +207,7 @@ Today: @today`;
     it('should work with documents that have no YAML front matter', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `This is a legal document.
@@ -217,10 +219,10 @@ lll. Liability
 Content continues here.`;
 
       const result = await service.processContent(input);
-      
+
       expect(result.startsWith('---\n')).toBe(true);
       expect(result).toContain('# Structured Headers');
-      expect(result).toContain('level-1: "Article %n."');
+      expect(result).toContain('level-1: "%n."');
       expect(result).toContain('# Properties');
       expect(result).toContain('---\n\nThis is a legal document.');
       expect(result).toContain('Content continues here.');
@@ -231,7 +233,7 @@ Content continues here.`;
     it('should handle malformed YAML gracefully', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const input = `---
@@ -251,14 +253,14 @@ l. Content`;
     it('should handle empty input', async () => {
       const service = new CliService({
         autoPopulateHeaders: true,
-        debug: false
+        debug: false,
       });
 
       const result = await service.processContent('');
-      
+
       expect(result.startsWith('---\n')).toBe(true);
       expect(result).toContain('# Structured Headers');
-      expect(result).toContain('level-1: "Article %n."');
+      expect(result).toContain('level-1: "%n."');
       expect(result).toContain('# Properties');
     });
   });

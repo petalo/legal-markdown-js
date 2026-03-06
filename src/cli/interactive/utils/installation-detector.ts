@@ -91,13 +91,14 @@ export function getConfigDirectory(): string {
   }
 }
 
-/**
- * Get the full path for .env configuration file
- *
- * @returns Full path to .env file
- */
+function getConfigFilePath(): string {
+  return isGlobalInstallation()
+    ? path.join(getConfigDirectory(), 'config.yaml')
+    : path.join(getConfigDirectory(), '.legalmdrc.yaml');
+}
+
 export function getEnvFilePath(): string {
-  return path.join(getConfigDirectory(), '.env');
+  return getConfigFilePath();
 }
 
 /**
@@ -110,8 +111,8 @@ export function getInstallationDescription(): string {
   const configPath = getConfigDirectory();
 
   if (isGlobal) {
-    return `Global installation - Configuration will be saved to:\n${configPath}/.env`;
+    return `Global installation - Configuration will be saved to:\n${path.join(configPath, 'config.yaml')}`;
   } else {
-    return `Local installation - Configuration will be saved to:\n${configPath}/.env`;
+    return `Local installation - Configuration will be saved to:\n${path.join(configPath, '.legalmdrc.yaml')}`;
   }
 }

@@ -74,6 +74,9 @@ General-purpose utilities.
 **Available helpers:**
 
 - `concat` - Concatenate strings
+- `join` - Join array elements with separator
+- `length` - Count array or string length
+- `default` - Fallback value for empty fields
 - `trackField` - Field tracking for highlighting
 
 ### ⭐ [Special Values](special-values.md)

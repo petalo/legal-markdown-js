@@ -31,10 +31,12 @@
  */
 
 import { visit } from 'unist-util-visit';
-import { toString } from 'mdast-util-to-string';
 import type { Plugin } from 'unified';
 import type { Root, Heading, Text, PhrasingContent, Node } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { fieldSpan } from '../../extensions/tracking/field-span';
+import { DEFAULT_HEADER_PATTERNS } from '../../constants/headers';
+import type { YamlValue } from '../../types';
 
 /**
  * Custom AST node type for cross-references
@@ -92,7 +94,7 @@ interface SectionCounters {
  */
 interface CrossReferenceASTOptions {
   /** Document metadata containing level formats and other data */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
   /** Enable debug logging */
   debug?: boolean;
   /** Enable field tracking with highlighting during AST processing */
@@ -102,17 +104,8 @@ interface CrossReferenceASTOptions {
 /**
  * Default level formats for section numbering (extended to 9 levels)
  */
-const DEFAULT_LEVEL_FORMATS = {
-  level1: 'Article %n.',
-  level2: 'Section %n.',
-  level3: '%n.',
-  level4: '(%n)',
-  level5: '(%A)',
-  level6: '(%a)',
-  level7: '(%R)',
-  level8: '(%r)',
-  level9: '%n.',
-};
+// Removed: local DEFAULT_LEVEL_FORMATS was dead code (never referenced).
+// All defaults now come from DEFAULT_HEADER_PATTERNS in src/constants/headers.ts.
 
 /**
  * Parse |key| patterns and convert them to custom reference nodes
@@ -188,7 +181,7 @@ function parseReferences(tree: Root): void {
  */
 function extractDefinitionsFromAST(
   root: Root,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean = false
 ): CrossReferenceDefinition[] {
   const crossReferences: CrossReferenceDefinition[] = [];
@@ -205,52 +198,23 @@ function extractDefinitionsFromAST(
   };
 
   // Get level formats from metadata (supporting expanded system)
-  const levelFormats = {
-    level1:
-      metadata['level-1'] ||
-      metadata['level-one'] ||
-      metadata['level_one'] ||
-      '{{undefined-level-1}}',
-    level2:
-      metadata['level-2'] ||
-      metadata['level-two'] ||
-      metadata['level_two'] ||
-      '{{undefined-level-2}}',
-    level3:
-      metadata['level-3'] ||
-      metadata['level-three'] ||
-      metadata['level_three'] ||
-      '{{undefined-level-3}}',
-    level4:
-      metadata['level-4'] ||
-      metadata['level-four'] ||
-      metadata['level_four'] ||
-      '{{undefined-level-4}}',
-    level5:
-      metadata['level-5'] ||
-      metadata['level-five'] ||
-      metadata['level_five'] ||
-      '{{undefined-level-5}}',
-    level6:
-      metadata['level-6'] ||
-      metadata['level-six'] ||
-      metadata['level_six'] ||
-      '{{undefined-level-6}}',
-    level7:
-      metadata['level-7'] ||
-      metadata['level-seven'] ||
-      metadata['level_seven'] ||
-      '{{undefined-level-7}}',
-    level8:
-      metadata['level-8'] ||
-      metadata['level-eight'] ||
-      metadata['level_eight'] ||
-      '{{undefined-level-8}}',
-    level9:
-      metadata['level-9'] ||
-      metadata['level-nine'] ||
-      metadata['level_nine'] ||
-      '{{undefined-level-9}}',
+  const mStr = (keys: string[], fallback: string): string => {
+    for (const k of keys) {
+      const v = metadata[k];
+      if (typeof v === 'string') return v;
+    }
+    return fallback;
+  };
+  const levelFormats: Record<string, string> = {
+    level1: mStr(['level-1', 'level-one', 'level_one'], DEFAULT_HEADER_PATTERNS['level-1']),
+    level2: mStr(['level-2', 'level-two', 'level_two'], DEFAULT_HEADER_PATTERNS['level-2']),
+    level3: mStr(['level-3', 'level-three', 'level_three'], DEFAULT_HEADER_PATTERNS['level-3']),
+    level4: mStr(['level-4', 'level-four', 'level_four'], DEFAULT_HEADER_PATTERNS['level-4']),
+    level5: mStr(['level-5', 'level-five', 'level_five'], DEFAULT_HEADER_PATTERNS['level-5']),
+    level6: mStr(['level-6', 'level-six', 'level_six'], DEFAULT_HEADER_PATTERNS['level-6']),
+    level7: mStr(['level-7', 'level-seven', 'level_seven'], DEFAULT_HEADER_PATTERNS['level-7']),
+    level8: mStr(['level-8', 'level-eight', 'level_eight'], DEFAULT_HEADER_PATTERNS['level-8']),
+    level9: mStr(['level-9', 'level-nine', 'level_nine'], DEFAULT_HEADER_PATTERNS['level-9']),
   };
 
   visit(root, 'heading', (node: Heading) => {
@@ -262,7 +226,7 @@ function extractDefinitionsFromAST(
     visit(node, child => {
       if (child.type === 'text') {
         headerText += child.value;
-      } else if ((child as any).type === 'reference') {
+      } else if ((child as unknown as { type: string }).type === 'reference') {
         const refNode = child as unknown as ReferenceNode;
         if (refNode.referenceType === 'definition') {
           definitionKey = refNode.key;
@@ -361,7 +325,7 @@ function generateSectionNumber(
   levelFormats: Record<string, string>
 ): string {
   const format = levelFormats[`level${level}`] || `{{undefined-level-${level}}}`;
-  const number = (counters as any)[`level${level}`];
+  const number = (counters as unknown as Record<string, number>)[`level${level}`];
 
   // If format is an undefined template, return it as-is
   if (format.startsWith('{{undefined-level-')) {
@@ -448,7 +412,7 @@ function toRomanNumeral(num: number): string {
 function resolveReferences(
   root: Root,
   crossReferences: CrossReferenceDefinition[],
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   enableFieldTracking: boolean = false,
   debug: boolean = false
 ): void {
@@ -477,9 +441,9 @@ function resolveReferences(
       hasLogic = true;
     } else {
       // Fallback to metadata value
-      resolvedValue = getNestedValue(metadata, key);
-      if (resolvedValue !== undefined) {
-        resolvedValue = formatMetadataValue(resolvedValue, key, metadata);
+      const rawMetaValue = getNestedValue(metadata, key);
+      if (rawMetaValue !== undefined) {
+        resolvedValue = formatMetadataValue(rawMetaValue, key, metadata);
       }
     }
 
@@ -495,21 +459,17 @@ function resolveReferences(
     }
 
     // Create replacement node
-    let replacementNode: Text | any;
+    let replacementNode: Text | { type: 'html'; value: string };
 
     if (enableFieldTracking) {
       // Create HTML node with field tracking
       const hasValue = resolvedValue !== undefined && resolvedValue !== '';
-      const cssClass = hasValue
-        ? hasLogic
-          ? 'legal-field highlight'
-          : 'legal-field imported-value'
-        : 'legal-field missing-value';
       const displayValue = resolvedValue || node.originalText;
+      const kind = hasValue ? (hasLogic ? 'crossref' : 'imported') : 'missing';
 
       replacementNode = {
         type: 'html',
-        value: `<span class="${cssClass}" data-field="crossref.${key.replace(/"/g, '&quot;')}">${displayValue}</span>`,
+        value: fieldSpan(`crossref.${key}`, displayValue, kind),
       };
     } else {
       // Create simple text node
@@ -520,7 +480,7 @@ function resolveReferences(
     }
 
     // Replace the reference node
-    (parent as any).children[index] = replacementNode;
+    (parent as unknown as { children: unknown[] }).children[index] = replacementNode;
 
     // Mark as resolved
     node.resolved = true;
@@ -537,7 +497,7 @@ function cleanupDefinitions(root: Root): void {
 
     if (node.referenceType === 'definition') {
       // Remove the definition reference node
-      (parent as any).children.splice(index, 1);
+      (parent as unknown as { children: unknown[] }).children.splice(index as number, 1);
     }
   });
 }
@@ -545,15 +505,20 @@ function cleanupDefinitions(root: Root): void {
 /**
  * Get nested value from object using dot notation
  */
-function getNestedValue(obj: Record<string, any>, path: string): any {
+function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue | undefined {
   const keys = path.split('.');
-  let value = obj;
+  let value: YamlValue = obj;
 
   for (const key of keys) {
-    if (value === undefined || value === null) {
+    if (
+      value === undefined ||
+      value === null ||
+      typeof value !== 'object' ||
+      Array.isArray(value)
+    ) {
       return undefined;
     }
-    value = value[key];
+    value = (value as Record<string, YamlValue>)[key];
   }
 
   return value;
@@ -562,7 +527,11 @@ function getNestedValue(obj: Record<string, any>, path: string): any {
 /**
  * Format metadata values based on type and context
  */
-function formatMetadataValue(value: any, key: string, metadata: Record<string, any>): string {
+function formatMetadataValue(
+  value: YamlValue | undefined,
+  key: string,
+  metadata: Record<string, YamlValue>
+): string {
   if (value === undefined) return '';
   if (value === null) return 'null';
 
@@ -573,7 +542,8 @@ function formatMetadataValue(value: any, key: string, metadata: Record<string, a
 
   // Handle currency amounts
   if (typeof value === 'number' && key.includes('amount')) {
-    const currency = metadata.payment_currency || 'USD';
+    const rawCurrency = metadata.payment_currency;
+    const currency = typeof rawCurrency === 'string' ? rawCurrency : 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -627,5 +597,15 @@ export const remarkCrossReferencesAST: Plugin<[CrossReferenceASTOptions], Root> 
   };
 };
 
-export default remarkCrossReferencesAST;
-export type { CrossReferenceASTOptions, CrossReferenceDefinition, ReferenceNode };
+export type { CrossReferenceASTOptions, CrossReferenceDefinition };
+
+// Exported for testing - not part of public API
+export {
+  parseReferences as _parseReferences,
+  extractDefinitionsFromAST as _extractDefinitionsFromAST,
+  updateSectionCounters as _updateSectionCounters,
+  generateSectionNumber as _generateSectionNumber,
+  toRomanNumeral as _toRomanNumeral,
+  resolveReferences as _resolveReferences,
+  formatMetadataValue as _formatMetadataValue,
+};

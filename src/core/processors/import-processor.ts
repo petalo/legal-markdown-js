@@ -40,9 +40,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ImportProcessingResult, LegalMarkdownOptions } from '../../types';
+import { ImportProcessingResult, LegalMarkdownOptions, YamlValue } from '../../types';
 import { parseYamlFrontMatter } from '../parsers/yaml-parser';
 import { mergeSequentially, MergeOptions } from '../utils/frontmatter-merger';
+import { ImportError } from '../../errors';
 
 /**
  * Processes partial imports in a LegalMarkdown document
@@ -98,7 +99,7 @@ import { mergeSequentially, MergeOptions } from '../utils/frontmatter-merger';
 export function processPartialImports(
   content: string,
   basePath?: string,
-  currentMetadata?: Record<string, any>,
+  currentMetadata?: Record<string, YamlValue>,
   options?: LegalMarkdownOptions
 ): ImportProcessingResult {
   // DEPRECATION WARNING
@@ -117,7 +118,7 @@ export function processPartialImports(
   const importPattern = /@import\s+(.+?)(?:\s|$)/g;
 
   const importedFiles: string[] = [];
-  const importedMetadataList: Record<string, any>[] = [];
+  const importedMetadataList: Record<string, YamlValue>[] = [];
 
   // Configure merge options based on processing options
   const mergeOptions: MergeOptions = {
@@ -134,7 +135,7 @@ export function processPartialImports(
       const message =
         `Import processing timed out after ${timeoutMs}ms. ` +
         'This may indicate complex nested imports or circular references.';
-      throw new Error(message);
+      throw new ImportError(message, { timeoutMs });
     }
 
     // Clean up filename (remove quotes, etc.)
@@ -151,7 +152,7 @@ export function processPartialImports(
       importedFiles.push(importPath);
 
       let processedImportContent = importedContent;
-      let importedMetadata: Record<string, any> = {};
+      let importedMetadata: Record<string, YamlValue> = {};
 
       // Extract frontmatter unless merging is explicitly disabled
       if (options?.disableFrontmatterMerge !== true) {
@@ -195,14 +196,14 @@ export function processPartialImports(
       }
 
       return tracedContent;
-    } catch (error) {
+    } catch {
       // Handle import errors gracefully without logging to stderr
       return `<!-- Error importing ${cleanFilename} -->`;
     }
   });
 
   // Merge all collected metadata unless explicitly disabled
-  let mergedMetadata: Record<string, any> | undefined;
+  let mergedMetadata: Record<string, YamlValue> | undefined;
   const shouldMerge = options?.disableFrontmatterMerge !== true && importedMetadataList.length > 0;
   if (shouldMerge) {
     const initialMetadata = currentMetadata || {};
@@ -217,7 +218,9 @@ export function processPartialImports(
     // Calculate remaining time and allocate granular timeouts
     const remainingTime = timeoutMs - (Date.now() - startTime);
     if (remainingTime < 1000) {
-      throw new Error('Insufficient time remaining for metadata merging.');
+      throw new ImportError('Insufficient time remaining for metadata merging.', {
+        remainingTime,
+      });
     }
 
     const perImportTimeout = Math.max(500, Math.floor(remainingTime / importedMetadataList.length));
@@ -350,7 +353,7 @@ export function validateImports(content: string, basePath?: string): string[] {
       if (!fs.existsSync(importPath)) {
         errors.push(`Import file not found: ${importPath}`);
       }
-    } catch (error) {
+    } catch {
       errors.push(`Error resolving import: ${filename}`);
     }
   }

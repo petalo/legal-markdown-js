@@ -31,7 +31,7 @@
  * @module
  */
 
-import { parseYamlFrontMatter, serializeToYaml } from '../parsers/yaml-parser';
+import { parseYamlFrontMatter } from '../parsers/yaml-parser';
 import { DEFAULT_HEADER_PATTERNS, DEFAULT_PROPERTIES } from '../../constants/headers';
 
 /**
@@ -121,12 +121,12 @@ export function autoPopulateYamlFrontMatter(
  * @returns {Record<string, any>} Enhanced metadata object
  */
 function createEnhancedMetadata(
-  existingMetadata: Record<string, any>,
+  existingMetadata: Record<string, unknown>,
   includeProperties: boolean = true,
   inferMissingLevels: boolean = true,
-  ensureQuotedLevels: boolean = true
-): Record<string, any> {
-  const enhanced: Record<string, any> = {};
+  _ensureQuotedLevels: boolean = true
+): Record<string, unknown> {
+  const enhanced: Record<string, unknown> = {};
 
   // Add comment for Structured Headers section
   enhanced['# Structured Headers'] = null;
@@ -240,8 +240,8 @@ export function generateNoIndentPattern(content: string): string {
  * @param {Record<string, any>} metadata - Metadata to validate
  * @returns {Record<string, any>} Normalized metadata
  */
-export function normalizeYamlStructure(metadata: Record<string, any>): Record<string, any> {
-  const normalized: Record<string, any> = {};
+export function normalizeYamlStructure(metadata: Record<string, unknown>): Record<string, unknown> {
+  const normalized: Record<string, unknown> = {};
 
   // Ensure Structured Headers section comes first
   normalized['# Structured Headers'] = null;
@@ -290,7 +290,7 @@ export function normalizeYamlStructure(metadata: Record<string, any>): Record<st
  * @param {Record<string, any>} metadata - Enhanced metadata to format
  * @returns {string} Formatted YAML string
  */
-function formatEnhancedYaml(metadata: Record<string, any>): string {
+function formatEnhancedYaml(metadata: Record<string, unknown>): string {
   const lines: string[] = [];
 
   for (const [key, value] of Object.entries(metadata)) {
@@ -321,3 +321,10 @@ function formatEnhancedYaml(metadata: Record<string, any>): string {
 
   return lines.join('\n') + '\n';
 }
+
+// Exported for testing - not part of public API
+export {
+  createEnhancedMetadata as _createEnhancedMetadata,
+  analyzeDocumentStructure as _analyzeDocumentStructure,
+  formatEnhancedYaml as _formatEnhancedYaml,
+};

@@ -1,5 +1,7 @@
 /**
- * Debug plugin to inspect AST structure
+ * Dev-only debug plugin to inspect AST structure.
+ *
+ * @module
  */
 import { Plugin } from 'unified';
 import { Root } from 'mdast';
@@ -10,9 +12,10 @@ export const remarkDebugAST: Plugin<[], Root> = () => {
     console.log('\n=== AST DEBUG ===');
 
     let nodeCount = 0;
-    visit(tree, (node: any, index, parent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unist-util-visit generic node callback
+    visit(tree, (node: any, _index, parent) => {
       if (node.type === 'text' || node.type === 'html') {
-        const value = node.value || '';
+        const value: string = node.value || '';
         if (value.includes('{{#') || value.includes('{{/')) {
           console.log(`\nNode #${nodeCount} (${node.type}):`);
           console.log('Value:', JSON.stringify(value));

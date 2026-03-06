@@ -15,8 +15,6 @@
 export { default as remarkCrossReferences } from './cross-references';
 export type { CrossReferenceOptions, CrossReferenceDefinition } from './cross-references';
 
-export { default as remarkFieldTracking } from './field-tracking';
-
 export { default as remarkTemplateFields } from './template-fields';
 export type { TemplateFieldOptions, TemplateField } from './template-fields';
 
@@ -36,3 +34,6 @@ export { remarkLegalHeadersParser } from './legal-headers-parser';
 
 export { default as remarkDates } from './dates';
 export type { DateProcessingOptions } from './dates';
+
+export { default as remarkSignatureLines } from './signature-lines';
+export type { SignatureLinesOptions } from './signature-lines';

@@ -33,5 +33,5 @@ content.
 
 ## 💡 Learn more
 
-- [YAML Frontmatter Guide](../../../docs/yaml-frontmatter.md)
-- [Metadata Processing](../../../docs/metadata.md)
+- [YAML Frontmatter Guide](../../../docs/features/yaml-frontmatter.md)
+- [Output Overview](../../../docs/output/README.md)

@@ -66,35 +66,50 @@ legal-md --debug --log-level verbose document.md
 
 Variables that refer to the current header level:
 
-| Variable | Description                          | Example | Output        |
-| -------- | ------------------------------------ | ------- | ------------- |
-| `%n`     | Current level number                 | `%n.`   | 1., 2., 3.    |
-| `%a`     | Current level alphabetic (lowercase) | `%a)`   | a), b), c)    |
-| `%A`     | Current level alphabetic (uppercase) | `%A.`   | A., B., C.    |
-| `%r`     | Current level Roman (lowercase)      | `%r.`   | i., ii., iii. |
-| `%R`     | Current level Roman (uppercase)      | `%R.`   | I., II., III. |
-| `%o`     | Current level ordinal                | `%o`    | 1st, 2nd, 3rd |
+| Variable | Description | Example | Output |
+| --- | --- | --- | --- |
+| `%n` | Current level number | `%n.` | 1., 2., 3. |
+| `%a` | Current level alphabetic (lowercase) | `%a)` | a), b), c) |
+| `%A` | Current level alphabetic (uppercase) | `%A.` | A., B., C. |
+| `%r` | Current level Roman (lowercase) | `%r.` | i., ii., iii. |
+| `%R` | Current level Roman (uppercase) | `%R.` | I., II., III. |
+| `%o` | Current level ordinal | `%o` | 1st, 2nd, 3rd |
 
 ### Hierarchical Reference Variables
 
 Variables that reference specific levels for hierarchical numbering:
 
-| Variable  | Description    | Example Format    | Output        |
-| --------- | -------------- | ----------------- | ------------- |
-| `%l1`     | Level 1 number | `%l1.`            | 1., 2., 3.    |
-| `%l2`     | Level 2 number | `%l1.%l2`         | 1.1, 1.2, 2.1 |
-| `%l3`     | Level 3 number | `%l1.%l2.%l3`     | 1.1.1, 1.1.2  |
-| `%l4-%l9` | Levels 4-9     | `%l1.%l2.%l3.%l4` | 1.1.1.1       |
+| Variable | Description | Example Format | Output |
+| --- | --- | --- | --- |
+| `%l1` | Level 1 number | `%l1.` | 1., 2., 3. |
+| `%l2` | Level 2 number | `%l1.%l2` | 1.1, 1.2, 2.1 |
+| `%l3` | Level 3 number | `%l1.%l2.%l3` | 1.1.1, 1.1.2 |
+| `%l4-%l9` | Levels 4-9 | `%l1.%l2.%l3.%l4` | 1.1.1.1 |
+
+### Relative Parent Reference Variables
+
+Tokens that reference ancestor levels relative to the current level, useful
+when the same format string is reused across different depth levels:
+
+| Token | Resolves to | Example (level-3 format `%n.%s.%t`) |
+| --- | --- | --- |
+| `%s` | Parent level counter (level - 1) | level-2 counter |
+| `%t` | Grandparent counter (level - 2) | level-1 counter |
+| `%f` | Great-grandparent counter (level - 3) | level-0 - resolves 0 |
+| `%i` | Great-great-grandparent counter (level - 4) | level-1 - resolves 0 |
+
+Note: Tokens that reference a level below 1 are left as-is in the output
+(e.g. `%s` in a level-1 format stays as `%s`).
 
 ### Extended Variables
 
 Advanced formatting options:
 
-| Variable | Description         | Example | Output             |
-| -------- | ------------------- | ------- | ------------------ |
-| `%02n`   | Zero-padded numbers | `%02n.` | 01., 02., 03.      |
-| `%03n`   | Three-digit padding | `%03n`  | 001, 002, 003      |
-| `%l1+`   | Level 1 and higher  | Custom  | Extended hierarchy |
+| Variable | Description | Example | Output |
+| --- | --- | --- | --- |
+| `%02n` | Zero-padded numbers | `%02n.` | 01., 02., 03. |
+| `%03n` | Three-digit padding | `%03n` | 001, 002, 003 |
+| `%l1+` | Level 1 and higher | Custom | Extended hierarchy |
 
 ## Format Examples
 
@@ -566,7 +581,7 @@ level-three: '(%n)'
 
 # ⚠️ Caution - Complex patterns may impact performance
 level-one: 'Article %R ({{titleCase(document_type)}})'
-level-two: 'Section %l1.%l2 - {{formatDate(@today, "YYYY")}}'
+level-two: 'Section %l1.%l2 - {{formatDate @today "YYYY"}}'
 ```
 
 ## Troubleshooting
@@ -581,7 +596,9 @@ level-two: 'Section %l1.%l2 - {{formatDate(@today, "YYYY")}}'
 
 **Incorrect hierarchical numbering:**
 
-- Use `%l1.%l2.%l3` for academic format
+- Use `%l1.%l2.%l3` for academic format (absolute level references)
+- Use `%s`/`%t` as relative parent references when you want a format that
+  adapts based on current depth rather than fixed level numbers
 - Use `%n` for current level only
 - Check level depth matches variable references
 

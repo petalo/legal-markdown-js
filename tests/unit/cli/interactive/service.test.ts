@@ -9,8 +9,11 @@ import { CliService } from '../../../../src/cli/service';
 import { InteractiveConfig } from '../../../../src/cli/interactive/types';
 import { RESOLVED_PATHS } from '@constants';
 import { readFileSync } from '@utils';
-import { processLegalMarkdown, generateHtml, generatePdf } from '../../../../src/index';
-import { buildProcessingContext, processLegalMarkdownWithRemark, generateAllFormats } from '../../../../src/core/pipeline';
+import {
+  buildProcessingContext,
+  processLegalMarkdown as processLegalMarkdownFromPipeline,
+  generateAllFormats,
+} from '../../../../src/core/pipeline';
 import { vi, MockedClass, MockedFunction, Mocked, beforeEach, describe, it, expect } from 'vitest';
 
 // Mock the CliService
@@ -23,21 +26,16 @@ vi.mock('@utils', () => ({
   writeFileSync: vi.fn(),
 }));
 
-vi.mock('../../../../src/index', () => ({
-  processLegalMarkdown: vi.fn(),
-  generateHtml: vi.fn(() => Promise.resolve('<html></html>')),
-  generatePdf: vi.fn(() => Promise.resolve()),
-}));
-
 // Mock the pipeline
 vi.mock('../../../../src/core/pipeline', () => ({
   buildProcessingContext: vi.fn(),
-  processLegalMarkdownWithRemark: vi.fn(),
+  processLegalMarkdown: vi.fn(),
   generateAllFormats: vi.fn(),
   buildFormatGenerationOptions: vi.fn((contextOptions: any, baseOptions: any) => ({
     ...baseOptions,
     pdf: contextOptions?.pdf ?? baseOptions?.pdf,
     html: contextOptions?.html ?? baseOptions?.html,
+    docx: contextOptions?.docx ?? baseOptions?.docx,
     highlight: contextOptions?.highlight ?? baseOptions?.highlight,
     format: contextOptions?.format ?? baseOptions?.format,
     landscape: contextOptions?.landscape ?? baseOptions?.landscape,
@@ -57,9 +55,9 @@ vi.mock('fs', async () => {
 });
 
 const mockedReadFileSync = readFileSync as MockedFunction<typeof readFileSync>;
-const mockedProcessLegalMarkdown = processLegalMarkdown as MockedFunction<typeof processLegalMarkdown>;
 const mockedBuildProcessingContext = buildProcessingContext as MockedFunction<typeof buildProcessingContext>;
-const mockedProcessLegalMarkdownWithRemark = processLegalMarkdownWithRemark as MockedFunction<typeof processLegalMarkdownWithRemark>;
+const mockedProcessLegalMarkdownWithRemark =
+  processLegalMarkdownFromPipeline as MockedFunction<typeof processLegalMarkdownFromPipeline>;
 const mockedGenerateAllFormats = generateAllFormats as MockedFunction<typeof generateAllFormats>;
 
 // Mock constants
@@ -86,11 +84,6 @@ describe('InteractiveService', () => {
 
     // Setup mocks
     mockedReadFileSync.mockReturnValue('# Test content');
-    mockedProcessLegalMarkdown.mockReturnValue({
-      content: '# Test content',
-      metadata: {},
-      exportedFiles: ['/test/output/processed-contract-metadata.yaml']
-    });
 
     // Mock pipeline functions
     mockedBuildProcessingContext.mockResolvedValue({
@@ -134,6 +127,7 @@ describe('InteractiveService', () => {
       outputFormats: {
         html: true,
         pdf: true,
+        docx: false,
         markdown: false,
         metadata: false,
       },

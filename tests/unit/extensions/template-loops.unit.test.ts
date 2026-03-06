@@ -1,237 +1,360 @@
-/**
- * @fileoverview Tests for template loops functionality
- * 
- * This test suite covers the {{#array}}...{{/array}} template loop system:
- * - Basic array iteration with primitive values
- * - Object array iteration with property access
- * - Nested object paths using dot notation (e.g., services.included)
- * - Current item access using {{.}} syntax
- * - Error handling for missing or invalid data
- */
-
 import { processTemplateLoops } from '@extensions/template-loops';
+import { ProcessingError } from '@errors';
 
 describe('processTemplateLoops', () => {
-  describe('Basic Array Loops', () => {
-    it('should iterate over simple array with dot syntax', () => {
-      const content = '{{#items}}\n- {{.}}\n{{/items}}';
-      const metadata = { items: ['Apple', 'Banana', 'Cherry'] };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>Apple</li>\n<li>Banana</li>\n<li>Cherry</li>');
+  it('renders #each loops with primitive values', () => {
+    const content = '{{#each items}}\n- {{this}}\n{{/each}}';
+    const metadata = { items: ['Apple', 'Banana', 'Cherry'] };
+
+    const result = processTemplateLoops(content, metadata, undefined, false);
+
+    expect(result).toContain('- Apple');
+    expect(result).toContain('- Banana');
+    expect(result).toContain('- Cherry');
+  });
+
+  it('renders #each loops with object properties', () => {
+    const content = '{{#each products}}\n- {{name}}\n{{/each}}';
+    const metadata = { products: [{ name: 'Laptop' }, { name: 'Mouse' }] };
+
+    const result = processTemplateLoops(content, metadata, undefined, false);
+
+    expect(result).toContain('- Laptop');
+    expect(result).toContain('- Mouse');
+  });
+
+  it('supports nested object paths with #each', () => {
+    const content = '{{#each services.included}}\n- {{this}}\n{{/each}}';
+    const metadata = {
+      services: {
+        included: ['Water', 'Electricity', 'Internet'],
+      },
+    };
+
+    const result = processTemplateLoops(content, metadata, undefined, false);
+
+    expect(result).toContain('- Water');
+    expect(result).toContain('- Electricity');
+    expect(result).toContain('- Internet');
+  });
+
+  it('handles missing arrays gracefully', () => {
+    const content = '{{#each services.missing}}\n- {{this}}\n{{/each}}';
+    const metadata = { services: { included: ['Water'] } };
+
+    const result = processTemplateLoops(content, metadata, undefined, false);
+
+    expect(result.trim()).toBe('');
+  });
+
+  it('renders conditionals with #if', () => {
+    const content = '{{#if isActive}}Active{{else}}Inactive{{/if}}';
+
+    expect(processTemplateLoops(content, { isActive: true }, undefined, false)).toContain('Active');
+    expect(processTemplateLoops(content, { isActive: false }, undefined, false)).toContain(
+      'Inactive'
+    );
+  });
+
+  it('defers top-level variable resolution to Phase 3', () => {
+    const content = 'Company: {{company}}';
+    const result = processTemplateLoops(content, { company: 'Acme Corp' }, undefined, false);
+    expect(result).toBe('Company: {{company}}');
+  });
+
+  it('resolves underscore-wrapped root variables (leaked emphasis normalization case)', () => {
+    const content = 'Company: {{_company_}}';
+    const result = processTemplateLoops(content, { _company_: 'Acme Corp' }, undefined, false);
+    expect(result).toBe('Company: Acme Corp');
+  });
+
+  it('resolves asterisk-wrapped root variables via leaked emphasis normalization', () => {
+    const content = 'Company: {{*company*}}';
+    const result = processTemplateLoops(content, { _company_: 'Acme Corp' }, undefined, false);
+    expect(result).toBe('Company: Acme Corp');
+  });
+
+  it('throws ProcessingError on legacy function-style helper syntax', () => {
+    const content = 'Total: {{formatDollar(amount)}}';
+
+    expect(() => processTemplateLoops(content, { amount: 100 }, undefined, false)).toThrow(
+      ProcessingError
+    );
+  });
+
+  it('throws ProcessingError on legacy mathematical expressions', () => {
+    const content = 'Total: {{price * quantity}}';
+
+    expect(() =>
+      processTemplateLoops(content, { price: 100, quantity: 2 }, undefined, false)
+    ).toThrow('Legacy template syntax detected');
+  });
+
+  it('throws ProcessingError on legacy string concatenation', () => {
+    const content = 'Price: {{"$" + price}}';
+
+    expect(() => processTemplateLoops(content, { price: 100 }, undefined, false)).toThrow(
+      'Legacy template syntax detected'
+    );
+  });
+
+  describe('field tracking for {{.}} / {{this}} in array loops', () => {
+    it('wraps non-empty array items with imported-value span when tracking enabled', () => {
+      const content = '{{#each requirements}}\n- {{.}}\n{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { requirements: ['Item A', 'Item B'] },
+        undefined,
+        true
+      );
+      expect(result).toContain('class="legal-field imported-value"');
+      expect(result).toContain('Item A');
+      expect(result).toContain('Item B');
     });
 
-    it('should handle empty arrays gracefully', () => {
-      const content = '{{#items}}\n- {{.}}\n{{/items}}';
-      const metadata = { items: [] };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
+    it('wraps empty array items with missing-value span when tracking enabled', () => {
+      const content = '{{#each requirements}}\n- {{.}}\n{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { requirements: ['', '', ''] },
+        undefined,
+        true
+      );
+      expect(result).toContain('class="legal-field missing-value"');
     });
 
-    it('should handle object arrays with property access', () => {
-      const content = '{{#products}}\n- {{name}}\n{{/products}}';
-      const metadata = {
-        products: [
-          { name: 'Laptop' },
-          { name: 'Mouse' }
-        ]
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>Laptop</li>\n<li>Mouse</li>');
+    it('correctly tracks mixed empty and filled items', () => {
+      const content = '{{#each items}}{{.}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { items: ['', 'Workers compensation', ''] },
+        undefined,
+        true
+      );
+      expect(result).toContain('class="legal-field missing-value"');
+      expect(result).toContain('class="legal-field imported-value"');
+      expect(result).toContain('Workers compensation');
+    });
+
+    it('returns raw values without any span when tracking disabled', () => {
+      const content = '{{#each items}}{{.}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { items: ['Alpha', ''] },
+        undefined,
+        false
+      );
+      expect(result).not.toContain('<span');
+      expect(result).not.toContain('legal-field');
+      expect(result).toContain('Alpha');
+    });
+
+    it('shows qualified path placeholder [[items[N]]] when loop item is empty and tracking enabled', () => {
+      const content = '{{#each items}}- {{.}}\n{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { items: ['', '', ''] },
+        undefined,
+        true
+      );
+      expect(result).toContain('[[items[0]]]');
+      expect(result).toContain('[[items[1]]]');
+      expect(result).toContain('[[items[2]]]');
+      expect(result).toContain('class="legal-field missing-value"');
+    });
+
+    it('displays escaped bracket value \\[value\\] as literal [value] in loop object property', () => {
+      // Inside #each loops, __lmVar resolves values where this !== root.
+      // Escaped bracket values like '\[Party Name\]' should show as '[Party Name]'.
+      const content = '{{#each parties}}{{name}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { parties: [{ name: '\\[Party Name\\]' }] },
+        undefined,
+        false
+      );
+      expect(result).toBe('[Party Name]');
+      expect(result).not.toContain('\\[');
+    });
+
+    it('does not mark escaped bracket value \\[value\\] as missing in loop context', () => {
+      const content = '{{#each parties}}{{name}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { parties: [{ name: '\\[Party Name\\]' }] },
+        undefined,
+        true
+      );
+      expect(result).not.toContain('missing-value');
+      expect(result).toContain('[Party Name]');
+    });
+
+    it('shows nested loop path [[parent.child[N]]] for dotted loop variable', () => {
+      // Loop over a nested array like insurance.lessee_requirements
+      const content = '{{#each insurance.lessee_requirements}}{{.}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { insurance: { lessee_requirements: ['', 'Workers comp', ''] } },
+        undefined,
+        true
+      );
+      expect(result).toContain('[[insurance.lessee_requirements[0]]]');
+      expect(result).toContain('Workers comp');
+      expect(result).toContain('[[insurance.lessee_requirements[2]]]');
+    });
+
+    it('uses the current loop path for each loop scope and resets between sibling loops', () => {
+      const content = '{{#each outer}}{{.}}{{/each}}|{{#each inner}}{{.}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        { outer: [''], inner: [''] },
+        undefined,
+        true
+      );
+      expect(result).toContain('[[outer[0]]]');
+      expect(result).toContain('[[inner[0]]]');
+    });
+
+    it('uses innermost loop path for nested loop dot placeholders', () => {
+      const content = '{{#each outer}}{{#each inner}}{{.}}{{/each}}{{/each}}';
+      const result = processTemplateLoops(
+        content,
+        {
+          outer: [
+            { inner: ['', 'A'] },
+            { inner: [''] },
+          ],
+        },
+        undefined,
+        true
+      );
+      expect(result).toContain('[[inner[0]]]');
+      expect(result).not.toContain('[[outer[0]]]');
+      expect(result).toContain('A');
     });
   });
 
-  describe('Nested Object Path Support (Dot Notation)', () => {
-    it('should support dot notation for nested object arrays', () => {
-      const content = '{{#services.included}}\n- {{.}}\n{{/services.included}}';
-      const metadata = {
-        services: {
-          included: ['Water', 'Electricity', 'Internet']
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>Water</li>\n<li>Electricity</li>\n<li>Internet</li>');
+  describe('AST-first tracking tokens', () => {
+    it('emits lm-field tokens instead of spans when astFieldTracking is enabled', () => {
+      const content = '{{upper name}}';
+      const result = processTemplateLoops(content, { name: 'john doe' }, undefined, true, true);
+      expect(result).toContain('<lm-field');
+      expect(result).toContain('data-field="name"');
+      expect(result).not.toContain('<span class="legal-field');
     });
 
-    it('should support complex nested paths', () => {
-      const content = '{{#contract.parties}}\n- {{name}}\n{{/contract.parties}}';
-      const metadata = {
-        contract: {
-          parties: [
-            { name: 'John Doe' },
-            { name: 'Jane Smith' }
-          ]
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>John Doe</li>\n<li>Jane Smith</li>');
+    it('keeps top-level variable deferral unchanged in AST-first mode', () => {
+      const content = 'Company: {{company}}';
+      const result = processTemplateLoops(content, { company: 'Acme Corp' }, undefined, true, true);
+      expect(result).toBe('Company: {{company}}');
     });
 
-    it('should handle deeply nested object paths', () => {
-      const content = '{{#office.maintenance.lessor_obligations}}\n- {{.}}\n{{/office.maintenance.lessor_obligations}}';
-      const metadata = {
-        office: {
-          maintenance: {
-            lessor_obligations: ['Structural elements', 'Building envelope']
-          }
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>Structural elements</li>\n<li>Building envelope</li>');
+    it('emits winner-branch logic tokens when both tracking flags are enabled', () => {
+      const content = '{{#if active}}Enabled{{else}}Disabled{{/if}}';
+      const result = processTemplateLoops(
+        content,
+        { active: true },
+        undefined,
+        true,
+        true,
+        true
+      );
+      expect(result).toContain('<lm-logic-start');
+      expect(result).toContain('data-field="logic.branch.');
+      expect(result).toContain('data-logic-helper="if"');
+      expect(result).toContain('data-logic-result="true"');
+      expect(result).toContain('<lm-logic-end></lm-logic-end>');
     });
 
-    it('should return empty string for non-existent nested paths', () => {
-      const content = '{{#services.nonexistent}}\n- {{.}}\n{{/services.nonexistent}}';
-      const metadata = {
-        services: {
-          included: ['Water']
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
-    });
-  });
-
-  describe('Current Item Access with {{.}} Syntax', () => {
-    it('should access current primitive value with dot syntax', () => {
-      const content = '{{#colors}}\nColor: {{.}}\n{{/colors}}';
-      const metadata = { colors: ['Red', 'Green', 'Blue'] };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      // The actual result doesn't include <li> tags for this format
-      expect(result).toBe('\nColor: Red\n\n\nColor: Green\n\n\nColor: Blue\n');
+    it('does not emit logic tokens when ast tracking flag is off', () => {
+      const content = '{{#if active}}Enabled{{else}}Disabled{{/if}}';
+      const result = processTemplateLoops(
+        content,
+        { active: true },
+        undefined,
+        true,
+        false,
+        true
+      );
+      expect(result).not.toContain('<lm-logic-start');
+      expect(result).toContain('Enabled');
     });
 
-    it('should work with mixed property and dot access', () => {
-      const content = '{{#items}}\n- {{name}}: {{value}}\n{{/items}}';
-      const metadata = {
-        items: [
-          { name: 'Item1', value: 'A' },
-          { name: 'Item2', value: 'B' }
-        ]
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toContain('Item1: A');
-      expect(result).toContain('Item2: B');
-    });
-  });
+    it('preserves newline boundaries around winner branch tokens in standalone blocks', () => {
+      const content = '{{#if cond}}\nA\n{{/if}}\n{{#if other}}\nB\n{{/if}}\nlll. Heading';
+      const result = processTemplateLoops(
+        content,
+        { cond: true, other: false },
+        undefined,
+        true,
+        true,
+        true
+      );
 
-  describe('Real-world Legal Document Examples', () => {
-    it('should handle office lease services template loop', () => {
-      const content = '{{#services.included}}\n- {{.}}\n{{/services.included}}';
-      const metadata = {
-        services: {
-          included: [
-            'Water',
-            'Electricity',
-            'Internet',
-            'Heating',
-            'Air Conditioning'
-          ]
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toContain('<li>Water</li>');
-      expect(result).toContain('<li>Electricity</li>');
-      expect(result).toContain('<li>Internet</li>');
-      expect(result).toContain('<li>Heating</li>');
-      expect(result).toContain('<li>Air Conditioning</li>');
+      expect(result).toContain('<lm-logic-end></lm-logic-end>\nlll. Heading');
+      expect(result).not.toContain('<lm-logic-end></lm-logic-end>lll. Heading');
     });
 
-    it('should handle maintenance obligations template loop', () => {
-      const content = '{{#maintenance.lessor_obligations}}\n- {{.}}\n{{/maintenance.lessor_obligations}}';
-      const metadata = {
-        maintenance: {
-          lessor_obligations: [
-            'Structural elements',
-            'Building envelope',
-            'Common areas'
-          ]
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('<li>Structural elements</li>\n<li>Building envelope</li>\n<li>Common areas</li>');
+    it('keeps loop item headings separated when first/last winner branches are highlighted', () => {
+      const content = `
+{{#each services}}
+lll. {{ordinal (add @index 1)}} Service Engagement: {{name}}
+
+{{description}}.
+{{#if @first}}
+
+This is the first service.
+{{/if}}
+{{#if @last}}
+
+This is the last service.
+{{/if}}
+{{/each}}
+`;
+
+      const result = processTemplateLoops(
+        content,
+        {
+          services: [
+            { name: 'Alpha', description: 'Alpha description' },
+            { name: 'Beta', description: 'Beta description' },
+            { name: 'Gamma', description: 'Gamma description' },
+          ],
+        },
+        undefined,
+        true,
+        true,
+        true
+      );
+
+      const headingCount = (result.match(/\nlll\./g) || []).length;
+      expect(headingCount).toBe(3);
+      expect(result).toContain('first service.<lm-logic-end></lm-logic-end>\nlll.');
+      expect(result).not.toContain('first service.<lm-logic-end></lm-logic-end>lll.');
+      expect(result).toContain('last service.<lm-logic-end></lm-logic-end>');
     });
 
-    it('should handle default events with empty values', () => {
-      const content = '{{#default.events}}\n- {{.}}\n{{/default.events}}';
-      const metadata = {
-        default: {
-          events: [
-            'Failure to pay rent within 5 days of due date',
-            '', // Empty - should still be processed
-            'Filing for bankruptcy or insolvency'
-          ]
-        }
-      };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toContain('<li>Failure to pay rent within 5 days of due date</li>');
-      expect(result).toContain('<li>Filing for bankruptcy or insolvency</li>');
-      // The empty value generates newlines but not empty <li></li>
-      expect(result).toContain('- \n');
-    });
-  });
+    it('keeps markdown structure when winner branch starts with heading and list', () => {
+      const content = `{{#if loyaltyMember}}
+## Customer Loyalty
 
-  describe('Error Handling', () => {
-    it('should return empty string for undefined variables', () => {
-      const content = '{{#nonexistent}}\n- {{.}}\n{{/nonexistent}}';
-      const metadata = {};
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
-    });
+- Member Points Earned: {{pointsEarned}}
+- Current Balance: {{pointsBalance}}
+{{/if}}`;
 
-    it('should handle null values gracefully', () => {
-      const content = '{{#items}}\n- {{.}}\n{{/items}}';
-      const metadata = { items: null };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
-    });
+      const result = processTemplateLoops(
+        content,
+        { loyaltyMember: true, pointsEarned: 112, pointsBalance: 1523 },
+        undefined,
+        true,
+        true,
+        true
+      );
 
-    it('should handle non-array values gracefully', () => {
-      const content = '{{#items}}\n- {{.}}\n{{/items}}';
-      const metadata = { items: 'not an array' };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      // Non-array values are treated as conditional and rendered if truthy
-      expect(result).toContain('- {{.}}');
-    });
-  });
-
-  describe('Conditional Blocks', () => {
-    it('should render content for truthy values', () => {
-      const content = '{{#isActive}}\nThis service is active.\n{{/isActive}}';
-      const metadata = { isActive: true };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toContain('This service is active.');
-    });
-
-    it('should not render content for falsy values', () => {
-      const content = '{{#isActive}}\nThis service is active.\n{{/isActive}}';
-      const metadata = { isActive: false };
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
-    });
-
-    it('should handle undefined conditional variables', () => {
-      const content = '{{#isActive}}\nThis service is active.\n{{/isActive}}';
-      const metadata = {};
-      const result = processTemplateLoops(content, metadata, undefined, false);
-      
-      expect(result).toBe('');
+      expect(result).toContain('## <lm-logic-start');
+      expect(result).toContain('\n- <lm-logic-start');
+      expect(result).not.toContain('<lm-logic-start data-field="logic.branch.1" data-logic-helper="if" data-logic-result="true"></lm-logic-start>## Customer Loyalty');
+      expect(result).not.toContain('<lm-logic-start data-field="logic.branch.1" data-logic-helper="if" data-logic-result="true"></lm-logic-start>- Member Points Earned');
     });
   });
 });

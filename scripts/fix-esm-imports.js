@@ -13,6 +13,8 @@ import {
   readdir as readdirAsync,
   readFile as readFileAsync,
   writeFile as writeFileAsync,
+  copyFile as copyFileAsync,
+  access as accessAsync,
 } from 'fs/promises';
 import { join, extname, dirname } from 'path';
 
@@ -101,6 +103,10 @@ async function fixImportsInFile(filePath) {
   }
 }
 
+function shouldProcessFile(fileName) {
+  return fileName.endsWith('.js') || fileName.endsWith('.d.ts');
+}
+
 async function walkDirectory(dir) {
   const entries = await readdirAsync(dir, { withFileTypes: true });
 
@@ -109,9 +115,33 @@ async function walkDirectory(dir) {
 
     if (entry.isDirectory()) {
       await walkDirectory(fullPath);
-    } else if (entry.name.endsWith('.js')) {
+    } else if (shouldProcessFile(entry.name)) {
       await fixImportsInFile(fullPath);
     }
+  }
+}
+
+async function ensureCjsTypesEntry() {
+  const esmTypesPath = join(DIST_DIR, 'index.d.ts');
+  const esmTypesMapPath = join(DIST_DIR, 'index.d.ts.map');
+  const cjsTypesPath = join(DIST_DIR, 'index.d.cts');
+  const cjsTypesMapPath = join(DIST_DIR, 'index.d.cts.map');
+
+  try {
+    await accessAsync(esmTypesPath);
+    await copyFileAsync(esmTypesPath, cjsTypesPath);
+    console.log(`Copied CJS types entry: ${cjsTypesPath}`);
+  } catch {
+    console.warn('Could not create CJS types entry: dist/index.d.ts not found');
+    return;
+  }
+
+  try {
+    await accessAsync(esmTypesMapPath);
+    await copyFileAsync(esmTypesMapPath, cjsTypesMapPath);
+    console.log(`Copied CJS types sourcemap: ${cjsTypesMapPath}`);
+  } catch {
+    // Optional sourcemap.
   }
 }
 
@@ -120,6 +150,7 @@ async function main() {
 
   try {
     await walkDirectory(DIST_DIR);
+    await ensureCjsTypesEntry();
     console.log('✅ ESM import fixes completed!');
   } catch (error) {
     console.error('❌ Error fixing ESM imports:', error.message);

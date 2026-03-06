@@ -82,6 +82,9 @@ const performanceProfile = {
 
 ## Remark vs Legacy Performance
 
+> Note: the legacy runtime path no longer exists in current releases. The
+> comparison in this section is retained as historical migration context.
+
 ### Performance Comparison
 
 The remark-based processor offers significant performance improvements:
@@ -96,7 +99,7 @@ The remark-based processor offers significant performance improvements:
 ### Why Remark is Faster
 
 ```typescript
-// Legacy processing (multiple passes)
+// Historical legacy processing (multiple passes)
 const legacyProcess = (content: string) => {
   const yamlParsed = parseYAML(content); // Pass 1
   const importsResolved = resolveImports(yamlParsed); // Pass 2
@@ -107,7 +110,7 @@ const legacyProcess = (content: string) => {
 
 // Remark processing (single AST traversal)
 const remarkProcess = async (content: string) => {
-  return await processLegalMarkdownWithRemark(content, {
+  return await processLegalMarkdown(content, {
     // All operations in single AST pass:
     enableFieldTracking: true,
     processCrossReferences: true,
@@ -121,7 +124,7 @@ const remarkProcess = async (content: string) => {
 
 ```typescript
 // Migrate to remark for better performance
-import { processLegalMarkdownWithRemark } from 'legal-markdown-js';
+import { processLegalMarkdown } from 'legal-markdown-js';
 
 const optimizedOptions = {
   // Performance optimizations
@@ -139,7 +142,7 @@ const optimizedOptions = {
   streamProcessing: true,
 };
 
-const result = await processLegalMarkdownWithRemark(content, optimizedOptions);
+const result = await processLegalMarkdown(content, optimizedOptions);
 ```
 
 ## Optimization Strategies
@@ -166,7 +169,6 @@ const productionOptions = {
 // For review: Balanced approach
 const reviewOptions = {
   enableFieldTracking: true,
-  outputFormat: 'html',
   includeHighlighting: true,
   optimizeForDisplay: true,
 };
@@ -202,7 +204,7 @@ const templateOptimization = {
   simpleFields: '{{client_name}}',
 
   // ⚠️ Caution: Nested helper calls
-  nestedHelpers: '{{upper(formatDate(addDays(@today, 30), "DD/MM/YYYY"))}}',
+  nestedHelpers: '{{upper (formatDate (addDays @today 30) "DD/MM/YYYY")}}',
 
   // ✅ Better: Pre-calculate in YAML
   preCalculated: '{{formatted_due_date}}', // Calculated in frontmatter
@@ -242,10 +244,7 @@ const largeDocumentOptions = {
 // Process large documents efficiently
 async function processLargeDocument(filePath: string) {
   const stream = fs.createReadStream(filePath);
-  const result = await processLegalMarkdownWithRemark(
-    stream,
-    largeDocumentOptions
-  );
+  const result = await processLegalMarkdown(stream, largeDocumentOptions);
   return result;
 }
 ```
@@ -269,7 +268,7 @@ async function processWithMemoryMonitoring(content: string) {
   const initialMemory = monitorMemory();
   console.log('Initial memory:', initialMemory);
 
-  const result = await processLegalMarkdownWithRemark(content, {
+  const result = await processLegalMarkdown(content, {
     enableMemoryMonitoring: true,
     memoryCallback: usage => {
       if (usage.heapUsed > 500 * 1024 * 1024) {
@@ -308,7 +307,7 @@ class DocumentProcessor {
 
     // Process with timeout
     const result = await Promise.race([
-      processLegalMarkdownWithRemark(content),
+      processLegalMarkdown(content),
       this.timeoutPromise(30000),
     ]);
 
@@ -415,7 +414,7 @@ if (isMainThread) {
     const results = [];
     for (const doc of documents) {
       try {
-        const result = await processLegalMarkdownWithRemark(doc);
+        const result = await processLegalMarkdown(doc);
         results.push(result);
       } catch (error) {
         results.push({ error: error.message });
@@ -538,7 +537,7 @@ class IntelligentCache {
   }
 
   private async process(content: string) {
-    return await processLegalMarkdownWithRemark(content);
+    return await processLegalMarkdown(content);
   }
 }
 ```
@@ -706,7 +705,7 @@ class PerformanceBenchmark {
       const memBefore = process.memoryUsage();
 
       try {
-        const result = await processLegalMarkdownWithRemark(
+        const result = await processLegalMarkdown(
           testCase.content,
           testCase.options
         );
@@ -943,7 +942,7 @@ function createLimitedProcessor() {
       }, resourceLimits.maxProcessingTime);
 
       try {
-        const result = await processLegalMarkdownWithRemark(content, {
+        const result = await processLegalMarkdown(content, {
           maxMemoryUsage: resourceLimits.maxMemoryUsage,
           enableGarbageCollection: true,
         });

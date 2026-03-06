@@ -55,6 +55,26 @@ The three-phase pipeline intentionally keeps Phase 1 and Phase 3 composable:
 Pipeline consumers should treat the cached `LegalMarkdownProcessorResult` as the
 single source of truth for processed content and metadata.
 
+## PDF Connector System
+
+The PDF generation layer uses a pluggable connector architecture defined in
+`src/extensions/generators/pdf-connectors/`:
+
+- `types.ts` - `PdfConnector` interface + `PdfConnectorPreference` union
+  (`'auto' | 'puppeteer' | 'system-chrome' | 'weasyprint'`)
+- `puppeteer-connector.ts` - uses bundled Puppeteer for hermetic, reproducible
+  rendering (requires `npm install puppeteer`)
+- `system-chrome-connector.ts` - launches any installed Chromium-family browser
+  via `--headless --print-to-pdf`; zero-install for users with a browser
+- `weasyprint-connector.ts` - delegates to the Python `weasyprint` executable;
+  useful in server environments without a display
+- `resolver.ts` - `resolvePdfConnector(preference)` selects the first available
+  connector for `preference: 'auto'`, or validates and returns the requested one
+- `index.ts` - re-exports `createPdfConnector` and `resolvePdfConnector`
+
+To force a specific backend set `pdf.connector` in `.legalmdrc` or use
+`LEGAL_MD_PDF_CONNECTOR=weasyprint legal-md ...` for temporary overrides.
+
 ## Helper & Formatter Extensions
 
 Helper libraries remain pluggable through existing registries:
@@ -69,7 +89,7 @@ Helper libraries remain pluggable through existing registries:
 - **Metadata exporters** - consume `LegalMarkdownProcessorResult.metadata` to
   publish additional reports (e.g., compliance summaries)
 
-When adding helpers, update typing in `src/types/helpers.ts` and include
+When adding helpers, update shared helper typing in `src/types.ts` and include
 targeted unit tests.
 
 ### Handlebars Template Engine
@@ -101,7 +121,7 @@ Phone: {{formatPhoneNumber client.phone}}
 - **String helpers**: `capitalize`, `titleCase`, `truncate`, `concat`, etc.
 - **Math helpers**: `multiply`, `divide`, `add`, `subtract`
 
-See `docs/handlebars-helpers-reference.md` for complete reference.
+See `docs/helpers/README.md` for complete reference.
 
 **Architecture:**
 
@@ -116,7 +136,7 @@ See `docs/handlebars-helpers-reference.md` for complete reference.
 2. Register helpers in `handlebars-engine.ts` initialization
 3. Provide TypeScript types for helper arguments
 4. Include unit tests for custom helpers
-5. Document helpers in `handlebars-helpers-reference.md`
+5. Document helpers in `docs/helpers/README.md`
 
 ## CLI & Tooling Hooks
 

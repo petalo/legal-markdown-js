@@ -95,7 +95,8 @@ The repo still ships helper modules originally designed for Ruby parity:
   reusable (e.g. clause evaluation logic shared by the remark plugin)
 - `src/core/exporters/metadata-exporter.ts` - Utility for metadata serialization
 
-A full inventory and retirement plan lives in `docs/legacy-deprecation-plan.md`.
+A full inventory and retirement plan lives in
+`plans/2026-03-03-phase2-phase3-span-refactor-plan.md`.
 
 ## Shared Utilities
 
@@ -103,9 +104,17 @@ Supporting modules include:
 
 - `src/utils/logger.ts`, `src/utils/archive-manager.ts`, `src/utils/index.ts`
   for logging, archiving and file helpers
+- `src/core/utils/template-variable-replacer.ts` - resolves
+  `{{ variable.path }}` placeholders against metadata objects (simple dot-path
+  traversal)
 - `src/constants/index.ts` for resolved paths shared by CLI/web builds
 - `src/types/index.ts` defining `LegalMarkdownOptions`, `ProcessingResult` and
   related interfaces consumed across the stack
+- `src/config/index.ts` - cosmiconfig-based project config loader; merges
+  `.legalmdrc` / `legal-markdown.config.*` with env-var overrides
+- `src/extensions/tracking/field-span.ts` - `fieldSpan(name, content, kind)`
+  helper that produces compound CSS class spans used by the field-tracking
+  plugin
 
 These utilities are imported by both CLI services and the pipeline to keep
 behaviour uniform regardless of hosting environment.

@@ -14,6 +14,7 @@ export async function selectOutputFormats(): Promise<OutputFormat> {
     choices: [
       { name: '🌐 HTML', value: 'html' },
       { name: '📄 PDF', value: 'pdf', checked: true }, // Default selected
+      { name: '🧾 DOCX', value: 'docx' },
       { name: '📝 Markdown', value: 'markdown' },
       { name: '📊 Export metadata (YAML/JSON)', value: 'metadata' },
     ],
@@ -23,6 +24,7 @@ export async function selectOutputFormats(): Promise<OutputFormat> {
   return {
     html: selectedFormats.includes('html'),
     pdf: selectedFormats.includes('pdf'),
+    docx: selectedFormats.includes('docx'),
     markdown: selectedFormats.includes('markdown'),
     metadata: selectedFormats.includes('metadata'),
   };

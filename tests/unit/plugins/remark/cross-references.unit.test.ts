@@ -365,4 +365,132 @@ No cross-references here.
       expect(refs[5].sectionNumber).toBe('Annex I');  // level 6 roman uppercase
     });
   });
+
+  describe('Edge Cases Ported from Old Processor Tests', () => {
+    it('should handle reference keys with hyphens', async () => {
+      const content = `
+# Test Section |test-section|
+
+## Another Section |another-section|
+
+Reference to |test-section| and |another-section|.
+`;
+
+      const metadata: Record<string, any> = {
+        'level-one': 'Article %n.',
+        'level-two': 'Section %n.',
+      };
+
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+
+      const result = await processor.process(content);
+      const processedContent = String(result);
+
+      expect(processedContent).toContain('Reference to Article 1. and Section 1.');
+    });
+
+    it('should handle reference keys with dots', async () => {
+      const content = `
+# Test Section |test.section|
+
+Reference to |test.section| works.
+`;
+
+      const metadata: Record<string, any> = {
+        'level-one': 'Article %n.',
+      };
+
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+
+      const result = await processor.process(content);
+      const processedContent = String(result);
+
+      expect(processedContent).toContain('Reference to Article 1. works.');
+    });
+
+    it('should resolve pipe references from metadata values', async () => {
+      const content = `
+# Contract |contract|
+
+Client name is |client_name| as specified in metadata.
+Reference to |contract| applies throughout.
+`;
+
+      const metadata: Record<string, any> = {
+        client_name: 'ACME Corporation',
+      };
+
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+
+      const result = await processor.process(content);
+      const processedContent = String(result);
+
+      expect(processedContent).toContain('Client name is ACME Corporation');
+      expect(processedContent).toContain('Reference to Article 1. applies');
+    });
+
+    it('should preserve unresolved references with no matching header or metadata', async () => {
+      const content = `
+Reference to |undefined_section| should remain unchanged.
+
+# Valid Section |valid|
+
+This refers to |valid| and |undefined_section|.
+`;
+
+      const metadata: Record<string, any> = {};
+
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+
+      const result = await processor.process(content);
+      const processedContent = String(result);
+
+      // remark-stringify may escape underscores, so check for both forms
+      expect(
+        processedContent.includes('|undefined_section|') ||
+        processedContent.includes('|undefined\\_section|')
+      ).toBe(true);
+      expect(processedContent).toContain('Article 1.');
+    });
+  });
+
+  describe('Misplaced definition warning badge', () => {
+    it('should append ⚠️ badge when |key| appears in heading but not at the end', async () => {
+      const content = `# Primary Section |sec-primary| some trailing text\n\nSome body.`;
+      const metadata: Record<string, unknown> = {};
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+      const result = await processor.process(content);
+      // remark-stringify may escape * characters, so check for the badge in either form
+      const output = String(result);
+      expect(output).toContain('⚠️');
+      expect(output).toContain('cross-ref not extracted');
+    });
+
+    it('should NOT append badge when |key| is correctly at the end of the heading', async () => {
+      const content = `# Primary Section |sec-primary|\n\nSome body.`;
+      const metadata: Record<string, unknown> = {};
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkCrossReferences, { metadata })
+        .use(remarkStringify);
+      const result = await processor.process(content);
+      expect(String(result)).not.toContain('⚠️');
+      expect(metadata['_cross_references']).toHaveLength(1);
+    });
+  });
 });

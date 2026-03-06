@@ -1,0 +1,20 @@
+_cross_references: []
+_field_mappings: {}
+balance: -4200.75
+company_name: acme legal technologies
+items:
+  - 1
+  - 2
+  - 3
+jurisdiction: SPAIN
+obligations:
+  - confidentiality
+  - audit rights
+  - data retention
+offer_a: 18000
+offer_b: 24500
+optional_clause: ''
+payment_day: 15
+penalty_a: 900
+penalty_b: 650
+title: Extended Helpers Validation

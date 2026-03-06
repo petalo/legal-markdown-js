@@ -6,7 +6,7 @@
  * between the legacy and AST-based implementations.
  */
 
-import { processLegalMarkdownWithRemark } from '@extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '@extensions/remark/legal-markdown-processor';
 import { fieldTracker, FieldStatus } from '@extensions/tracking/field-tracker';
 
 describe('Remark Field Tracking Port', () => {
@@ -22,7 +22,7 @@ client_name: John Doe
 
 Hello, {{client_name}}!`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -44,7 +44,7 @@ phone: null
 
 Contact: {{email}}, {{phone}}, {{address}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -86,7 +86,7 @@ level1: "Article %n"
 
 As specified in |payment|, payment is due.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -110,7 +110,7 @@ null_field: null
 
 Content: {{filled_field}}, {{empty_field}}, {{null_field}}, {{undefined_field}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -131,7 +131,7 @@ false_value: false
 
 Status: {{is_active}}, Count: {{count}}, Zero: {{zero_value}}, False: {{false_value}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -151,7 +151,7 @@ client_name: John Doe
 
 Hello, {{client_name}}!`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -166,7 +166,7 @@ empty_field: ""
 
 Value: {{empty_field}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -183,7 +183,7 @@ level1: "Article %n"
 
 See |payment| for details.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -203,7 +203,7 @@ client:
 
 Client: {{client.name}}, Street: {{client.address.street}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -225,7 +225,7 @@ company:
 
 Simple: {{name}}, Complex: {{company.name}}, Founded: {{company.info.founded}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -249,7 +249,7 @@ level2: "Section %n.%s"
 
 Reference: |intro| and |background|`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -273,7 +273,7 @@ level1: "Art. %n -"
 
 Short reference |pay| should be highlighted.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -295,7 +295,7 @@ level1: "Article %n"
 
 Name: {{name}}, Email: {{email}}, Reference: |terms|`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -312,7 +312,7 @@ client_name: ACME Corp
 
 {{client_name}} is our client. Contact {{client_name}} directly.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -330,7 +330,7 @@ client_name: Custom Client
 
 Welcome <<client_name>> to our service.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true,
         fieldPatterns: ['<<(.+?)>>']
       });
@@ -349,7 +349,7 @@ name2: Value2
 
 Template: {{name1}} and custom: <<name2>>`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true,
         fieldPatterns: ['{{(.+?)}}', '<<(.+?)>>']
       });
@@ -368,7 +368,7 @@ level_value: "2"
 <span class="legal-header" data-level="2">Header</span>
 Field value: {{level_value}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -388,7 +388,7 @@ content: "Important"
   <span>{{content}}</span>
 </div>`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -407,7 +407,7 @@ duplicate: Second value
 
 First: {{duplicate}}, Second: {{duplicate}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -427,7 +427,7 @@ ${fields}
 ${fieldRefs}`;
 
       const startTime = Date.now();
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
       const endTime = Date.now();
@@ -452,7 +452,7 @@ contract_amount: $50000
 Client {{client_name}} agrees to pay {{contract_amount}}.
 As per |payment|, terms apply.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -487,14 +487,14 @@ name: Second Doc
 Document: {{name}}`;
 
       // Process first document
-      await processLegalMarkdownWithRemark(content1, {
+      await processLegalMarkdown(content1, {
         enableFieldTracking: true
       });
 
       const fieldsAfterFirst = fieldTracker.getFields().size;
 
       // Process second document (should clear and start fresh)
-      await processLegalMarkdownWithRemark(content2, {
+      await processLegalMarkdown(content2, {
         enableFieldTracking: true
       });
 
@@ -513,7 +513,7 @@ undefined_in_yaml: null
 
 Value: {{undefined_in_yaml}}, Missing: {{completely_missing}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 
@@ -532,7 +532,7 @@ null_val: null
 
 Zero: {{zero}}, False: {{false_val}}, Empty: {{empty_string}}, Null: {{null_val}}`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         enableFieldTracking: true
       });
 

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -66,7 +66,7 @@ Este es el final del documento.
   it('should convert headers in imported files to proper HTML headings', async () => {
     const mainContent = fs.readFileSync(mainFile, 'utf-8');
 
-    const result = await processLegalMarkdownWithRemark(mainContent, {
+    const result = await processLegalMarkdown(mainContent, {
       basePath: tempDir,
       debug: false,
     });
@@ -90,7 +90,7 @@ Este es el final del documento.
   it('should process headers in both main and imported files', async () => {
     const mainContent = fs.readFileSync(mainFile, 'utf-8');
 
-    const result = await processLegalMarkdownWithRemark(mainContent, {
+    const result = await processLegalMarkdown(mainContent, {
       basePath: tempDir,
       debug: false,
     });
@@ -115,7 +115,7 @@ Este es el final del documento.
   it('should preserve cross-reference markers in imported headers', async () => {
     const mainContent = fs.readFileSync(mainFile, 'utf-8');
 
-    const result = await processLegalMarkdownWithRemark(mainContent, {
+    const result = await processLegalMarkdown(mainContent, {
       basePath: tempDir,
       debug: false,
     });

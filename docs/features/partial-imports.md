@@ -31,6 +31,26 @@ l. Terms and Conditions
 @import boilerplate/footer.md
 ```
 
+### Quoted Paths
+
+Use double quotes when the file path contains spaces:
+
+```markdown
+@import "clauses/non compete agreement.md"
+
+@import "legal docs/standard terms.md"
+```
+
+Both quoted and unquoted paths are supported:
+
+```markdown
+@import clauses/confidentiality.md # unquoted (no spaces) @import "clauses/non
+compete agreement.md" # quoted (has spaces)
+```
+
+Quoted paths are recommended on systems where folder names commonly contain
+spaces (e.g., macOS, Google Drive synced folders).
+
 ### File Structure Example
 
 ```text
@@ -339,12 +359,9 @@ templates/
 title: 'Custom Enterprise Agreement'
 ---
 
-@import metadata/enterprise-defaults.md
-@import metadata/client-defaults.md
-@import contracts/base-contract.md
-@import clauses/confidentiality.md
-@import clauses/warranty.md
-@import metadata/compliance-eu.md
+@import metadata/enterprise-defaults.md @import metadata/client-defaults.md
+@import contracts/base-contract.md @import clauses/confidentiality.md @import
+clauses/warranty.md @import metadata/compliance-eu.md
 ```
 
 ## Best Practices

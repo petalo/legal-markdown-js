@@ -47,7 +47,7 @@ usage and the recommended steps to diagnose them.
 - **CLI errors** - capture command, environment, `--debug` output and relevant
   metadata files; open an issue referencing architecture document sections if
   the pipeline order seems incorrect
-- **Web UI issues** - reproduce via `npm run web`, open browser devtools,
+- **Web UI issues** - reproduce via `npm run dev:web`, open browser devtools,
   inspect worker messages logged from pipeline phases
 - **Performance regressions** - rerun
   `tests/integration/pipeline-3-phase.integration.test.ts` and profile Phase 2

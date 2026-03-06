@@ -596,7 +596,7 @@ document:
   type: 'service_agreement'
   version: '3.1'
   reference:
-    "PSA-{{formatDate(@today, 'YYYYMMDD')}}-{{upper(initials(client.name))}}"
+    "PSA-{{formatDate @today 'YYYYMMDD'}}-{{upper (initials client.name)}}"
 
 parties:
   provider:
@@ -634,9 +634,9 @@ effective_date: '@today'
 ```yaml
 ---
 invoice:
-  number: "INV-{{formatDate(@today, 'YYYYMMDD')}}-001"
+  number: "INV-{{formatDate @today 'YYYYMMDD'}}-001"
   date: '@today'
-  due_date: '{{addDays(@today, 30)}}'
+  due_date: '{{addDays @today 30}}'
 
 client:
   name: 'Acme Corporation'
@@ -677,6 +677,11 @@ currency: 'USD'
 **Total:**
 {{formatCurrency((items.0.hours * items.0.rate + items.1.hours * items.1.rate) * (1 + tax_rate), currency)}}
 ```
+
+## Implementation Notes
+
+- Active implementation: `src/extensions/ast-mixin-processor.ts`
+- Deprecated legacy module: removed (kept only in git history)
 
 ## See Also
 

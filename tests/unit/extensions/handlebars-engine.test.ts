@@ -17,11 +17,16 @@
  * - Handlebars options object filtering
  */
 
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   handlebarsInstance,
   compileHandlebarsTemplate,
   registerCustomHelper,
 } from '../../../src/extensions/handlebars-engine';
+import {
+  setFieldTrackingEnabled,
+  isFieldTrackingEnabled,
+} from '../../../src/extensions/tracking/field-tracking-state';
 
 describe('Handlebars Engine', () => {
   // ==========================================================================
@@ -35,18 +40,17 @@ describe('Handlebars Engine', () => {
     });
 
     it('should handle multiple variables', () => {
-      const result = compileHandlebarsTemplate(
-        '{{firstName}} {{lastName}}',
-        { firstName: 'John', lastName: 'Doe' }
-      );
+      const result = compileHandlebarsTemplate('{{firstName}} {{lastName}}', {
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       expect(result).toBe('John Doe');
     });
 
     it('should handle nested object properties', () => {
-      const result = compileHandlebarsTemplate(
-        '{{person.name}} is {{person.age}} years old',
-        { person: { name: 'Alice', age: 30 } }
-      );
+      const result = compileHandlebarsTemplate('{{person.name}} is {{person.age}} years old', {
+        person: { name: 'Alice', age: 30 },
+      });
       expect(result).toBe('Alice is 30 years old');
     });
 
@@ -85,19 +89,17 @@ describe('Handlebars Engine', () => {
     describe('formatBasicDate', () => {
       it('should format dates with DD/MM/YYYY pattern', () => {
         const testDate = new Date('2025-03-15');
-        const result = compileHandlebarsTemplate(
-          '{{formatBasicDate date "DD/MM/YYYY"}}',
-          { date: testDate }
-        );
+        const result = compileHandlebarsTemplate('{{formatBasicDate date "DD/MM/YYYY"}}', {
+          date: testDate,
+        });
         expect(result).toBe('15/03/2025');
       });
 
       it('should format dates with YYYY-MM-DD pattern', () => {
         const testDate = new Date('2025-03-15');
-        const result = compileHandlebarsTemplate(
-          '{{formatBasicDate date "YYYY-MM-DD"}}',
-          { date: testDate }
-        );
+        const result = compileHandlebarsTemplate('{{formatBasicDate date "YYYY-MM-DD"}}', {
+          date: testDate,
+        });
         expect(result).toBe('2025-03-15');
       });
     });
@@ -166,10 +168,9 @@ describe('Handlebars Engine', () => {
     describe('formatDate', () => {
       it('should format dates with various patterns', () => {
         const testDate = new Date('2025-03-15T10:30:00');
-        const result = compileHandlebarsTemplate(
-          '{{formatDate date "MMMM Do, YYYY"}}',
-          { date: testDate }
-        );
+        const result = compileHandlebarsTemplate('{{formatDate date "MMMM Do, YYYY"}}', {
+          date: testDate,
+        });
         expect(result).toContain('March');
         expect(result).toContain('2025');
       });
@@ -188,18 +189,16 @@ describe('Handlebars Engine', () => {
       });
 
       it('should format currency with specific currency code', () => {
-        const result = compileHandlebarsTemplate(
-          '{{formatCurrency price "EUR"}}',
-          { price: 1234.56 }
-        );
+        const result = compileHandlebarsTemplate('{{formatCurrency price "EUR"}}', {
+          price: 1234.56,
+        });
         expect(result).toContain('1,234.56');
       });
 
       it('should format currency with custom decimal places', () => {
-        const result = compileHandlebarsTemplate(
-          '{{formatCurrency price "USD" 0}}',
-          { price: 1234.56 }
-        );
+        const result = compileHandlebarsTemplate('{{formatCurrency price "USD" 0}}', {
+          price: 1234.56,
+        });
         expect(result).toContain('1,235'); // Rounded
       });
 
@@ -217,10 +216,7 @@ describe('Handlebars Engine', () => {
       });
 
       it('should format integers with custom separator', () => {
-        const result = compileHandlebarsTemplate(
-          '{{formatInteger num "."}}',
-          { num: 1234567 }
-        );
+        const result = compileHandlebarsTemplate('{{formatInteger num "."}}', { num: 1234567 });
         expect(result).toBe('1.234.567');
       });
 
@@ -292,10 +288,9 @@ describe('Handlebars Engine', () => {
 
     describe('capitalizeWords', () => {
       it('should capitalize each word', () => {
-        const result = compileHandlebarsTemplate(
-          '{{capitalizeWords text}}',
-          { text: 'hello world' }
-        );
+        const result = compileHandlebarsTemplate('{{capitalizeWords text}}', {
+          text: 'hello world',
+        });
         expect(result).toBe('Hello World');
       });
     });
@@ -316,10 +311,9 @@ describe('Handlebars Engine', () => {
 
     describe('titleCase', () => {
       it('should convert to title case', () => {
-        const result = compileHandlebarsTemplate(
-          '{{titleCase text}}',
-          { text: 'the quick brown fox' }
-        );
+        const result = compileHandlebarsTemplate('{{titleCase text}}', {
+          text: 'the quick brown fox',
+        });
         expect(result).toBe('The Quick Brown Fox');
       });
     });
@@ -354,36 +348,28 @@ describe('Handlebars Engine', () => {
 
     describe('truncate', () => {
       it('should truncate long strings', () => {
-        const result = compileHandlebarsTemplate(
-          '{{truncate text 10}}',
-          { text: 'This is a very long text' }
-        );
+        const result = compileHandlebarsTemplate('{{truncate text 10}}', {
+          text: 'This is a very long text',
+        });
         expect(result.length).toBeLessThanOrEqual(13); // 10 + "..." = 13
       });
 
       it('should use custom suffix', () => {
-        const result = compileHandlebarsTemplate(
-          '{{truncate text 10 " [...]"}}',
-          { text: 'This is a very long text' }
-        );
+        const result = compileHandlebarsTemplate('{{truncate text 10 " [...]"}}', {
+          text: 'This is a very long text',
+        });
         expect(result).toContain('[...]');
       });
 
       it('should handle Handlebars options object gracefully', () => {
-        const result = compileHandlebarsTemplate(
-          '{{truncate "Hello World" 5}}',
-          {}
-        );
+        const result = compileHandlebarsTemplate('{{truncate "Hello World" 5}}', {});
         expect(result.length).toBeLessThanOrEqual(8); // 5 + "..."
       });
     });
 
     describe('clean', () => {
       it('should remove extra whitespace', () => {
-        const result = compileHandlebarsTemplate(
-          '{{clean text}}',
-          { text: '  hello   world  ' }
-        );
+        const result = compileHandlebarsTemplate('{{clean text}}', { text: '  hello   world  ' });
         expect(result).toBe('hello world');
       });
     });
@@ -411,20 +397,18 @@ describe('Handlebars Engine', () => {
 
     describe('contains', () => {
       it('should check if string contains substring', () => {
-        const result = compileHandlebarsTemplate(
-          '{{contains text "world"}}',
-          { text: 'hello world' }
-        );
+        const result = compileHandlebarsTemplate('{{contains text "world"}}', {
+          text: 'hello world',
+        });
         expect(result).toBe('true');
       });
     });
 
     describe('replaceAll', () => {
       it('should replace all occurrences', () => {
-        const result = compileHandlebarsTemplate(
-          '{{replaceAll text "o" "0"}}',
-          { text: 'hello world' }
-        );
+        const result = compileHandlebarsTemplate('{{replaceAll text "o" "0"}}', {
+          text: 'hello world',
+        });
         expect(result).toBe('hell0 w0rld');
       });
     });
@@ -507,23 +491,25 @@ describe('Handlebars Engine', () => {
 
   describe('concat helper', () => {
     it('should concatenate multiple strings', () => {
-      const result = compileHandlebarsTemplate(
-        '{{concat prefix name suffix}}',
-        { prefix: 'Mr. ', name: 'John Doe', suffix: ' Esq.' }
-      );
+      const result = compileHandlebarsTemplate('{{concat prefix name suffix}}', {
+        prefix: 'Mr. ',
+        name: 'John Doe',
+        suffix: ' Esq.',
+      });
       expect(result).toBe('Mr. John Doe Esq.');
     });
 
     it('should concatenate literals and variables', () => {
-      const result = compileHandlebarsTemplate(
-        '{{concat "$" price}}',
-        { price: '100' }
-      );
+      const result = compileHandlebarsTemplate('{{concat "$" price}}', { price: '100' });
       expect(result).toBe('$100');
     });
 
     it('should handle empty strings', () => {
-      const result = compileHandlebarsTemplate('{{concat a b c}}', { a: 'hello', b: '', c: 'world' });
+      const result = compileHandlebarsTemplate('{{concat a b c}}', {
+        a: 'hello',
+        b: '',
+        c: 'world',
+      });
       expect(result).toBe('helloworld');
     });
   });
@@ -538,7 +524,9 @@ describe('Handlebars Engine', () => {
         '{{#trackField "clientName"}}{{name}}{{/trackField}}',
         { name: 'John Doe' }
       );
-      expect(result).toBe('<span class="legal-md-field" data-field="clientName">John Doe</span>');
+      expect(result).toBe(
+        '<span class="legal-field imported-value" data-field="clientName">John Doe</span>'
+      );
     });
 
     it('should preserve content formatting', () => {
@@ -558,62 +546,51 @@ describe('Handlebars Engine', () => {
   describe('Built-in Block Helpers', () => {
     describe('if helper', () => {
       it('should render block when condition is true', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#if active}}Active{{/if}}',
-          { active: true }
-        );
+        const result = compileHandlebarsTemplate('{{#if active}}Active{{/if}}', { active: true });
         expect(result).toBe('Active');
       });
 
       it('should not render block when condition is false', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#if active}}Active{{/if}}',
-          { active: false }
-        );
+        const result = compileHandlebarsTemplate('{{#if active}}Active{{/if}}', { active: false });
         expect(result).toBe('');
       });
 
       it('should support else clause', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#if active}}Active{{else}}Inactive{{/if}}',
-          { active: false }
-        );
+        const result = compileHandlebarsTemplate('{{#if active}}Active{{else}}Inactive{{/if}}', {
+          active: false,
+        });
         expect(result).toBe('Inactive');
       });
     });
 
     describe('unless helper', () => {
       it('should render block when condition is false', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#unless completed}}Pending{{/unless}}',
-          { completed: false }
-        );
+        const result = compileHandlebarsTemplate('{{#unless completed}}Pending{{/unless}}', {
+          completed: false,
+        });
         expect(result).toBe('Pending');
       });
 
       it('should not render block when condition is true', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#unless completed}}Pending{{/unless}}',
-          { completed: true }
-        );
+        const result = compileHandlebarsTemplate('{{#unless completed}}Pending{{/unless}}', {
+          completed: true,
+        });
         expect(result).toBe('');
       });
     });
 
     describe('each helper', () => {
       it('should iterate over array', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#each items}}{{this}} {{/each}}',
-          { items: ['A', 'B', 'C'] }
-        );
+        const result = compileHandlebarsTemplate('{{#each items}}{{this}} {{/each}}', {
+          items: ['A', 'B', 'C'],
+        });
         expect(result).toBe('A B C ');
       });
 
       it('should provide @index variable', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#each items}}{{@index}}:{{this}} {{/each}}',
-          { items: ['A', 'B', 'C'] }
-        );
+        const result = compileHandlebarsTemplate('{{#each items}}{{@index}}:{{this}} {{/each}}', {
+          items: ['A', 'B', 'C'],
+        });
         expect(result).toBe('0:A 1:B 2:C ');
       });
 
@@ -635,10 +612,9 @@ describe('Handlebars Engine', () => {
       });
 
       it('should iterate over object properties', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#each person}}{{@key}}: {{this}} {{/each}}',
-          { person: { name: 'John', age: 30 } }
-        );
+        const result = compileHandlebarsTemplate('{{#each person}}{{@key}}: {{this}} {{/each}}', {
+          person: { name: 'John', age: 30 },
+        });
         expect(result).toContain('name: John');
         expect(result).toContain('age: 30');
       });
@@ -646,10 +622,9 @@ describe('Handlebars Engine', () => {
 
     describe('with helper', () => {
       it('should change context', () => {
-        const result = compileHandlebarsTemplate(
-          '{{#with person}}{{name}} is {{age}}{{/with}}',
-          { person: { name: 'John', age: 30 } }
-        );
+        const result = compileHandlebarsTemplate('{{#with person}}{{name}} is {{age}}{{/with}}', {
+          person: { name: 'John', age: 30 },
+        });
         expect(result).toBe('John is 30');
       });
     });
@@ -682,34 +657,27 @@ describe('Handlebars Engine', () => {
     });
 
     it('should combine helpers with block helpers', () => {
-      const result = compileHandlebarsTemplate(
-        '{{#each items}}{{upper this}} {{/each}}',
-        { items: ['hello', 'world'] }
-      );
+      const result = compileHandlebarsTemplate('{{#each items}}{{upper this}} {{/each}}', {
+        items: ['hello', 'world'],
+      });
       expect(result).toBe('HELLO WORLD ');
     });
 
     it('should handle deeply nested object access', () => {
-      const result = compileHandlebarsTemplate(
-        '{{company.department.team.lead.name}}',
-        {
-          company: {
-            department: {
-              team: {
-                lead: { name: 'Alice' },
-              },
+      const result = compileHandlebarsTemplate('{{company.department.team.lead.name}}', {
+        company: {
+          department: {
+            team: {
+              lead: { name: 'Alice' },
             },
           },
-        }
-      );
+        },
+      });
       expect(result).toBe('Alice');
     });
 
     it('should combine multiple helpers in sequence', () => {
-      const result = compileHandlebarsTemplate(
-        '{{upper (capitalize name)}}',
-        { name: 'john' }
-      );
+      const result = compileHandlebarsTemplate('{{upper (capitalize name)}}', { name: 'john' });
       expect(result).toBe('JOHN');
     });
 
@@ -728,42 +696,27 @@ describe('Handlebars Engine', () => {
 
   describe('Error Handling', () => {
     it('should handle undefined variables gracefully', () => {
-      const result = compileHandlebarsTemplate(
-        'Hello {{undefinedVar}}!',
-        {}
-      );
+      const result = compileHandlebarsTemplate('Hello {{undefinedVar}}!', {});
       expect(result).toBe('Hello !');
     });
 
     it('should handle null values', () => {
-      const result = compileHandlebarsTemplate(
-        'Value: {{value}}',
-        { value: null }
-      );
+      const result = compileHandlebarsTemplate('Value: {{value}}', { value: null });
       expect(result).toBe('Value: ');
     });
 
     it('should handle empty strings', () => {
-      const result = compileHandlebarsTemplate(
-        'Name: {{name}}',
-        { name: '' }
-      );
+      const result = compileHandlebarsTemplate('Name: {{name}}', { name: '' });
       expect(result).toBe('Name: ');
     });
 
     it('should handle zero values', () => {
-      const result = compileHandlebarsTemplate(
-        'Count: {{count}}',
-        { count: 0 }
-      );
+      const result = compileHandlebarsTemplate('Count: {{count}}', { count: 0 });
       expect(result).toBe('Count: 0');
     });
 
     it('should handle false boolean values', () => {
-      const result = compileHandlebarsTemplate(
-        'Active: {{active}}',
-        { active: false }
-      );
+      const result = compileHandlebarsTemplate('Active: {{active}}', { active: false });
       expect(result).toBe('Active: false');
     });
 
@@ -865,10 +818,9 @@ describe('Handlebars Engine', () => {
       const largeArray = Array.from({ length: 1000 }, (_, i) => i);
       const start = Date.now();
 
-      const result = compileHandlebarsTemplate(
-        '{{#each items}}{{this}}{{/each}}',
-        { items: largeArray }
-      );
+      const result = compileHandlebarsTemplate('{{#each items}}{{this}}{{/each}}', {
+        items: largeArray,
+      });
 
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(1000); // Should complete in less than 1 second
@@ -882,20 +834,16 @@ describe('Handlebars Engine', () => {
     });
 
     it('should handle special HTML characters', () => {
-      const result = compileHandlebarsTemplate(
-        '{{text}}',
-        { text: '<script>alert("xss")</script>' }
-      );
+      const result = compileHandlebarsTemplate('{{text}}', {
+        text: '<script>alert("xss")</script>',
+      });
       // Handlebars escapes HTML by default
       expect(result).not.toContain('<script>');
       expect(result).toContain('&lt;');
     });
 
     it('should handle Unicode characters', () => {
-      const result = compileHandlebarsTemplate(
-        '{{text}}',
-        { text: 'Hello 世界 🌍' }
-      );
+      const result = compileHandlebarsTemplate('{{text}}', { text: 'Hello 世界 🌍' });
       expect(result).toBe('Hello 世界 🌍');
     });
 
@@ -905,13 +853,282 @@ describe('Handlebars Engine', () => {
     });
 
     it('should handle arrays with mixed types', () => {
-      const result = compileHandlebarsTemplate(
-        '{{#each items}}{{this}} {{/each}}',
-        { items: [1, 'two', true, null, undefined] }
-      );
+      const result = compileHandlebarsTemplate('{{#each items}}{{this}} {{/each}}', {
+        items: [1, 'two', true, null, undefined],
+      });
       expect(result).toContain('1');
       expect(result).toContain('two');
       expect(result).toContain('true');
+    });
+  });
+
+  // ==========================================================================
+  // FIELD TRACKING — yellow (highlight) spans for data-formatting helpers
+  // ==========================================================================
+
+  describe('field tracking – helper yellow spans', () => {
+    afterEach(() => {
+      setFieldTrackingEnabled(false);
+    });
+
+    it('isFieldTrackingEnabled reflects setFieldTrackingEnabled', () => {
+      setFieldTrackingEnabled(true);
+      expect(isFieldTrackingEnabled()).toBe(true);
+      setFieldTrackingEnabled(false);
+      expect(isFieldTrackingEnabled()).toBe(false);
+    });
+
+    it('formatDate wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{formatDate date "YYYY-MM-DD"}}', {
+        date: '2026-03-03',
+      });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('data-field="date"');
+      expect(result).toContain('2026-03-03');
+    });
+
+    it('formatDate returns plain string when tracking disabled', () => {
+      setFieldTrackingEnabled(false);
+      const result = compileHandlebarsTemplate('{{formatDate date "YYYY-MM-DD"}}', {
+        date: '2026-03-03',
+      });
+      expect(result).not.toContain('legal-field');
+      expect(result).not.toContain('<span');
+    });
+
+    it('formatDate as subexpression does NOT wrap (avoids breaking comparisons)', () => {
+      setFieldTrackingEnabled(true);
+      // Used as subexpression in eq — must return plain string so equality works
+      const result = compileHandlebarsTemplate(
+        '{{#if (eq (formatDate date "YYYY-MM-DD") "2026-03-03")}}yes{{/if}}',
+        { date: '2026-03-03' }
+      );
+      expect(result).toBe('yes');
+    });
+
+    it('formatCurrency wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{formatCurrency amount "USD"}}', {
+        amount: 1234.56,
+      });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('data-field="amount"');
+    });
+
+    it('numberToWords wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{numberToWords n}}', { n: 42 });
+      expect(result).toContain('class="legal-field highlight"');
+    });
+
+    it('multiply wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{multiply a b}}', { a: 3, b: 4 });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('12');
+    });
+
+    it('multiply as subexpression in gt does NOT wrap', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{#if (gt (multiply a b) 10)}}big{{/if}}', {
+        a: 3,
+        b: 4,
+      });
+      expect(result).toBe('big');
+    });
+
+    it('concat wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{concat first " " last}}', {
+        first: 'John',
+        last: 'Doe',
+      });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('John Doe');
+    });
+
+    it('upper wraps output with highlight span when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{upper name}}', { name: 'alice' });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('data-field="name"');
+      expect(result).toContain('ALICE');
+    });
+
+    it('titleCase top-level helper uses source field path when uniquely inferable', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{titleCase name}}', { name: 'acme corp' });
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('data-field="name"');
+      expect(result).toContain('Acme Corp');
+    });
+
+    it('case-conversion helpers wrap output when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const camel = compileHandlebarsTemplate('{{camelCase text}}', { text: 'acme corp' });
+      const pascal = compileHandlebarsTemplate('{{pascalCase text}}', { text: 'acme corp' });
+      const kebab = compileHandlebarsTemplate('{{kebabCase text}}', { text: 'acme corp' });
+      const snake = compileHandlebarsTemplate('{{snakeCase text}}', { text: 'acme corp' });
+
+      expect(camel).toContain('class="legal-field highlight"');
+      expect(camel).toContain('data-field="text"');
+      expect(pascal).toContain('data-field="text"');
+      expect(kebab).toContain('data-field="text"');
+      expect(snake).toContain('data-field="text"');
+    });
+
+    it('numeric helper outputs wrap when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      const abs = compileHandlebarsTemplate('{{abs n}}', { n: -42 });
+      const max = compileHandlebarsTemplate('{{max a b}}', { a: 10, b: 25 });
+      const min = compileHandlebarsTemplate('{{min a b}}', { a: 10, b: 25 });
+      const modulo = compileHandlebarsTemplate('{{modulo a b}}', { a: 17, b: 5 });
+      const power = compileHandlebarsTemplate('{{power a b}}', { a: 2, b: 10 });
+
+      expect(abs).toContain('data-field="n"');
+      expect(max).toContain('data-field="max"');
+      expect(min).toContain('data-field="min"');
+      expect(modulo).toContain('data-field="modulo"');
+      expect(power).toContain('data-field="power"');
+    });
+
+    it('tracked subexpressions preserve #if/#unless logic truthiness', () => {
+      setFieldTrackingEnabled(true);
+      const ifLength = compileHandlebarsTemplate('{{#if (length items)}}yes{{else}}no{{/if}}', {
+        items: [],
+      });
+      const ifContains = compileHandlebarsTemplate(
+        '{{#if (contains text "z")}}yes{{else}}no{{/if}}',
+        {
+          text: 'abc',
+        }
+      );
+      const unlessContains = compileHandlebarsTemplate(
+        '{{#unless (contains text "z")}}no-match{{else}}match{{/unless}}',
+        { text: 'abc' }
+      );
+
+      expect(ifLength).toBe('no');
+      expect(ifContains).toBe('no');
+      expect(unlessContains).toBe('no-match');
+    });
+
+    it('boolean helpers (eq, gt) are never wrapped even when tracking enabled', () => {
+      setFieldTrackingEnabled(true);
+      // eq and gt return booleans — no span, and their use in #if must still work
+      const result = compileHandlebarsTemplate('{{#if (gt amount 100)}}high{{else}}low{{/if}}', {
+        amount: 200,
+      });
+      expect(result).toBe('high');
+      expect(result).not.toContain('legal-field');
+    });
+
+    it('formatDate as subexpression in eq comparison works correctly', () => {
+      setFieldTrackingEnabled(true);
+      // Regression: formatDate returned a TrackedValue that broke eq comparison
+      const result = compileHandlebarsTemplate(
+        '{{#if (eq (formatDate date "YYYY-MM-DD") "2026-03-03")}}yes{{/if}}',
+        { date: '2026-03-03' }
+      );
+      expect(result).toBe('yes');
+    });
+  });
+
+  // ==========================================================================
+  // SUBEXPRESSION CHAINING WITH FIELD TRACKING
+  // ==========================================================================
+
+  describe('helper subexpression chaining with field tracking', () => {
+    afterEach(() => {
+      setFieldTrackingEnabled(false);
+    });
+
+    it('upper(titleCase(x)) – string helper chain resolves without crash', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{upper (titleCase name)}}', {
+        name: 'acme technologies llc',
+      });
+      // The outer upper should produce the uppercased text inside a tracking span
+      expect(result).toContain('ACME TECHNOLOGIES LLC');
+      expect(result).toContain('class="legal-field highlight"');
+      expect(result).toContain('data-field="name"');
+      expect(result).not.toContain('data-field="titleCase"');
+    });
+
+    it('upper(titleCase(x)) works with tracking disabled', () => {
+      setFieldTrackingEnabled(false);
+      const result = compileHandlebarsTemplate('{{upper (titleCase name)}}', {
+        name: 'acme technologies llc',
+      });
+      expect(result).toBe('ACME TECHNOLOGIES LLC');
+    });
+
+    it('formatDate(addYears(date, n)) – date helper chain resolves without crash', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate(
+        '{{formatDate (addYears effectiveDate 2) "YYYY-MM-DD"}}',
+        { effectiveDate: '2026-01-15' }
+      );
+      expect(result).toContain('2028-01-15');
+      expect(result).toContain('class="legal-field highlight"');
+    });
+
+    it('formatDate(addDays(date, n)) – addDays subexpression resolves correctly', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate(
+        '{{formatDate (addDays effectiveDate 30) "YYYY-MM-DD"}}',
+        { effectiveDate: '2026-01-01' }
+      );
+      expect(result).toContain('2026-01-31');
+    });
+
+    it('formatDate(addMonths(addYears(date, y), m)) – deeply nested date chain', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate(
+        '{{formatDate (addMonths (addYears effectiveDate 2) 3) "YYYY-MM-DD"}}',
+        { effectiveDate: '2026-01-15' }
+      );
+      expect(result).toContain('2028-04-15');
+    });
+
+    it('capitalize(numberToWords(add(add(a, b), c))) – full MSA fee chain', () => {
+      setFieldTrackingEnabled(true);
+      // Mirrors: {{capitalize (numberToWords (add (add fee1 fee2) fee3))}}
+      const result = compileHandlebarsTemplate('{{capitalize (numberToWords (add (add a b) c))}}', {
+        a: 10000,
+        b: 20000,
+        c: 30000,
+      });
+      expect(result).toContain('Sixty thousand');
+      expect(result).toContain('class="legal-field highlight"');
+    });
+
+    it('formatDollar(add(a, b)) – number format helper receiving math subexpression', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{formatDollar (add price tax)}}', {
+        price: 100,
+        tax: 15,
+      });
+      expect(result).toContain('115');
+    });
+
+    it('concat with tracked subexpression does not emit nested span markup', () => {
+      setFieldTrackingEnabled(true);
+      const result = compileHandlebarsTemplate('{{concat "REF-" (padStart "42" 4 "0") "-A"}}', {});
+      expect(result).toContain('data-field="concat"');
+      expect(result).toContain('REF-0042-A');
+      expect(result).not.toContain('data-field="padStart"');
+    });
+
+    it('titleCase as subexpression in eq comparison works correctly', () => {
+      setFieldTrackingEnabled(true);
+      // titleCase returns TrackedValue; eq must unwrap it for comparison
+      const result = compileHandlebarsTemplate(
+        '{{#if (eq (titleCase name) "Acme Corp")}}match{{/if}}',
+        { name: 'acme corp' }
+      );
+      expect(result).toBe('match');
     });
   });
 });

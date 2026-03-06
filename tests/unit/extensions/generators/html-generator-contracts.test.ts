@@ -163,6 +163,96 @@ describe('HtmlGenerator - Contract Tests', () => {
     });
   });
 
+  describe('Metadata meta tags', () => {
+    it('should render primitive string values as meta tags', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      const result = await generator.generateHtml(markdown, {
+        metadata: { title: 'My Contract', version: '1.0' },
+      });
+
+      expect(result).toContain('<meta name="title" content="My Contract">');
+      expect(result).toContain('<meta name="version" content="1.0">');
+    });
+
+    it('should render number and boolean values as meta tags', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      const result = await generator.generateHtml(markdown, {
+        metadata: { pages: 12, signed: true },
+      });
+
+      expect(result).toContain('<meta name="pages" content="12">');
+      expect(result).toContain('<meta name="signed" content="true">');
+    });
+
+    it('should not render [object Object] for nested object values', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      // Simulates what the pipeline passes: YAML sections are plain objects
+      const result = await generator.generateHtml(markdown, {
+        metadata: {
+          title: 'Contract',
+          lessor: { company_name: 'Acme', address: '123 Main St' },
+          payment: { monthly_rent: 5000, currency: 'USD' },
+        },
+      });
+
+      expect(result).not.toContain('[object Object]');
+      // The primitive title should still appear
+      expect(result).toContain('<meta name="title" content="Contract">');
+      // The object keys should not produce meta tags at all
+      expect(result).not.toContain('name="lessor"');
+      expect(result).not.toContain('name="payment"');
+    });
+
+    it('should not render [object Map] for Map values', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      const result = await generator.generateHtml(markdown, {
+        metadata: { _field_mappings: new Map([['key', 'val']]) },
+      });
+
+      expect(result).not.toContain('[object Map]');
+      expect(result).not.toContain('name="_field_mappings"');
+    });
+
+    it('should not render meta tags for array values', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      const result = await generator.generateHtml(markdown, {
+        metadata: { services: ['cleaning', 'security'] },
+      });
+
+      expect(result).not.toContain('name="services"');
+    });
+
+    it('should handle mixed metadata with primitive and object values', async () => {
+      const markdown = asMarkdown('# Doc');
+
+      // Real-world scenario: full YAML frontmatter passed as metadata
+      const result = await generator.generateHtml(markdown, {
+        metadata: {
+          title: 'Office Lease',
+          date: '2024-01-15',
+          contract: { signing_date: '2024-01-15', city: 'SF' },
+          lessor: { company_name: 'Prop Mgmt LLC' },
+          maintenance_included: true,
+          _field_mappings: new Map(),
+          _cross_references: '',
+        },
+      });
+
+      expect(result).not.toContain('[object Object]');
+      expect(result).not.toContain('[object Map]');
+      expect(result).toContain('<meta name="title" content="Office Lease">');
+      expect(result).toContain('<meta name="date" content="2024-01-15">');
+      expect(result).toContain('<meta name="maintenance_included" content="true">');
+      // Empty string is a valid primitive - it produces an empty meta tag
+      expect(result).toContain('<meta name="_cross_references" content="">');
+    });
+  });
+
   describe('HTML Entity Handling', () => {
     it('should distinguish between HTML entities and actual tags', async () => {
       // &lt; and &gt; are HTML entities, not tags, so this is valid Markdown

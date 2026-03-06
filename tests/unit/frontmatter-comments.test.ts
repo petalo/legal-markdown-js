@@ -21,7 +21,7 @@ describe('Frontmatter Comments Bug', () => {
     }
   });
 
-  it('should not process frontmatter comments as markdown headers', () => {
+  it('should not process frontmatter comments as markdown headers', async () => {
     // Contenido con comentarios en frontmatter como el que reporta el usuario
     const importContent = `---
 # Definición y cálculo del Valor Total de la Transacción (VTT) y la comisión aplicable según la fórmula Modern Lehman.
@@ -58,14 +58,14 @@ version: "1.0"
 Fin del documento.
 `;
 
-    const result = processLegalMarkdown(mainContent, {
+    const result = await processLegalMarkdown(mainContent, {
       basePath: testDir,
-      noImports: false
+      noImports: false,
     });
 
     // Verificar si realmente hay comentarios que se procesen mal
     const hasCommentsAsHeaders = result.content.includes('# Definición y cálculo');
-    
+
     // Escribir el resultado a un archivo para debugging
     // Eliminamos la escritura de archivos de depuración innecesarios
     // fs.writeFileSync(path.join(testDir, 'debug-output.md'), result.content);
@@ -84,10 +84,11 @@ Fin del documento.
     // Solo los metadatos del documento principal deben estar presentes
     expect(result.metadata).toEqual({
       _cross_references: [],
+      _field_mappings: expect.any(Map),
       title: 'Documento Principal',
-      version: '1.0'
+      version: '1.0',
     });
-    
+
     // Los metadatos malformados no deben estar presentes
     expect(result.metadata).not.toHaveProperty('descuento');
   });

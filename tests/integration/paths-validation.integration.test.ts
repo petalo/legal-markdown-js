@@ -1,6 +1,6 @@
 /**
  * @fileoverview Integration tests for path validation and error handling
- * 
+ *
  * Tests real-world scenarios where:
  * - Configured paths don't exist
  * - Permission issues with directories
@@ -10,17 +10,18 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { htmlGenerator } from '../../src/extensions/generators/html-generator';
 import { CliService } from '../../src/cli/service';
-import { RESOLVED_PATHS } from '../../src/constants/paths';
-import { vi } from 'vitest';
+import { PATHS, RESOLVED_PATHS } from '../../src/constants/paths';
+import { setRuntimeConfig } from '../../src/config/runtime';
+import { DEFAULT_CONFIG } from '../../src/config/schema';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Path Validation Integration Tests', () => {
   const testDir = path.join(__dirname, '../tmp/path-validation');
-  const originalEnv = process.env;
 
   beforeAll(async () => {
     // Create test directory structure
@@ -46,72 +47,79 @@ describe('Path Validation Integration Tests', () => {
           // Ignore permission errors during cleanup
         }
       };
-      
+
       await restorePermissions(testDir);
       await fs.rm(testDir, { recursive: true, force: true });
     } catch {
       // Ignore cleanup errors
     }
-    process.env = originalEnv;
+    setRuntimeConfig(DEFAULT_CONFIG);
   });
 
   beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv };
+    setRuntimeConfig(DEFAULT_CONFIG);
   });
 
   describe('Non-existent directories', () => {
     it('should handle missing styles directory gracefully in HTML generator', async () => {
       // Set non-existent styles directory
-      process.env.STYLES_DIR = path.join(testDir, 'non-existent-styles');
-      
-      // Re-import modules to pick up new environment
-      vi.resetModules();
-      const { htmlGenerator: freshHtmlGenerator } = await import('../../src/extensions/generators/html-generator');
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          styles: path.join(testDir, 'non-existent-styles'),
+        },
+      });
+
       const markdown = '# Test Document\n\nThis is a test.';
-      
+
       // Should not throw, but might not load custom CSS
-      await expect(freshHtmlGenerator.generateHtml(markdown, {
-        cssPath: undefined, // Use default CSS which won't exist
-      })).resolves.toBeDefined();
+      await expect(
+        htmlGenerator.generateHtml(markdown as any, {
+          cssPath: undefined, // Use default CSS which won't exist
+        })
+      ).resolves.toBeDefined();
     });
 
     it('should handle missing input directory in CLI service', async () => {
       // Set non-existent input directory
-      process.env.DEFAULT_INPUT_DIR = path.join(testDir, 'non-existent-input');
-      
-      // Re-import modules to pick up new environment
-      vi.resetModules();
-      const { CliService: FreshCliService } = await import('../../src/cli/service');
-      
-      const cliService = new FreshCliService({
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          input: path.join(testDir, 'non-existent-input'),
+        },
+      });
+
+      const cliService = new CliService({
         basePath: path.join(testDir, 'non-existent-input'),
       });
-      
+
       const testFile = path.join(testDir, 'test-input.md');
       await fs.writeFile(testFile, '# Test\n\nContent');
-      
+
       // Should handle missing base path gracefully
       await expect(cliService.processFile(testFile)).resolves.toBeUndefined();
     });
 
     it('should create output directory if it does not exist', async () => {
       const outputDir = path.join(testDir, 'auto-created-output');
-      process.env.DEFAULT_OUTPUT_DIR = outputDir;
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          output: outputDir,
+        },
+      });
+
       // Ensure directory doesn't exist
       await fs.rm(outputDir, { recursive: true, force: true });
-      
-      // Re-import modules
-      vi.resetModules();
-      const { RESOLVED_PATHS: freshResolvedPaths } = await import('../../src/constants/paths');
-      
-      expect(freshResolvedPaths.DEFAULT_OUTPUT_DIR).toBe(path.resolve(outputDir));
-      
+
+      expect(RESOLVED_PATHS.DEFAULT_OUTPUT_DIR).toBe(path.resolve(outputDir));
+
       // Verify directory doesn't exist yet
       await expect(fs.access(outputDir)).rejects.toThrow();
-      
+
       // The directory should be created when actually needed by the application
       // (This would be tested in actual usage scenarios)
     });
@@ -137,27 +145,31 @@ describe('Path Validation Integration Tests', () => {
 
       // Ensure directory is created fresh
       await fs.mkdir(readOnlyDir, { recursive: true });
-      
+
       // Create a CSS file
       const cssFile = path.join(readOnlyDir, 'test.css');
       await fs.writeFile(cssFile, 'body { color: red; }');
-      
+
       // Make directory read-only (if running on Unix-like systems)
       if (process.platform !== 'win32') {
         await fs.chmod(readOnlyDir, 0o444);
       }
-      
-      process.env.STYLES_DIR = readOnlyDir;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { htmlGenerator: freshHtmlGenerator } = await import('../../src/extensions/generators/html-generator');
-      
+
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          styles: readOnlyDir,
+        },
+      });
+
       // Should be able to read CSS file even from read-only directory
-      await expect(freshHtmlGenerator.generateHtml('# Test', {
-        cssPath: cssFile,
-      })).resolves.toBeDefined();
-      
+      await expect(
+        htmlGenerator.generateHtml('# Test' as any, {
+          cssPath: cssFile,
+        })
+      ).resolves.toBeDefined();
+
       // Restore permissions for cleanup
       if (process.platform !== 'win32') {
         await fs.chmod(readOnlyDir, 0o755);
@@ -169,27 +181,29 @@ describe('Path Validation Integration Tests', () => {
     it('should handle paths with invalid characters', async () => {
       // Test with a specific problematic character
       const problematicPath = 'path/with|pipe';
-      process.env.STYLES_DIR = problematicPath;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { PATHS, RESOLVED_PATHS } = await import('../../src/constants/paths');
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          styles: problematicPath,
+        },
+      });
+
       // Should store the path as-is (validation happens at filesystem level)
       expect(PATHS.STYLES_DIR).toBe(problematicPath);
-      
+
       // Test actual filesystem behavior - should fail gracefully
       const testCssContent = 'body { color: red; }';
       const invalidCssPath = path.join(RESOLVED_PATHS.STYLES_DIR, 'test.css');
-      
+
       try {
         await fs.mkdir(RESOLVED_PATHS.STYLES_DIR, { recursive: true });
         await fs.writeFile(invalidCssPath, testCssContent);
-        
+
         // If creation succeeds on this platform, verify we can read it back
         const content = await fs.readFile(invalidCssPath, 'utf8');
         expect(content).toBe(testCssContent);
-        
+
         // Cleanup
         await fs.rm(RESOLVED_PATHS.STYLES_DIR, { recursive: true, force: true });
       } catch (error) {
@@ -201,23 +215,27 @@ describe('Path Validation Integration Tests', () => {
 
     it('should handle paths with angle brackets', async () => {
       const problematicPath = 'path/with<angle>brackets';
-      process.env.STYLES_DIR = problematicPath;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { PATHS } = await import('../../src/constants/paths');
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          styles: problematicPath,
+        },
+      });
+
       expect(PATHS.STYLES_DIR).toBe(problematicPath);
     });
 
     it('should handle extremely long paths', async () => {
       const longPath = 'a'.repeat(1000); // Very long path
-      process.env.IMAGES_DIR = longPath;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { PATHS, RESOLVED_PATHS } = await import('../../src/constants/paths');
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          images: longPath,
+        },
+      });
+
       expect(PATHS.IMAGES_DIR).toBe(longPath);
       expect(RESOLVED_PATHS.IMAGES_DIR).toBe(path.resolve(process.cwd(), longPath));
     });
@@ -226,12 +244,14 @@ describe('Path Validation Integration Tests', () => {
   describe('Path resolution edge cases', () => {
     it('should handle circular references in paths', async () => {
       const circularPath = '../../../legal-markdown-js/src/styles/../styles';
-      process.env.STYLES_DIR = circularPath;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { RESOLVED_PATHS } = await import('../../src/constants/paths');
-      
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          styles: circularPath,
+        },
+      });
+
       // path.resolve should normalize the circular reference
       const normalizedPath = path.resolve(process.cwd(), circularPath);
       expect(RESOLVED_PATHS.STYLES_DIR).toBe(normalizedPath);
@@ -240,76 +260,67 @@ describe('Path Validation Integration Tests', () => {
     it('should handle symlinks correctly', async () => {
       const realDir = path.join(testDir, 'real-styles');
       const symlinkDir = path.join(testDir, 'symlink-styles');
-      
+
       await fs.mkdir(realDir, { recursive: true });
-      
+
       try {
         // Create symlink (might fail on Windows without admin privileges)
         await fs.symlink(realDir, symlinkDir);
-        
-        process.env.STYLES_DIR = symlinkDir;
-        
-        // Re-import modules
-        delete require.cache[require.resolve('../../src/constants/paths')];
-        const { RESOLVED_PATHS } = require('../../src/constants/paths');
-        
+
+        setRuntimeConfig({
+          ...DEFAULT_CONFIG,
+          paths: {
+            ...DEFAULT_CONFIG.paths,
+            styles: symlinkDir,
+          },
+        });
+
         // Should resolve to the symlink path, not the real path
         expect(RESOLVED_PATHS.STYLES_DIR).toBe(path.resolve(process.cwd(), symlinkDir));
-        
+
         // Cleanup symlink
         await fs.unlink(symlinkDir);
       } catch (error) {
         // Skip test if symlinks aren't supported (e.g., Windows without admin)
-        console.warn('Skipping symlink test:', error instanceof Error ? error.message : String(error));
+        console.warn(
+          'Skipping symlink test:',
+          error instanceof Error ? error.message : String(error)
+        );
       }
     });
   });
 
   describe('Environment variable precedence', () => {
-    it('should prioritize environment variables over defaults', async () => {
-      // Mock env-discovery to not load any .env file
-      vi.doMock('../../src/utils/env-discovery', () => ({
-        discoverAndLoadEnv: vi.fn(() => null)
-      }));
-      
-      process.env.IMAGES_DIR = 'env-images';
-      process.env.STYLES_DIR = 'env-styles';
-      delete process.env.DEFAULT_INPUT_DIR; // Ensure it uses default
-      delete process.env.DEFAULT_OUTPUT_DIR; // Ensure it uses default
-      
-      // Re-import modules
-      vi.resetModules();
-      const { PATHS } = await import('../../src/constants/paths');
-      
+    it('should prioritize runtime config values over defaults', async () => {
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          images: 'env-images',
+          styles: 'env-styles',
+        },
+      });
+
       expect(PATHS.IMAGES_DIR).toBe('env-images');
       expect(PATHS.STYLES_DIR).toBe('env-styles');
-      expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Should use default
-      expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('output'); // Should use default
-      
-      vi.unmock('../../src/utils/env-discovery');
+      expect(PATHS.DEFAULT_INPUT_DIR).toBe('.'); // Should use default
+      expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('.'); // Should use default
     });
 
-    it('should handle mixed environment and default values', async () => {
-      // Mock env-discovery to not load any .env file
-      vi.doMock('../../src/utils/env-discovery', () => ({
-        discoverAndLoadEnv: vi.fn(() => null)
-      }));
-      
-      process.env.IMAGES_DIR = 'custom-images';
-      delete process.env.STYLES_DIR;
-      process.env.DEFAULT_OUTPUT_DIR = 'custom-output';
-      delete process.env.DEFAULT_INPUT_DIR;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { PATHS } = await import('../../src/constants/paths');
-      
+    it('should handle mixed runtime config and default values', async () => {
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          images: 'custom-images',
+          output: 'custom-output',
+        },
+      });
+
       expect(PATHS.IMAGES_DIR).toBe('custom-images');
-      expect(PATHS.STYLES_DIR).toBe('src/styles'); // Default
-      expect(PATHS.DEFAULT_INPUT_DIR).toBe('input'); // Default
+      expect(PATHS.STYLES_DIR).toBe('.'); // Default
+      expect(PATHS.DEFAULT_INPUT_DIR).toBe('.'); // Default
       expect(PATHS.DEFAULT_OUTPUT_DIR).toBe('custom-output');
-      
-      vi.unmock('../../src/utils/env-discovery');
     });
   });
 
@@ -318,28 +329,34 @@ describe('Path Validation Integration Tests', () => {
       // Create real directories and files
       const testImagesDir = path.join(testDir, 'real-images');
       const testStylesDir = path.join(testDir, 'real-styles');
-      
+
       await fs.mkdir(testImagesDir, { recursive: true });
       await fs.mkdir(testStylesDir, { recursive: true });
-      
+
       // Create test files
       await fs.writeFile(path.join(testImagesDir, 'test.png'), 'fake-png-data');
       await fs.writeFile(path.join(testStylesDir, 'test.css'), 'body { margin: 0; }');
-      
-      process.env.IMAGES_DIR = testImagesDir;
-      process.env.STYLES_DIR = testStylesDir;
-      
-      // Re-import modules
-      vi.resetModules();
-      const { RESOLVED_PATHS } = await import('../../src/constants/paths');
-      
+
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        paths: {
+          ...DEFAULT_CONFIG.paths,
+          images: testImagesDir,
+          styles: testStylesDir,
+        },
+      });
+
       // Verify paths resolve correctly
       expect(RESOLVED_PATHS.IMAGES_DIR).toBe(path.resolve(testImagesDir));
       expect(RESOLVED_PATHS.STYLES_DIR).toBe(path.resolve(testStylesDir));
-      
+
       // Verify files can be accessed
-      await expect(fs.access(path.join(RESOLVED_PATHS.IMAGES_DIR, 'test.png'))).resolves.toBeUndefined();
-      await expect(fs.access(path.join(RESOLVED_PATHS.STYLES_DIR, 'test.css'))).resolves.toBeUndefined();
+      await expect(
+        fs.access(path.join(RESOLVED_PATHS.IMAGES_DIR, 'test.png'))
+      ).resolves.toBeUndefined();
+      await expect(
+        fs.access(path.join(RESOLVED_PATHS.STYLES_DIR, 'test.css'))
+      ).resolves.toBeUndefined();
     });
   });
 });

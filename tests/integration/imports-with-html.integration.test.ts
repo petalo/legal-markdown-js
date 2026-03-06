@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 import { writeFileSync, unlinkSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -90,7 +90,7 @@ Regular paragraph.`
 
 # Conclusion`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -114,7 +114,7 @@ Regular paragraph.`
 @import ./with-comments.md
 <!-- Second comment -->`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -139,7 +139,7 @@ Regular paragraph.`
 
 # Next Section`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -166,7 +166,7 @@ Regular markdown
 
 More regular markdown`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -191,7 +191,7 @@ section_title: My Special Section
 
 # Document End`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -232,7 +232,7 @@ End of nested section`
 
 # Conclusion`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -280,7 +280,7 @@ l. **Conclusion**
 
 Document executed on this date.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
       });
 
@@ -322,7 +322,7 @@ title: Test Document
 
 Regular content.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -361,7 +361,7 @@ Before
 @import ./comments-only.md
 After`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -390,7 +390,7 @@ Regular content
 
 @import ./malformed.md`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled
@@ -413,7 +413,7 @@ Regular content
 
 @import ./long-comment.md`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: tempDir,
         noHeaders: true,
         noReferences: true, // Disable cross-references since headers are disabled

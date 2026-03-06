@@ -3,7 +3,7 @@
 
 # Purchase Ticket - {{ ticketNumber }}
 
-**Date:** {{now "DD/MM/YYYY"}} **Store:** {{ storeName }}  
+**Date:** {{formatDate @today "DD/MM/YYYY"}} **Store:** {{ storeName }}  
 **Cashier:** {{ cashierName }}
 
 </div>

@@ -13,14 +13,17 @@
  */
 
 import { generateHtml, generatePdf, generatePdfVersions } from '../../src/index';
+import { isPdfAvailable } from '../../src/extensions/generators';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // PDF generation timeout - higher in CI environments for slower systems
 const PDF_TIMEOUT = process.env.CI ? 45000 : 30000;
+const pdfAvailable = await isPdfAvailable();
+const describePdf = pdfAvailable ? describe.sequential : describe.sequential.skip;
 
 // Use sequential execution to avoid Puppeteer race conditions (Issue #144)
-describe.sequential('PDF Generation Integration', () => {
+describePdf('PDF Generation Integration', () => {
   /**
    * Sample legal document content with YAML frontmatter and template variables.
    * Includes conditional rendering and missing field scenarios to test error handling.
@@ -40,7 +43,7 @@ hasClause: true
 
 This agreement is between {{party1.name}} ({{party1.email}}) and {{party2.company}}.
 
-{{party2.name ? party2.name : "[Party 2 Name Missing]"}}
+{{#if party2.name}}{{party2.name}}{{else}}[Party 2 Name Missing]{{/if}}
 
 Missing field: {{missing_field}}
 
@@ -49,8 +52,12 @@ Missing field: {{missing_field}}
 This clause is included conditionally.
 {{/hasClause}}`;
 
-  /** Directory for test output files */
-  const outputDir = path.join(__dirname, '../output');
+  /** Unique directory for test output files */
+  const outputDir = path.join(
+    __dirname,
+    '../output',
+    `pdf-generation-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  );
 
   /**
    * Setup test environment with output directory
@@ -59,33 +66,12 @@ This clause is included conditionally.
     await fs.mkdir(outputDir, { recursive: true });
   });
 
-  /**
-   * Clean up generated test files to prevent test pollution
-   */
+  /** Clean up generated test files to prevent test pollution */
   afterAll(async () => {
     try {
-      // Clean up generated files
-      const files = await fs.readdir(outputDir);
-      for (const file of files) {
-        if (file.startsWith('test-')) {
-          const filePath = path.join(outputDir, file);
-          try {
-            // Check if file exists before attempting to delete
-            await fs.stat(filePath);
-            await fs.unlink(filePath);
-          } catch (unlinkError: any) {
-            // Ignore file not found errors
-            if (unlinkError.code !== 'ENOENT') {
-              console.warn(`Warning: Could not delete test file ${filePath}:`, unlinkError.message);
-            }
-          }
-        }
-      }
-    } catch (readdirError: any) {
-      // Ignore if output directory doesn't exist
-      if (readdirError.code !== 'ENOENT') {
-        console.warn('Warning: Could not read output directory for cleanup:', readdirError.message);
-      }
+      await fs.rm(outputDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup failures to avoid false negatives.
     }
   });
 
@@ -108,8 +94,9 @@ This clause is included conditionally.
       expect(html).toContain('Special Clause');
       // HTML should always contain field tracking classes for structure
       expect(html).toContain('class="legal-field imported-value"');
-      // But should NOT contain the highlight.css styles
-      expect(html).not.toContain('border: 1px solid #0066cc');
+      // But should NOT contain highlight.css tokens
+      expect(html).not.toContain('--highlight-imported-border: #0066cc');
+      expect(html).not.toContain('border: 1px solid var(--highlight-imported-border)');
     });
 
     /**
@@ -129,8 +116,10 @@ This clause is included conditionally.
       expect(html).toContain('John Doe');
       expect(html).toContain('john@example.com');
       // Should include the highlight.css styles
-      expect(html).toContain('border: 1px solid #0066cc');
-      expect(html).toContain('border: 1px solid #dc3545');
+      expect(html).toContain('--highlight-imported-border: #0066cc');
+      expect(html).toContain('--highlight-missing-border: #dc3545');
+      expect(html).toContain('border: 1px solid var(--highlight-imported-border)');
+      expect(html).toContain('border: 1px solid var(--highlight-missing-border)');
     });
 
     /**
@@ -157,93 +146,109 @@ This clause is included conditionally.
      * Verifies complete pipeline: template → HTML → PDF conversion using Puppeteer.
      * This is an integration test because it tests the full document generation workflow.
      */
-    it('should generate a basic PDF', async () => {
-      const pdfPath = path.join(outputDir, 'test-basic.pdf');
+    it(
+      'should generate a basic PDF',
+      async () => {
+        const pdfPath = path.join(outputDir, 'test-basic.pdf');
 
-      const buffer = await generatePdf(testContent, pdfPath, {
-        title: 'Test PDF',
-      });
+        const buffer = await generatePdf(testContent, pdfPath, {
+          title: 'Test PDF',
+        });
 
-      expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.length).toBeGreaterThan(1000); // PDF should have some content
+        expect(buffer).toBeInstanceOf(Buffer);
+        expect(buffer.length).toBeGreaterThan(1000); // PDF should have some content
 
-      // Verify file was written
-      const stats = await fs.stat(pdfPath);
-      expect(stats.size).toBeGreaterThan(1000);
-    }, PDF_TIMEOUT);
+        // Verify file was written
+        const stats = await fs.stat(pdfPath);
+        expect(stats.size).toBeGreaterThan(1000);
+      },
+      PDF_TIMEOUT
+    );
 
     /**
      * Test PDF generation with field highlighting for document review.
      * Verifies that template fields are visually highlighted in the PDF output
      * for easier identification during legal review processes.
      */
-    it('should generate PDF with highlighting', async () => {
-      const pdfPath = path.join(outputDir, 'test-highlighted.pdf');
+    it(
+      'should generate PDF with highlighting',
+      async () => {
+        const pdfPath = path.join(outputDir, 'test-highlighted.pdf');
 
-      const buffer = await generatePdf(testContent, pdfPath, {
-        title: 'Test PDF',
-        includeHighlighting: true,
-      });
+        const buffer = await generatePdf(testContent, pdfPath, {
+          title: 'Test PDF',
+          includeHighlighting: true,
+        });
 
-      expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.length).toBeGreaterThan(1000);
-    }, PDF_TIMEOUT);
+        expect(buffer).toBeInstanceOf(Buffer);
+        expect(buffer.length).toBeGreaterThan(1000);
+      },
+      PDF_TIMEOUT
+    );
 
     /**
      * Test simultaneous generation of normal and highlighted PDF versions.
      * Verifies the generatePdfVersions utility function that creates both
      * a clean version (for final documents) and a highlighted version (for review).
      */
-    it('should generate both normal and highlighted PDF versions', async () => {
-      const basePath = path.join(outputDir, 'test-versions.pdf');
+    it(
+      'should generate both normal and highlighted PDF versions',
+      async () => {
+        const basePath = path.join(outputDir, 'test-versions.pdf');
 
-      const { normal, highlighted } = await generatePdfVersions(testContent, basePath, {
-        title: 'Test PDF Versions',
-      });
+        const { normal, highlighted } = await generatePdfVersions(testContent, basePath, {
+          title: 'Test PDF Versions',
+        });
 
-      expect(normal).toBeInstanceOf(Buffer);
-      expect(highlighted).toBeInstanceOf(Buffer);
+        expect(normal).toBeInstanceOf(Buffer);
+        expect(highlighted).toBeInstanceOf(Buffer);
 
-      // Add delay to ensure files are written to disk (longer in CI)
-      await new Promise(resolve => setTimeout(resolve, process.env.CI ? 1500 : 500));
+        // Add delay to ensure files are written to disk (longer in CI)
+        await new Promise(resolve => setTimeout(resolve, process.env.CI ? 1500 : 500));
 
-      // Verify both files were created with retry mechanism
-      const maxRetries = process.env.CI ? 20 : 10;
-      let normalStats, highlightedStats;
+        // Verify both files were created with retry mechanism
+        const maxRetries = process.env.CI ? 20 : 10;
+        let normalStats, highlightedStats;
 
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          normalStats = await fs.stat(path.join(outputDir, 'test-versions.pdf'));
-          highlightedStats = await fs.stat(path.join(outputDir, 'test-versions.HIGHLIGHT.pdf'));
-          break;
-        } catch (error) {
-          if (i === maxRetries - 1) {
-            console.error('Files not found after', maxRetries, 'retries');
-            throw error;
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            normalStats = await fs.stat(path.join(outputDir, 'test-versions.pdf'));
+            highlightedStats = await fs.stat(path.join(outputDir, 'test-versions.HIGHLIGHT.pdf'));
+            break;
+          } catch (error) {
+            if (i === maxRetries - 1) {
+              console.error('Files not found after', maxRetries, 'retries');
+              throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, process.env.CI ? 200 : 100));
           }
-          await new Promise(resolve => setTimeout(resolve, process.env.CI ? 200 : 100));
         }
-      }
 
-      expect(normalStats!.size).toBeGreaterThan(1000);
-      expect(highlightedStats!.size).toBeGreaterThan(1000);
-    }, PDF_TIMEOUT);
+        expect(normalStats!.size).toBeGreaterThan(1000);
+        expect(highlightedStats!.size).toBeGreaterThan(1000);
+      },
+      PDF_TIMEOUT
+    );
 
     /**
      * Test PDF generation with different page formats (Letter, A4, etc.).
      * Verifies that the PDF generation pipeline correctly handles
      * various page size requirements for different jurisdictions.
      */
-    it('should handle different page formats', async () => {
-      const pdfPath = path.join(outputDir, 'test-letter.pdf');
+    it(
+      'should handle different page formats',
+      async () => {
+        const pdfPath = path.join(outputDir, 'test-letter.pdf');
 
-      const buffer = await generatePdf(testContent, pdfPath, {
-        title: 'Test PDF',
-        format: 'Letter',
-      });
+        const buffer = await generatePdf(testContent, pdfPath, {
+          title: 'Test PDF',
+          format: 'Letter',
+        });
 
-      expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.length).toBeGreaterThan(1000);
-    }, PDF_TIMEOUT);
+        expect(buffer).toBeInstanceOf(Buffer);
+        expect(buffer.length).toBeGreaterThan(1000);
+      },
+      PDF_TIMEOUT
+    );
   });
 });

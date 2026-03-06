@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Handlebars + Optional Clauses Integration', () => {
   describe('Helpers Inside Optional Clauses', () => {

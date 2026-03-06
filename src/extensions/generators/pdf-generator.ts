@@ -29,7 +29,6 @@
  * ```
  */
 
-import * as puppeteer from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
@@ -46,6 +45,36 @@ const currentDir = getCurrentDir();
 import { htmlGenerator, HtmlGeneratorOptions } from './html-generator';
 import { PdfTemplates } from './pdf-templates';
 import { PDF_TEMPLATE_CONSTANTS, RESOLVED_PATHS } from '../../constants/index';
+import { PdfDependencyError } from '../../errors';
+import type * as Puppeteer from 'puppeteer';
+
+type PuppeteerModule = typeof import('puppeteer');
+
+let puppeteerModule: PuppeteerModule | null = null;
+
+async function loadPuppeteer(): Promise<PuppeteerModule> {
+  if (puppeteerModule) {
+    return puppeteerModule;
+  }
+
+  try {
+    puppeteerModule = await import('puppeteer');
+    return puppeteerModule;
+  } catch (error) {
+    throw new PdfDependencyError(undefined, {
+      cause: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function isPdfAvailable(): Promise<boolean> {
+  try {
+    await import('puppeteer');
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Configuration options for PDF generation
@@ -332,7 +361,7 @@ async function downloadAndEncodeImage(logoUrl: string): Promise<string> {
  * ```
  */
 export class PdfGenerator {
-  private puppeteerOptions: puppeteer.LaunchOptions;
+  private puppeteerOptions: Puppeteer.LaunchOptions;
 
   /**
    * Creates a new PDF generator instance
@@ -568,7 +597,7 @@ export class PdfGenerator {
       } else {
         throw new Error('Chrome installation failed');
       }
-    } catch (npxError) {
+    } catch (_npxError) {
       logger.error('❌ Failed to automatically install Chrome.');
       logger.error('📋 Chrome Setup Status:');
 
@@ -719,7 +748,7 @@ export class PdfGenerator {
     outputPath: string,
     options: PdfGeneratorOptions = {}
   ): Promise<Buffer> {
-    let browser: puppeteer.Browser | null = null;
+    let browser: Puppeteer.Browser | null = null;
     let tempHtmlPath: string | null = null;
 
     try {
@@ -736,6 +765,8 @@ export class PdfGenerator {
       await fs.mkdir(tempDir, { recursive: true });
       tempHtmlPath = path.join(tempDir, `temp-${Date.now()}.html`);
       await fs.writeFile(tempHtmlPath, htmlContent, 'utf-8');
+
+      const puppeteer = await loadPuppeteer();
 
       // Ensure Chrome is available before launching
       await this.ensureChrome();
@@ -777,7 +808,7 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
       });
 
       // Configure PDF options
-      const pdfOptions: puppeteer.PDFOptions = {
+      const pdfOptions: Puppeteer.PDFOptions = {
         path: outputPath,
         format: options.format || 'A4',
         landscape: options.landscape || false,
@@ -936,7 +967,7 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
     outputPath: string,
     options: PdfGeneratorOptions = {}
   ): Promise<Buffer> {
-    let browser: puppeteer.Browser | null = null;
+    let browser: Puppeteer.Browser | null = null;
     let tempHtmlPath: string | null = null;
 
     try {
@@ -950,6 +981,8 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
       await fs.mkdir(tempDir, { recursive: true });
       tempHtmlPath = path.join(tempDir, `temp-${Date.now()}.html`);
       await fs.writeFile(tempHtmlPath, htmlContent, 'utf-8');
+
+      const puppeteer = await loadPuppeteer();
 
       // Ensure Chrome is available before launching
       await this.ensureChrome();
@@ -995,7 +1028,7 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
       await fs.mkdir(outputDir, { recursive: true });
 
       // Configure PDF options
-      const pdfOptions: puppeteer.PDFOptions = {
+      const pdfOptions: Puppeteer.PDFOptions = {
         path: outputPath,
         format: options.format || 'A4',
         landscape: options.landscape || false,
@@ -1174,3 +1207,11 @@ Original error: ${launchError instanceof Error ? launchError.message : String(la
  * ```
  */
 export const pdfGenerator = new PdfGenerator();
+
+// Exported for testing - not part of public API
+export {
+  loadPuppeteer as _loadPuppeteer,
+  loadAndEncodeImage as _loadAndEncodeImage,
+  downloadAndEncodeImage as _downloadAndEncodeImage,
+  detectLogoFromCSS as _detectLogoFromCSS,
+};

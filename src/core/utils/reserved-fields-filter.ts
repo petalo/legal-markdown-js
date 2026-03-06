@@ -87,12 +87,12 @@ export const RESERVED_FIELDS = [
 /**
  * Type for reserved field names
  */
-export type ReservedField = (typeof RESERVED_FIELDS)[number];
+type ReservedField = (typeof RESERVED_FIELDS)[number];
 
 /**
  * Options for filtering reserved fields
  */
-export interface FilterOptions {
+interface FilterOptions {
   /** Whether to log filtered fields for debugging */
   logFiltered?: boolean;
   /** Custom list of additional fields to filter */
@@ -127,17 +127,16 @@ export interface FilterOptions {
  * ```
  */
 export function filterReservedFields(
-  metadata: Record<string, any>,
+  metadata: Record<string, unknown>,
   options: FilterOptions = {}
-): Record<string, any> {
+): Record<string, unknown> {
   if (!metadata || typeof metadata !== 'object') {
     return metadata;
   }
 
   const { logFiltered = false, additionalReserved = [], strictMode = false } = options;
 
-  const filtered: Record<string, any> = {};
-  const allReservedFields = [...RESERVED_FIELDS, ...additionalReserved];
+  const filtered: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(metadata)) {
     if (isReservedField(key, { additionalReserved, strictMode })) {
@@ -263,7 +262,7 @@ export function getReservedFieldsByCategory(): Record<string, string[]> {
  * ```
  */
 export function validateNoReservedFields(
-  metadata: Record<string, any>,
+  metadata: Record<string, unknown>,
   options: FilterOptions = {}
 ): {
   isValid: boolean;
@@ -320,5 +319,5 @@ export function validateNoReservedFields(
  * ```
  */
 export function createFieldFilter(options: FilterOptions = {}) {
-  return (metadata: Record<string, any>) => filterReservedFields(metadata, options);
+  return (metadata: Record<string, unknown>) => filterReservedFields(metadata, options);
 }

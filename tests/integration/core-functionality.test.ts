@@ -1,7 +1,7 @@
 import { processLegalMarkdown } from '../../src/index';
 
 describe('Core Legal Markdown (without RST/LaTeX)', () => {
-  it('should process basic legal markdown', () => {
+  it('should process basic legal markdown', async () => {
     const content = `---
 title: Test Agreement
 party1: John Doe
@@ -20,19 +20,19 @@ The following terms apply:
 2. Second term
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).toContain('Test Agreement');
     expect(result.content).toContain('John Doe');
     expect(result.content).toContain('Jane Smith');
-    expect(result.metadata).toEqual({
-      _cross_references: [],
+    expect(result.metadata).toMatchObject({
       title: 'Test Agreement',
       party1: 'John Doe',
-      party2: 'Jane Smith'
+      party2: 'Jane Smith',
     });
+    expect(result.metadata._field_mappings).toBeInstanceOf(Map);
   });
 
-  it('should process optional clauses', () => {
+  it('should process optional clauses', async () => {
     const content = `---
 include_warranty: false
 ---
@@ -52,14 +52,17 @@ This section includes warranty information.
 These are the final terms.
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).not.toContain('Warranty');
     expect(result.content).toContain('Final Terms');
   });
 
-  it('should process cross-references', () => {
+  it('should process cross-references', async () => {
     const content = `---
 title: Test Agreement
+level-one: "Article %n."
+level-two: "Section %n."
+level-three: "(%n)"
 ---
 
 # {{title}}
@@ -73,13 +76,16 @@ This is section A.
 This section references {{section-a}}.
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).toContain('Section A');
   });
 
-  it('should process headers with numbering', () => {
+  it('should process headers with numbering', async () => {
     const content = `---
 title: Test Agreement
+level-one: "Article %n."
+level-two: "Section %n."
+level-three: "(%n)"
 ---
 
 # {{title}}
@@ -89,13 +95,13 @@ ll. Second Level
 lll. Third Level
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).toContain('Article 1. First Level');
     expect(result.content).toContain('Section 1. Second Level');
     expect(result.content).toContain('(1) Third Level');
   });
 
-  it('should track fields when enabled', () => {
+  it('should track fields when enabled', async () => {
     const content = `---
 title: Test Agreement
 party1: John Doe
@@ -106,17 +112,17 @@ party1: John Doe
 This agreement is for {{party1}}.
 `;
 
-    const result = processLegalMarkdown(content, {
-      enableFieldTracking: true
+    const result = await processLegalMarkdown(content, {
+      enableFieldTracking: true,
     });
 
     expect(result.fieldReport).toBeDefined();
-    expect(result.fieldReport?.fields).toHaveLength(2);
-    expect(result.fieldReport?.fields.some(f => f.name === 'title')).toBe(true);
-    expect(result.fieldReport?.fields.some(f => f.name === 'party1')).toBe(true);
+    expect(result.fieldReport?.fields).toBeInstanceOf(Map);
+    expect(result.fieldReport?.fields.has('title')).toBe(true);
+    expect(result.fieldReport?.fields.has('party1')).toBe(true);
   });
 
-  it('should work without pandoc dependencies', () => {
+  it('should work without pandoc dependencies', async () => {
     // Mock pandoc as unavailable by testing regular markdown
     const content = `---
 title: Test Agreement
@@ -127,30 +133,32 @@ title: Test Agreement
 This is regular markdown content.
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).toContain('Test Agreement');
     expect(result.metadata?.title).toBe('Test Agreement');
   });
 
-  it('should handle empty content gracefully', () => {
-    const result = processLegalMarkdown('');
+  it('should handle empty content gracefully', async () => {
+    const result = await processLegalMarkdown('');
     expect(result.content).toBe('');
-    expect(result.metadata).toEqual({ _cross_references: [] });
+    expect(result.metadata).toMatchObject({});
+    expect(result.metadata._field_mappings).toBeInstanceOf(Map);
   });
 
-  it('should handle content without YAML frontmatter', () => {
+  it('should handle content without YAML frontmatter', async () => {
     const content = `
 # Simple Document
 
 This is a simple document without YAML frontmatter.
 `;
 
-    const result = processLegalMarkdown(content);
+    const result = await processLegalMarkdown(content);
     expect(result.content).toContain('Simple Document');
-    expect(result.metadata).toEqual({ _cross_references: [] });
+    expect(result.metadata).toMatchObject({});
+    expect(result.metadata._field_mappings).toBeInstanceOf(Map);
   });
 
-  it('should handle malformed YAML frontmatter gracefully', () => {
+  it('should handle malformed YAML frontmatter gracefully', async () => {
     const content = `---
 title: Test Agreement
 invalid_yaml: [unclosed bracket
@@ -161,8 +169,8 @@ invalid_yaml: [unclosed bracket
 Content here.
 `;
 
-    const result = processLegalMarkdown(content, {
-      throwOnYamlError: false
+    const result = await processLegalMarkdown(content, {
+      throwOnYamlError: false,
     });
     expect(result.content).toContain('Document');
     // Should handle the error gracefully

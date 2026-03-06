@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../../src/extensions/remark/legal-markdown-processor';
 
 describe('Underscore Escaping Fix - Integration', () => {
   it('should correctly process variables with leading underscores', async () => {
@@ -18,7 +18,7 @@ _field: "Value with leading underscore"
 
 Result: {{_field}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Value with leading underscore');
     expect(result.content).not.toContain('{{*field}}'); // Should NOT have asterisk
@@ -32,7 +32,7 @@ field_: "Value with trailing underscore"
 
 Result: {{field_}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Value with trailing underscore');
     expect(result.content).not.toContain('{{field*}}'); // Should NOT have asterisk
@@ -46,7 +46,7 @@ _both_: "Value with both"
 
 Result: {{_both_}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Value with both');
     expect(result.content).not.toContain('{{*both*}}'); // Should NOT have asterisks
@@ -66,7 +66,7 @@ Trailing: {{trailing_}}
 Both: {{_both_}}
 Normal: {{normal_field}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Leading: Leading');
     expect(result.content).toContain('Trailing: Trailing');
@@ -86,7 +86,7 @@ client:
 Client: {{client._name}}
 Address: {{client.address_}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Acme Corp');
     expect(result.content).toContain('123 Main St');
@@ -98,7 +98,7 @@ Address: {{client.address_}}`;
 
 Missing: {{_missing_field}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     // Unresolved fields keep underscores, but they may be escaped (\_)
     // The important thing is they don't become asterisks
@@ -116,7 +116,7 @@ _field: "Value"
 
 **Client: {{_field}}**`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Value');
     expect(result.content).not.toContain('{{*field}}');
@@ -129,7 +129,7 @@ field_: "Value"
 
 *Important: {{field_}}*`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Value');
     expect(result.content).not.toContain('{{field*}}');
@@ -144,7 +144,7 @@ _item2: "Second"
 - {{_item1}}
 - {{_item2}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('First');
     expect(result.content).toContain('Second');
@@ -158,7 +158,7 @@ _title: "Important Section"
 
 ## {{_title}}`;
 
-    const result = await processLegalMarkdownWithRemark(content);
+    const result = await processLegalMarkdown(content);
 
     expect(result.content).toContain('Important Section');
     expect(result.content).not.toContain('{{*title}}');

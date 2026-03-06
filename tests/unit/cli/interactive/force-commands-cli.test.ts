@@ -108,6 +108,7 @@ force_commands: "--invalid-option --another-bad"
       const forceCommands = {
         pdf: true,
         html: true,
+        docx: true,
         highlight: true,
         css: 'contract.css',
         debug: true,
@@ -135,6 +136,7 @@ force_commands: "--invalid-option --another-bad"
       // Verify all mappings
       expect(result.pdf).toBe(true);
       expect(result.html).toBe(true);
+      expect(result.docx).toBe(true);
       expect(result.highlight).toBe(true);
       expect(result.includeHighlighting).toBe(true);
       expect(result.cssPath).toBe('contract.css');
@@ -264,6 +266,7 @@ force_commands: "--invalid-option --another-bad"
       const forceCommands = {
         pdf: true,
         html: true,
+        docx: true,
         highlight: false,
       };
       
@@ -279,10 +282,15 @@ force_commands: "--invalid-option --another-bad"
       if (forceCommands.html) {
         expectedFiles.push(`${outputDir}/${outputBaseName}.html`);
       }
+
+      if (forceCommands.docx) {
+        expectedFiles.push(`${outputDir}/${outputBaseName}.docx`);
+      }
       
       expect(expectedFiles).toEqual([
         '/output/document.pdf',
         '/output/document.html',
+        '/output/document.docx',
       ]);
     });
   });

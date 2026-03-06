@@ -26,5 +26,5 @@
 
 ## 💡 Learn more
 
-- [Feature documentation](../../docs/{RELATED_DOC}.md)
-- [API reference](../../docs/api.md)
+- [Feature documentation](../../docs/README.md)
+- [CLI reference](../../docs/cli_reference.md)

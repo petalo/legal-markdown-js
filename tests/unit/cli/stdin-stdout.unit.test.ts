@@ -16,6 +16,8 @@ import { getBestCliPath } from '../../utils/cli-paths.js';
 
 /** Path to the compiled CLI executable */
 const cliPath = getBestCliPath();
+const CLI_OP_TIMEOUT = process.env.CI ? 30_000 : 15_000;
+const TEST_TIMEOUT = CLI_OP_TIMEOUT + 5_000;
 
 describe('CLI stdin/stdout functionality', () => {
   it('should read from stdin and write to stdout', () => {
@@ -69,7 +71,7 @@ This is test content.
       const timeout = setTimeout(() => {
         child.kill('SIGTERM');
         reject(new Error('Test timed out'));
-      }, 8000);
+      }, CLI_OP_TIMEOUT);
 
       child.on('close', () => {
         clearTimeout(timeout);
@@ -78,7 +80,7 @@ This is test content.
       child.stdin.write(input);
       child.stdin.end();
     });
-  }, 10000);
+  }, TEST_TIMEOUT);
 
   it('should read from stdin and write to file', () => {
     return new Promise<void>((resolve, reject) => {
@@ -145,7 +147,7 @@ This is test content.
           fs.unlinkSync(outputPath);
         }
         reject(new Error('Test timed out'));
-      }, 8000);
+      }, CLI_OP_TIMEOUT);
 
       child.on('close', () => {
         clearTimeout(timeout);
@@ -154,7 +156,7 @@ This is test content.
       child.stdin.write(input);
       child.stdin.end();
     });
-  }, 10000);
+  }, TEST_TIMEOUT);
 
   it('should process file and write to stdout', () => {
     return new Promise<void>((resolve, reject) => {
@@ -227,11 +229,11 @@ This is test content.
           fs.unlinkSync(inputPath);
         }
         reject(new Error('Test timed out'));
-      }, 8000);
+      }, CLI_OP_TIMEOUT);
 
       child.on('close', () => {
         clearTimeout(timeout);
       });
     });
-  }, 10000);
+  }, TEST_TIMEOUT);
 });

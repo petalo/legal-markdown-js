@@ -123,9 +123,9 @@ And:
 
 **{{lessee.company_name}}**, with registered office at
 {{lessee.registered_address}}, and Tax ID
-{{lessee.tax_id ? lessee.tax_id : "[TAX ID REQUIRED]"}}, hereinafter referred to
+{{#if lessee.tax_id}}{{lessee.tax_id}}{{else}}[TAX ID REQUIRED]{{/if}}, hereinafter referred to
 as "THE LESSEE". And on its behalf,
-{{lessee.representative.full_name ? lessee.representative.full_name : "[REPRESENTATIVE NAME REQUIRED]"}}
+{{#if lessee.representative.full_name}}{{lessee.representative.full_name}}{{else}}[REPRESENTATIVE NAME REQUIRED]{{/if}}
 with ID {{lessee.representative.id_number}}.
 
 **The following is hereby agreed**:
@@ -291,7 +291,7 @@ Date: **\*\***\_**\*\***
 
 ---
 
-{{lessee.representative.full_name ? lessee.representative.full_name : "[Name]"}}  
+{{#if lessee.representative.full_name}}{{lessee.representative.full_name}}{{else}}[Name]{{/if}}  
 ID:
 {{lessee.representative.id_number}}  
 Date: **\*\***\_**\*\***

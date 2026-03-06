@@ -73,7 +73,7 @@ legal-md batch ./docs --output ./html --html --extensions .md,.txt --exclude-pat
 | `recursive`         | boolean  | `true`    | Process subdirectories       |
 | `preserveStructure` | boolean  | `true`    | Maintain directory structure |
 | `concurrency`       | number   | `5`       | Number of parallel processes |
-| `onProgress`        | function | -         | Progress callback function   |
+| `onProgress`        | function | ---       | Progress callback function   |
 
 ### Processing Options
 
@@ -92,7 +92,6 @@ const options = {
 
   // Processing settings
   concurrency: 3,
-  outputFormat: 'pdf',
   cssPath: './styles/batch.css',
   includeHighlighting: false,
 
@@ -408,7 +407,6 @@ const contractResult = await processBatch({
 
   // Contract-specific settings
   cssPath: './styles/legal-contract.css',
-  outputFormat: 'pdf',
   includeHighlighting: false,
 
   // Performance for legal docs
@@ -434,14 +432,13 @@ const invoices = await processBatch({
   outputDir: './generated-invoices',
 
   // Invoice settings
-  outputFormat: 'both', // PDF and HTML
   cssPath: './styles/invoice.css',
 
   // File naming
-  outputNaming: (inputFile, outputFormat) => {
+  outputNaming: inputFile => {
     const date = new Date().toISOString().split('T')[0];
     const name = path.basename(inputFile, '.md');
-    return `${name}_${date}.${outputFormat}`;
+    return `${name}_${date}.pdf`;
   },
 
   // Data enrichment
@@ -462,7 +459,6 @@ const docsResult = await processBatch({
   outputDir: './docs-site',
 
   // Web-optimized settings
-  outputFormat: 'html',
   cssPath: './styles/docs.css',
   includeHighlighting: true,
 

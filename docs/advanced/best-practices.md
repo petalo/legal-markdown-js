@@ -266,7 +266,7 @@ optional_vars:
 <!-- Generates unique contract ID: CLIENT_INITIALS + DATE + SEQUENCE -->
 
 Contract ID:
-{{upper(initials(client_name))}}{{formatDate(@today, "YYMMDD")}}{{padStart(sequence_number, 3, "0")}}
+{{upper (initials client_name)}}{{formatDate @today "YYMMDD"}}{{padStart sequence_number 3 "0"}}
 
 <!-- Payment schedule calculation: monthly payments over contract duration -->
 
@@ -540,6 +540,7 @@ imports:
   - './safe-template.md'
   - './legal-clauses.md'
 
+
 # ❌ Dangerous - System configuration injection
 # These fields are automatically filtered in imports:
 # level-one: "malicious format"
@@ -674,7 +675,7 @@ Example: ABC250801001
 -->
 
 Contract ID:
-{{upper(initials(client_name))}}{{formatDate(@today, "YYMMDD")}}{{padStart(sequence_number, 3, "0")}}
+{{upper (initials client_name)}}{{formatDate @today "YYMMDD"}}{{padStart sequence_number 3 "0"}}
 
 <!--
 Payment calculation with currency conversion
@@ -892,7 +893,7 @@ trackTemplateUsage({
   templateId: 'service-agreement-v2',
   userId: 'legal.dept@company.com',
   processingTime: 1250, // milliseconds
-  outputFormat: 'pdf',
+  format: 'pdf',
   success: true,
 });
 ```

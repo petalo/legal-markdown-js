@@ -371,4 +371,95 @@ Legal notice: [{{show_legal_notice}}This document is legally binding]`;
       expect(result).not.toContain('[{{show_note}}');
     });
   });
+
+  describe('Edge Cases Ported from Old Processor Tests', () => {
+    it('should handle nested object equality in bracket syntax', async () => {
+      const input = `[California specific]{location.state == "CA"}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          location: { state: 'CA', city: 'San Francisco' },
+        },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('California specific');
+    });
+
+    it('should handle nested object equality as false in bracket syntax', async () => {
+      const input = `[California specific]{location.state == "NY"}`;
+      const options: RemarkClausesOptions = {
+        metadata: {
+          location: { state: 'CA', city: 'San Francisco' },
+        },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).not.toContain('California specific');
+    });
+
+    it('should handle != operator in bracket syntax', async () => {
+      const input = `[Not standard client]{client_type != "standard"}`;
+      const options: RemarkClausesOptions = {
+        metadata: { client_type: 'premium' },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Not standard client');
+    });
+
+    it('should handle AND and OR combined in bracket syntax', async () => {
+      const input = `[Special offer]{client_type == "premium" && quantity == 100}`;
+      const options: RemarkClausesOptions = {
+        metadata: { client_type: 'premium', quantity: 100 },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Special offer');
+    });
+
+    it('should handle OR in bracket syntax', async () => {
+      const input = `[Eligible]{client_type == "premium" || client_type == "enterprise"}`;
+      const options: RemarkClausesOptions = {
+        metadata: { client_type: 'enterprise' },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Eligible');
+    });
+
+    it('should handle undefined conditions as false in bracket syntax', async () => {
+      const input = `[This should not appear]{undefined_condition}`;
+      const options: RemarkClausesOptions = {
+        metadata: {},
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).not.toContain('This should not appear');
+    });
+
+    it('should handle multiple bracket-syntax clauses in one line', async () => {
+      const input = `[Warranty included]{warranty} and [Support included]{support}.`;
+      const options: RemarkClausesOptions = {
+        metadata: { warranty: true, support: false },
+        debug: false,
+      };
+
+      const result = await processMarkdownWithClauses(input, options);
+
+      expect(result).toContain('Warranty included');
+      expect(result).not.toContain('Support included');
+    });
+  });
 });

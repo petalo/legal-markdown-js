@@ -1,17 +1,20 @@
 # PDF Generation
 
-Generate professional PDF documents with custom styling, logos, and advanced
-formatting options for legal and business documents.
+Generate professional PDF documents with custom styling, logos, and formatting
+options for legal and business documents.
 
 ## Table of Contents
 
 - [Basic PDF Generation](#basic-pdf-generation)
+- [PDF Backend / Connector](#pdf-backend--connector)
 - [PDF Options](#pdf-options)
-- [Logo Headers and Footers](#logo-headers-and-footers)
+- [Auto Headers and Footers](#auto-headers-and-footers)
+- [Logo Detection](#logo-detection)
 - [Template Helpers](#template-helpers)
 - [Advanced Configuration](#advanced-configuration)
 - [Examples](#examples)
 - [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
 
 ## Basic PDF Generation
 
@@ -29,11 +32,15 @@ legal-md document.md --pdf --highlight
 # PDF with custom CSS styling
 legal-md document.md --pdf --css ./styles/contract.css
 
-# PDF with custom format
-legal-md document.md --pdf --format A4 --landscape
+# PDF with a specific connector
+legal-md document.md --pdf --pdf-connector puppeteer
 ```
 
 ### Programmatic Usage
+
+The public `generatePdf` function processes Legal Markdown content and produces
+a PDF buffer. It first runs `processLegalMarkdown` internally, then passes the
+result to the PDF generator.
 
 ```typescript
 import { generatePdf } from 'legal-markdown-js';
@@ -47,149 +54,161 @@ const buffer = await generatePdf(content, 'output.pdf', {
 });
 ```
 
-## PDF Options
+## PDF Backend / Connector
 
-### Core Configuration
+Legal Markdown JS supports three PDF backends. The active connector is chosen
+via the `pdf.connector` config key or the `LEGAL_MD_PDF_CONNECTOR` env var:
 
-| Option                | Type    | Default        | Description                     |
-| --------------------- | ------- | -------------- | ------------------------------- |
-| `title`               | string  | Document title | PDF document title              |
-| `format`              | string  | 'A4'           | Page format (A4, Letter, Legal) |
-| `landscape`           | boolean | false          | Page orientation                |
-| `includeHighlighting` | boolean | false          | Include field highlighting      |
-| `cssPath`             | string  | -              | Path to custom CSS file         |
-| `displayHeaderFooter` | boolean | false          | Show headers and footers        |
+| Connector        | How to install            | Notes                                     |
+| ---------------- | ------------------------- | ----------------------------------------- |
+| `puppeteer`      | `npm install puppeteer`   | Self-contained; most reproducible         |
+| `system-chrome`  | Install Chrome / Chromium | Zero npm footprint; uses existing browser |
+| `weasyprint`     | `pip install weasyprint`  | Python-based; headless-server friendly    |
+| `auto` (default) | ---                       | Tries in the order above; first wins      |
 
-### Format Options
-
-```typescript
-// Available page formats
-const formats = {
-  A4: { width: 8.27, height: 11.7 }, // 210 × 297 mm
-  Letter: { width: 8.5, height: 11 }, // 8.5 × 11 inches
-  Legal: { width: 8.5, height: 14 }, // 8.5 × 14 inches
-  A3: { width: 11.7, height: 16.5 }, // 297 × 420 mm
-};
-
-// Custom page size
-const buffer = await generatePdf(content, 'output.pdf', {
-  format: 'A4',
-  landscape: true,
-  margin: {
-    top: '0.5in',
-    right: '0.5in',
-    bottom: '0.5in',
-    left: '0.5in',
-  },
-});
+```yaml
+# .legalmdrc
+pdf:
+  connector: system-chrome # or puppeteer | weasyprint | auto
 ```
 
-## Logo Headers and Footers
+```bash
+# One-off override
+LEGAL_MD_PDF_CONNECTOR=weasyprint legal-md document.md --pdf
+```
+
+## PDF Options
+
+### Public API Options (`generatePdf`)
+
+These are the options accepted by the top-level `generatePdf()` function
+exported from `legal-markdown-js`:
+
+| Option                | Type    | Default   | Description                                                 |
+| --------------------- | ------- | --------- | ----------------------------------------------------------- |
+| `title`               | string  | from YAML | Document title (falls back to metadata)                     |
+| `format`              | string  | `'A4'`    | Page format: `A4`, `Letter`, or `Legal`                     |
+| `landscape`           | boolean | `false`   | Page orientation                                            |
+| `pdfConnector`        | string  | `'auto'`  | Backend: `auto`, `puppeteer`, `system-chrome`, `weasyprint` |
+| `includeHighlighting` | boolean | `false`   | Include field highlighting styles                           |
+| `cssPath`             | string  | ---       | Path to custom CSS file                                     |
+| `highlightCssPath`    | string  | ---       | Path to highlighting CSS file                               |
+
+All standard `LegalMarkdownOptions` (e.g., `debug`, `enableFieldTracking`) are
+also accepted and forwarded to the processing pipeline.
+
+### Internal `PdfGeneratorOptions`
+
+The internal `PdfGeneratorOptions` interface (used by
+`pdfGenerator.generatePdf`) extends `HtmlGeneratorOptions` and adds these
+PDF-specific properties:
+
+| Option                | Type    | Default   | Description                                     |
+| --------------------- | ------- | --------- | ----------------------------------------------- |
+| `format`              | string  | `'A4'`    | Page format: `A4`, `Letter`, or `Legal`         |
+| `landscape`           | boolean | `false`   | Page orientation                                |
+| `margin`              | object  | see below | Page margins (`top`, `right`, `bottom`, `left`) |
+| `displayHeaderFooter` | boolean | `false`   | Show headers and footers (auto-set to `true`)   |
+| `headerTemplate`      | string  | ---       | Custom HTML template for page headers           |
+| `footerTemplate`      | string  | ---       | Custom HTML template for page footers           |
+| `printBackground`     | boolean | `true`    | Include CSS background colors/images            |
+| `preferCSSPageSize`   | boolean | `false`   | Use CSS page size if specified                  |
+| `cssPath`             | string  | ---       | Path to CSS file (also used for logo detection) |
+| `version`             | string  | ---       | Document version displayed in footer            |
+
+Default margins when auto-generated headers/footers are active:
+
+```typescript
+{ top: '3cm', right: '1cm', bottom: '3cm', left: '1cm' }
+```
+
+Default margins otherwise:
+
+```typescript
+{ top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
+```
+
+## Auto Headers and Footers
+
+When no custom `headerTemplate` or `footerTemplate` is provided, the PDF
+generator automatically generates headers and footers using `PdfTemplates`:
+
+- **Header**: Empty div (no logo) or a right-aligned logo image if a logo is
+  detected from the CSS file.
+- **Footer**: Right-aligned page numbers in the format "Pg: 1 / 10". If a
+  `version` option is provided, it also shows the version on the left side.
+
+When auto-generated templates are active, `displayHeaderFooter` is automatically
+set to `true` and top/bottom margins are increased to 3cm (unless custom margins
+are specified).
+
+If custom `headerTemplate` or `footerTemplate` values are provided, the auto
+behavior is skipped and the custom templates are used as-is.
+
+## Logo Detection
 
 ### Automatic Logo Detection
 
-The PDF generator automatically detects and includes logos when a CSS file
-contains logo configuration:
+The PDF generator automatically detects logos from CSS files when `cssPath` is
+provided. It looks for a `--logo-filename` custom property:
 
 ```css
 /* In your CSS file (e.g., styles/contract.css) */
 :root {
   --logo-filename: logo.company.png;
 }
-
-/* Optional logo styling */
-.header-logo {
-  height: 40px;
-  width: auto;
-}
 ```
 
-```typescript
-import { generatePdf } from 'legal-markdown-js';
-
-// Logo automatically detected and included in header
-const buffer = await generatePdf(content, 'output.pdf', {
-  cssPath: './styles/contract.css', // Contains --logo-filename
-  format: 'A4',
-  displayHeaderFooter: true,
-});
-```
-
-### Manual Header/Footer Templates
-
-Create custom headers and footers with full HTML/CSS control:
-
-```typescript
-const buffer = await generatePdf(content, 'output.pdf', {
-  displayHeaderFooter: true,
-  headerTemplate: `
-    <div style="width: 100%; text-align: right; padding-right: 25mm;">
-      <img src="data:image/png;base64,iVBORw0..." style="height: 40px;" />
-      <span style="font-size: 10px; margin-left: 10px;">Confidential</span>
-    </div>
-  `,
-  footerTemplate: `
-    <div style="width: 100%; text-align: center; padding: 10px 25mm; font-size: 10px;">
-      <span>Company Legal Services</span>
-      <span style="float: right;">Page <span class="pageNumber"></span> / <span class="totalPages"></span></span>
-    </div>
-  `,
-  margin: {
-    top: '1in', // Space for header
-    bottom: '1in', // Space for footer
-  },
-});
-```
+The logo filename can be a local file (resolved relative to the configured
+images directory) or an external URL (`http://` or `https://`).
 
 ### Logo Requirements
 
-- **Format**: PNG only (for best compatibility)
-- **Size**: Maximum 500KB (for performance)
-- **Location**: Place in accessible directory (e.g., `assets/images/`)
-- **Reference**: Use `--logo-filename` CSS variable to specify
+- **Format**: PNG only (validated via magic number bytes)
+- **Size**: Maximum 500KB
+- **Location**: Local files are resolved from the configured images directory
+- **Reference**: Use `--logo-filename` CSS custom property
 
 ### Logo Integration Process
 
-1. **Detection**: System scans CSS for `--logo-filename` property
-2. **Validation**: Checks file exists, is PNG format, and within size limits
-3. **Encoding**: Converts to base64 for embedding in PDF
-4. **Template Generation**: Creates header/footer with logo positioning
-5. **Fallback**: Continues without logo if any step fails
+1. **Detection**: Parses CSS for `--logo-filename` property
+2. **Resolution**: Determines if the value is a URL or local filename
+3. **Validation**: Checks file exists, is PNG format, and within 500KB limit
+4. **Encoding**: Converts to base64 for embedding in PDF header
+5. **Fallback**: Continues without logo if any step fails (graceful degradation)
 
 ## Template Helpers
 
-Use built-in template helpers for consistent PDF generation:
+The `PdfTemplates` class provides static methods for generating header and
+footer HTML templates. These are used internally by the PDF generator but can
+also be used directly for custom PDF workflows.
 
 ```typescript
-import { PdfTemplates } from 'legal-markdown-js/generators/pdf-templates';
-import { PDF_TEMPLATE_CONSTANTS } from 'legal-markdown-js/constants';
+import { PdfTemplates } from 'legal-markdown-js';
+import { PDF_TEMPLATE_CONSTANTS } from 'legal-markdown-js';
 
 // Generate templates programmatically
-const logoBase64 = 'data:image/png;base64,iVBORw0...';
+const logoBase64 = 'iVBORw0KGgoAAAANS...'; // raw base64, no data URI prefix
 
 const headerTemplate = PdfTemplates.generateHeaderTemplate(logoBase64);
-const footerTemplate = PdfTemplates.generateFooterTemplate();
+const footerTemplate = PdfTemplates.generateFooterTemplate('1.0.0');
 const customHeader = PdfTemplates.generateCustomHeaderTemplate(
   'Confidential',
   logoBase64
 );
-
-const buffer = await generatePdf(content, 'output.pdf', {
-  displayHeaderFooter: true,
-  headerTemplate,
-  footerTemplate,
-  margin: PDF_TEMPLATE_CONSTANTS.DEFAULT_MARGINS,
-});
+const customFooter = PdfTemplates.generateCustomFooterTemplate(
+  '(c) 2025 Company Name'
+);
 ```
 
 ### Available Template Helpers
 
-| Method                           | Description                       | Usage             |
-| -------------------------------- | --------------------------------- | ----------------- |
-| `generateHeaderTemplate()`       | Standard header with logo         | Company documents |
-| `generateFooterTemplate()`       | Standard footer with page numbers | Most documents    |
-| `generateCustomHeaderTemplate()` | Header with custom text + logo    | Confidential docs |
-| `generateLegalFooterTemplate()`  | Footer with legal disclaimers     | Legal documents   |
+| Method                           | Description                                | Parameters                |
+| -------------------------------- | ------------------------------------------ | ------------------------- |
+| `generateHeaderTemplate()`       | Header with optional logo (right-aligned)  | `logoBase64?: string`     |
+| `generateFooterTemplate()`       | Footer with page numbers, optional version | `version?: string`        |
+| `generateCustomHeaderTemplate()` | Header with text and optional logo         | `headerText, logoBase64?` |
+| `generateCustomFooterTemplate()` | Footer with custom text and page numbers   | `footerText`              |
 
 ## Advanced Configuration
 
@@ -211,33 +230,58 @@ const { normal, highlighted } = await generatePdfVersions(
 );
 
 // Creates: document.pdf and document.HIGHLIGHT.pdf
-console.log('Normal PDF:', normal);
-console.log('Highlighted PDF:', highlighted);
+console.log('Normal PDF size:', normal.length);
+console.log('Highlighted PDF size:', highlighted.length);
 ```
 
-### PDF Metadata
+### Using the Internal PDF Generator Directly
+
+For more control, use the singleton `pdfGenerator` instance directly:
 
 ```typescript
-const buffer = await generatePdf(content, 'output.pdf', {
-  title: 'Service Agreement',
-  subject: 'Legal Contract',
-  author: 'Legal Department',
-  creator: 'Legal Markdown JS',
-  keywords: ['contract', 'legal', 'agreement'],
-  creationDate: new Date(),
-  modificationDate: new Date(),
+import { pdfGenerator } from 'legal-markdown-js';
+import { processLegalMarkdown } from 'legal-markdown-js';
+import { asMarkdown } from 'legal-markdown-js';
+
+// Process content first
+const result = await processLegalMarkdown(content, {
+  enableFieldTracking: true,
+});
+
+// Generate PDF with full PdfGeneratorOptions
+const buffer = await pdfGenerator.generatePdf(result.content, './output.pdf', {
+  format: 'A4',
+  landscape: false,
+  cssPath: './styles/contract.css',
+  version: '2.1.0',
+  printBackground: true,
+  margin: {
+    top: '2cm',
+    right: '1cm',
+    bottom: '2cm',
+    left: '1cm',
+  },
 });
 ```
 
-### Print Options
+### Generate PDF from Pre-generated HTML
+
+The `generatePdfFromHtml` method accepts pre-generated HTML and converts it
+directly to PDF without re-processing the markdown. This is used internally by
+the 3-phase pipeline:
 
 ```typescript
-const buffer = await generatePdf(content, 'output.pdf', {
-  printBackground: true, // Include CSS background colors/images
-  preferCSSPageSize: true, // Use CSS page size if specified
-  scale: 1.0, // Page scale factor
-  paperWidth: 8.5, // Custom paper width (inches)
-  paperHeight: 11, // Custom paper height (inches)
+import { htmlGenerator, pdfGenerator } from 'legal-markdown-js';
+
+// Generate HTML once
+const html = await htmlGenerator.generateHtml(result.content, {
+  cssPath: './styles.css',
+  includeHighlighting: true,
+});
+
+// Reuse the same HTML for PDF (no re-processing)
+const buffer = await pdfGenerator.generatePdfFromHtml(html, './output.pdf', {
+  format: 'A4',
 });
 ```
 
@@ -252,66 +296,36 @@ const contractPdf = await generatePdf(contractContent, 'contract.pdf', {
   title: 'Service Agreement',
   format: 'Letter',
   cssPath: './styles/legal-contract.css',
-  displayHeaderFooter: true,
-  headerTemplate: `
-    <div style="text-align: center; width: 100%; font-size: 10px; padding: 10px;">
-      <strong>CONFIDENTIAL</strong>
-    </div>
-  `,
-  footerTemplate: `
-    <div style="text-align: center; width: 100%; font-size: 9px; padding: 10px;">
-      Service Agreement - Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-    </div>
-  `,
-  margin: {
-    top: '0.75in',
-    bottom: '0.75in',
-    left: '0.5in',
-    right: '0.5in',
-  },
-});
-```
-
-### Invoice Generation
-
-```typescript
-const invoicePdf = await generatePdf(invoiceContent, 'invoice.pdf', {
-  title: `Invoice ${invoiceNumber}`,
-  format: 'A4',
-  cssPath: './styles/invoice.css',
-  displayHeaderFooter: true,
   includeHighlighting: false,
-  printBackground: true,
 });
 ```
 
-### Legal Brief
+### Highlighted Review Copy
 
 ```typescript
-const briefPdf = await generatePdf(briefContent, 'legal-brief.pdf', {
-  title: 'Motion to Dismiss',
-  format: 'Legal', // 8.5 × 14 inches
-  cssPath: './styles/legal-brief.css',
-  margin: {
-    top: '1in',
-    bottom: '1in',
-    left: '1.25in', // Left margin for binding
-    right: '1in',
-  },
-});
-```
-
-### Multi-Language Document
-
-```typescript
-const multiLangPdf = await generatePdf(content, 'document.pdf', {
-  title: 'Contrato de Servicios',
+const reviewPdf = await generatePdf(contractContent, 'contract-review.pdf', {
+  title: 'Service Agreement - Review Copy',
   format: 'A4',
-  cssPath: './styles/spanish-legal.css',
-  // Ensure proper font support for international characters
-  printBackground: true,
-  preferCSSPageSize: false,
+  cssPath: './styles/legal-contract.css',
+  includeHighlighting: true,
 });
+```
+
+### Both Versions at Once
+
+```typescript
+import { generatePdfVersions } from 'legal-markdown-js';
+
+const { normal, highlighted } = await generatePdfVersions(
+  contractContent,
+  'contract.pdf',
+  {
+    title: 'Service Agreement',
+    format: 'A4',
+    cssPath: './styles/legal-contract.css',
+  }
+);
+// Creates: contract.pdf and contract.HIGHLIGHT.pdf
 ```
 
 ## Best Practices
@@ -341,22 +355,20 @@ const multiLangPdf = await generatePdf(content, 'document.pdf', {
 
 ### 2. Logo Management
 
-```typescript
-// ✅ Good - optimize logo for PDF
-const optimizedLogo = await optimizeLogo('./assets/company-logo.png', {
-  maxWidth: 200,
-  maxHeight: 80,
-  quality: 90,
-});
+Keep logo files under 500KB and in PNG format. The generator validates both the
+file size and PNG magic bytes before embedding.
 
-// ❌ Avoid - large unoptimized logos
-// --logo-filename: huge-logo-5mb.png;
+```css
+/* Reference your logo in CSS */
+:root {
+  --logo-filename: company-logo.png;
+}
 ```
 
 ### 3. Performance Optimization
 
 ```typescript
-// ✅ Good - reuse CSS for multiple documents
+// Reuse CSS path for multiple documents
 const cssPath = './styles/shared-legal.css';
 
 const documents = await Promise.all([
@@ -365,12 +377,10 @@ const documents = await Promise.all([
   generatePdf(contract3, 'contract3.pdf', { cssPath }),
 ]);
 
-// ✅ Good - batch generation
-const { normal, highlighted } = await generatePdfVersions(
-  content,
-  'doc.pdf',
-  options
-);
+// Or use generatePdfVersions for normal + highlighted
+const { normal, highlighted } = await generatePdfVersions(content, 'doc.pdf', {
+  cssPath,
+});
 ```
 
 ### 4. Error Handling
@@ -380,16 +390,11 @@ try {
   const buffer = await generatePdf(content, 'output.pdf', options);
   console.log('PDF generated successfully');
 } catch (error) {
-  if (error.code === 'LOGO_NOT_FOUND') {
-    console.warn('Logo file not found, generating PDF without logo');
-    // Retry without logo
-    const buffer = await generatePdf(content, 'output.pdf', {
-      ...options,
-      cssPath: undefined,
-    });
-  } else {
-    console.error('PDF generation failed:', error.message);
-  }
+  // Common errors:
+  // - PdfDependencyError: no PDF backend available
+  // - Chrome launch failure (missing browser)
+  // - Invalid markdown content
+  console.error('PDF generation failed:', error.message);
 }
 ```
 
@@ -397,88 +402,48 @@ try {
 
 ```text
 project/
-├── styles/
-│   ├── legal-contract.css
-│   ├── invoice.css
-│   └── shared-legal.css
-├── assets/
-│   └── images/
-│       ├── company-logo.png
-│       └── watermark.png
-└── output/
-    ├── contracts/
-    ├── invoices/
-    └── archive/
-```
-
-### 6. Testing PDF Output
-
-```typescript
-// Test PDF generation in development
-if (process.env.NODE_ENV === 'development') {
-  const testPdf = await generatePdf(sampleContent, 'test.pdf', {
-    title: 'Test Document',
-    includeHighlighting: true,
-    cssPath: './styles/test.css',
-  });
-
-  // Validate PDF was created
-  const fs = require('fs');
-  if (fs.existsSync('test.pdf')) {
-    console.log('✅ PDF generation test passed');
-  }
-}
-```
-
-### 7. Version Control
-
-```typescript
-// Include version info in PDFs
-const versionInfo = `Generated by Legal Markdown JS v${packageVersion}`;
-
-const buffer = await generatePdf(content, 'output.pdf', {
-  creator: versionInfo,
-  subject: `Document generated on ${new Date().toISOString()}`,
-  // Include generation metadata
-  footerTemplate: `
-    <div style="font-size: 8px; text-align: center; width: 100%;">
-      ${versionInfo} - Page <span class="pageNumber"></span>
-    </div>
-  `,
-});
+  styles/
+    legal-contract.css
+    invoice.css
+    shared-legal.css
+  assets/
+    images/
+      company-logo.png
+  output/
+    contracts/
+    invoices/
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-**PDF generation fails:**
+**PDF generation fails with PdfDependencyError:**
 
-- Check CSS file path is correct
-- Verify logo file exists and is accessible
-- Ensure content is valid markdown
+- Ensure at least one backend is available (puppeteer, system Chrome, or
+  weasyprint)
+- Run `npx puppeteer browsers install chrome` to install a bundled Chrome
+- Or install Chrome/Chromium on the system
 
 **Logo not appearing:**
 
-- Verify PNG format and file size < 500KB
-- Check `--logo-filename` CSS variable syntax
-- Ensure file path is relative to CSS file
+- Verify PNG format and file size under 500KB
+- Check `--logo-filename` CSS custom property syntax
+- Ensure the file is accessible from the configured images directory
 
 **Layout issues:**
 
-- Test CSS with HTML output first
+- Test CSS with HTML output first (`--html`)
 - Use print media queries for PDF-specific styles
 - Check margin and page size settings
 
-**Performance issues:**
+**macOS-specific Chrome issues:**
 
-- Optimize logo file sizes
-- Reduce CSS complexity
-- Use batch generation for multiple PDFs
+- Apple Silicon Macs may need Rosetta 2: `softwareupdate --install-rosetta`
+- Check Chrome permissions if launch fails
 
 ## See Also
 
 - [HTML Generation](html-generation.md) - Generate HTML output
 - [Field Highlighting](field-highlighting.md) - Visual field tracking
 - [CSS Classes](css-classes.md) - Available CSS styling classes
-- [Smart Archiving](../features/smart-archiving.md) - Automatic file management

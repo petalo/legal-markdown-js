@@ -37,5 +37,5 @@ professional document generation.
 
 ## 💡 Learn more
 
-- [Advanced Documents Guide](../../../docs/advanced-documents.md)
-- [Legal Templates](../../../docs/legal-templates.md)
+- [Advanced Guide](../../../docs/advanced/README.md)
+- [Template Variables](../../../docs/features/mixins-variables.md)

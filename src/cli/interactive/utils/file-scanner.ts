@@ -16,7 +16,23 @@ import { FileItem } from '../types';
  * These extensions are recognized as valid input formats that can be
  * processed by the Legal Markdown system.
  */
-const SUPPORTED_EXTENSIONS = ['.md', '.markdown', '.rst', '.tex', '.latex', '.txt'];
+const SUPPORTED_EXTENSIONS = ['.md', '.markdown', '.txt'];
+
+/**
+ * Directory names to skip during recursive scanning
+ *
+ * These directories are excluded because they contain tooling artifacts,
+ * dependencies, or hidden config files - not user documents.
+ */
+const SKIP_DIRECTORIES = new Set([
+  'node_modules',
+  'dist',
+  'build',
+  '.git',
+  '.claude',
+  '.cache',
+  'coverage',
+]);
 
 /**
  * Recursively scan directory for supported files
@@ -44,6 +60,10 @@ export function scanDirectory(dirPath: string, baseDir?: string): FileItem[] {
       const fullPath = path.join(dirPath, entry.name);
 
       if (entry.isDirectory()) {
+        // Skip hidden directories and known tooling/artifact directories
+        if (entry.name.startsWith('.') || SKIP_DIRECTORIES.has(entry.name)) {
+          continue;
+        }
         // Add subdirectory files recursively
         const subItems = scanDirectory(fullPath, baseDir);
         items.push(...subItems);
@@ -58,7 +78,7 @@ export function scanDirectory(dirPath: string, baseDir?: string): FileItem[] {
         }
       }
     }
-  } catch (error) {
+  } catch {
     console.warn(`Warning: Could not scan directory ${dirPath}`);
   }
 
@@ -68,7 +88,7 @@ export function scanDirectory(dirPath: string, baseDir?: string): FileItem[] {
 /**
  * Scan for CSS files in styles directory, excluding highlight.css
  *
- * Discovers available CSS stylesheets for HTML/PDF output styling,
+ * Discovers available CSS stylesheets for HTML/PDF/DOCX output styling,
  * automatically excluding the reserved highlight.css file which is
  * used internally for field highlighting functionality.
  *
@@ -90,7 +110,7 @@ export function scanCssFiles(stylesDir: string): string[] {
         cssFiles.push(entry);
       }
     }
-  } catch (error) {
+  } catch {
     console.warn(`Warning: Could not scan CSS directory ${stylesDir}`);
   }
 

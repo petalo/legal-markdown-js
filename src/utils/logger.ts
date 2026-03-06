@@ -46,10 +46,12 @@
  * logger.error('Processing failed', { error: 'Invalid syntax' });
  * ```
  */
+import { getRuntimeConfig } from '../config/runtime';
+
 // Global debug state for browser compatibility
 let debugEnabled = false;
-// Set log level based on environment - default to 'error' for quiet operation
-let logLevel = (typeof process !== 'undefined' && process.env && process.env.LOG_LEVEL) || 'error';
+
+let logLevel: 'debug' | 'info' | 'warn' | 'error' | 'none' = getConfig().logging.level;
 
 export const logger = {
   /**
@@ -82,10 +84,8 @@ export const logger = {
    * logger.debug('Import resolved', { path: './shared/header.md' });
    * ```
    */
-  debug: (message: string, data?: any) => {
-    // Browser-compatible debug check
-    const isDebugEnabled =
-      debugEnabled || (typeof process !== 'undefined' && process.env && process.env.DEBUG);
+  debug: (message: string, data?: unknown) => {
+    const isDebugEnabled = debugEnabled || getConfig().logging.debug;
     if (isDebugEnabled) {
       console.debug(`[DEBUG] ${message}`, data || '');
     }
@@ -104,7 +104,7 @@ export const logger = {
    * logger.info('Export successful', { format: 'html', path: './output.html' });
    * ```
    */
-  info: (message: string, data?: any) => {
+  info: (message: string, data?: unknown) => {
     if (logLevel === 'none' || logLevel === 'warn' || logLevel === 'error') return;
     console.info(`[INFO] ${message}`, data || '');
   },
@@ -122,7 +122,7 @@ export const logger = {
    * logger.warn('Import file not found', { path: './missing.md' });
    * ```
    */
-  warn: (message: string, data?: any) => {
+  warn: (message: string, data?: unknown) => {
     if (logLevel === 'none' || logLevel === 'error') return;
     console.warn(`[WARN] ${message}`, data || '');
   },
@@ -140,8 +140,12 @@ export const logger = {
    * logger.error('Document processing failed', { file: 'contract.md', reason: 'Missing imports' });
    * ```
    */
-  error: (message: string, data?: any) => {
+  error: (message: string, data?: unknown) => {
     if (logLevel === 'none') return;
     console.error(`[ERROR] ${message}`, data || '');
   },
 };
+
+function getConfig() {
+  return getRuntimeConfig();
+}

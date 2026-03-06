@@ -58,7 +58,7 @@ under the laws of {{parties.provider.state}} (Registration:
 **Client:** {{client.name}}, a {{client.type}}
 
 For the {{project.name}} project with a total budget of
-${{project.budget | currency}} over {{project.duration}}.
+${{formatCurrency project.budget project.currency}} over {{project.duration}}.
 
 ---
 
@@ -69,7 +69,8 @@ scheduled to run from {{project.start_date}} to {{project.end_date}}.
 
 - **Project Manager:** {{project.project_manager}}
 - **Duration:** {{project.duration}}
-- **Budget:** ${{project.budget | currency}} {{project.currency}}
+- **Budget:** ${{formatCurrency project.budget project.currency}}
+  {{project.currency}}
 
 ll. Deliverables Project deliverables and milestones will be defined in separate
 Statements of Work (SOW) that reference this master agreement.
@@ -90,56 +91,56 @@ Statements of Work (SOW) that reference this master agreement.
 
 l. Financial Terms
 
-ll. Project Budget The total project budget is **${{project.budget | currency}}
-{{project.currency}}** payable according to the payment schedule defined in
-individual SOWs.
+ll. Project Budget The total project budget is
+**${{formatCurrency project.budget project.currency}} {{project.currency}}**
+payable according to the payment schedule defined in individual SOWs.
 
 ll. Payment Terms  
 Payment terms for this agreement are **{{payment_terms}}** from invoice date.
 
 ll. Liability Cap Total liability under this agreement is capped at
-**${{liability_cap | currency}}**.
+**${{formatCurrency liability_cap project.currency}}**.
 
-{{#liability_cap}} _Note: This liability cap represents the final agreed amount
-after client negotiations and supersedes any conflicting terms in imported
-components._ {{/liability_cap}}
+{{#if liability_cap}} _Note: This liability cap represents the final agreed
+amount after client negotiations and supersedes any conflicting terms in
+imported components._ {{/if}}
 
 ---
 
 l. Execution
 
-{{#signature_required}} ll. Signatures
+{{#if signature_required}} ll. Signatures
 
 **PROVIDER:**
 
 {{parties.provider.name}}
 
-By: ****************\_****************  
+By: **\*\***\*\*\*\***\*\***\_**\*\***\*\*\*\***\*\***  
 Name: [Name]  
 Title: [Title]  
-Date: ******\_\_\_******
+Date: **\*\***\_\_\_**\*\***
 
 **CLIENT:**
 
 {{client.name}}
 
-By: ****************\_****************  
+By: **\*\***\*\*\*\***\*\***\_**\*\***\*\*\*\***\*\***  
 Name: {{contact.legal.name}}  
 Title: {{contact.legal.title}}  
-Date: ******\_\_\_******
+Date: **\*\***\_\_\_**\*\***
 
-{{#witnesses_required}} ll. Witnesses
+{{#if witnesses_required}} ll. Witnesses
 
-Witness 1: ****************\_****************  
-Date: ******\_\_\_******
+Witness 1: **\*\***\*\*\*\***\*\***\_**\*\***\*\*\*\***\*\***  
+Date: **\*\***\_\_\_**\*\***
 
-Witness 2: ****************\_****************  
-Date: ******\_\_\_****** {{/witnesses_required}}
+Witness 2: **\*\***\*\*\*\***\*\***\_**\*\***\*\*\*\***\*\***  
+Date: **\*\***\_\_\_**\*\*** {{/if}}
 
-{{#notarization_required}} ll. Notarization
+{{#if notarization_required}} ll. Notarization
 
-State of: ******\_\_\_******  
-County of: ******\_\_\_******
+State of: **\*\***\_\_\_**\*\***  
+County of: **\*\***\_\_\_**\*\***
 
 On this **\_** day of **\_\_\_\_**, 2024, before me personally appeared [Names]
 who proved to me on the basis of satisfactory evidence to be the persons whose
@@ -148,9 +149,9 @@ executed the same in their authorized capacities.
 
 ---
 
-Notary Public {{/notarization_required}}
+Notary Public {{/if}}
 
-{{/signature_required}}
+{{/if}}
 
 ---
 
@@ -161,8 +162,8 @@ Markdown with frontmatter merging._
 **Key Merged Metadata Summary:**
 
 - **Governing Law:** {{governing_law}} _(main document preference)_
-- **Liability Cap:** ${{liability_cap | currency}} _(main document wins over
-  {{client.name}} preference)_
+- **Liability Cap:** ${{formatCurrency liability_cap project.currency}} _(main
+  document wins over {{client.name}} preference)_
 - **Payment Terms:** {{payment_terms}} _(main document preference)_
 - **Client Contact:** {{contact.legal.name}} at {{contact.legal.email}}
 - **Service Level:** {{service_levels.availability.uptime_guarantee}}% uptime

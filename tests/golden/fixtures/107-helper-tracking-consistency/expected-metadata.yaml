@@ -1,0 +1,11 @@
+_cross_references: []
+_field_mappings: {}
+a: 10
+b: 25
+company_name: acme corporation
+items:
+  - alpha
+  - beta
+negative: -42
+text: abc
+title: Helper Tracking Consistency

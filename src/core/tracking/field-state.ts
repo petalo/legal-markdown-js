@@ -27,6 +27,8 @@
  * ```
  */
 
+import type { YamlValue } from '../../types';
+
 /**
  * Enumeration of possible field statuses during processing
  *
@@ -51,6 +53,8 @@ export enum FieldStatus {
   EMPTY = 'empty',
   /** Field contains logic or uses mixins */
   LOGIC = 'logic',
+  /** Field is declared in YAML but never referenced in the template */
+  DECLARED = 'declared',
 }
 
 /**
@@ -67,9 +71,9 @@ export enum FieldStatus {
  */
 export interface FieldTrackingOptions {
   /** The processed value of the field */
-  value?: any;
+  value?: YamlValue;
   /** The original unprocessed value of the field */
-  originalValue?: any;
+  originalValue?: YamlValue;
   /** Whether the field contains logical operations */
   hasLogic?: boolean;
   /** Name of mixin used for processing this field */
@@ -96,9 +100,9 @@ export interface TrackedField {
   /** The current status of the field */
   status: FieldStatus;
   /** The processed value of the field */
-  value?: any;
+  value?: YamlValue;
   /** The original unprocessed value of the field */
-  originalValue?: any;
+  originalValue?: YamlValue;
   /** Whether the field contains logical operations */
   hasLogic: boolean;
   /** Name of mixin used for processing this field */

@@ -14,12 +14,28 @@
  * @module browser-modern
  */
 
+// Polyfill Buffer for browser environments.
+// `globalThis` is typed without a `Buffer` property in browser typings, so the
+// cast to `Record<string, unknown>` is required to assign it at runtime without
+// a TypeScript error. The guard ensures we never overwrite a natively available
+// Buffer (e.g. in Node.js or a bundler that already provides one).
+import { Buffer as BufferPolyfill } from 'buffer';
+const browserGlobal = globalThis as unknown as { Buffer?: unknown };
+if (typeof browserGlobal.Buffer === 'undefined') {
+  browserGlobal.Buffer = BufferPolyfill;
+}
+
 // Import the remark-based processor
 import {
-  processLegalMarkdownWithRemark,
+  processLegalMarkdown as processLegalMarkdownCore,
   LegalMarkdownProcessorOptions,
   LegalMarkdownProcessorResult,
 } from './extensions/remark/legal-markdown-processor';
+
+// Import shared HTML formatting utilities (browser-compatible)
+import { markdownToHtmlBody, formatHtml, wrapHtmlDocument } from './utils/html-format';
+
+declare const __LEGAL_MARKDOWN_VERSION__: string;
 
 // Re-export the types for convenience
 export type { LegalMarkdownProcessorOptions, LegalMarkdownProcessorResult };
@@ -45,30 +61,14 @@ export type { LegalMarkdownProcessorOptions, LegalMarkdownProcessorResult };
  * console.log(result.metadata); // Extracted metadata
  * ```
  */
-export async function processLegalMarkdown(
+export async function processLegalMarkdownAsync(
   content: string,
   options: LegalMarkdownProcessorOptions = {}
 ): Promise<LegalMarkdownProcessorResult> {
-  return processLegalMarkdownWithRemark(content, options);
+  return processLegalMarkdownCore(content, options);
 }
 
-/**
- * Legacy sync API - throws error with migration instructions
- *
- * This function exists only to provide a clear migration path for
- * users of the old synchronous API.
- *
- * @deprecated Use the async processLegalMarkdown() instead
- * @throws Error with migration instructions
- */
-export function processLegalMarkdownSync(): never {
-  throw new Error(
-    'Synchronous processing is no longer supported in the browser version. ' +
-      'Please use processLegalMarkdown() which returns a Promise:\n\n' +
-      'const result = await processLegalMarkdown(content, options);\n\n' +
-      'This change enables full feature parity with the CLI version.'
-  );
-}
+export const processLegalMarkdown = processLegalMarkdownAsync;
 
 /**
  * Default export for UMD compatibility
@@ -77,35 +77,18 @@ export function processLegalMarkdownSync(): never {
  * and legacy module systems.
  */
 const LegalMarkdown = {
+  processLegalMarkdownAsync,
   processLegalMarkdown,
-  processLegalMarkdownSync,
+  process: processLegalMarkdownAsync,
 
-  // Also export with explicit names for clarity
-  processLegalMarkdownWithRemark,
-  process: processLegalMarkdown,
+  // HTML formatting utilities (shared with Node pipeline)
+  markdownToHtmlBody,
+  formatHtml,
+  wrapHtmlDocument,
 
   // Version info
-  version: '2.16.3',
+  version: __LEGAL_MARKDOWN_VERSION__,
   isModernBundle: true,
 };
-
-// For debugging - log when bundle is loaded
-if (typeof window !== 'undefined' && (window as any).DEBUG_LEGAL_MARKDOWN) {
-  console.log('[Legal Markdown] Modern browser bundle loaded', {
-    version: LegalMarkdown.version,
-    features: [
-      'remark AST processing',
-      'legal headers (l., ll., lll.)',
-      'template fields ({{variable}})',
-      'template loops ({{#array}}...{{/array}})',
-      'conditional blocks ({{#if}}...{{/if}})',
-      'bracket conditionals ([text]{condition})',
-      'date helpers (@today)',
-      'cross-references',
-      'mixins',
-      'field tracking',
-    ],
-  });
-}
 
 export default LegalMarkdown;

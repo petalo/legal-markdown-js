@@ -207,6 +207,21 @@ Conditional content
       expect(result.content).toContain('Sub 1.1');
       expect(result.content).toContain('Sub 1.2');
     });
+
+    it('should emit lm-field tokens in template loops when astFieldTracking is enabled', async () => {
+      const content = '{{upper name}}';
+      const metadata = { name: 'john doe' };
+
+      const result = await applyStringTransformations(content, {
+        metadata,
+        enableFieldTracking: true,
+        astFieldTracking: true,
+      });
+
+      expect(result.content).toContain('<lm-field');
+      expect(result.content).toContain('data-field="name"');
+      expect(result.content).not.toContain('<span class="legal-field');
+    });
   });
 
   describe('Transformation Order', () => {

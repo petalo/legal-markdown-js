@@ -8,6 +8,7 @@ with **enhanced expression evaluation**.
 - [Overview](#overview)
 - [Basic Conditionals](#basic-conditionals)
 - [Comparison Operators](#comparison-operators)
+- [Comparison Helpers](#comparison-helpers)
 - [Boolean Operators](#boolean-operators)
 - [Value Types](#value-types)
 - [Else Branches](#else-branches)
@@ -28,6 +29,7 @@ functions) and on par with Liquid templates.
 
 - ✅ Comparison operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
 - ✅ Boolean operators: `&&`, `||`
+- ✅ Automatic inline conversion to helper subexpressions
 - ✅ Nested expressions with parentheses
 - ✅ Multiple value types: strings, numbers, booleans, null
 - ✅ Dot notation for nested objects
@@ -70,8 +72,8 @@ client:
 
 ## Comparison Operators
 
-Legal Markdown supports full comparison expressions (unlike Handlebars which
-requires helper functions).
+Legal Markdown supports full comparison expressions. Inline expressions are
+automatically converted to Handlebars helper subexpressions during processing.
 
 ### Equality Comparison
 
@@ -129,6 +131,9 @@ status: 'active'
 {{#if status != "cancelled"}} This contract is active {{/if}}
 ```
 
+This inline syntax is converted internally to:
+`{{#if (neq status "cancelled")}}`.
+
 ## Boolean Operators
 
 Combine multiple conditions using `&&` (AND) and `||` (OR).
@@ -167,6 +172,33 @@ jurisdiction: 'madrid'
 ```markdown
 {{#if jurisdiction == "madrid" || jurisdiction == "barcelona"}} Applicable law:
 Spanish Civil Code {{/if}}
+```
+
+## Comparison Helpers
+
+Handlebars `{{#if}}` only checks truthiness. For comparisons, use subexpression
+helpers:
+
+| Helper | Usage               | Description       |
+| ------ | ------------------- | ----------------- |
+| `eq`   | `{{#if (eq a b)}}`  | Equal (`===`)     |
+| `neq`  | `{{#if (neq a b)}}` | Not equal (`!==`) |
+| `gt`   | `{{#if (gt a b)}}`  | Greater than      |
+| `gte`  | `{{#if (gte a b)}}` | Greater or equal  |
+| `lt`   | `{{#if (lt a b)}}`  | Less than         |
+| `lte`  | `{{#if (lte a b)}}` | Less or equal     |
+| `and`  | `{{#if (and a b)}}` | Logical AND       |
+| `or`   | `{{#if (or a b)}}`  | Logical OR        |
+| `not`  | `{{#if (not a)}}`   | Logical NOT       |
+
+### Inline comparison syntax
+
+For convenience, inline comparisons are automatically converted:
+
+```handlebars
+{{#if status == "active"}}   →  {{#if (eq status "active")}}
+{{#if amount > 1000}}        →  {{#if (gt amount 1000)}}
+{{#if a && b}}               →  {{#if (and a b)}}
 ```
 
 ### Complex Expressions
@@ -452,16 +484,19 @@ status: '' # Is empty string falsy?
 
 ## Comparison with Other Template Engines
 
-Legal Markdown has **more powerful conditionals** than Handlebars:
+Legal Markdown has **more ergonomic conditional syntax** than Handlebars:
 
-| Feature           | Handlebars                      | Liquid                | Legal Markdown      |
-| ----------------- | ------------------------------- | --------------------- | ------------------- |
-| Simple truthiness | ✅ `{{#if var}}`                | ✅ `{% if var %}`     | ✅ `{{#if var}}`    |
-| Comparisons       | ❌ Requires `{{#if (eq a b)}}`  | ✅ `{% if a == b %}`  | ✅ `{{#if a == b}}` |
-| Numeric           | ❌ Requires `{{#if (gt a 10)}}` | ✅ `{% if a > 10 %}`  | ✅ `{{#if a > 10}}` |
-| Boolean logic     | ❌ Requires `{{#if (and a b)}}` | ✅ `{% if a and b %}` | ✅ `{{#if a && b}}` |
-| Else branches     | ✅ `{{else}}`                   | ✅ `{% else %}`       | ✅ `{{else}}`       |
-| Unless            | ✅ `{{#unless}}`                | ✅ `{% unless %}`     | ✅ `{{#unless}}`    |
+| Feature           | Handlebars                      | Liquid                | Legal Markdown        |
+| ----------------- | ------------------------------- | --------------------- | --------------------- |
+| Simple truthiness | ✅ `{{#if var}}`                | ✅ `{% if var %}`     | ✅ `{{#if var}}`      |
+| Comparisons       | ❌ Requires `{{#if (eq a b)}}`  | ✅ `{% if a == b %}`  | ✅ `{{#if a == b}}`\* |
+| Numeric           | ❌ Requires `{{#if (gt a 10)}}` | ✅ `{% if a > 10 %}`  | ✅ `{{#if a > 10}}`\* |
+| Boolean logic     | ❌ Requires `{{#if (and a b)}}` | ✅ `{% if a and b %}` | ✅ `{{#if a && b}}`\* |
+| Else branches     | ✅ `{{else}}`                   | ✅ `{% else %}`       | ✅ `{{else}}`         |
+| Unless            | ✅ `{{#unless}}`                | ✅ `{% unless %}`     | ✅ `{{#unless}}`      |
+
+\* Inline expressions are automatically converted to helper subexpressions
+(`eq`, `gt`, `and`, etc.).
 
 **Why this matters:**
 

@@ -8,10 +8,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { 
-  autoPopulateYamlFrontMatter, 
-  generateNoIndentPattern, 
-  normalizeYamlStructure 
+import {
+  autoPopulateYamlFrontMatter,
+  generateNoIndentPattern,
+  normalizeYamlStructure,
 } from '../../../src/core/yaml/yaml-auto-population';
 
 describe('YAML Auto-Population', () => {
@@ -26,7 +26,7 @@ l. Introduction
 ll. Terms`;
 
       const result = autoPopulateYamlFrontMatter(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article 1."');
       expect(result).toContain('level-2: "Section 1."');
@@ -44,11 +44,11 @@ level-1: "Article 1."
 l. Introduction`;
 
       const result = autoPopulateYamlFrontMatter(input, {
-        inferMissingLevels: true
+        inferMissingLevels: true,
       });
-      
+
       expect(result).toContain('level-1: "Article 1."');
-      expect(result).toContain('level-2: "Section %n."');
+      expect(result).toContain('level-2: "%n."');
       expect(result).toContain('level-3: "%n."');
       expect(result).toContain('level-9: "%n."');
     });
@@ -58,10 +58,10 @@ l. Introduction`;
 ll. Terms and Conditions`;
 
       const result = autoPopulateYamlFrontMatter(input);
-      
+
       expect(result.startsWith('---\n')).toBe(true);
       expect(result).toContain('# Structured Headers');
-      expect(result).toContain('level-1: "Article %n."');
+      expect(result).toContain('level-1: "%n."');
       expect(result).toContain('# Properties');
       expect(result.endsWith('l. Introduction\nll. Terms and Conditions')).toBe(true);
     });
@@ -75,9 +75,9 @@ level-2: "Section 1."
 content`;
 
       const result = autoPopulateYamlFrontMatter(input, {
-        ensureQuotedLevels: true
+        ensureQuotedLevels: true,
       });
-      
+
       expect(result).toContain('level-1: "Article 1."');
       expect(result).toContain('level-2: "Section 1."');
     });
@@ -92,7 +92,7 @@ custom-property: "custom value"
 content`;
 
       const result = autoPopulateYamlFrontMatter(input);
-      
+
       expect(result).toContain('no-indent: "l., ll."');
       expect(result).toContain('custom-property: "custom value"');
       expect(result).toContain('no-reset: ""'); // Should add missing properties
@@ -106,9 +106,9 @@ level-1: "Article 1."
 content`;
 
       const result = autoPopulateYamlFrontMatter(input, {
-        includeProperties: false
+        includeProperties: false,
       });
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).not.toContain('# Properties');
       expect(result).not.toContain('no-indent:');
@@ -122,7 +122,7 @@ ll. Second Level
 lll. Third Level`;
 
       const result = generateNoIndentPattern(content);
-      
+
       expect(result).toBe('l., ll., lll.');
     });
 
@@ -132,7 +132,7 @@ l3. Third Level
 l5. Fifth Level`;
 
       const result = generateNoIndentPattern(content);
-      
+
       expect(result).toBe('l2., l3., l5.');
     });
 
@@ -143,7 +143,7 @@ l3. Third Level (alternative)
 lll. Third Level (traditional)`;
 
       const result = generateNoIndentPattern(content);
-      
+
       expect(result).toContain('l.');
       expect(result).toContain('ll.');
       expect(result).toContain('l3.');
@@ -155,7 +155,7 @@ lll. Third Level (traditional)`;
 No headers here`;
 
       const result = generateNoIndentPattern(content);
-      
+
       expect(result).toBe('');
     });
   });
@@ -168,11 +168,11 @@ No headers here`;
         'custom-prop': 'value',
         'no-indent': 'l., ll.',
         'level-2': 'Section 1.',
-        'no-reset': ''
+        'no-reset': '',
       };
 
       const result = normalizeYamlStructure(metadata);
-      
+
       // Check structure ordering
       const keys = Object.keys(result);
       expect(keys[0]).toBe('# Structured Headers');
@@ -186,11 +186,11 @@ No headers here`;
       const metadata = {
         'level-1': 'Article 1.',
         'level-5': '(%A)',
-        'other-prop': 'value'
+        'other-prop': 'value',
       };
 
       const result = normalizeYamlStructure(metadata);
-      
+
       expect(result['level-1']).toBe('Article 1.');
       expect(result['level-5']).toBe('(%A)');
       expect(result['level-2']).toBeUndefined();
@@ -201,11 +201,11 @@ No headers here`;
     it('should handle metadata without properties section', () => {
       const metadata = {
         'level-1': 'Article 1.',
-        'custom-prop': 'value'
+        'custom-prop': 'value',
       };
 
       const result = normalizeYamlStructure(metadata);
-      
+
       expect(result['# Structured Headers']).toBeNull();
       expect(result['level-1']).toBe('Article 1.');
       expect(result['custom-prop']).toBe('value');
@@ -226,7 +226,7 @@ l. Introduction
 ll. Terms`;
 
       const result = autoPopulateYamlFrontMatter(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article 1."');
       expect(result).toContain('level-2: "Section 1."');
@@ -256,12 +256,14 @@ l. First
 ll. Second`;
 
       const result = autoPopulateYamlFrontMatter(input);
-      
+
       expect(result).toContain('# Structured Headers');
       expect(result).toContain('level-1: "Article (1)"');
       expect(result).toContain('level-9: "(I)"');
       expect(result).toContain('# Properties');
-      expect(result).toContain('no-indent: "l., ll., lll., llll., lllll., lllll., lllllll., llllllll., lllllllll."');
+      expect(result).toContain(
+        'no-indent: "l., ll., lll., llll., lllll., lllll., lllllll., llllllll., lllllllll."'
+      );
       expect(result).toContain('no-reset: ""');
       expect(result).toContain('level-style: ""');
     });

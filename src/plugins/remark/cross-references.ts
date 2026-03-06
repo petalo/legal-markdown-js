@@ -31,12 +31,14 @@
  */
 
 import { visit } from 'unist-util-visit';
-import { visitParents } from 'unist-util-visit-parents';
 import { toString } from 'mdast-util-to-string';
 import type { Plugin } from 'unified';
-import type { Root, Heading, Text, PhrasingContent } from 'mdast';
+import type { Root, Heading, Text } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { fieldSpan } from '../../extensions/tracking/field-span';
 import { getRomanNumeral, getAlphaLabel } from '../../utils/number-utilities';
+import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Cross-reference definition extracted from headers
@@ -70,7 +72,7 @@ interface SectionCounters {
  */
 interface CrossReferenceOptions {
   /** Document metadata containing level formats and other data */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
   /** Enable debug logging */
   debug?: boolean;
   /** Enable field tracking with highlighting during AST processing */
@@ -88,28 +90,6 @@ const DEFAULT_LEVEL_FORMATS = {
   level5: '(%n%c)',
   level6: 'Annex %r -',
 };
-
-/**
- * Extract text content from a node, handling various node types
- */
-function extractTextFromNode(node: PhrasingContent): string {
-  if (node.type === 'text') {
-    return node.value;
-  }
-
-  if ('children' in node && node.children) {
-    return node.children.map(child => extractTextFromNode(child as PhrasingContent)).join('');
-  }
-
-  return toString(node);
-}
-
-/**
- * Replace text content in a text node
- */
-function replaceTextInNode(node: Text, oldText: string, newText: string): void {
-  node.value = node.value.replace(oldText, newText);
-}
 
 /**
  * Update section counters based on current level
@@ -162,7 +142,6 @@ function generateSectionNumber(
   levelFormats: Record<string, string>
 ): string {
   const format = levelFormats[`level${level}`] || `Level ${level}.`;
-  const count = (counters as any)[`level${level}`];
 
   // Create array representation for easier access (matching header-processor logic)
   const headerNumbers = [
@@ -280,12 +259,23 @@ function generateSectionNumber(
 }
 
 /**
+ * Append a warning badge text node to a heading when a |key| definition
+ * was found but is not at the end of the heading text.
+ */
+function appendMisplacedKeyBadge(node: Heading): void {
+  node.children.push({
+    type: 'text',
+    value: ' ⚠️*(cross-ref not extracted)*',
+  } as Text);
+}
+
+/**
  * Extract cross-reference definitions from heading nodes
  */
 function extractCrossReferencesFromAST(
   root: Root,
-  metadata: Record<string, any>,
-  debug: boolean = false
+  metadata: Record<string, YamlValue>,
+  _debug: boolean = false
 ): CrossReferenceDefinition[] {
   const crossReferences: CrossReferenceDefinition[] = [];
   const sectionCounters: SectionCounters = {
@@ -298,13 +288,15 @@ function extractCrossReferencesFromAST(
   };
 
   // Support both dash-based keys (legacy compatibility) and number-based keys
-  const levelFormats = {
-    level1: metadata['level1'] || metadata['level-one'] || DEFAULT_LEVEL_FORMATS.level1,
-    level2: metadata['level2'] || metadata['level-two'] || DEFAULT_LEVEL_FORMATS.level2,
-    level3: metadata['level3'] || metadata['level-three'] || DEFAULT_LEVEL_FORMATS.level3,
-    level4: metadata['level4'] || metadata['level-four'] || DEFAULT_LEVEL_FORMATS.level4,
-    level5: metadata['level5'] || metadata['level-five'] || DEFAULT_LEVEL_FORMATS.level5,
-    level6: metadata['level6'] || metadata['level-six'] || DEFAULT_LEVEL_FORMATS.level6,
+  const toStr = (v: YamlValue | undefined, fallback: string): string =>
+    typeof v === 'string' ? v : fallback;
+  const levelFormats: Record<string, string> = {
+    level1: toStr(metadata['level1'] || metadata['level-one'], DEFAULT_LEVEL_FORMATS.level1),
+    level2: toStr(metadata['level2'] || metadata['level-two'], DEFAULT_LEVEL_FORMATS.level2),
+    level3: toStr(metadata['level3'] || metadata['level-three'], DEFAULT_LEVEL_FORMATS.level3),
+    level4: toStr(metadata['level4'] || metadata['level-four'], DEFAULT_LEVEL_FORMATS.level4),
+    level5: toStr(metadata['level5'] || metadata['level-five'], DEFAULT_LEVEL_FORMATS.level5),
+    level6: toStr(metadata['level6'] || metadata['level-six'], DEFAULT_LEVEL_FORMATS.level6),
   };
 
   visit(root, 'heading', (node: Heading) => {
@@ -339,6 +331,19 @@ function extractCrossReferencesFromAST(
             }
           : undefined,
       });
+    } else {
+      // Detect |key| that is truly misplaced: text before it AND text after it.
+      // We only warn when the |key| appears in the MIDDLE of a heading (not when
+      // it is the entire heading content, which is a legitimate reference/template usage).
+      const misplacedMatch = headingText.match(/^(?:l+\.\s+)?(.+?)\s+\|([^|]+)\|\s+\S/);
+      if (misplacedMatch) {
+        const key = misplacedMatch[2].trim();
+        logger.warn(
+          `[remarkCrossReferences] |${key}| found in heading but not at end - definition will not be extracted`,
+          { key, line: node.position?.start.line }
+        );
+        appendMisplacedKeyBadge(node);
+      }
     }
   });
 
@@ -365,7 +370,7 @@ function cleanHeaderDefinitionsInAST(
     const definitionMatch = headingText.match(/^(.+?)\s+\|([^|]+)\|$/);
 
     if (definitionMatch) {
-      const [, headerContent, key] = definitionMatch;
+      const [, , key] = definitionMatch;
       const trimmedKey = key.trim();
 
       // Only remove the definition if it's one we extracted
@@ -399,7 +404,7 @@ function cleanHeaderDefinitionsInAST(
 function replaceCrossReferencesInAST(
   root: Root,
   crossReferences: CrossReferenceDefinition[],
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   enableFieldTracking: boolean = false
 ): void {
   // Create lookup map for fast reference resolution
@@ -479,7 +484,7 @@ function replaceCrossReferencesInAST(
             type: 'html',
             value: modifiedValue,
           };
-          parent.children[index] = htmlNode as any;
+          parent.children[index] = htmlNode as unknown as import('mdast').Content;
         }
       } else {
         node.value = modifiedValue;
@@ -488,7 +493,7 @@ function replaceCrossReferencesInAST(
   });
 
   // Process HTML nodes that contain cross-references (after template field processing)
-  visit(root, 'html', (node: any) => {
+  visit(root, 'html', (node: { value: string }) => {
     if (!node.value || !node.value.includes('|')) {
       return; // Skip HTML nodes without cross-references
     }
@@ -513,8 +518,7 @@ function replaceCrossReferencesInAST(
         hasReplacements = true;
         // For HTML nodes, generate HTML span if field tracking is enabled
         if (enableFieldTracking) {
-          const cssClass = getCrossRefCssClass(true, true);
-          return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${sectionNumber}</span>`;
+          return fieldSpan(`crossref.${trimmedKey}`, sectionNumber, 'crossref');
         } else {
           return sectionNumber;
         }
@@ -535,8 +539,7 @@ function replaceCrossReferencesInAST(
         hasReplacements = true;
         // For HTML nodes, generate HTML span if field tracking is enabled
         if (enableFieldTracking) {
-          const cssClass = getCrossRefCssClass(true, false);
-          return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${resolvedValue}</span>`;
+          return fieldSpan(`crossref.${trimmedKey}`, resolvedValue, 'imported');
         } else {
           return resolvedValue;
         }
@@ -551,8 +554,7 @@ function replaceCrossReferencesInAST(
 
       // For HTML nodes, generate HTML span for unresolved if field tracking is enabled
       if (enableFieldTracking) {
-        const cssClass = getCrossRefCssClass(false, false);
-        return `<span class="${cssClass}" data-field="crossref.${trimmedKey.replace(/"/g, '&quot;')}">${match}</span>`;
+        return fieldSpan(`crossref.${trimmedKey}`, match, 'missing');
       } else {
         return match;
       }
@@ -563,19 +565,6 @@ function replaceCrossReferencesInAST(
       node.value = modifiedValue;
     }
   });
-}
-
-/**
- * Get CSS class for cross-reference field based on its status
- */
-function getCrossRefCssClass(hasValue: boolean, hasLogic: boolean): string {
-  if (!hasValue) {
-    return 'legal-field missing-value';
-  }
-  if (hasLogic) {
-    return 'legal-field highlight';
-  }
-  return 'legal-field imported-value';
 }
 
 /**
@@ -592,22 +581,34 @@ function formatCrossRefValue(
   }
 
   const hasValue = value !== '';
-  const cssClass = getCrossRefCssClass(hasValue, hasLogic);
-  return `<span class="${cssClass}" data-field="crossref.${fieldName.replace(/"/g, '&quot;')}">${value}</span>`;
+  const kind = !hasValue ? 'missing' : hasLogic ? 'crossref' : 'imported';
+  return fieldSpan(`crossref.${fieldName}`, value, kind);
 }
 
 /**
  * Get nested value from object using dot notation
  */
-function getNestedValue(obj: Record<string, any>, path: string): any {
+function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue | undefined {
   const keys = path.split('.');
-  let value = obj;
+  let value: YamlValue = obj;
 
   for (const key of keys) {
     if (value === undefined || value === null) {
       return undefined;
     }
-    value = value[key];
+    if (Array.isArray(value)) {
+      // Numeric key in dot notation: parties.1.name -> parties[1].name
+      const arrayIndex = parseInt(key, 10);
+      if (!isNaN(arrayIndex) && String(arrayIndex) === key) {
+        value = (value as YamlValue[])[arrayIndex];
+      } else {
+        return undefined; // Non-numeric key on an array
+      }
+    } else if (typeof value !== 'object' || value instanceof Date) {
+      return undefined;
+    } else {
+      value = (value as Record<string, YamlValue>)[key];
+    }
   }
 
   return value;
@@ -616,7 +617,11 @@ function getNestedValue(obj: Record<string, any>, path: string): any {
 /**
  * Format metadata values based on type and context
  */
-function formatMetadataValue(value: any, key: string, metadata: Record<string, any>): string {
+function formatMetadataValue(
+  value: YamlValue | undefined,
+  key: string,
+  metadata: Record<string, YamlValue>
+): string {
   if (value === undefined) {
     return '';
   }
@@ -632,7 +637,8 @@ function formatMetadataValue(value: any, key: string, metadata: Record<string, a
 
   // Handle currency amounts
   if (typeof value === 'number' && key.includes('amount')) {
-    const currency = metadata.payment_currency || 'USD';
+    const rawCurrency = metadata.payment_currency;
+    const currency = typeof rawCurrency === 'string' ? rawCurrency : 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -693,3 +699,13 @@ const remarkCrossReferences: Plugin<[CrossReferenceOptions], Root> = options => 
 
 export default remarkCrossReferences;
 export type { CrossReferenceOptions, CrossReferenceDefinition };
+
+// Exported for testing - not part of public API
+export {
+  updateSectionCounters as _updateSectionCounters,
+  generateSectionNumber as _generateSectionNumber,
+  extractCrossReferencesFromAST as _extractCrossReferencesFromAST,
+  cleanHeaderDefinitionsInAST as _cleanHeaderDefinitionsInAST,
+  replaceCrossReferencesInAST as _replaceCrossReferencesInAST,
+  formatMetadataValue as _formatMetadataValue,
+};

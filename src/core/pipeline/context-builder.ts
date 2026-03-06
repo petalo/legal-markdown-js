@@ -20,104 +20,10 @@ import {
   parseForceCommands,
   applyForceCommands,
 } from '../parsers/force-commands-parser';
-import { LegalMarkdownOptions } from '../../types';
+import type { ProcessingContext, ProcessingOptions } from '../../types/pipeline';
+import type { YamlValue } from '../../types';
+import { ValidationError } from '../../errors';
 import { logger } from '../../utils/logger';
-
-/**
- * Processing context created by Phase 1
- *
- * This object contains all information needed for Phase 2 processing:
- * - Raw content to process
- * - Merged and resolved metadata
- * - Final processing options (CLI + force-commands + defaults)
- * - Base path for file operations
- */
-export interface ProcessingContext {
-  /** Raw markdown content (after YAML extraction) */
-  content: string;
-
-  /** Original raw content including YAML frontmatter */
-  rawContent: string;
-
-  /** Merged metadata from YAML + additional sources */
-  metadata: Record<string, any>;
-
-  /** Final processing options (CLI + force-commands merged) */
-  options: ProcessingOptions;
-
-  /** Base path for resolving relative file paths */
-  basePath: string;
-}
-
-/**
- * Processing options for the unified pipeline
- *
- * Combines LegalMarkdownOptions with additional CLI-specific options
- */
-export interface ProcessingOptions extends LegalMarkdownOptions {
-  /** Enable verbose logging */
-  verbose?: boolean;
-
-  /** Generate PDF output */
-  pdf?: boolean;
-
-  /** Generate HTML output */
-  html?: boolean;
-
-  /** Enable field highlighting */
-  highlight?: boolean;
-
-  /** Path to custom CSS file */
-  css?: string;
-
-  /** Document title */
-  title?: string;
-
-  /** Archive source file after processing */
-  archiveSource?: string | boolean;
-
-  /** Export to markdown */
-  toMarkdown?: boolean;
-
-  /** Export YAML metadata */
-  exportYaml?: boolean;
-
-  /** Export JSON metadata */
-  exportJson?: boolean;
-
-  /** Custom output path */
-  output?: string;
-
-  /** Output path for exports */
-  outputPath?: string;
-
-  /** Page format for PDF */
-  format?: 'A4' | 'Letter' | 'Legal';
-
-  /** Landscape orientation */
-  landscape?: boolean;
-
-  /** Additional metadata to merge */
-  additionalMetadata?: Record<string, any>;
-
-  /** Include highlighting in output */
-  includeHighlighting?: boolean;
-
-  /** CSS path (internal) */
-  cssPath?: string;
-
-  /** Highlight CSS path */
-  highlightCssPath?: string;
-
-  /** Silent mode (suppress output) */
-  silent?: boolean;
-
-  /** Enable field tracking in markdown */
-  enableFieldTrackingInMarkdown?: boolean;
-
-  /** Auto-populate YAML headers */
-  autoPopulateHeaders?: boolean;
-}
 
 /**
  * Build a processing context from raw content and options
@@ -253,15 +159,18 @@ export async function buildProcessingContext(
  * @internal
  */
 export function mergeMetadata(
-  target: Record<string, any>,
-  source: Record<string, any>
-): Record<string, any> {
+  target: Record<string, YamlValue>,
+  source: Record<string, YamlValue>
+): Record<string, YamlValue> {
   const result = { ...target };
 
   for (const [key, value] of Object.entries(source)) {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       // Recursively merge nested objects
-      result[key] = mergeMetadata(result[key] || {}, value);
+      result[key] = mergeMetadata(
+        (result[key] || {}) as Record<string, YamlValue>,
+        value as Record<string, YamlValue>
+      );
     } else {
       // Direct assignment for primitives and arrays
       result[key] = value;
@@ -283,22 +192,22 @@ export function mergeMetadata(
  */
 export function validateProcessingContext(context: ProcessingContext): void {
   if (!context) {
-    throw new Error('Processing context is null or undefined');
+    throw new ValidationError('Processing context is null or undefined', 'context');
   }
 
   if (typeof context.content !== 'string') {
-    throw new Error('Processing context content must be a string');
+    throw new ValidationError('Processing context content must be a string', 'content');
   }
 
   if (!context.metadata || typeof context.metadata !== 'object') {
-    throw new Error('Processing context metadata must be an object');
+    throw new ValidationError('Processing context metadata must be an object', 'metadata');
   }
 
   if (!context.options || typeof context.options !== 'object') {
-    throw new Error('Processing context options must be an object');
+    throw new ValidationError('Processing context options must be an object', 'options');
   }
 
   if (typeof context.basePath !== 'string') {
-    throw new Error('Processing context basePath must be a string');
+    throw new ValidationError('Processing context basePath must be a string', 'basePath');
   }
 }

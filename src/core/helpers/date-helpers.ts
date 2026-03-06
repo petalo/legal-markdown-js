@@ -25,6 +25,8 @@
  * ```
  */
 
+import { ValidationError } from '../../errors';
+
 /**
  * Returns the current date - implements `@today` functionality from Ruby legal-markdown
  *
@@ -83,7 +85,7 @@ export function formatBasicDate(date: Date | string, format: string = 'YYYY-MM-D
   const d = typeof date === 'string' ? new Date(date) : date;
 
   if (isNaN(d.getTime())) {
-    throw new Error(`Invalid date: ${date}`);
+    throw new ValidationError(`Invalid date: ${date}`, 'date');
   }
 
   const year = d.getFullYear();

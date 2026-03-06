@@ -2,23 +2,27 @@
  * Remark plugin for Legal Markdown date processing
  *
  * This plugin processes date references in Legal Markdown documents using
- * AST-based processing. It handles @today tokens with format specifiers and
+ * AST-based processing. It handles {{@today}} tokens with format specifiers and
  * arithmetic operations, integrating with the comprehensive date helper system.
  *
  * Features:
- * - @today token processing with format specifiers (@today[format])
- * - Date arithmetic with +/- operations (@today+30, @today-365)
+ * - {{@today}} token processing with format specifiers ({{@today[format]}})
+ * - Date arithmetic with +/- operations ({{@today+30}}, {{@today-365}})
  * - Advanced date formatting (legal, ISO, US, European, etc.)
  * - Timezone and locale support
  * - Integration with field tracking for highlighting
  * - Comprehensive error handling with fallback formatting
  *
  * Architecture:
- * 1. Scan document content for @today patterns
+ * 1. Scan document content for {{@today}} patterns
  * 2. Parse format specifiers and arithmetic operations
  * 3. Process dates using advanced date helpers
  * 4. Replace tokens with formatted dates
  * 5. Integrate with field tracker for highlighting support
+ *
+ * Ordering:
+ * - Run before `remarkTemplateFields` so `{{@today...}}` arithmetic expressions
+ *   are resolved before general `{{...}}` field expansion.
  *
  * @example
  * ```typescript
@@ -33,7 +37,7 @@
  *     enableFieldTracking: true
  *   });
  *
- * const result = await processor.process('Contract signed on @today[legal].');
+ * const result = await processor.process('Contract signed on {{@today[legal]}}.');
  * // Result: "Contract signed on January 15th, 2024."
  * ```
  *
@@ -46,13 +50,15 @@ import type { Root, Text } from 'mdast';
 // Date processing functionality is implemented directly in this plugin
 import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-date-helpers';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { fieldSpan } from '../../extensions/tracking/field-span';
+import type { YamlValue } from '../../types';
 
 /**
  * Plugin options for date processing
  */
 interface DateProcessingOptions {
   /** Document metadata containing date formatting options */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
   /** Enable debug logging */
   debug?: boolean;
   /** Enable field tracking with highlighting during AST processing */
@@ -60,82 +66,74 @@ interface DateProcessingOptions {
 }
 
 /**
- * Pattern to match @today with optional arithmetic and format specifiers
- * Uses alternation to match valid patterns: arithmetic+format, arithmetic only, or format only
+ * Pattern to match @today with optional chained arithmetic and format specifiers.
+ * Supports one or more arithmetic segments (e.g. +2y-90d) followed by an optional
+ * format specifier (e.g. [US]), or a format specifier alone.
+ *
+ * Examples: @today, @today+30, @today+2y-90d, @today+2y-90d[US], @today[legal]
  */
-const EXTENDED_DATE_PATTERN =
-  /@today((?:[+-]\d+[dmy]?(?:\[[^\]]+\])?)|(?:[+-]\d+[dmy]?)|(?:\[[^\]]+\]))?/g;
+const WRAPPED_DATE_PATTERN =
+  /\{\{\s*(@today((?:[+-]\d+[dmy]?)+(?:\[[^\]]+\])?|\[[^\]]+\])?)\s*\}\}/g;
 
-/**
- * Parse date token to extract arithmetic and format
- * @param token - The full token after @today (e.g., "+30[US]", "[legal]", "+1y")
- * @returns Object with arithmetic operation and format, or null if invalid
- */
-function parseDateToken(token: string): {
-  arithmetic: { type: 'days' | 'months' | 'years'; amount: number } | null;
-  format: string | null;
-  isValid: boolean;
-} {
-  if (!token) return { arithmetic: null, format: null, isValid: true };
-
-  // Check if the token contains only valid characters for date processing
-  if (!/^[+-]?\d*[dmy]?(\[[^\]]+\])?$/.test(token)) {
-    return { arithmetic: null, format: null, isValid: false };
-  }
-
-  // Extract format first [format]
-  const formatMatch = token.match(/\[([^\]]+)\]/);
-  const format = formatMatch ? formatMatch[1] : null;
-
-  // Remove format part to get arithmetic part
-  const arithmeticPart = token.replace(/\[([^\]]+)\]/, '');
-
-  // Parse arithmetic operation only if there is an arithmetic part
-  let arithmetic = null;
-  if (arithmeticPart) {
-    const arithmeticMatch = arithmeticPart.match(/^([+-])(\d+)([dmy]?)$/);
-
-    if (arithmeticMatch) {
-      const [, sign, amount, suffix] = arithmeticMatch;
-      const numAmount = parseInt(amount) * (sign === '-' ? -1 : 1);
-
-      switch (suffix) {
-        case 'd':
-        case '':
-          arithmetic = { type: 'days' as const, amount: numAmount };
-          break;
-        case 'm':
-          arithmetic = { type: 'months' as const, amount: numAmount };
-          break;
-        case 'y':
-          arithmetic = { type: 'years' as const, amount: numAmount };
-          break;
-        default:
-          arithmetic = { type: 'days' as const, amount: numAmount };
-      }
-    } else if (arithmeticPart !== '') {
-      // Invalid arithmetic format
-      return { arithmetic: null, format: null, isValid: false };
-    }
-  }
-
-  return { arithmetic, format, isValid: true };
+/** A single arithmetic step to apply to a date */
+interface ArithmeticOp {
+  type: 'days' | 'months' | 'years';
+  amount: number;
 }
 
 /**
- * Legacy function for backwards compatibility
+ * Parse date token to extract a list of arithmetic operations and an optional format.
+ * @param token - Everything after @today (e.g. "+2y-90d[US]", "[legal]", "+1y", "")
+ * @returns { arithmeticList, format, isValid }
  */
-function parseArithmetic(
-  operation: string
-): { type: 'days' | 'months' | 'years'; amount: number } | null {
-  const result = parseDateToken(operation);
-  return result.arithmetic;
+function parseDateToken(token: string): {
+  arithmeticList: ArithmeticOp[];
+  format: string | null;
+  isValid: boolean;
+} {
+  if (!token) return { arithmeticList: [], format: null, isValid: true };
+
+  // Valid token: zero-or-more arithmetic segments + optional [format]
+  if (!/^(?:[+-]\d+[dmy]?)*(?:\[[^\]]+\])?$/.test(token)) {
+    return { arithmeticList: [], format: null, isValid: false };
+  }
+
+  // Extract optional [format] specifier
+  const formatMatch = token.match(/\[([^\]]+)\]/);
+  const format = formatMatch ? formatMatch[1] : null;
+
+  // Remove [format] to isolate arithmetic part
+  const arithmeticPart = token.replace(/\[[^\]]+\]/, '');
+
+  // Parse every [+-]\d+[dmy]? segment in order
+  const arithmeticList: ArithmeticOp[] = [];
+  const opRe = /([+-])(\d+)([dmy]?)/g;
+  let m: RegExpExecArray | null;
+  while ((m = opRe.exec(arithmeticPart)) !== null) {
+    const [, sign, digits, suffix] = m;
+    const amount = parseInt(digits) * (sign === '-' ? -1 : 1);
+    switch (suffix) {
+      case 'm':
+        arithmeticList.push({ type: 'months', amount });
+        break;
+      case 'y':
+        arithmeticList.push({ type: 'years', amount });
+        break;
+      default: // 'd' or no suffix → days
+        arithmeticList.push({ type: 'days', amount });
+    }
+  }
+
+  return { arithmeticList, format, isValid: true };
 }
 
 /**
  * Apply arithmetic operation to a date
  */
-function applyDateArithmetic(baseDate: Date, arithmetic: ReturnType<typeof parseArithmetic>): Date {
+function applyDateArithmetic(
+  baseDate: Date,
+  arithmetic: { type: 'days' | 'months' | 'years'; amount: number } | null
+): Date {
   if (!arithmetic) return baseDate;
 
   switch (arithmetic.type) {
@@ -244,13 +242,6 @@ function formatDateBasic(date: Date, format: string): string {
 }
 
 /**
- * Get CSS class for date field based on its processing status
- */
-function getDateFieldCssClass(hasArithmetic: boolean): string {
-  return hasArithmetic ? 'legal-field highlight' : 'legal-field imported-value';
-}
-
-/**
  * Format date value with optional field tracking wrapper
  */
 function formatDateValue(
@@ -263,10 +254,9 @@ function formatDateValue(
     return value;
   }
 
-  const cssClass = getDateFieldCssClass(hasArithmetic);
   const fieldName = `date.${originalToken.replace(/[@[\]]/g, '')}`;
-
-  return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${value}</span>`;
+  const kind = hasArithmetic ? 'highlight' : 'imported';
+  return fieldSpan(fieldName, value, kind);
 }
 
 /**
@@ -274,7 +264,7 @@ function formatDateValue(
  */
 function processDateReferencesInAST(
   root: Root,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   enableFieldTracking: boolean = false
 ): void {
   visit(root, 'text', (node: Text, index, parent) => {
@@ -282,41 +272,41 @@ function processDateReferencesInAST(
     let modifiedValue = originalValue;
     let hasChanges = false;
 
-    // Process extended date patterns with arithmetic
-    modifiedValue = modifiedValue.replace(EXTENDED_DATE_PATTERN, (match, token) => {
+    // Process wrapped {{@today...}} tokens with arithmetic
+    modifiedValue = modifiedValue.replace(WRAPPED_DATE_PATTERN, (match, fullToken, token) => {
       try {
-        // Parse the token to get arithmetic and format
-        const { arithmetic, format: tokenFormat, isValid } = parseDateToken(token);
+        // Parse the token to get arithmetic operations and format
+        const { arithmeticList, format: tokenFormat, isValid } = parseDateToken(token);
 
         // If token is invalid, return original match
         if (!isValid) {
           return match;
         }
 
-        // Use current date as base
+        // Use current date as base, then apply each arithmetic step in order
         let date = new Date();
-        const hasArithmetic = !!arithmetic;
-
-        // Apply arithmetic if present
-        if (arithmetic) {
-          date = applyDateArithmetic(date, arithmetic);
+        const hasArithmetic = arithmeticList.length > 0;
+        for (const op of arithmeticList) {
+          date = applyDateArithmetic(date, op);
         }
 
         // Determine format
-        const format = tokenFormat || metadata['date-format'] || 'YYYY-MM-DD';
+        const format =
+          tokenFormat ||
+          (typeof metadata['date-format'] === 'string' ? metadata['date-format'] : 'YYYY-MM-DD');
 
         // Format the date using our basic formatter
         const formattedDate = formatDateBasic(date, format);
 
         // Track the date field for statistics
-        fieldTracker.trackField(`date.${match.replace(/[@[\]]/g, '')}`, {
+        fieldTracker.trackField(`date.${fullToken.replace(/[@[\]]/g, '')}`, {
           value: formattedDate,
           originalValue: match,
           hasLogic: hasArithmetic,
         });
 
         hasChanges = true;
-        return formatDateValue(formattedDate, match, enableFieldTracking, hasArithmetic);
+        return formatDateValue(formattedDate, fullToken, enableFieldTracking, hasArithmetic);
       } catch (error) {
         console.warn(`Error processing date reference ${match}:`, error);
         return match; // Return original on error
@@ -333,7 +323,7 @@ function processDateReferencesInAST(
             type: 'html',
             value: modifiedValue,
           };
-          parent.children[index] = htmlNode as any;
+          parent.children[index] = htmlNode as unknown as import('mdast').Content;
         }
       } else {
         node.value = modifiedValue;
@@ -342,45 +332,51 @@ function processDateReferencesInAST(
   });
 
   // Also process HTML nodes that might contain date references
-  visit(root, 'html', (node: any) => {
-    if (!node.value || !node.value.includes('@today')) {
+  visit(root, 'html', (node: { value: string }) => {
+    if (!node.value || !node.value.includes('{{') || !node.value.includes('@today')) {
       return;
     }
 
     let modifiedValue = node.value;
     let hasChanges = false;
 
-    // Process basic date patterns in HTML content
+    // Process wrapped {{@today...}} tokens in HTML content
     modifiedValue = modifiedValue.replace(
-      EXTENDED_DATE_PATTERN,
-      (match: string, formatOverride: string) => {
+      WRAPPED_DATE_PATTERN,
+      (match: string, fullToken: string, token: string) => {
         try {
-          // Use current date
-          const date = new Date();
+          const { arithmeticList, format: tokenFormat, isValid } = parseDateToken(token);
+          if (!isValid) {
+            return match;
+          }
+
+          let date = new Date();
+          const hasArithmetic = arithmeticList.length > 0;
+          for (const op of arithmeticList) {
+            date = applyDateArithmetic(date, op);
+          }
 
           // Determine format
-          const format = formatOverride || metadata['date-format'] || 'YYYY-MM-DD';
+          const format =
+            tokenFormat ||
+            (typeof metadata['date-format'] === 'string' ? metadata['date-format'] : 'YYYY-MM-DD');
 
           // Format the date
           const formattedDate = formatDateBasic(date, format);
 
           // Track the date field for statistics
-          fieldTracker.trackField(`date.${match.replace(/[@[\]]/g, '')}`, {
+          fieldTracker.trackField(`date.${fullToken.replace(/[@[\]]/g, '')}`, {
             value: formattedDate,
             originalValue: match,
-            hasLogic: false,
+            hasLogic: hasArithmetic,
           });
 
           hasChanges = true;
 
           // For HTML nodes, generate HTML span if field tracking is enabled
           if (enableFieldTracking) {
-            const cssClass = getDateFieldCssClass(false);
-            const fieldName = `date.${match.replace(/[@[\]]/g, '')}`;
-            return (
-              `<span class="${cssClass}" ` +
-              `data-field="${fieldName.replace(/"/g, '&quot;')}">${formattedDate}</span>`
-            );
+            const fieldName = `date.${fullToken.replace(/[@[\]]/g, '')}`;
+            return fieldSpan(fieldName, formattedDate, hasArithmetic ? 'highlight' : 'imported');
           } else {
             return formattedDate;
           }
@@ -420,3 +416,12 @@ const remarkDates: Plugin<[DateProcessingOptions], Root> = options => {
 
 export default remarkDates;
 export type { DateProcessingOptions };
+
+// Exported for testing - not part of public API
+export {
+  parseDateToken as _parseDateToken,
+  applyDateArithmetic as _applyDateArithmetic,
+  getOrdinalSuffix as _getOrdinalSuffix,
+  formatDateBasic as _formatDateBasic,
+  formatDateValue as _formatDateValue,
+};

@@ -7,15 +7,17 @@ export default defineConfig({
       entry: './src/browser-modern.ts',
       name: 'LegalMarkdown',
       formats: ['es'],
-      fileName: () => 'legal-markdown-browser.js'
+      fileName: () => 'legal-markdown-browser.js',
     },
     rollupOptions: {
       external: [
-        // Only exclude truly Node-specific modules that should never be in browser
         'child_process',
+        'node:child_process',
         'puppeteer',
+        'puppeteer-core',
         'worker_threads',
-        'pandoc-wasm' // This is optional and loaded separately
+        'node:worker_threads',
+        'pandoc-wasm',
       ],
       output: {
         // Provide empty modules for Node.js builtins
@@ -27,9 +29,9 @@ export default defineConfig({
           stream: '{}',
           util: '{}',
           events: '{}',
-          buffer: '{}'
-        }
-      }
+          buffer: '{}',
+        },
+      },
     },
     minify: false, // Disable for easier debugging
     sourcemap: true,
@@ -46,16 +48,13 @@ export default defineConfig({
       '@errors': path.resolve(__dirname, 'src/errors'),
       '@utils': path.resolve(__dirname, 'src/utils'),
       // Provide browser shims for Node.js modules
-      'fs': path.resolve(__dirname, 'src/utils/browser-shims.ts'),
+      cosmiconfig: path.resolve(__dirname, 'src/utils/cosmiconfig-shim.ts'),
+      fs: path.resolve(__dirname, 'src/utils/browser-shims.ts'),
       'fs/promises': path.resolve(__dirname, 'src/utils/browser-shims.ts'),
-      'path': 'path-browserify',
-      'crypto': 'crypto-browserify',
-      'stream': 'stream-browserify',
-      'util': 'util',
-      'events': 'events',
-      'buffer': 'buffer'
+      path: 'path-browserify',
+      buffer: 'buffer',
     },
-    extensions: ['.ts', '.js', '.mjs', '.json']
+    extensions: ['.ts', '.js', '.mjs', '.json'],
   },
   optimizeDeps: {
     include: [
@@ -69,20 +68,19 @@ export default defineConfig({
       'js-yaml',
       'extend',
       'path-browserify',
-      'util',
-      'events',
-      'buffer'
+      'buffer',
     ],
     esbuildOptions: {
       define: {
-        global: 'globalThis'
-      }
-    }
+        global: 'globalThis',
+      },
+    },
   },
   define: {
+    __LEGAL_MARKDOWN_VERSION__: JSON.stringify(process.env.npm_package_version || '0.0.0'),
     'process.env.NODE_ENV': JSON.stringify('production'),
     'process.env.DEBUG': JSON.stringify(false),
-    'process': JSON.stringify({ env: { NODE_ENV: 'production', DEBUG: false } }),
-    'global': 'globalThis'
-  }
+    process: JSON.stringify({ env: { NODE_ENV: 'production', DEBUG: false } }),
+    global: 'globalThis',
+  },
 });

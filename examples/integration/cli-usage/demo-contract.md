@@ -33,7 +33,8 @@ Contact: {{client.contact}}
 
 **VENDOR**: {{vendor.name}}  
 {{vendor.address}}  
-Contact: {{vendor.contact ? vendor.contact : "[Contact Required]"}}
+Contact: {{#if vendor.contact}}{{vendor.contact}}{{else}}[Contact
+Required]{{/if}}
 
 ## PROJECT DETAILS
 
@@ -45,7 +46,8 @@ Total Budget: ${{project.budget}}
 
 Payment terms: {{payment.terms}}
 
-{{payment.late_fee ? "Late payments will incur a " + payment.fee_percentage + "% monthly fee." : "No late fees apply."}}
+{{#if payment.late_fee}}Late payments will incur a {{payment.fee_percentage}}%
+monthly fee.{{else}}No late fees apply.{{/if}}
 
 ## SIGNATURES
 

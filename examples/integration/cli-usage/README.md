@@ -36,5 +36,5 @@ patterns and options.
 
 ## 💡 Learn more
 
-- [CLI Reference](../../../docs/cli-reference.md)
-- [Batch Processing Guide](../../../docs/batch-processing.md)
+- [CLI Reference](../../../docs/cli_reference.md)
+- [Batch Processing Guide](../../../docs/advanced/batch-processing.md)

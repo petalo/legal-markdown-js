@@ -35,17 +35,14 @@ This is a test document for integration testing.`;
 
     fs.writeFileSync(path.join(testInputDir, 'integration-test.md'), testContent);
 
-    // Create test .env file in the isolated work directory
-    const testEnvContent = `# Legal Markdown Configuration
-# Generated for integration testing
-
-STYLES_DIR="./src/styles"
-DEFAULT_INPUT_DIR="${testInputDir}"
-DEFAULT_OUTPUT_DIR="${testOutputDir}"
-ARCHIVE_DIR="./archive"
+    const testConfigContent = `paths:
+  input: "${testInputDir}"
+  output: "${testOutputDir}"
+  styles: "./src/styles"
+  archive: "./archive"
 `;
 
-    fs.writeFileSync(path.join(testWorkDir, '.env'), testEnvContent);
+    fs.writeFileSync(path.join(testWorkDir, '.legalmdrc.yaml'), testConfigContent);
   });
 
   afterAll(async () => {
@@ -78,19 +75,21 @@ ARCHIVE_DIR="./archive"
       },
       cwd: testWorkDir,
     });
-    
+
     activeProcesses.add(child);
 
     return new Promise((resolve, reject) => {
       let output = '';
       let foundExpectedOutput = false;
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', data => {
         output += data.toString();
-        
+
         // Check if we see the expected prompts (without emojis to avoid encoding issues)
-        if (output.includes('Legal Markdown Interactive CLI') && 
-            output.includes('Searching for files in:')) {
+        if (
+          output.includes('Legal Markdown Interactive CLI') &&
+          output.includes('Searching for files in:')
+        ) {
           foundExpectedOutput = true;
           child.kill('SIGTERM');
         }
@@ -99,7 +98,7 @@ ARCHIVE_DIR="./archive"
       child.on('exit', () => {
         activeProcesses.delete(child);
         clearTimeout(timeout);
-        
+
         if (foundExpectedOutput) {
           expect(output).toContain('Legal Markdown Interactive CLI');
           expect(output).toContain('Searching for files in:');
@@ -109,7 +108,7 @@ ARCHIVE_DIR="./archive"
         }
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         clearTimeout(timeout);
         reject(error);
       });
@@ -134,16 +133,16 @@ ARCHIVE_DIR="./archive"
       },
       cwd: testWorkDir,
     });
-    
+
     activeProcesses.add(child);
 
     return new Promise((resolve, reject) => {
       let output = '';
       let cancelled = false;
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', data => {
         output += data.toString();
-        
+
         // Wait for the file selection prompt, then simulate cancellation
         if (output.includes('Select an input file:') && !cancelled) {
           cancelled = true;
@@ -154,7 +153,7 @@ ARCHIVE_DIR="./archive"
       child.on('exit', (code, signal) => {
         activeProcesses.delete(child);
         clearTimeout(timeout);
-        
+
         if ((signal === 'SIGINT' || code === 0) && cancelled) {
           resolve(void 0);
         } else if (!cancelled) {
@@ -164,7 +163,7 @@ ARCHIVE_DIR="./archive"
         }
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         clearTimeout(timeout);
         reject(error);
       });
@@ -183,16 +182,13 @@ ARCHIVE_DIR="./archive"
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-'));
     const emptyWorkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'legal-md-test-empty-work-'));
 
-    // Create temporary .env with empty directory in the empty work dir
-    const tempEnvContent = `# Legal Markdown Configuration
-# Generated for empty directory test
-
-STYLES_DIR="./src/styles"
-DEFAULT_INPUT_DIR="${emptyDir}"
-DEFAULT_OUTPUT_DIR="${testOutputDir}"
-ARCHIVE_DIR="./archive"
+    const tempConfigContent = `paths:
+  input: "${emptyDir}"
+  output: "${testOutputDir}"
+  styles: "./src/styles"
+  archive: "./archive"
 `;
-    fs.writeFileSync(path.join(emptyWorkDir, '.env'), tempEnvContent);
+    fs.writeFileSync(path.join(emptyWorkDir, '.legalmdrc.yaml'), tempConfigContent);
 
     const child = spawn('node', [cliPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -201,16 +197,16 @@ ARCHIVE_DIR="./archive"
       },
       cwd: emptyWorkDir,
     });
-    
+
     activeProcesses.add(child);
 
     return new Promise((resolve, reject) => {
       let output = '';
       let foundWarning = false;
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', data => {
         output += data.toString();
-        
+
         // Should show warning about no files found
         if (output.includes('No supported files found')) {
           foundWarning = true;
@@ -221,7 +217,7 @@ ARCHIVE_DIR="./archive"
       child.on('exit', () => {
         activeProcesses.delete(child);
         clearTimeout(timeout);
-        
+
         // Clean up empty directories
         try {
           fs.rmSync(emptyDir, { recursive: true, force: true });
@@ -238,7 +234,7 @@ ARCHIVE_DIR="./archive"
         }
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         clearTimeout(timeout);
         reject(error);
       });

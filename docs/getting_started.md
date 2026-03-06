@@ -194,37 +194,22 @@ cat input.md | legal-md --stdin --stdout
 ### Programmatic Usage
 
 ```typescript
-import {
-  processLegalMarkdown,
-  processLegalMarkdownWithRemark,
-} from 'legal-markdown-js';
+import { processLegalMarkdown } from 'legal-markdown-js';
 
-// Basic processing (legacy)
-const result = processLegalMarkdown(content);
+// Basic processing (async)
+const result = await processLegalMarkdown(content);
 console.log(result.content);
 
-// Remark-based processing (recommended for new projects)
-const remarkResult = await processLegalMarkdownWithRemark(content, {
+// With options (async)
+const detailedResult = await processLegalMarkdown(content, {
   basePath: './documents',
   enableFieldTracking: true,
   debug: false,
 });
 
-console.log(remarkResult.content);
-console.log(remarkResult.metadata);
-console.log(remarkResult.fieldReport);
-
-// With options (legacy)
-const result = processLegalMarkdown(content, {
-  basePath: './documents',
-  exportMetadata: true,
-  exportFormat: 'json',
-  enableFieldTracking: true,
-});
-
-console.log(result.content);
-console.log(result.metadata);
-console.log(result.fieldReport);
+console.log(detailedResult.content);
+console.log(detailedResult.metadata);
+console.log(detailedResult.fieldReport);
 ```
 
 ## Common Use Cases

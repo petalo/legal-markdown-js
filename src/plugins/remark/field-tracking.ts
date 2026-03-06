@@ -33,6 +33,7 @@ import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
 import type { Root, Text, Node } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import type { YamlValue } from '../../types';
 
 /**
  * Configuration options for the field tracking plugin
@@ -48,7 +49,7 @@ export interface FieldTrackingOptions {
   debug?: boolean;
 
   /** Metadata object to store tracking statistics */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, YamlValue>;
 }
 
 /**
@@ -111,7 +112,7 @@ function extractFieldName(match: string, pattern: string): string {
 /**
  * Resolve field value from metadata or return empty string
  */
-function resolveFieldValue(fieldName: string, metadata: Record<string, any>): string {
+function resolveFieldValue(fieldName: string, metadata: Record<string, YamlValue>): string {
   // Try direct metadata lookup
   if (metadata[fieldName] !== undefined) {
     return String(metadata[fieldName]);
@@ -119,11 +120,16 @@ function resolveFieldValue(fieldName: string, metadata: Record<string, any>): st
 
   // Try nested lookup for dotted field names (e.g., 'contract.date')
   const keys = fieldName.split('.');
-  let current = metadata;
+  let current: YamlValue = metadata;
 
   for (const key of keys) {
-    if (current && typeof current === 'object' && key in current) {
-      current = current[key];
+    if (
+      current !== null &&
+      typeof current === 'object' &&
+      !Array.isArray(current) &&
+      key in current
+    ) {
+      current = (current as Record<string, YamlValue>)[key];
     } else {
       return ''; // Field not found
     }
@@ -138,7 +144,7 @@ function resolveFieldValue(fieldName: string, metadata: Record<string, any>): st
 function trackFieldsInTextNode(
   textNode: Text,
   patterns: string[],
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean = false
 ): FieldTrackingResult[] {
   const results: FieldTrackingResult[] = [];
@@ -246,3 +252,11 @@ const remarkFieldTracking: Plugin<[FieldTrackingOptions?], Root> = (options = {}
 };
 
 export default remarkFieldTracking;
+
+// Exported for testing - not part of public API
+export {
+  shouldExcludeNode as _shouldExcludeNode,
+  extractFieldName as _extractFieldName,
+  resolveFieldValue as _resolveFieldValue,
+  trackFieldsInTextNode as _trackFieldsInTextNode,
+};

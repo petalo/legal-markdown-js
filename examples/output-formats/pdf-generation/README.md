@@ -32,5 +32,5 @@ Generating PDF output with styling and field highlighting capabilities.
 
 ## 💡 Learn more
 
-- [PDF Generation Guide](../../../docs/pdf-generation.md)
-- [Styling and Themes](../../../docs/styling.md)
+- [PDF Generation Guide](../../../docs/output/pdf-generation.md)
+- [CSS Classes](../../../docs/output/css-classes.md)

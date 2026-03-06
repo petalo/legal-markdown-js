@@ -42,7 +42,7 @@ src/
 │   ├── clause-processor.ts         # [text]{condition} optional clauses
 │   ├── reference-processor.ts      # |reference| cross-references
 │   ├── import-processor.ts         # @import file inclusion with frontmatter merging
-│   ├── mixin-processor.ts          # {{variable}} template substitution (legacy)
+│   ├── mixin-processor.ts          # {{variable}} template substitution (legacy, deprecated - see ast-mixin-processor.ts)
 │   └── date-processor.ts           # @today date processing
 ├── extensions/             # 🚀 Modern Node.js enhancements
 │   ├── helpers/            # Advanced helper functions (Node.js only)
@@ -230,12 +230,12 @@ npm run format           # Format code with Prettier
 npm run typecheck        # Run TypeScript type checking
 
 # Documentation
-npm run docs:build       # Build documentation
-npm run docs:serve       # Serve documentation locally
+npm run build:docs       # Build API documentation
+npm run docs             # Alias for build:docs
 
 # Release
-npm run release          # Create a new release
-npm run version          # Bump version and create changelog
+npm run release:dry      # Validate semantic-release setup
+npm version patch        # Bump version locally (if needed)
 ```
 
 ## 🛠️ Development Guidelines
@@ -247,20 +247,20 @@ processing:
 
 #### Pipeline Components
 
-1. **Pipeline Manager** (`src/extensions/pipeline/pipeline-manager.ts`):
+1. **Pipeline Orchestration** (`src/core/pipeline/index.ts`):
    - Orchestrates step-by-step document processing
    - Handles dependencies between processing steps
    - Provides comprehensive error handling and recovery
    - Includes performance monitoring and metrics
 
-2. **Pipeline Configuration** (`src/extensions/pipeline/pipeline-config.ts`):
+2. **Pipeline Builder** (`src/core/pipeline/pipeline-builder.ts`):
    - Pre-configured processing pipelines for different use cases
    - `createDefaultPipeline()` - Standard document processing
    - `createHtmlPipeline()` - HTML output with field tracking
    - Configurable step ordering and dependencies
 
 3. **AST Mixin Processor** (`src/extensions/ast-mixin-processor.ts`):
-   - Prevents text contamination issues from the legacy processor
+   - Prevents text contamination issues from removed legacy regex processors
    - Uses Abstract Syntax Tree parsing for clean variable substitution
    - Supports all mixin types: variables, helpers, conditionals
    - Automatic bracket value detection for missing fields
@@ -409,7 +409,7 @@ export class PdfGenerator {
 
 ### Enhanced Field Tracking System
 
-The field tracking system (`src/tracking/field-tracker.ts`) provides
+The field tracking system (`src/extensions/tracking/field-tracker.ts`) provides
 comprehensive field monitoring:
 
 #### Field Tracking Guidelines
@@ -424,7 +424,10 @@ comprehensive field monitoring:
 **Example Field Tracking Usage**:
 
 ```typescript
-import { fieldTracker, FieldStatus } from '../tracking/field-tracker';
+import {
+  fieldTracker,
+  FieldStatus,
+} from '../extensions/tracking/field-tracker';
 
 // Track a field during processing
 fieldTracker.trackField('client.name', {
@@ -526,7 +529,7 @@ export function formatCurrency(
 
 ### Web Interface Development
 
-When working on the web interface (`src/web/` and `src/browser.ts`):
+When working on the web interface (`src/web/` and `src/browser-modern.ts`):
 
 1. **Browser Compatibility**: Support modern browsers (Chrome, Firefox, Safari,
    Edge)
@@ -635,7 +638,7 @@ Unit tests should:
 describe('Pipeline Manager', () => {
   it('should execute pipeline steps in correct order', async () => {
     const pipeline = createDefaultPipeline();
-    const content = '{{name}} - {{formatDate(@today, "YYYY-MM-DD")}}';
+    const content = '{{name}} - {{formatDate @today "YYYY-MM-DD"}}';
     const metadata = { name: 'John Doe' };
     const options = { legalMarkdownOptions: {} };
 
@@ -686,7 +689,7 @@ describe('AST Mixin Processor', () => {
   });
 
   it('should track fields correctly during AST processing', () => {
-    const content = 'Name: {{name}}, Date: {{formatDate(@today)}}';
+    const content = 'Name: {{name}}, Date: {{formatDate @today "US"}}';
     const metadata = { name: 'John Doe' };
     const options = { enableFieldTracking: true };
 
@@ -694,7 +697,9 @@ describe('AST Mixin Processor', () => {
 
     const fields = fieldTracker.getFields();
     expect(fields.get('name')?.status).toBe(FieldStatus.FILLED);
-    expect(fields.get('formatDate(@today)')?.status).toBe(FieldStatus.LOGIC);
+    expect(fields.get('formatDate @today "US"')?.status).toBe(
+      FieldStatus.LOGIC
+    );
   });
 });
 ```
@@ -975,11 +980,11 @@ const pipelineLogger = new ConsolePipelineLogger({
 - Used by generators, parsers, and utilities
 - Controlled by `LOG_LEVEL` environment variable
 
-**2. Pipeline Logger (`src/extensions/pipeline/pipeline-logger.ts`)**
+**2. Pipeline Diagnostics (`src/plugins/remark/plugin-order-validator.ts`)**
 
-- Specialized for pipeline system logging
-- Provides detailed execution metrics
-- Includes performance profiling and step timing
+- Validates processing plugin order
+- Provides actionable diagnostics when ordering constraints fail
+- Helps surface configuration issues in development and CI
 
 #### Development Guidelines
 
@@ -1273,10 +1278,10 @@ test(integration): add comprehensive workflow tests
 
 ### Documentation Resources
 
-- **[API Reference](docs/api-reference.md)**: Complete API documentation
-- **[Architecture Guide](architecture.md)**: System architecture overview
-- **[Compatibility Guide](COMPATIBILITY.md)**: Feature compatibility tracking
-- **[Examples](examples/)**: Practical usage examples
+- **[Documentation Hub](../README.md)**: Complete API documentation
+- **[Architecture Guide](../ARCHITECTURE.md)**: System architecture overview
+- **[Features Guide](../features/README.md)**: Feature compatibility tracking
+- **[Examples](../../examples/README.md)**: Practical usage examples
 
 ### Maintainer Contact
 

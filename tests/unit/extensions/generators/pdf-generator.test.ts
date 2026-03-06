@@ -20,15 +20,18 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach, MockedObject } from 'vitest';
-import { PdfGenerator, pdfGenerator, PdfGeneratorOptions } from '../../../../src/extensions/generators/pdf-generator';
-import * as puppeteer from 'puppeteer';
+import {
+  PdfGenerator,
+  pdfGenerator,
+  PdfGeneratorOptions,
+} from '../../../../src/extensions/generators/pdf-generator';
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { asMarkdown } from '../../../../src/types/content-formats';
 
 // Mock all external dependencies
-vi.mock('puppeteer');
+vi.mock('puppeteer', () => ({ launch: vi.fn() }), { virtual: true });
 vi.mock('fs/promises');
 vi.mock('fs');
 vi.mock('../../utils/logger', () => ({
@@ -47,18 +50,28 @@ vi.mock('../../../../src/extensions/generators/html-generator', () => ({
   },
 }));
 
-const mockedPuppeteer = puppeteer as MockedObject<typeof puppeteer>;
+let mockedPuppeteer: MockedObject<typeof import('puppeteer')>;
 const mockedFs = fs as MockedObject<typeof fs>;
 const mockedFsSync = fsSync as MockedObject<typeof fsSync>;
+const SLOW_TIMEOUT = process.env.CI ? 60_000 : 30_000;
 
 describe('PdfGenerator', () => {
   let generator: PdfGenerator;
   let mockPage: any;
   let mockBrowser: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    mockedPuppeteer = (await import('puppeteer')) as MockedObject<typeof import('puppeteer')>;
+
     // Reset all mocks
     vi.clearAllMocks();
+
+    // Restore html-generator mock after clearAllMocks (vitest v4 clearAllMocks also
+    // clears mock implementations, not just call history)
+    const { htmlGenerator } = await import(
+      '../../../../src/extensions/generators/html-generator'
+    );
+    vi.mocked(htmlGenerator.generateHtml).mockResolvedValue('<html><body><h1>Test</h1></body></html>');
 
     // Setup mock page
     mockPage = {
@@ -367,10 +380,7 @@ describe('PdfGenerator', () => {
       const deepPath = '/tmp/deep/nested/path/output.pdf';
       await generator.generatePdf(markdown, deepPath);
 
-      expect(mockedFs.mkdir).toHaveBeenCalledWith(
-        path.dirname(deepPath),
-        { recursive: true }
-      );
+      expect(mockedFs.mkdir).toHaveBeenCalledWith(path.dirname(deepPath), { recursive: true });
     });
 
     it('should write PDF file to disk', async () => {
@@ -389,9 +399,7 @@ describe('PdfGenerator', () => {
     it('should cleanup temporary HTML file', async () => {
       await generator.generatePdf(markdown, outputPath);
 
-      expect(mockedFs.unlink).toHaveBeenCalledWith(
-        expect.stringContaining('.html')
-      );
+      expect(mockedFs.unlink).toHaveBeenCalledWith(expect.stringContaining('.html'));
     });
 
     it('should close browser after generation', async () => {
@@ -417,18 +425,22 @@ describe('PdfGenerator', () => {
       );
     });
 
-    it('should provide helpful error message on macOS', async () => {
-      const originalPlatform = process.platform;
-      Object.defineProperty(process, 'platform', { value: 'darwin' });
+    it(
+      'should provide helpful error message on macOS',
+      async () => {
+        const originalPlatform = process.platform;
+        Object.defineProperty(process, 'platform', { value: 'darwin' });
 
-      mockedPuppeteer.launch = vi.fn().mockRejectedValue(new Error('Chrome not found'));
-      mockedFsSync.existsSync = vi.fn().mockReturnValue(false);
-      mockedFsSync.readdirSync = vi.fn().mockReturnValue([]);
+        mockedPuppeteer.launch = vi.fn().mockRejectedValue(new Error('Chrome not found'));
+        mockedFsSync.existsSync = vi.fn().mockReturnValue(false);
+        mockedFsSync.readdirSync = vi.fn().mockReturnValue([]);
 
-      await expect(generator.generatePdf(markdown, outputPath)).rejects.toThrow(/macOS/);
+        await expect(generator.generatePdf(markdown, outputPath)).rejects.toThrow(/macOS/);
 
-      Object.defineProperty(process, 'platform', { value: originalPlatform });
-    });
+        Object.defineProperty(process, 'platform', { value: originalPlatform });
+      },
+      SLOW_TIMEOUT
+    );
   });
 
   // ==========================================================================
@@ -708,7 +720,9 @@ describe('PdfGenerator', () => {
     });
 
     it('should throw error when HTML generation fails', async () => {
-      const { htmlGenerator } = await import('../../../../src/extensions/generators/html-generator');
+      const { htmlGenerator } = await import(
+        '../../../../src/extensions/generators/html-generator'
+      );
       vi.mocked(htmlGenerator.generateHtml).mockRejectedValue(new Error('HTML gen failed'));
 
       await expect(generator.generatePdf(markdown, outputPath)).rejects.toThrow(
@@ -790,7 +804,9 @@ describe('PdfGenerator', () => {
     });
 
     it('should pass all HtmlGeneratorOptions to HTML generator', async () => {
-      const { htmlGenerator } = await import('../../../../src/extensions/generators/html-generator');
+      const { htmlGenerator } = await import(
+        '../../../../src/extensions/generators/html-generator'
+      );
       const options: PdfGeneratorOptions = {
         cssPath: './styles/custom.css',
         includeHighlighting: true,

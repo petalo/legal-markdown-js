@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { EXAMPLE_CONFIG } = require('./migrate-examples');
+const { EXAMPLE_CONFIG } = require('./example-config.cjs');
 
 // Templates específicos por tipo de procesamiento
 const SCRIPT_TEMPLATES = {

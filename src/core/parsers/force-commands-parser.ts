@@ -25,9 +25,10 @@
  * ```
  */
 
-import { processMixins } from '../processors/mixin-processor';
+import type { YamlValue } from '../../types';
 import { LegalMarkdownOptions } from '../../types';
 import { logger } from '../../utils/logger';
+import { replaceTemplateVariables } from '../utils/template-variable-replacer';
 
 /**
  * Interface for parsed command line arguments
@@ -41,8 +42,14 @@ export interface ParsedCommands {
   pdf?: boolean;
   /** HTML generation flag */
   html?: boolean;
+  /** DOCX generation flag */
+  docx?: boolean;
   /** Field highlighting flag */
   highlight?: boolean;
+  /** AST-first field tracking */
+  astFieldTracking?: boolean;
+  /** Winner branch highlighting */
+  logicBranchHighlighting?: boolean;
   /** Export YAML metadata flag */
   exportYaml?: boolean;
   /** Export JSON metadata flag */
@@ -50,7 +57,7 @@ export interface ParsedCommands {
   /** Custom output path for exports */
   outputPath?: string;
   /** Page format for PDF */
-  format?: 'A4' | 'letter' | 'legal';
+  format?: 'A4' | 'Letter' | 'Legal';
   /** Landscape orientation flag */
   landscape?: boolean;
   /** Debug mode flag */
@@ -75,6 +82,17 @@ const PROTECTED_COMMANDS = [
   'throwOnYamlError',
 ];
 
+function isSimpleTemplatePath(path: string): boolean {
+  return /^[a-zA-Z_$][\w$]*(?:\[[0-9]+\]|\.[a-zA-Z_$][\w$]*|\[["'][^"'\]]+["']\])*$/u.test(path);
+}
+
+function extractUnsupportedTemplateExpressions(command: string): string[] {
+  const matches = Array.from(command.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g));
+  return matches
+    .map(match => String(match[1]).trim())
+    .filter(expression => !isSimpleTemplatePath(expression));
+}
+
 /**
  * Parse a force_commands string into structured options
  *
@@ -95,9 +113,11 @@ const PROTECTED_COMMANDS = [
  */
 export function parseForceCommands(
   commandString: string,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, YamlValue> = {},
   processingOptions: Partial<LegalMarkdownOptions> = {}
 ): ParsedCommands | null {
+  void processingOptions;
+
   if (!commandString || typeof commandString !== 'string') {
     return null;
   }
@@ -106,10 +126,15 @@ export function parseForceCommands(
 
   try {
     // First, resolve any template variables in the command string
-    const resolvedCommandString = processMixins(commandString, metadata, {
-      ...processingOptions,
-      noMixins: false, // Always allow mixins in force_commands
-    });
+    const resolvedCommandString = replaceTemplateVariables(commandString, metadata);
+
+    const unsupportedExpressions = extractUnsupportedTemplateExpressions(resolvedCommandString);
+    if (unsupportedExpressions.length > 0) {
+      logger.warn(
+        'force_commands contains unsupported template expressions; only simple metadata paths are resolved',
+        { unsupportedExpressions }
+      );
+    }
 
     logger.debug('Resolved command string', {
       original: commandString,
@@ -221,8 +246,20 @@ function parseArgumentsToCommands(args: string[]): ParsedCommands {
         commands.html = true;
         break;
 
+      case 'docx':
+        commands.docx = true;
+        break;
+
       case 'highlight':
         commands.highlight = true;
+        break;
+
+      case 'ast-field-tracking':
+        commands.astFieldTracking = true;
+        break;
+
+      case 'logic-branch-highlighting':
+        commands.logicBranchHighlighting = true;
         break;
 
       case 'export-yaml':
@@ -240,8 +277,13 @@ function parseArgumentsToCommands(args: string[]): ParsedCommands {
 
       case 'format': {
         const format = args[++i];
-        if (['A4', 'letter', 'legal'].includes(format)) {
-          commands.format = format as 'A4' | 'letter' | 'legal';
+        const normalized = format?.toLowerCase();
+        if (format === 'A4' || normalized === 'a4') {
+          commands.format = 'A4';
+        } else if (normalized === 'letter') {
+          commands.format = 'Letter';
+        } else if (normalized === 'legal') {
+          commands.format = 'Legal';
         }
         break;
       }
@@ -322,8 +364,10 @@ function validateAndFilterCommands(commands: ParsedCommands): ParsedCommands {
  * ```
  */
 export function applyForceCommands(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   existingOptions: Partial<LegalMarkdownOptions> & Record<string, any>,
   forceCommands: ParsedCommands
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Partial<LegalMarkdownOptions> & Record<string, any> {
   const updatedOptions = { ...existingOptions };
 
@@ -344,9 +388,21 @@ export function applyForceCommands(
     updatedOptions.html = forceCommands.html;
   }
 
+  if (forceCommands.docx !== undefined) {
+    updatedOptions.docx = forceCommands.docx;
+  }
+
   if (forceCommands.highlight !== undefined) {
     updatedOptions.highlight = forceCommands.highlight;
     updatedOptions.includeHighlighting = forceCommands.highlight;
+  }
+
+  if (forceCommands.astFieldTracking !== undefined) {
+    updatedOptions.astFieldTracking = forceCommands.astFieldTracking;
+  }
+
+  if (forceCommands.logicBranchHighlighting !== undefined) {
+    updatedOptions.logicBranchHighlighting = forceCommands.logicBranchHighlighting;
   }
 
   if (forceCommands.exportYaml !== undefined) {
@@ -400,7 +456,7 @@ export function applyForceCommands(
  * @param metadata - Document metadata from YAML front matter
  * @returns Force commands string or null if not found
  */
-export function extractForceCommands(metadata: Record<string, any>): string | null {
+export function extractForceCommands(metadata: Record<string, YamlValue>): string | null {
   if (!metadata || typeof metadata !== 'object') {
     return null;
   }
@@ -417,3 +473,10 @@ export function extractForceCommands(metadata: Record<string, any>): string | nu
 
   return null;
 }
+
+// Exported for testing - not part of public API
+export {
+  parseCommandArguments as _parseCommandArguments,
+  parseArgumentsToCommands as _parseArgumentsToCommands,
+  validateAndFilterCommands as _validateAndFilterCommands,
+};

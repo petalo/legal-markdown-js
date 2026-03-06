@@ -150,10 +150,20 @@ describe('Bracket Value Detection', () => {
 
       const bracketFields = detectBracketValues(metadata);
 
-      // Note: Current implementation may not traverse arrays
-      // This test documents the expected behavior
-      // If it fails, it indicates arrays need special handling
-      expect(bracketFields.size).toBeGreaterThanOrEqual(0);
+      expect(bracketFields.has('parties[0].name')).toBe(true);
+      expect(bracketFields.has('parties[1].name')).toBe(true);
+      expect(bracketFields.has('parties[2].role')).toBe(true);
+      expect(bracketFields.has('parties[2].name')).toBe(false);
+    });
+
+    it('should not flag escaped bracket literals as missing placeholders', () => {
+      const metadata = {
+        company: '\\[Acme Corp\\]',
+      };
+
+      const bracketFields = detectBracketValues(metadata);
+      expect(bracketFields.has('company')).toBe(false);
+      expect(bracketFields.size).toBe(0);
     });
   });
 

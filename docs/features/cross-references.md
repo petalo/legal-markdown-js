@@ -17,10 +17,14 @@ documents and referencing variables from frontmatter.
 
 Legal Markdown uses two distinct syntaxes for different types of references:
 
-| Syntax          | Purpose                     | Example          | Output                     |
-| --------------- | --------------------------- | ---------------- | -------------------------- |
-| `\|reference\|` | Internal section references | `\|payment\|`    | "Section 2. Payment Terms" |
-| `{{variable}}`  | Variables and helpers       | `{{party_name}}` | "ACME Corporation"         |
+<!-- prettier-ignore-start -->
+
+| Syntax | Purpose | Example | Output |
+| --- | --- | --- | --- |
+| `\ | reference\ | ` | Internal section references | `\ | payment\ | ` | "Section 2. Payment Terms" |
+| `{{variable}}` | Variables and helpers | `{{party_name}}` | "ACME Corporation" |
+
+<!-- prettier-ignore-end -->
 
 ## Internal Section References
 
@@ -55,8 +59,8 @@ As outlined in Article 1., payment is due within 30 days.
 1. **Section Markers**: Add `|key|` after any numbered section header
 2. **References**: Use `|key|` anywhere in the document to reference that
    section
-3. **Automatic Replacement**: References are replaced with the section's number
-   and title
+3. **Automatic Replacement**: References are replaced with the section's
+   formatted number (e.g., "Article 1.")
 
 ### Complex Document Structure
 
@@ -92,7 +96,10 @@ with Article 2. requirements.
 
 - **Unique Keys**: Each reference key must be unique within the document
 - **Case Sensitive**: Reference keys are case-sensitive
-- **No Spaces**: Keys cannot contain spaces or special characters
+- **No Pipes**: Keys cannot contain the pipe (`|`) character
+- **Position Requirement**: `|key|` must be the **last token** in the heading
+  line. If placed elsewhere, the definition will not be extracted and the
+  heading will show a `⚠️*(cross-ref not extracted)*` badge in the output.
 - **Fallback**: If a reference key is not found as an internal section, the
   system falls back to metadata variables
 
@@ -184,13 +191,13 @@ The generated metadata will be:
 _cross_references:
   - key: 'definitions'
     sectionNumber: 'Article 1.'
-    sectionText: 'Article 1. **Definitions**'
+    sectionText: 'Article 1. Definitions'
   - key: 'payment'
     sectionNumber: 'Article 2.'
-    sectionText: 'Article 2. **Payment Terms**'
+    sectionText: 'Article 2. Payment Terms'
   - key: 'termination'
     sectionNumber: 'Article 3.'
-    sectionText: 'Article 3. **Termination**'
+    sectionText: 'Article 3. Termination'
 ```
 
 ### Usage
@@ -418,6 +425,22 @@ subject to |enforcement| procedures.
 
 **Problem**: Reference appears as `|undefined_reference|` in output.
 **Solution**: Verify the section marker exists and keys match exactly.
+
+### Warning Badge in Heading Output
+
+**Problem**: A heading shows `⚠️*(cross-ref not extracted)*` appended to it.
+**Cause**: The `|key|` pattern is present in the heading but is NOT at the end —
+there is trailing text after it. The definition was silently ignored.
+
+```markdown
+# ❌ Misplaced - trailing text after |key|
+l. Payment Terms |payment| and other conditions
+
+# ✅ Correct - |key| at the very end
+l. Payment Terms |payment|
+```
+
+**Solution**: Move `|key|` to the end of the heading line.
 
 ### Circular References
 

@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Issue #139: Mixins should render in headers', () => {
   it('should render mixins inside headers with bold markdown', async () => {
@@ -27,7 +27,7 @@ level-two: "Clause %R"
 
 ll. - Obligations of **{{counterparty.contract_name}}** |obligations|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -46,7 +46,7 @@ level-two: "Section %R"
 
 ll. - {{section_title}} |conf|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -65,7 +65,7 @@ level-two: "Clause %R"
 
 ll. - Obligations of {{contract.party_name}} as {{contract.role}} |obligations|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -84,7 +84,7 @@ level-two: "Definition"
 
 ll. - Definition of *{{term}}* |def|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -102,7 +102,7 @@ level-two: "Clause %R"
 
 ll. - Party {{counterparty.legal_name}} ({{counterparty.contract_name}}) |party|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -123,7 +123,7 @@ level-two: "Agreement"
 
 ll. - Agreement between {{client}} and {{vendor}} dated {{date}} |agreement|`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });
@@ -143,7 +143,7 @@ ll. - {{section_name}} |conf|
 
 Please see |conf| for details.`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       noImports: true,
     });

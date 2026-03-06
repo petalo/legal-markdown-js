@@ -29,6 +29,20 @@
  * ```
  */
 
+import { getConfig } from '../../config';
+
+function parseNumber(value: string | number): number {
+  if (typeof value === 'number') return value;
+  const cleaned = String(value).replace(/[,\s]/g, '');
+  return parseFloat(cleaned);
+}
+
+function clampDecimals(decimals: number, fallback: number = 2): number {
+  const numericDecimals = Number(decimals);
+  const resolved = Number.isFinite(numericDecimals) ? numericDecimals : fallback;
+  return Math.max(0, Math.min(20, Math.trunc(resolved)));
+}
+
 /**
  * Formats a number as an integer with thousand separators
  *
@@ -58,10 +72,10 @@
  * ```
  */
 export function formatInteger(value: number | string, separator: string = ','): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = parseNumber(value);
   if (isNaN(num)) return String(value);
 
-  return Math.round(num)
+  return Math.trunc(num)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, separator);
 }
@@ -101,13 +115,14 @@ export function formatPercent(
   decimals: number = 2,
   symbol: boolean = true
 ): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = parseNumber(value);
   if (isNaN(num)) return String(value);
+  const safeDecimals = clampDecimals(decimals, 2);
 
   // Always convert to percentage (multiply by 100)
   // Input should always be in decimal format: 0.21 = 21%, 1.5 = 150%
   const percentage = num * 100;
-  const formatted = percentage.toFixed(decimals);
+  const formatted = percentage.toFixed(safeDecimals);
   return symbol ? `${formatted}%` : formatted;
 }
 
@@ -142,18 +157,39 @@ export function formatPercent(
 export function formatCurrency(
   value: number | string,
   currency: 'EUR' | 'USD' | 'GBP' = 'EUR',
-  decimals: number = 2
+  decimals: number = 2,
+  locale?: string
 ): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = parseNumber(value);
   if (isNaN(num)) return String(value);
 
+  const lang = locale || getConfig().processing.locale || 'en';
+  const safeDecimals = clampDecimals(decimals, 2);
+
+  if (lang.toLowerCase().startsWith('en')) {
+    return manualCurrencyFormat(num, currency, safeDecimals);
+  }
+
+  try {
+    return new Intl.NumberFormat(lang, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: safeDecimals,
+      maximumFractionDigits: safeDecimals,
+    }).format(num);
+  } catch {
+    return manualCurrencyFormat(num, currency, safeDecimals);
+  }
+}
+
+function manualCurrencyFormat(amount: number, currency: string, decimals: number): string {
   const symbols: Record<string, string> = {
     EUR: '€',
     USD: '$',
     GBP: '£',
   };
 
-  const formatted = num.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formatted = amount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const symbol = symbols[currency] || currency;
 
   // Different positioning for different currencies
@@ -269,8 +305,12 @@ export function formatPound(value: number | string, decimals: number | object = 
  * ```
  */
 export function numberToWords(num: number | string): string {
-  const n = typeof num === 'string' ? parseFloat(num) : num;
+  const n = parseNumber(num);
   if (isNaN(n)) return String(num);
+
+  if (Math.abs(n) > 999_999_999_999) {
+    return n.toLocaleString('en-US');
+  }
 
   if (n === 0) return 'zero';
 
@@ -341,12 +381,15 @@ export function numberToWords(num: number | string): string {
     return str.trim();
   };
 
-  if (n < 0) {
-    return 'negative ' + numberToWords(Math.abs(n));
-  }
+  const isNegative = n < 0;
+  const absoluteValue = Math.abs(n);
+  let integerPart = Math.floor(absoluteValue);
+  let decimalPart = Math.round((absoluteValue - integerPart) * 100);
 
-  const integerPart = Math.floor(n);
-  const decimalPart = Math.round((n - integerPart) * 100);
+  if (decimalPart === 100) {
+    integerPart += 1;
+    decimalPart = 0;
+  }
 
   let result = convertMillions(integerPart);
 
@@ -354,7 +397,8 @@ export function numberToWords(num: number | string): string {
     result += ' and ' + convertHundreds(decimalPart) + ' cents';
   }
 
-  return result.trim();
+  result = result.trim();
+  return isNegative ? `negative ${result}` : result;
 }
 
 /**
@@ -393,10 +437,11 @@ export function formatNumber(
   decimalSeparator: string = '.',
   thousandSeparator: string = ','
 ): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = parseNumber(value);
   if (isNaN(num)) return String(value);
+  const safeDecimals = clampDecimals(decimals, 2);
 
-  const parts = num.toFixed(decimals).split('.');
+  const parts = num.toFixed(safeDecimals).split('.');
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
 
   return parts.join(decimalSeparator);
@@ -431,9 +476,46 @@ export function formatNumber(
  * ```
  */
 export function round(value: number | string, decimals: number = 0): number {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = parseNumber(value);
   if (isNaN(num)) return 0;
 
   const factor = Math.pow(10, decimals);
   return Math.round(num * factor) / factor;
+}
+
+const ORDINAL_RULES: Record<string, (n: number) => string> = {
+  en: n => {
+    const j = n % 10;
+    const k = n % 100;
+    if (j === 1 && k !== 11) return n + 'st';
+    if (j === 2 && k !== 12) return n + 'nd';
+    if (j === 3 && k !== 13) return n + 'rd';
+    return n + 'th';
+  },
+  es: n => n + '.º',
+  fr: n => (n === 1 ? n + 'er' : n + 'e'),
+  de: n => n + '.',
+  pt: n => n + '.º',
+  it: n => n + '°',
+};
+
+export function ordinal(n: number, locale?: string): string {
+  const num = parseNumber(n);
+  if (isNaN(num)) return String(n);
+  const i = Math.trunc(num);
+  const lang = (locale || getConfig().processing.locale || 'en').split('-')[0];
+  const rule = ORDINAL_RULES[lang] || ORDINAL_RULES['en'];
+  return rule(i);
+}
+
+export function abs(n: number): number {
+  return Math.abs(parseNumber(n));
+}
+
+export function max(a: number, b: number): number {
+  return Math.max(parseNumber(a), parseNumber(b));
+}
+
+export function min(a: number, b: number): number {
+  return Math.min(parseNumber(a), parseNumber(b));
 }

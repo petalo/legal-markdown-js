@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../../../src/extensions/remark/legal-markdown-processor';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -42,7 +42,7 @@ This is content after the comment.`;
 # End`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -65,7 +65,7 @@ More content
       const mainContent = `@import multiple-comments.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -87,7 +87,7 @@ More content
       const mainContent = `@import with-div.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -106,7 +106,7 @@ More content
       const mainContent = `@import with-span.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -130,7 +130,7 @@ More content
       const mainContent = `@import nested-html.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -156,7 +156,7 @@ Normal **markdown** text.
       const mainContent = `@import mixed-content.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -180,7 +180,7 @@ Normal **markdown** text.
       const mainContent = `@import ast-test.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -209,7 +209,7 @@ Normal **markdown** text.
 # After`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
@@ -227,11 +227,147 @@ Normal **markdown** text.
       const mainContent = `@import only-comment.md`;
       fs.writeFileSync(mainFile, mainContent, 'utf-8');
 
-      const result = await processLegalMarkdownWithRemark(mainContent, {
+      const result = await processLegalMarkdown(mainContent, {
         basePath: tempDir,
       });
 
       expect(result.content).toContain('<!-- Just a comment -->');
+    });
+  });
+
+  describe('Edge Cases Ported from Old Processor Tests', () => {
+    it('should handle circular import detection gracefully', async () => {
+      const fileA = path.join(tempDir, 'fileA.md');
+      const fileB = path.join(tempDir, 'fileB.md');
+
+      fs.writeFileSync(
+        fileA,
+        `Content from A.\n\n@import fileB.md`,
+        'utf-8'
+      );
+      fs.writeFileSync(
+        fileB,
+        `Content from B.\n\n@import fileA.md`,
+        'utf-8'
+      );
+
+      const mainContent = `# Main\n\n@import fileA.md`;
+
+      // Should not throw or hang due to circular imports
+      const result = await processLegalMarkdown(mainContent, {
+        basePath: tempDir,
+      });
+
+      expect(result.content).toContain('Content from A.');
+      expect(result.content).toContain('Content from B.');
+    });
+
+    it('should merge frontmatter from imported files', async () => {
+      const importedFile = path.join(tempDir, 'with-fm.md');
+      const importedContent = `---
+author: John Doe
+version: 1.0
+---
+
+# Imported Content
+
+This is imported content with frontmatter.`;
+      fs.writeFileSync(importedFile, importedContent, 'utf-8');
+
+      const mainContent = `---
+title: Main Document
+client: Acme Corp
+---
+
+# Main Document
+
+@import with-fm.md
+
+# End`;
+
+      const result = await processLegalMarkdown(mainContent, {
+        basePath: tempDir,
+      });
+
+      // Imported content should appear
+      expect(result.content).toContain('Imported Content');
+      expect(result.content).toContain('imported content with frontmatter');
+
+      // Metadata from main document should be preserved
+      expect(result.metadata?.title).toBe('Main Document');
+      expect(result.metadata?.client).toBe('Acme Corp');
+    });
+
+    it('should handle cascading frontmatter merge from nested imports', async () => {
+      const level2 = path.join(tempDir, 'level2-cascade.md');
+      const level1 = path.join(tempDir, 'level1-cascade.md');
+
+      fs.writeFileSync(
+        level2,
+        `---
+author: Level 2 Author
+---
+
+Level 2 content.`,
+        'utf-8'
+      );
+
+      fs.writeFileSync(
+        level1,
+        `---
+editor: Level 1 Editor
+---
+
+Level 1 content.
+
+@import level2-cascade.md`,
+        'utf-8'
+      );
+
+      const mainContent = `---
+title: Main Document
+---
+
+@import level1-cascade.md`;
+
+      const result = await processLegalMarkdown(mainContent, {
+        basePath: tempDir,
+      });
+
+      expect(result.content).toContain('Level 1 content.');
+      expect(result.content).toContain('Level 2 content.');
+      expect(result.metadata?.title).toBe('Main Document');
+    });
+
+    it('should handle missing import files gracefully', async () => {
+      const mainContent = `# Main\n\n@import nonexistent-file.md\n\n# End`;
+
+      // Should not throw
+      const result = await processLegalMarkdown(mainContent, {
+        basePath: tempDir,
+      });
+
+      // Should still have surrounding content
+      expect(result.content).toContain('# Main');
+      expect(result.content).toContain('# End');
+    });
+
+    it('should handle imports with no frontmatter', async () => {
+      const importedFile = path.join(tempDir, 'no-fm.md');
+      fs.writeFileSync(importedFile, 'Just plain text without frontmatter.', 'utf-8');
+
+      const mainContent = `---
+title: Main
+---
+
+@import no-fm.md`;
+
+      const result = await processLegalMarkdown(mainContent, {
+        basePath: tempDir,
+      });
+
+      expect(result.content).toContain('Just plain text without frontmatter.');
+      expect(result.metadata?.title).toBe('Main');
     });
   });
 });

@@ -269,27 +269,24 @@ const remarkProcessor = {
 
 ## Migration Guide
 
-### From Legacy to Remark
+### From Legacy to Async Canonical API
 
 Step 1: Update imports
 
 ```typescript
-// Before (Legacy)
+// Canonical API
 import { processLegalMarkdown } from 'legal-markdown-js';
-
-// After (Remark)
-import { processLegalMarkdownWithRemark } from 'legal-markdown-js';
 ```
 
 Step 2: Update function calls
 
 ```typescript
-// Before (Synchronous)
-const result = processLegalMarkdown(content, options);
-
-// After (Asynchronous)
-const result = await processLegalMarkdownWithRemark(content, options);
+// processLegalMarkdown is async in v4
+const result = await processLegalMarkdown(content, options);
 ```
+
+> `processLegalMarkdown()` now returns a `Promise` and runs the remark pipeline
+> as the only supported pipeline.
 
 Step 3: Update option handling
 
@@ -309,14 +306,14 @@ const options = {
 
 ### Compatibility Mode
 
-For gradual migration, use compatibility mode:
+The async API remains options-compatible for most existing call sites:
 
 ```typescript
 import { processLegalMarkdown } from 'legal-markdown-js';
 
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   ...options,
-  useRemarkProcessor: true, // Enable remark backend
+  // remark pipeline is now the default and only pipeline
 });
 ```
 
@@ -334,7 +331,8 @@ const result = processLegalMarkdown(content, {
 
 **Minimal breaking changes:**
 
-1. **Async Processing**: Remark processing is asynchronous
+1. **Async Processing**: `processLegalMarkdown()` is asynchronous and returns a
+   Promise
 2. **Plugin API**: Custom plugins need remark-compatible interface
 3. **AST Access**: Direct AST manipulation requires remark knowledge
 
@@ -452,7 +450,7 @@ export default function customLegalPlugin(options = {}) {
 }
 
 // Usage
-const result = await processLegalMarkdownWithRemark(content, {
+const result = await processLegalMarkdown(content, {
   plugins: ['./plugins/custom-legal-plugin.js'],
 });
 ```
@@ -495,7 +493,7 @@ const fieldTrackingPlugin = {
 
 ```typescript
 try {
-  const result = await processLegalMarkdownWithRemark(content, options);
+  const result = await processLegalMarkdown(content, options);
 } catch (error) {
   if (error.name === 'ASTParseError') {
     console.error('Markdown parsing failed:', error.message);
@@ -507,7 +505,7 @@ try {
 **Plugin loading errors:**
 
 ```typescript
-const result = await processLegalMarkdownWithRemark(content, {
+const result = await processLegalMarkdown(content, {
   plugins: ['invalid-plugin'],
   onPluginError: (error, pluginName) => {
     console.warn(`Plugin ${pluginName} failed to load:`, error.message);
@@ -531,7 +529,7 @@ legal-md --profile-ast --remark document.md
 **AST inspection:**
 
 ```typescript
-const result = await processLegalMarkdownWithRemark(content, {
+const result = await processLegalMarkdown(content, {
   debugAST: true,
   astOutputPath: './debug-ast.json',
 });
@@ -543,7 +541,7 @@ console.log(JSON.stringify(result.ast, null, 2));
 **Performance profiling:**
 
 ```typescript
-const result = await processLegalMarkdownWithRemark(content, {
+const result = await processLegalMarkdown(content, {
   logPerformance: true,
   performanceCallback: metrics => {
     console.log('Processing time:', metrics.processingTime);
@@ -572,7 +570,7 @@ const result = await processLegalMarkdownWithRemark(content, {
 // ✅ Good - Proper async handling
 async function processDocument(content: string) {
   try {
-    const result = await processLegalMarkdownWithRemark(content, options);
+    const result = await processLegalMarkdown(content, options);
     return result;
   } catch (error) {
     console.error('Processing failed:', error);
@@ -582,7 +580,7 @@ async function processDocument(content: string) {
 
 // ❌ Bad - Missing await
 function processDocument(content: string) {
-  return processLegalMarkdownWithRemark(content, options); // Returns Promise
+  return processLegalMarkdown(content, options); // Returns Promise
 }
 ```
 
@@ -655,20 +653,13 @@ const fullPlugins = [
 // Migration testing
 async function testMigration(content: string) {
   // Process with both engines
-  const legacyResult = processLegalMarkdown(content, options);
-  const remarkResult = await processLegalMarkdownWithRemark(content, options);
+  const remarkResult = await processLegalMarkdown(content, options);
 
   // Compare results
-  if (legacyResult.content !== remarkResult.content) {
-    console.warn('Output differs between engines');
-  }
-
   // Verify field tracking
-  const legacyFields = extractFields(legacyResult.html);
   const remarkFields = extractFields(remarkResult.html);
-
-  if (!arraysEqual(legacyFields, remarkFields)) {
-    console.warn('Field tracking differs');
+  if (remarkFields.length === 0) {
+    console.warn('Field tracking did not detect expected fields');
   }
 }
 ```
@@ -683,7 +674,7 @@ const documents = ['doc1.md', 'doc2.md', 'doc3.md'];
 
 const results = await Promise.all(
   documents.map(doc =>
-    processLegalMarkdownWithRemark(fs.readFileSync(doc, 'utf8'), options)
+    processLegalMarkdown(fs.readFileSync(doc, 'utf8'), options)
   )
 );
 ```

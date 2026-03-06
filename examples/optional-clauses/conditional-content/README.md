@@ -31,5 +31,5 @@ Conditional clause processing based on metadata values using the
 
 ## 💡 Learn more
 
-- [Optional Clauses Guide](../../../docs/optional-clauses.md)
-- [Template Design](../../../docs/templates.md)
+- [Optional Clauses Guide](../../../docs/features/optional-clauses.md)
+- [Variables & Mixins](../../../docs/features/mixins-variables.md)

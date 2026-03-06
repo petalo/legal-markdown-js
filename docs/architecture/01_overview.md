@@ -29,8 +29,7 @@ The codebase is organised around a **three-phase processing pipeline**:
    cached AST without re-processing content
 
 This pipeline is reusable by the CLI, browser interface, automated jobs and
-future services. It replaces the legacy regex stack, which now only survives in
-compatibility shims tracked in `docs/legacy-deprecation-plan.md`.
+future services.
 
 ## Capability Highlights
 
