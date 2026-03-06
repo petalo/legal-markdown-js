@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/petalo/legal-markdown-js/compare/v4.0.0...v4.0.1) (2026-03-06)
+
+### Bug Fixes
+
+- **build:** add chmod step for CLI bin executables after tsc compilation
+  ([8c5590f](https://github.com/petalo/legal-markdown-js/commit/8c5590f156745b9bbe4e17868f4485bb7945d79c))
+
 ## [4.0.0](https://github.com/petalo/legal-markdown-js/compare/v3.5.0...v4.0.0) (2026-03-06)
 
 ### ⚠ BREAKING CHANGES
