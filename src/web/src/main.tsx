@@ -4,8 +4,8 @@ import App from './App';
 import './index.css';
 
 /**
- * Load the pre-built library by injecting a <script type="module"> element
- * whose src points to /public/legal-markdown-loader.js.
+ * Load the pre-built library by injecting a <script type="module"> element.
+ * The URL is resolved from Vite's BASE_URL so it works in GitHub Pages subpaths.
  *
  * Files in /public are served as-is by Vite - the browser resolves all
  * relative chunk imports natively, bypassing Vite's import-analysis plugin
@@ -15,7 +15,7 @@ function loadLibrary(): Promise<void> {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/legal-markdown-loader.js';
+    script.src = `${import.meta.env.BASE_URL}legal-markdown-loader.js`;
     script.addEventListener('load', () => resolve());
     script.addEventListener('error', reject);
     document.head.appendChild(script);
