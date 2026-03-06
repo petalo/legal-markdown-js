@@ -1,0 +1,17 @@
+_cross_references: []
+_field_mappings: {}
+balance: -920
+deductions: 1450
+gross_amount: 12000
+invoice_number: 3157
+num_installments: 4
+offer_a: 12500
+offer_b: 13250
+penalty_a: 900
+penalty_b: 1250
+quantity: 30
+subtotal: 8400
+tax_amount: 1764
+title: Consulting Invoice Calculation Sheet
+total_amount: 10120
+unit_price: 280

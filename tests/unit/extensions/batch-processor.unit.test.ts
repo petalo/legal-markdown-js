@@ -1,6 +1,6 @@
 /**
  * @fileoverview Tests for batch processor functionality
- * 
+ *
  * Tests the batch processor which handles:
  * - Bulk processing of legal markdown files across directories
  * - Recursive directory traversal with configurable depth
@@ -46,19 +46,29 @@ describe('Batch Processor', () => {
   describe('processBatch', () => {
     it('should process multiple markdown files', async () => {
       // Create test files
-      await writeFile(path.join(inputDir, 'test1.md'), `---
+      await writeFile(
+        path.join(inputDir, 'test1.md'),
+        `---
 title: Test 1
+level-one: "Article %n."
+level-two: "Section %n."
 ---
 
 l. First header
-ll. Second header`);
+ll. Second header`
+      );
 
-      await writeFile(path.join(inputDir, 'test2.md'), `---
+      await writeFile(
+        path.join(inputDir, 'test2.md'),
+        `---
 title: Test 2
+level-one: "Article %n."
+level-two: "Section %n."
 ---
 
 l. Another header
-ll. Another second header`);
+ll. Another second header`
+      );
 
       const result = await processBatch({
         inputDir,
@@ -156,10 +166,18 @@ ll. Another second header`);
     });
 
     it('should handle processing options', async () => {
-      await writeFile(path.join(inputDir, 'test.md'), `l. First level
+      await writeFile(
+        path.join(inputDir, 'test.md'),
+        `---
+level-one: "Article %n."
+level-two: "Section %n."
+---
+
+l. First level
 ll. Second level
 l. Another first level
-ll. Another second level`);
+ll. Another second level`
+      );
 
       const result = await processBatch({
         inputDir,
@@ -174,13 +192,13 @@ ll. Another second level`);
       expect(result.totalErrors).toBe(0);
 
       const output = await readFile(path.join(outputDir, 'test.md'), 'utf8');
-      const lines = output.split('\n');
+      const lines = output.split('\n').filter(line => line.trim().length > 0);
 
       // Check continuous numbering (noReset flag prevents resetting counters)
-      expect(lines[0]).toBe('Article 1. First level');
-      expect(lines[1]).toBe('Section 1. Second level');
-      expect(lines[2]).toBe('Article 2. Another first level');
-      expect(lines[3]).toBe('Section 2. Another second level');
+      expect(lines[0]).toBe('# Article 1. First level');
+      expect(lines[1]).toBe('## Section 1. Second level');
+      expect(lines[2]).toBe('# Article 2. Another first level');
+      expect(lines[3]).toBe('## Section 2. Another second level');
 
       // Check no indentation (noIndent flag removes hierarchical indentation)
       expect(lines[1]).not.toMatch(/^\s+Section/);
@@ -188,11 +206,14 @@ ll. Another second level`);
 
     it('should handle errors gracefully', async () => {
       await writeFile(path.join(inputDir, 'valid.md'), `l. Valid file`);
-      await writeFile(path.join(inputDir, 'invalid.md'), `---
+      await writeFile(
+        path.join(inputDir, 'invalid.md'),
+        `---
 invalid: [unclosed array
 ---
 
-l. Invalid YAML`);
+l. Invalid YAML`
+      );
 
       const errors: Array<{ file: string; error: Error }> = [];
       const result = await processBatch({
@@ -221,7 +242,7 @@ l. Invalid YAML`);
       await writeFile(path.join(inputDir, 'test2.md'), `l. Test 2`);
 
       const progressUpdates: Array<{ processed: number; total: number; file: string }> = [];
-      
+
       const result = await processBatch({
         inputDir,
         outputDir,
@@ -278,12 +299,14 @@ l. Invalid YAML`);
     });
 
     it('should throw error for non-existent input directory', async () => {
-      await expect(processBatch({
-        inputDir: '/non/existent/directory',
-        outputDir,
-        extensions: ['.md'],
-        recursive: false,
-      })).rejects.toThrow('Input directory does not exist');
+      await expect(
+        processBatch({
+          inputDir: '/non/existent/directory',
+          outputDir,
+          extensions: ['.md'],
+          recursive: false,
+        })
+      ).rejects.toThrow('Input directory does not exist');
     });
   });
 

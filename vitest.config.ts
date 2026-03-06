@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
-import os from 'os';
 
 export default defineConfig({
   test: {
@@ -16,7 +15,13 @@ export default defineConfig({
     // Coverage configuration
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'clover'],
+      reporter: ['text', 'text-summary', 'lcov'],
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 80,
+        lines: 80,
+      },
       exclude: [
         'node_modules/**',
         'dist/**',
@@ -27,37 +32,59 @@ export default defineConfig({
       ],
     },
 
-    // Test patterns
-    include: ['tests/**/*.test.ts'],
-
     // Timeout - Higher for CI environments to handle slower systems
-    testTimeout: process.env.VITEST_TEST_TIMEOUT ? parseInt(process.env.VITEST_TEST_TIMEOUT) : (process.env.CI ? 30000 : 15000),
+    testTimeout: process.env.VITEST_TEST_TIMEOUT
+      ? parseInt(process.env.VITEST_TEST_TIMEOUT)
+      : process.env.CI
+        ? 30000
+        : 15000,
 
-    // Retry flaky tests in CI
-    retry: process.env.CI ? 2 : 0,
-
-    // Parallelization - Use threads for better performance
-    // Puppeteer tests run in forks pool for sequential execution (Issue #144)
-    pool: process.env.E2E_TESTS ? 'forks' : 'threads',
+    retry: 0,
 
     // File-level parallelism for faster test execution
     fileParallelism: true,
 
-    poolOptions: {
-      threads: {
-        maxThreads: process.env.CI ? Math.min(2, os.cpus().length) : Math.min(4, os.cpus().length),
-        minThreads: process.env.CI ? 1 : 2
-      },
-      forks: {
-        // Force sequential execution for Puppeteer tests (Issue #144)
-        maxForks: 1
-      }
-    },
-
     // Reporter
     reporters: process.env.CI ? ['default', 'json'] : ['default'],
+
+    projects: [
+      {
+        extends: true,
+        test: {
+          include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+          pool: 'threads',
+        },
+      },
+      {
+        extends: true,
+        test: {
+          include: ['tests/e2e/**/*.test.ts'],
+          pool: 'forks',
+          maxWorkers: 1,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          include: ['tests/golden/**/*.test.ts'],
+          pool: 'threads',
+        },
+      },
+      {
+        test: {
+          name: 'web',
+          include: ['src/web/src/**/*.test.{ts,tsx}'],
+          environment: 'jsdom',
+          globals: true,
+          setupFiles: ['src/web/src/test-setup.ts'],
+        },
+        resolve: {
+          alias: { '@': new URL('src/web/src', import.meta.url).pathname },
+        },
+      },
+    ],
   },
-  
+
   // Path resolution (matches tsconfig paths)
   resolve: {
     alias: {

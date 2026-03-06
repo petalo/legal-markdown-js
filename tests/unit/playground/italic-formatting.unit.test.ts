@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../../src/extensions/remark/legal-markdown-processor';
 
 describe('Playground Italic Formatting', () => {
   it('should convert _ to italics correctly', async () => {
@@ -16,7 +16,7 @@ title: Test Document
 This is _italic text_ and this is normal text.
 `;
 
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       debug: false,
       enableFieldTracking: false,
       noIndent: true,
@@ -39,7 +39,7 @@ title: Test Document
 This is __bold text__ and this is normal text.
 `;
 
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       debug: false,
       enableFieldTracking: false,
       noIndent: true,
@@ -63,7 +63,7 @@ Mix of _italic_ and *also italic*.
 Mix of __bold__ and **also bold**.
 `;
 
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       debug: false,
       enableFieldTracking: false,
       noIndent: true,
@@ -96,7 +96,7 @@ ll. _Subsection_ with __emphasis__
 ll. *Another subsection* with **strong emphasis**
 `;
 
-    const result = await processLegalMarkdownWithRemark(content, {
+    const result = await processLegalMarkdown(content, {
       debug: false,
       enableFieldTracking: false,
       noIndent: true,

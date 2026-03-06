@@ -270,6 +270,7 @@ This is a test document for archive functionality.`;
         outputFormats: {
           html: false,
           pdf: false,
+          docx: false,
           markdown: true,
           metadata: false,
         },

@@ -29,7 +29,7 @@ different legal document styles.
 - **Configurable indentation** for each level
 - **Customizable templates** for each format
 - **Enhanced variable system** with %A, %a, %R, %r, %l1-l9, %o support
-- **Undefined level fallbacks** rendered as {{undefined-level-n}} templates
+- **Default fallback** to `%n.` for all undefined levels
 - **Auto-population**: CLI `--headers` flag automatically populates YAML front
   matter
 
@@ -46,31 +46,21 @@ Level 7 - Extended Level 1 llllllll. Level 8 - Extended Level 2 lllllllll. Level
 9 - Extended Level 3
 ```
 
-### Alternative Notation
-
-Use 'l' followed by the level number:
-
-```markdown
-l1. Level 1 - Article l2. Level 2 - Section l3. Level 3 - Subsection l4. Level
-4 - Sub-subsection l5. Level 5 - Paragraph l6. Level 6 - Annex l7. Level 7 -
-Extended Level 1 l8. Level 8 - Extended Level 2 l9. Level 9 - Extended Level 3
-```
-
 ## 9-Level Hierarchy
 
 ### Level Definitions
 
-| Level | Notation              | Default Format | Typical Use      |
-| ----- | --------------------- | -------------- | ---------------- |
-| 1     | `l.` or `l1.`         | `Article %n.`  | Main articles    |
-| 2     | `ll.` or `l2.`        | `Section %n.`  | Sections         |
-| 3     | `lll.` or `l3.`       | `%n.`          | Subsections      |
-| 4     | `llll.` or `l4.`      | `(%n)`         | Sub-subsections  |
-| 5     | `lllll.` or `l5.`     | `(%A)`         | Paragraphs       |
-| 6     | `llllll.` or `l6.`    | `(%a)`         | Annexes          |
-| 7     | `lllllll.` or `l7.`   | `(%R)`         | Extended Level 1 |
-| 8     | `llllllll.` or `l8.`  | `(%r)`         | Extended Level 2 |
-| 9     | `lllllllll.` or `l9.` | `%n.`          | Extended Level 3 |
+| Level | Notation     | Default Format | Typical Use      |
+| ----- | ------------ | -------------- | ---------------- |
+| 1     | `l.`         | `%n.`          | Main articles    |
+| 2     | `ll.`        | `%n.`          | Sections         |
+| 3     | `lll.`       | `%n.`          | Subsections      |
+| 4     | `llll.`      | `%n.`          | Sub-subsections  |
+| 5     | `lllll.`     | `%n.`          | Paragraphs       |
+| 6     | `llllll.`    | `%n.`          | Annexes          |
+| 7     | `lllllll.`   | `%n.`          | Extended Level 1 |
+| 8     | `llllllll.`  | `%n.`          | Extended Level 2 |
+| 9     | `lllllllll.` | `%n.`          | Extended Level 3 |
 
 ### Input Example
 
@@ -95,45 +85,47 @@ invoice.
 ### Generated Output
 
 ```markdown
-Article 1. SERVICES Section 1. Scope of Services The provider will provide
-consulting services as described in Annex A.
+1. SERVICES 1. Scope of Services The provider will provide consulting services
+   as described in Annex A.
 
-Section 2. Performance Standards Services will be performed professionally and
-in accordance with industry standards.
+2. Performance Standards Services will be performed professionally and in
+   accordance with industry standards.
 
-Article 2. COMPENSATION Section 1. Fees The client will pay the provider the sum
-of $5,000 as compensation.
+3. COMPENSATION 1. Fees The client will pay the provider the sum of $5,000 as
+   compensation.
 
-Section 2. Payment Terms Payment will be made within 30 days after receipt of
-the invoice.
+4. Payment Terms Payment will be made within 30 days after receipt of the
+   invoice.
 ```
 
 ## Template Variables
 
 ### Basic Variables
 
-| Variable | Description                     | Example             |
-| -------- | ------------------------------- | ------------------- |
-| `%n`     | Number of current level         | `1`, `2`, `3`       |
-| `%R`     | Roman numeral (uppercase)       | `I`, `II`, `III`    |
-| `%r`     | Roman numeral (lowercase)       | `i`, `ii`, `iii`    |
-| `%A`     | Alphabetic letter (uppercase)   | `A`, `B`, `C`       |
-| `%a`     | Alphabetic letter (lowercase)   | `a`, `b`, `c`       |
-| `%o`     | Ordinal number (fallback to %n) | `1st`, `2nd`, `3rd` |
+| Variable | Description                                 | Example          |
+| -------- | ------------------------------------------- | ---------------- |
+| `%n`     | Number of current level                     | `1`, `2`, `3`    |
+| `%R`     | Roman numeral (uppercase)                   | `I`, `II`, `III` |
+| `%r`     | Roman numeral (lowercase)                   | `i`, `ii`, `iii` |
+| `%A`     | Alphabetic letter (uppercase)               | `A`, `B`, `C`    |
+| `%a`     | Alphabetic letter (lowercase)               | `a`, `b`, `c`    |
+| `%c`     | Alphabetic letter (lowercase, alias for %a) | `a`, `b`, `c`    |
+| `%o`     | Numeric (currently falls back to %n)        | `1`, `2`, `3`    |
 
 ### Variable Behavior by Context
 
 #### Standard Formats (Current Level Variables)
 
-All basic variables (`%n`, `%r`, `%R`, `%A`, `%a`, `%o`) refer to the current
-level number:
+All basic variables (`%n`, `%r`, `%R`, `%A`, `%a`, `%c`, `%o`) refer to the
+current level number:
 
 - `%n` = current level number
 - `%a` = current level as lowercase letter
+- `%c` = current level as lowercase letter (alias for `%a`)
 - `%A` = current level as uppercase letter
 - `%r` = current level as lowercase roman numeral
 - `%R` = current level as uppercase roman numeral
-- `%o` = current level as ordinal (fallback to %n)
+- `%o` = current level number (currently falls back to %n)
 
 #### Hierarchical Formats (Level Reference Variables)
 
@@ -157,6 +149,20 @@ For academic/dotted notation or cross-level references, use the `%l1` through
 | `%l7`    | Level 7 number | Seventh Level   | `%l1.%l7` → "1.7"                   |
 | `%l8`    | Level 8 number | Eighth Level    | `%l1.%l8` → "1.8"                   |
 | `%l9`    | Level 9 number | Ninth Level     | `%l1.%l9` → "1.9"                   |
+
+### Relative Parent Reference Variables
+
+Tokens that resolve to ancestor counters relative to the current level:
+
+| Variable | Description                                         | Reference Level                             |
+| -------- | --------------------------------------------------- | ------------------------------------------- |
+| `%s`     | Parent level counter (current level - 1)            | level-2 counter when used at level 3        |
+| `%t`     | Grandparent counter (current level - 2)             | level-1 counter when used at level 3        |
+| `%f`     | Great-grandparent counter (current level - 3)       | left as-is if ancestor level does not exist |
+| `%i`     | Great-great-grandparent counter (current level - 4) | left as-is if ancestor level does not exist |
+
+Tokens that reference a level below 1 are left as-is in the output (e.g. `%s` at
+level 1 stays as literal `%s`, `%f` at level 3 stays as literal `%f`).
 
 ### Special Variables (Leading Zeros)
 
@@ -186,45 +192,65 @@ level-three: 'Subsection (%n)'
 level-four: 'Part %n%a'
 level-five: 'Item %n%a%r'
 level-six: 'Annex %R -'
-# Custom indentation (em)
-level-indent: 2.0
 ---
 ```
 
-### Undefined Level Fallbacks
+### Default Fallback Formats
 
-Legal Markdown JS uses **undefined fallbacks** instead of hardcoded defaults.
-The system only applies formatting when explicitly defined in YAML metadata.
+When a level format is not defined in YAML metadata, the header numbering plugin
+falls back to `%n.` for all levels (matching the Go/Ruby spec).
 
-| Level | Auto-Population Default | Undefined Fallback      |
-| ----- | ----------------------- | ----------------------- |
-| 1     | `Article %n.`           | `{{undefined-level-1}}` |
-| 2     | `Section %n.`           | `{{undefined-level-2}}` |
-| 3     | `%n.`                   | `{{undefined-level-3}}` |
-| 4     | `(%n)`                  | `{{undefined-level-4}}` |
-| 5     | `(%A)`                  | `{{undefined-level-5}}` |
-| 6     | `(%a)`                  | `{{undefined-level-6}}` |
-| 7     | `(%R)`                  | `{{undefined-level-7}}` |
-| 8     | `(%r)`                  | `{{undefined-level-8}}` |
-| 9     | `%n.`                   | `{{undefined-level-9}}` |
+| Level | Default Fallback |
+| ----- | ---------------- |
+| 1     | `%n.`            |
+| 2     | `%n.`            |
+| 3     | `%n.`            |
+| 4     | `%n.`            |
+| 5     | `%n.`            |
+| 6     | `%n.`            |
+| 7     | `%n.`            |
+| 8     | `%n.`            |
+| 9     | `%n.`            |
 
-**Important**: Levels without metadata definitions will render as
-`{{undefined-level-n}}` templates instead of hardcoded values. This ensures
-templates remain reusable and don't produce unexpected formatting.
+**Note**: The cross-reference system uses `{{undefined-level-n}}` fallbacks
+separately for levels without defined formats.
 
 ### Default Indentation
 
-- **Level 1**: No indentation
-- **Level 2**: 3 spaces (1.5 × 2)
-- **Level 3**: 6 spaces (3.0 × 2)
-- **Level 4**: 9 spaces (4.5 × 2)
-- **Level 5**: 12 spaces (6.0 × 2)
-- **Level 6**: 15 spaces (7.5 × 2)
-- **Level 7**: 18 spaces (9.0 × 2)
-- **Level 8**: 21 spaces (10.5 × 2)
-- **Level 9**: 24 spaces (12.0 × 2)
+- **Level 1**: No indentation (0 spaces)
+- **Level 2**: 2 spaces
+- **Level 3**: 4 spaces
+- **Level 4**: 6 spaces
+- **Level 5**: 8 spaces
+- **Level 6**: 10 spaces
+- **Level 7**: 12 spaces
+- **Level 8**: 14 spaces
+- **Level 9**: 16 spaces
 
-> Indentation is calculated as: `(level - 1) × level-indent × 2` spaces
+> Indentation is calculated as: `(level - 1) * 2` spaces. Indentation can be
+> disabled with the `no-indent` option.
+
+### Configuration Options
+
+| Option      | Type    | Default | Description                                      |
+| ----------- | ------- | ------- | ------------------------------------------------ |
+| `no-indent` | boolean | `false` | Disable automatic indentation of header text     |
+| `no-reset`  | boolean | `false` | Disable automatic reset of deeper-level counters |
+
+When `no-reset` is `true`, child-level counters continue incrementing even when
+a parent level advances. By default, moving from one parent section to the next
+resets all deeper counters to zero.
+
+### Alternative Key Formats
+
+Level format keys accept multiple naming conventions:
+
+- Hyphenated: `level-one`, `level-two`, etc.
+- Numbered: `level-1`, `level-2`, etc.
+- Underscored: `level_one`, `level_two`, etc.
+
+All three forms are equivalent. Hyphenated format is recommended for
+consistency.
 
 ## Format Examples
 
@@ -239,7 +265,6 @@ level-three: '%l1.%l2.%l3'
 level-four: '%l1.%l2.%l3.%l4'
 level-five: '%l1.%l2.%l3.%l4.%l5'
 level-six: 'Annex %R -'
-level-indent: 2.0
 ---
 ```
 
@@ -321,7 +346,6 @@ level-two: 'Section %n.'
 level-three: '(%n)'
 level-four: '(%n%a)'
 level-five: '(%n%a%r)'
-level-indent: 1.5
 ---
 
 l. DEFINITIONS ll. Software "Software" means the computer program licensed under
@@ -447,14 +471,9 @@ no extra spaces or special characters in the `l.` notation.
 
 #### 2. Inconsistent Indentation
 
-**Problem**: Indentation doesn't match expectations. **Solution**: Adjust the
-`level-indent` value in the front matter:
-
-```yaml
-level-indent: 1.5  # Default value
-level-indent: 2.0  # More indentation
-level-indent: 1.0  # Less indentation
-```
+**Problem**: Indentation doesn't match expectations. **Solution**: Use the
+`no-indent` option in the front matter to disable indentation entirely, or
+accept the default of 2 spaces per level.
 
 #### 3. Incorrect Template Format
 

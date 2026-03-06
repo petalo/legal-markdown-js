@@ -166,10 +166,8 @@ End: {{endDate}}`;
 
       const result = await processLegalMarkdown(input);
 
-      // Dates should be present in output (may be formatted as Date objects)
-      expect(result.content).toContain('2025');
-      expect(result.content).toContain('Jan');
-      expect(result.content).toContain('Dec');
+      expect(result.content).toContain('2025-01-15');
+      expect(result.content).toContain('2025-12-31');
     });
 
     it('should handle date arithmetic operations', async () => {
@@ -177,7 +175,7 @@ End: {{endDate}}`;
 date: 2025-01-15
 ---
 Original: {{date}}
-Next year: {{addYears(date, 1)}}`;
+Next year: {{addYears date 1}}`;
 
       const result = await processLegalMarkdown(input);
 

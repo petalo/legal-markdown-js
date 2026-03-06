@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../../src/extensions/remark/legal-markdown-processor';
 
 describe('Mixed Headers Processing', () => {
   it('should only process legal headers, not regular markdown headers', async () => {
@@ -18,7 +18,7 @@ l. Legal Header
 
 ll. Legal Subsection`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       debug: false,
       noIndent: true,
@@ -51,7 +51,7 @@ l. First Chapter
 
 ll. Chapter Subsection`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       debug: false,
       noIndent: true
@@ -81,7 +81,7 @@ ll. Legal Subsection of Second
 
 lll. Legal Sub-subsection`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: false,
       debug: false,
       noIndent: true,
@@ -109,7 +109,7 @@ lll. Legal Sub-subsection`;
 
 l. {{section_title}}`;
 
-    const result = await processLegalMarkdownWithRemark(input, {
+    const result = await processLegalMarkdown(input, {
       enableFieldTracking: true,
       debug: false,
       additionalMetadata: {

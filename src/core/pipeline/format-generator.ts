@@ -2,25 +2,27 @@
  * Phase 3: Format Generation from Cached AST
  *
  * This module implements Phase 3 of the 3-phase pipeline architecture.
- * It generates all requested output formats (HTML, PDF, Markdown, Metadata)
+ * It generates all requested output formats (HTML, PDF, DOCX, Markdown, Metadata)
  * from the cached AST and processed content produced by Phase 2.
  *
  * Key benefits:
  * - Single processing run regardless of output formats
  * - Parallel format generation from cached AST
  * - ~75% reduction in processing time for multi-format output
- * - Compatible with existing HTML/PDF generation
+ * - Compatible with existing HTML/PDF/DOCX generation
  *
  * @module core/pipeline/format-generator
  */
 
-import { Root } from 'mdast';
 import * as path from 'path';
 import * as fs from 'fs';
 import { writeFileSync } from '../../utils';
-import { ProcessingContext, ProcessingOptions } from './context-builder';
+import type { ProcessingOptions } from '../../types';
 import { LegalMarkdownProcessorResult } from '../../extensions/remark/legal-markdown-processor';
+import { ProcessingError } from '../../errors';
 import { logger } from '../../utils/logger';
+import type { PdfConnector, PdfOptions } from '../../extensions/generators/pdf-connectors';
+import { resolvePdfConnector } from '../../extensions/generators/pdf-connectors';
 
 /**
  * Configuration for format generation
@@ -37,6 +39,9 @@ export interface FormatGenerationOptions {
 
   /** Generate HTML output */
   html?: boolean;
+
+  /** Generate DOCX output */
+  docx?: boolean;
 
   /** Generate Markdown output */
   markdown?: boolean;
@@ -64,6 +69,21 @@ export interface FormatGenerationOptions {
 
   /** Landscape orientation */
   landscape?: boolean;
+
+  /** Custom DOCX header HTML template */
+  docxHeaderTemplate?: string;
+
+  /** Custom DOCX footer HTML template */
+  docxFooterTemplate?: string;
+
+  pdfConnector?: PdfConnector;
+
+  pdfMargin?: {
+    top: string;
+    bottom: string;
+    left: string;
+    right: string;
+  };
 
   /** Export format for metadata */
   exportFormat?: 'yaml' | 'json';
@@ -109,6 +129,7 @@ export function buildFormatGenerationOptions(
     // Format flags: prioritize context.options (force-commands) over base options
     pdf: contextOptions.pdf ?? baseOptions.pdf,
     html: contextOptions.html ?? baseOptions.html,
+    docx: contextOptions.docx ?? baseOptions.docx,
     markdown: baseOptions.markdown,
     metadata: baseOptions.metadata,
 
@@ -116,6 +137,10 @@ export function buildFormatGenerationOptions(
     highlight: contextOptions.highlight ?? baseOptions.highlight,
     format: contextOptions.format ?? baseOptions.format,
     landscape: contextOptions.landscape ?? baseOptions.landscape,
+    pdfConnector: baseOptions.pdfConnector,
+    pdfMargin: baseOptions.pdfMargin,
+    docxHeaderTemplate: baseOptions.docxHeaderTemplate,
+    docxFooterTemplate: baseOptions.docxFooterTemplate,
 
     // Paths and other options
     cssPath: baseOptions.cssPath,
@@ -144,6 +169,10 @@ export interface FormatGenerationResult {
       normal?: string;
       highlight?: string;
     };
+    docx?: {
+      normal?: string;
+      highlight?: string;
+    };
     markdown?: string;
     metadata?: string[];
   };
@@ -169,7 +198,7 @@ export interface FormatGenerationResult {
  * @example
  * ```typescript
  * // After Phase 2 processing:
- * const processed = await processLegalMarkdownWithRemark(content, options);
+ * const processed = await processLegalMarkdown(content, options);
  *
  * // Generate all formats:
  * const result = await generateAllFormats(processed, {
@@ -198,15 +227,15 @@ export async function generateAllFormats(
     }
   } catch (error) {
     // If we can't create the directory, throw a more helpful error
-    throw new Error(
+    throw new ProcessingError(
       `Failed to create output directory "${options.outputDir}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
-  // Orchestration logic: If both HTML and PDF are requested, execute sequentially
-  // to reuse HTML content. Otherwise, execute in parallel for better performance.
-  if (options.html && options.pdf) {
-    logger.debug('[Phase 3] Orchestrating HTML→PDF pipeline (sequential for HTML reuse)');
+  // Orchestration logic: If HTML plus PDF and/or DOCX are requested,
+  // execute sequentially to reuse HTML content.
+  if (options.html && (options.pdf || options.docx)) {
+    logger.debug('[Phase 3] Orchestrating HTML→(PDF/DOCX) pipeline (sequential for HTML reuse)');
 
     // Step 1: Generate HTML (cache content for PDF reuse)
     const htmlResults = await generateHtmlFormats(processedResult, options);
@@ -217,11 +246,30 @@ export async function generateAllFormats(
     if (htmlResults.normal?.path) generatedFiles.push(htmlResults.normal.path);
     if (htmlResults.highlight?.path) generatedFiles.push(htmlResults.highlight.path);
 
-    // Step 2: Generate PDF using cached HTML (NO HTML regeneration!)
-    const pdfResults = await generatePdfFormats(processedResult, options, htmlResults);
-    results.pdf = pdfResults;
-    if (pdfResults.normal) generatedFiles.push(pdfResults.normal);
-    if (pdfResults.highlight) generatedFiles.push(pdfResults.highlight);
+    // Step 2: Generate PDF/DOCX using cached HTML (NO HTML regeneration!)
+    const dependentFormats: Promise<void>[] = [];
+
+    if (options.pdf) {
+      dependentFormats.push(
+        generatePdfFormats(processedResult, options, htmlResults).then(pdfResults => {
+          results.pdf = pdfResults;
+          if (pdfResults.normal) generatedFiles.push(pdfResults.normal);
+          if (pdfResults.highlight) generatedFiles.push(pdfResults.highlight);
+        })
+      );
+    }
+
+    if (options.docx) {
+      dependentFormats.push(
+        generateDocxFormats(processedResult, options, htmlResults).then(docxResults => {
+          results.docx = docxResults;
+          if (docxResults.normal) generatedFiles.push(docxResults.normal);
+          if (docxResults.highlight) generatedFiles.push(docxResults.highlight);
+        })
+      );
+    }
+
+    await Promise.all(dependentFormats);
 
     // Step 3: Generate other formats in parallel
     const otherFormats: Promise<void>[] = [];
@@ -259,6 +307,17 @@ export async function generateAllFormats(
           results.pdf = pdfResults;
           if (pdfResults.normal) generatedFiles.push(pdfResults.normal);
           if (pdfResults.highlight) generatedFiles.push(pdfResults.highlight);
+        })
+      );
+    }
+
+    // Generate DOCX if requested
+    if (options.docx) {
+      formatPromises.push(
+        generateDocxFormats(processedResult, options).then(docxResults => {
+          results.docx = docxResults;
+          if (docxResults.normal) generatedFiles.push(docxResults.normal);
+          if (docxResults.highlight) generatedFiles.push(docxResults.highlight);
         })
       );
     }
@@ -363,6 +422,99 @@ async function generateHtmlFormats(
 }
 
 /**
+ * Generate DOCX formats (normal and/or highlight)
+ *
+ * Reuses cached HTML when available to avoid duplicated HTML generation.
+ *
+ * @param processedResult - Processed result with cached content
+ * @param options - Generation options
+ * @param cachedHtml - Optional pre-generated HTML content to reuse
+ * @returns Promise resolving to DOCX file paths
+ * @internal
+ */
+async function generateDocxFormats(
+  processedResult: LegalMarkdownProcessorResult,
+  options: FormatGenerationOptions,
+  cachedHtml?: HtmlGenerationResult
+): Promise<{ normal?: string; highlight?: string }> {
+  const { HtmlGenerator } = await import('../../extensions/generators/html-generator');
+  const { DocxGenerator } = await import('../../extensions/generators/docx-generator');
+
+  const htmlGenerator = new HtmlGenerator();
+  const generator = new DocxGenerator();
+  const result: { normal?: string; highlight?: string } = {};
+
+  const htmlGeneratorOptions = {
+    cssPath: options.cssPath,
+    highlightCssPath: options.highlightCssPath,
+    title: options.title || options.baseFilename,
+    metadata: processedResult.metadata,
+  };
+
+  const version =
+    processedResult.metadata && typeof processedResult.metadata.version === 'string'
+      ? processedResult.metadata.version
+      : undefined;
+
+  const docxOptions = {
+    cssPath: options.cssPath,
+    highlightCssPath: options.highlightCssPath,
+    title: options.title || options.baseFilename,
+    metadata: processedResult.metadata,
+    format: options.format,
+    landscape: options.landscape,
+    margin: options.pdfMargin,
+    headerTemplate: options.docxHeaderTemplate,
+    footerTemplate: options.docxFooterTemplate,
+    version,
+  };
+
+  if (options.highlight) {
+    const normalPath = path.join(options.outputDir, `${options.baseFilename}.docx`);
+    const highlightPath = path.join(options.outputDir, `${options.baseFilename}.HIGHLIGHT.docx`);
+
+    const normalHtml =
+      cachedHtml?.normal?.content ||
+      (await htmlGenerator.generateHtml(processedResult.content, {
+        ...htmlGeneratorOptions,
+        includeHighlighting: false,
+      }));
+    await generator.generateDocxFromHtml(normalHtml, normalPath, {
+      ...docxOptions,
+      includeHighlighting: false,
+    });
+    result.normal = normalPath;
+
+    const highlightHtml =
+      cachedHtml?.highlight?.content ||
+      (await htmlGenerator.generateHtml(processedResult.content, {
+        ...htmlGeneratorOptions,
+        includeHighlighting: true,
+      }));
+    await generator.generateDocxFromHtml(highlightHtml, highlightPath, {
+      ...docxOptions,
+      includeHighlighting: true,
+    });
+    result.highlight = highlightPath;
+  } else {
+    const normalPath = path.join(options.outputDir, `${options.baseFilename}.docx`);
+    const normalHtml =
+      cachedHtml?.normal?.content ||
+      (await htmlGenerator.generateHtml(processedResult.content, {
+        ...htmlGeneratorOptions,
+        includeHighlighting: false,
+      }));
+    await generator.generateDocxFromHtml(normalHtml, normalPath, {
+      ...docxOptions,
+      includeHighlighting: false,
+    });
+    result.normal = normalPath;
+  }
+
+  return result;
+}
+
+/**
  * Generate PDF formats (normal and/or highlight)
  *
  * Uses the 3-phase pipeline approach: generates HTML once, then converts to PDF.
@@ -387,12 +539,11 @@ async function generatePdfFormats(
   options: FormatGenerationOptions,
   cachedHtml?: HtmlGenerationResult
 ): Promise<{ normal?: string; highlight?: string }> {
-  // Import generators
+  const connector = options.pdfConnector ?? (await resolvePdfConnector('auto'));
+
   const { HtmlGenerator } = await import('../../extensions/generators/html-generator');
-  const { PdfGenerator } = await import('../../extensions/generators/pdf-generator');
 
   const htmlGenerator = new HtmlGenerator();
-  const pdfGenerator = new PdfGenerator();
   const result: { normal?: string; highlight?: string } = {};
 
   if (cachedHtml) {
@@ -413,11 +564,20 @@ async function generatePdfFormats(
   // Extract version from metadata for PDF footer
   const version = processedResult.metadata?.version;
 
-  const pdfGeneratorOptions = {
-    format: options.format,
+  const normalizedPdfFormat: PdfOptions['format'] = options.format === 'Letter' ? 'Letter' : 'A4';
+
+  const pdfGenerationOptions: PdfOptions = {
+    format: normalizedPdfFormat,
+    margin: options.pdfMargin ?? {
+      top: '1cm',
+      right: '1cm',
+      bottom: '1cm',
+      left: '1cm',
+    },
     landscape: options.landscape,
-    version, // For footer display
-    cssPath: options.cssPath, // Needed for logo detection
+    footerTemplate: version
+      ? `<div style="font-size:8px;width:100%;text-align:right;">${version}</div>`
+      : undefined,
   };
 
   if (options.highlight) {
@@ -434,7 +594,7 @@ async function generatePdfFormats(
       }));
 
     // Convert pre-generated HTML to PDF (no re-processing!)
-    await pdfGenerator.generatePdfFromHtml(normalHtml, normalPath, pdfGeneratorOptions);
+    await connector.generatePdf(normalHtml, normalPath, pdfGenerationOptions);
     result.normal = normalPath;
 
     // Get or generate HTML for highlight version
@@ -446,7 +606,7 @@ async function generatePdfFormats(
       }));
 
     // Convert pre-generated HTML to PDF (no re-processing!)
-    await pdfGenerator.generatePdfFromHtml(highlightHtml, highlightPath, pdfGeneratorOptions);
+    await connector.generatePdf(highlightHtml, highlightPath, pdfGenerationOptions);
     result.highlight = highlightPath;
   } else {
     // Single normal version
@@ -461,7 +621,7 @@ async function generatePdfFormats(
       }));
 
     // Convert pre-generated HTML to PDF (no re-processing!)
-    await pdfGenerator.generatePdfFromHtml(normalHtml, normalPath, pdfGeneratorOptions);
+    await connector.generatePdf(normalHtml, normalPath, pdfGenerationOptions);
     result.normal = normalPath;
   }
 
@@ -485,42 +645,9 @@ async function generateMarkdownFormat(
   return mdPath;
 }
 
-/**
- * Helper function to integrate Phase 3 with existing code
- *
- * This function provides a simple interface for code that currently calls
- * multiple processing functions. It runs Phase 2 once and generates all
- * formats from the cached result.
- *
- * @param content - Raw markdown content
- * @param context - Processing context from Phase 1
- * @param formatOptions - Format generation options
- * @returns Promise resolving to generation result
- *
- * @example
- * ```typescript
- * const context = await buildProcessingContext(content, cliOptions, basePath);
- * const result = await processAndGenerateFormats(content, context, {
- *   outputDir: '/path/to/output',
- *   baseFilename: 'contract',
- *   pdf: true,
- *   html: true,
- *   highlight: true
- * });
- * ```
- */
-export async function processAndGenerateFormats(
-  content: string,
-  context: ProcessingContext,
-  formatOptions: FormatGenerationOptions
-): Promise<FormatGenerationResult> {
-  // Phase 2: Process content once
-  const { processLegalMarkdownWithRemark } = await import(
-    '../../extensions/remark/legal-markdown-processor'
-  );
-
-  const processedResult = await processLegalMarkdownWithRemark(content, context.options);
-
-  // Phase 3: Generate all formats from cached result
-  return generateAllFormats(processedResult, formatOptions);
-}
+// Exported for testing - not part of public API
+export {
+  generateHtmlFormats as _generateHtmlFormats,
+  generatePdfFormats as _generatePdfFormats,
+  generateDocxFormats as _generateDocxFormats,
+};

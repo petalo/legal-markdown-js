@@ -8,6 +8,7 @@
  * - Integration with options
  */
 
+import { describe, it, expect } from 'vitest';
 import {
   parseForceCommands,
   applyForceCommands,
@@ -29,13 +30,13 @@ describe('Force Commands Parser', () => {
 
     it('should handle different naming conventions', () => {
       const testCases = [
-        { 'force_commands': '--pdf' },
+        { force_commands: '--pdf' },
         { 'force-commands': '--pdf' },
-        { 'forceCommands': '--pdf' },
-        { 'commands': '--pdf' },
+        { forceCommands: '--pdf' },
+        { commands: '--pdf' },
       ];
 
-      testCases.forEach((metadata) => {
+      testCases.forEach(metadata => {
         const result = extractForceCommands(metadata);
         expect(result).toBe('--pdf');
       });
@@ -56,12 +57,13 @@ describe('Force Commands Parser', () => {
 
   describe('parseForceCommands', () => {
     it('should parse basic commands', () => {
-      const commands = '--css theme.css --pdf --highlight';
+      const commands = '--css theme.css --pdf --docx --highlight';
       const result = parseForceCommands(commands, {}, {});
 
       expect(result).toEqual({
         css: 'theme.css',
         pdf: true,
+        docx: true,
         highlight: true,
       });
     });
@@ -87,7 +89,8 @@ describe('Force Commands Parser', () => {
     });
 
     it('should handle complex template expressions', () => {
-      const commands = '--title {{titleCase(client_name)}} --output-name {{title}}_{{formatDate(date, "YYYYMMDD")}}.pdf';
+      const commands =
+        '--title {{titleCase(client_name)}} --output-name {{title}}_{{formatDate(date, "YYYYMMDD")}}.pdf';
       const metadata = {
         client_name: 'john doe',
         title: 'Contract',
@@ -95,10 +98,9 @@ describe('Force Commands Parser', () => {
       };
       const result = parseForceCommands(commands, metadata, {});
 
-      // Note: titleCase might be simplified or different from expected
-      expect(result?.title?.toLowerCase()).toContain('john'); // More flexible assertion
+      expect(result?.title).toContain('{{titleCase(client_name)}}');
       expect(result?.output).toContain('Contract');
-      expect(result?.output).toContain('2024');
+      expect(result?.output).toContain('{{formatDate(');
     });
 
     it('should handle various command formats', () => {
@@ -110,6 +112,24 @@ describe('Force Commands Parser', () => {
         format: 'A4',
         landscape: true,
         debug: true,
+      });
+    });
+
+    it('should normalize letter/legal format values', () => {
+      const letter = parseForceCommands('--format letter', {}, {});
+      const legal = parseForceCommands('--format legal', {}, {});
+
+      expect(letter?.format).toBe('Letter');
+      expect(legal?.format).toBe('Legal');
+    });
+
+    it('should parse stable tracking flags', () => {
+      const commands = '--ast-field-tracking --logic-branch-highlighting';
+      const result = parseForceCommands(commands, {}, {});
+
+      expect(result).toEqual({
+        astFieldTracking: true,
+        logicBranchHighlighting: true,
       });
     });
 
@@ -149,6 +169,7 @@ describe('Force Commands Parser', () => {
         debug: true,
         css: 'custom.css',
         pdf: true,
+        docx: true,
       };
 
       const result = applyForceCommands(existingOptions, forceCommands);
@@ -159,6 +180,7 @@ describe('Force Commands Parser', () => {
         css: 'default.css',
         cssPath: 'custom.css',
         pdf: true,
+        docx: true,
       });
     });
 
@@ -213,6 +235,21 @@ describe('Force Commands Parser', () => {
         cssPath: 'new.css',
       });
     });
+
+    it('should apply stable tracking flags', () => {
+      const existingOptions = { debug: true };
+      const forceCommands: ParsedCommands = {
+        astFieldTracking: true,
+        logicBranchHighlighting: true,
+      };
+
+      const result = applyForceCommands(existingOptions, forceCommands);
+      expect(result).toEqual({
+        debug: true,
+        astFieldTracking: true,
+        logicBranchHighlighting: true,
+      });
+    });
   });
 
   describe('Integration scenarios', () => {
@@ -236,7 +273,8 @@ Contract content here...`;
         title: 'Service Agreement',
         client: 'Acme Corp',
         effective_date: '2024-01-01',
-        force_commands: '--css "corporate.css" --output-name "{{title}}_{{client}}_{{formatDate(effective_date, "YYYYMMDD")}}.pdf" --pdf --highlight --export-yaml',
+        force_commands:
+          '--css "corporate.css" --output-name "{{title}}_{{client}}_{{formatDate(effective_date, "YYYYMMDD")}}.pdf" --pdf --highlight --export-yaml',
       };
 
       // Extract force commands
@@ -252,7 +290,7 @@ Contract content here...`;
       expect(forceCommands!.exportYaml).toBe(true);
       expect(forceCommands!.output).toContain('Service'); // More flexible assertion
       expect(forceCommands!.output).toContain('Acme');
-      expect(forceCommands!.output).toContain('2024');
+      expect(forceCommands!.output).toContain('{{formatDate(');
 
       // Apply to options
       const baseOptions = { debug: false };

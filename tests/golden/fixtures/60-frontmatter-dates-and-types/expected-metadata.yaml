@@ -1,0 +1,11 @@
+_cross_references: []
+_field_mappings: {}
+auto_renew: true
+effective_date: {}
+fees:
+  monthly: 1200
+nullable_value: null
+renewal_months: 18
+tags:
+  - legal
+  - services

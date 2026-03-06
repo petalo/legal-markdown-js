@@ -1,0 +1,24 @@
+_cross_references: []
+_field_mappings: {}
+disclosing_party: north atlantic biotech ltd
+effective_date: '2026-02-01'
+expense_reduction: 17500
+expenses_cap: 120000
+is_cross_border: true
+jurisdiction: spain
+materiality_threshold: 250000
+minimum_security_score: 82
+notice_days: 45
+obligations:
+  - Use Confidential Information only for evaluating the transaction.
+  - Restrict disclosure to employees with a strict need to know.
+  - Apply industry-standard technical and organizational safeguards.
+  - Notify the disclosing party promptly after unauthorized access.
+penalty_base: 15000
+receiving_party: Sierra Legal Analytics LLC
+security_score: 88
+signatory_disclosing: Elena Martín
+signatory_receiving: David Kim
+term_years: 4
+title: Mutual Non-Disclosure Agreement
+violation_multiplier: 1.5

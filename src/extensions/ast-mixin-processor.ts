@@ -42,6 +42,7 @@
  */
 
 import { LegalMarkdownOptions } from '../types';
+import type { YamlValue } from '../types';
 import { fieldTracker } from './tracking/field-tracker';
 import { extensionHelpers as helpers } from './helpers/index';
 
@@ -65,7 +66,7 @@ export interface MixinNode {
   };
 
   /** Resolved value after processing (set during resolution phase) */
-  resolved?: any;
+  resolved?: YamlValue;
 
   /** Whether this node had processing errors */
   hasError?: boolean;
@@ -374,10 +375,10 @@ function escapeHtmlAttribute(value: string): string {
  * // Returns: Set(["client.name", "description"])
  * ```
  */
-export function detectBracketValues(metadata: Record<string, any>, prefix = ''): Set<string> {
+export function detectBracketValues(metadata: Record<string, YamlValue>, prefix = ''): Set<string> {
   const bracketFields = new Set<string>();
 
-  function traverse(obj: any, currentPath: string): void {
+  function traverse(obj: YamlValue, currentPath: string): void {
     if (typeof obj === 'string') {
       // Check if the string value is wrapped in brackets
       if (obj.match(/^\[.*\]$/)) {
@@ -403,6 +404,20 @@ export function detectBracketValues(metadata: Record<string, any>, prefix = ''):
 }
 
 /**
+ * If `value` is an escaped bracket literal like `\[MyCompany\]` (YAML single-quoted),
+ * returns the unescaped form `[MyCompany]`. Otherwise returns `null`.
+ *
+ * This allows authors to write `'\[value\]'` in YAML to display a literal bracket
+ * placeholder without triggering the "missing field" detection used for `[value]`.
+ */
+export function unescapeBracketLiteral(value: string): string | null {
+  if (value.startsWith('\\[') && value.endsWith('\\]')) {
+    return '[' + value.slice(2, -2) + ']';
+  }
+  return null;
+}
+
+/**
  * Resolves a dot-notation path in an object, with support for array indices
  *
  * @param obj - The object to traverse
@@ -422,21 +437,30 @@ export function detectBracketValues(metadata: Record<string, any>, prefix = ''):
  * console.log(resolvePath(obj, "parties[1].contact.email"));  // "b@example.com"
  * ```
  */
-function resolvePath(obj: any, path: string): any {
+function resolvePath(obj: YamlValue, path: string): YamlValue | undefined {
   // Handle special case for current item in template loops
   if (path === '.') {
-    return obj?.['.'];
+    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
+      ? (obj as Record<string, YamlValue>)['.']
+      : undefined;
   }
 
-  return path.split('.').reduce((current, part) => {
-    // Handle array indices like parties[0].name
-    const match = part.match(/^(\w+)\[(\d+)\]$/);
-    if (match) {
-      const [, key, index] = match;
-      return current?.[key]?.[parseInt(index, 10)];
-    }
-    return current?.[part];
-  }, obj);
+  return path
+    .split('.')
+    .reduce((current: YamlValue | undefined, part: string): YamlValue | undefined => {
+      if (current === null || current === undefined || typeof current !== 'object')
+        return undefined;
+      // Handle array indices like parties[0].name
+      const match = part.match(/^(\w+)\[(\d+)\]$/);
+      if (match) {
+        const [, key, index] = match;
+        const obj2 = current as Record<string, YamlValue>;
+        const arr = obj2[key];
+        if (Array.isArray(arr)) return arr[parseInt(index, 10)];
+        return undefined;
+      }
+      return (current as Record<string, YamlValue>)[part];
+    }, obj);
 }
 
 /**
@@ -446,11 +470,14 @@ function resolvePath(obj: any, path: string): any {
  * @param metadata - Metadata context for variable resolution
  * @returns Array of parsed arguments
  */
-function parseArguments(argsString: string, metadata: Record<string, any>): any[] {
+function parseArguments(
+  argsString: string,
+  metadata: Record<string, YamlValue>
+): (YamlValue | undefined)[] {
   if (!argsString.trim()) return [];
 
   // Advanced argument parsing - split by comma but handle quoted strings and nested parentheses
-  const args: any[] = [];
+  const args: (YamlValue | undefined)[] = [];
   let current = '';
   let inQuotes = false;
   let quoteChar = '';
@@ -458,7 +485,7 @@ function parseArguments(argsString: string, metadata: Record<string, any>): any[
 
   for (let i = 0; i < argsString.length; i++) {
     const char = argsString[i];
-    // eslint-disable-next-line quotes
+
     if (!inQuotes && (char === '"' || char === "'")) {
       inQuotes = true;
       quoteChar = char;
@@ -508,9 +535,9 @@ function parseArguments(argsString: string, metadata: Record<string, any>): any[
  * @param metadata - Metadata context for variable resolution
  * @returns The parsed argument value
  */
-function parseArgument(arg: string, metadata: Record<string, any>): any {
+function parseArgument(arg: string, metadata: Record<string, YamlValue>): YamlValue | undefined {
   // Handle quoted strings
-  // eslint-disable-next-line quotes
+
   if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
     return arg.slice(1, -1);
   }
@@ -552,7 +579,10 @@ function parseArgument(arg: string, metadata: Record<string, any>): any {
  * @param metadata - Metadata context
  * @returns Resolved value or undefined
  */
-function resolveVariable(variable: string, metadata: Record<string, any>): any {
+function resolveVariable(
+  variable: string,
+  metadata: Record<string, YamlValue>
+): YamlValue | undefined {
   return resolvePath(metadata, variable);
 }
 
@@ -563,7 +593,10 @@ function resolveVariable(variable: string, metadata: Record<string, any>): any {
  * @param metadata - Metadata context for argument resolution
  * @returns The result of the helper function call, or undefined if invalid
  */
-function resolveHelper(expression: string, metadata: Record<string, any>): any {
+function resolveHelper(
+  expression: string,
+  metadata: Record<string, YamlValue>
+): YamlValue | undefined {
   try {
     // Parse helper function call: helperName(arg1, arg2, ...)
     const match = expression.match(/^(\w+)\((.*)\)$/);
@@ -580,7 +613,8 @@ function resolveHelper(expression: string, metadata: Record<string, any>): any {
     const args = parseArguments(argsString, metadata);
 
     // Call the helper function
-    return (helper as any)(...args);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic helper dispatch requires any to call unknown function signature
+    return (helper as any)(...args) as YamlValue | undefined;
   } catch (error) {
     console.warn(`Error evaluating helper expression: ${expression}`, error);
     return undefined;
@@ -594,7 +628,10 @@ function resolveHelper(expression: string, metadata: Record<string, any>): any {
  * @param metadata - Metadata context for condition evaluation
  * @returns The result of the conditional expression
  */
-function resolveConditional(expression: string, metadata: Record<string, any>): any {
+function resolveConditional(
+  expression: string,
+  metadata: Record<string, YamlValue>
+): YamlValue | undefined {
   try {
     const questionIndex = expression.indexOf('?');
     const colonIndex = expression.indexOf(':', questionIndex);
@@ -631,7 +668,7 @@ function resolveConditional(expression: string, metadata: Record<string, any>): 
  */
 export function processMixinAST(
   nodes: MixinNode[],
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   options: LegalMarkdownOptions = {}
 ): string {
   if (options.noMixins) {
@@ -652,13 +689,12 @@ export function processMixinAST(
     if (node.hasError || !node.variable) {
       // Handle malformed mixins
       if (options.enableFieldTrackingInMarkdown) {
-        // eslint-disable-next-line max-len
         return `<span class="legal-field highlight"><span class="legal-field missing-value" data-field="${escapeHtmlAttribute(node.content)}">{{${node.variable || 'malformed'}}}</span></span>`;
       }
       return node.content; // Return original malformed content
     }
 
-    let resolvedValue: any;
+    let resolvedValue: YamlValue | undefined;
     let hasLogic = false;
     let mixinType = 'variable';
 
@@ -693,13 +729,12 @@ export function processMixinAST(
     fieldTracker.trackField(node.variable, {
       value: isValueMissing ? undefined : resolvedValue,
       hasLogic,
-      mixinUsed: mixinType as any,
+      mixinUsed: mixinType,
     });
 
     if (isValueMissing) {
       // Handle missing values
       if (options.enableFieldTrackingInMarkdown) {
-        // eslint-disable-next-line max-len
         return `<span class="legal-field missing-value" data-field="${escapeHtmlAttribute(node.variable)}">{{${node.variable}}}</span>`;
       }
       return node.content; // Return original mixin syntax
@@ -710,10 +745,8 @@ export function processMixinAST(
 
     if (options.enableFieldTrackingInMarkdown) {
       if (hasLogic) {
-        // eslint-disable-next-line max-len
         return `<span class="highlight" data-field="${escapeHtmlAttribute(node.variable)}">${stringValue}</span>`;
       } else {
-        // eslint-disable-next-line max-len
         return `<span class="imported-value" data-field="${escapeHtmlAttribute(node.variable)}">${stringValue}</span>`;
       }
     }
@@ -756,7 +789,7 @@ export function processMixinAST(
  */
 export function processMixins(
   content: string,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   options: LegalMarkdownOptions = {}
 ): string {
   try {
@@ -780,3 +813,12 @@ export function processMixins(
     return content;
   }
 }
+
+// Exported for testing - not part of public API
+export {
+  findTemplateLoopRanges as _findTemplateLoopRanges,
+  resolvePath as _resolvePath,
+  parseArguments as _parseArguments,
+  resolveHelper as _resolveHelper,
+  resolveConditional as _resolveConditional,
+};

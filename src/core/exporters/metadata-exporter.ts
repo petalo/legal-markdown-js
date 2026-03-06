@@ -37,6 +37,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
+import type { YamlValue } from '../../types';
 import { MetadataExportResult } from '../../types';
 
 /**
@@ -78,7 +79,7 @@ import { MetadataExportResult } from '../../types';
  * ```
  */
 export function exportMetadata(
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   format?: 'yaml' | 'json',
   outputPath?: string
 ): MetadataExportResult {
@@ -189,7 +190,7 @@ export function exportMetadata(
  * // Internal meta-* keys are removed
  * ```
  */
-export function filterMetadataForExport(metadata: Record<string, any>): Record<string, any> {
+export function filterMetadataForExport(metadata: Record<string, YamlValue>): Record<string, YamlValue> {
   // Deep clone the metadata to avoid modifying original
   const result = JSON.parse(JSON.stringify(metadata));
 

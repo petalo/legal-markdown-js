@@ -32,7 +32,7 @@ Legal Markdown JS implements a robust error handling system designed to:
 
 ```typescript
 try {
-  const result = processLegalMarkdown(content, {
+  const result = await processLegalMarkdown(content, {
     throwOnYamlError: true,
     enableFieldTracking: true,
   });
@@ -66,7 +66,7 @@ interface TemplateError {
 }
 
 try {
-  const result = processLegalMarkdown(content);
+  const result = await processLegalMarkdown(content);
 } catch (error) {
   if (error.code === 'TEMPLATE_ERROR') {
     console.error(`Template error: ${error.message}`);
@@ -86,7 +86,7 @@ Price: {{formatCurrency(invalid_number, "EUR")}}
 Result: {{unknownHelper(value)}}
 `;
 
-const result = processLegalMarkdown(content);
+const result = await processLegalMarkdown(content);
 // Output preserves original values for invalid inputs:
 // Date: invalid_date
 // Price: invalid_number
@@ -119,7 +119,7 @@ try {
 
 ```typescript
 // Handle missing imported files
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   onImportError: (importPath, error) => {
     console.warn(`Failed to import ${importPath}: ${error.message}`);
     return '<!-- Import failed: ' + importPath + ' -->';
@@ -206,7 +206,7 @@ Count: {{formatInteger("not-a-number")}}
 ### Partial Processing Success
 
 ```typescript
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   continueOnError: true,
   collectErrors: true,
 });
@@ -225,7 +225,7 @@ console.log('Generated content length:', result.content.length);
 ### Fallback Content
 
 ```typescript
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   // Provide fallback values for missing variables
   fallbackValues: {
     client_name: '[Client Name Required]',
@@ -267,7 +267,7 @@ interface ErrorHandlingOptions {
   helperFallback?: (helper: string, args: any[]) => any;
 }
 
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   throwOnYamlError: false,
   continueOnError: true,
   collectErrors: true,
@@ -330,7 +330,7 @@ legal-md --log-level debug document.md output.md
 ### Programmatic Debugging
 
 ```typescript
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   debug: true,
   debugOptions: {
     traceVariables: true,
@@ -385,7 +385,7 @@ async function debugProcessing(content: string) {
 ### Error Context Capture
 
 ```typescript
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   captureContext: true,
   contextLines: 3, // Lines before/after error
 });
@@ -410,7 +410,7 @@ async function processWithRetry(
 ) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      return processLegalMarkdown(content, options);
+      return await processLegalMarkdown(content, options);
     } catch (error) {
       console.warn(`Attempt ${attempt} failed: ${error.message}`);
 
@@ -433,7 +433,7 @@ async function processWithRetry(
 async function processWithFallback(content: string) {
   try {
     // Try full processing
-    return processLegalMarkdown(content, {
+    return await processLegalMarkdown(content, {
       enableFieldTracking: true,
       includeHighlighting: true,
     });
@@ -442,7 +442,7 @@ async function processWithFallback(content: string) {
 
     try {
       // Fallback to basic processing
-      return processLegalMarkdown(content, {
+      return await processLegalMarkdown(content, {
         enableFieldTracking: false,
         includeHighlighting: false,
         continueOnError: true,
@@ -470,7 +470,7 @@ async function processWithPartialRecovery(content: string) {
 
   for (const section of sections) {
     try {
-      const result = processLegalMarkdown(section);
+      const result = await processLegalMarkdown(section);
       results.push(result.content);
     } catch (error) {
       console.warn(`Section processing failed: ${error.message}`);
@@ -530,7 +530,7 @@ const logger = winston.createLogger({
   ],
 });
 
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   onError: (error, context) => {
     logger.error('Legal Markdown processing error', {
       error: error.message,
@@ -569,7 +569,7 @@ async function progressiveProcessing(content: string) {
   const strategies = [
     // Strategy 1: Full featured processing
     () =>
-      processLegalMarkdown(content, {
+      await processLegalMarkdown(content, {
         enableFieldTracking: true,
         includeHighlighting: true,
         processImports: true,
@@ -577,7 +577,7 @@ async function progressiveProcessing(content: string) {
 
     // Strategy 2: Basic processing without advanced features
     () =>
-      processLegalMarkdown(content, {
+      await processLegalMarkdown(content, {
         enableFieldTracking: false,
         includeHighlighting: false,
         processImports: true,
@@ -586,7 +586,7 @@ async function progressiveProcessing(content: string) {
 
     // Strategy 3: Minimal processing
     () =>
-      processLegalMarkdown(content, {
+      await processLegalMarkdown(content, {
         enableFieldTracking: false,
         includeHighlighting: false,
         processImports: false,
@@ -625,7 +625,7 @@ invalid: [unclosed array
 ---
 Content here`;
 
-    const result = processLegalMarkdown(invalidYaml, {
+    const result = await processLegalMarkdown(invalidYaml, {
       continueOnError: true,
       collectErrors: true,
     });
@@ -638,7 +638,7 @@ Content here`;
   test('handles missing variables gracefully', () => {
     const template = 'Client: {{missing_variable}}';
 
-    const result = processLegalMarkdown(template, {
+    const result = await processLegalMarkdown(template, {
       continueOnError: true,
       fallbackValues: {
         missing_variable: '[MISSING]',
@@ -715,13 +715,13 @@ Client: {{clientName}}   # ❌ Wrong variable name
 ```markdown
 <!-- ✅ Correct helper usage -->
 
-Date: {{formatDate(@today, "MMMM Do, YYYY")}} Amount:
-{{formatCurrency(1000, "USD")}}
+Date: {{formatDate @today "MMMM Do, YYYY"}} Amount:
+{{formatCurrency 1000 "USD"}}
 
 <!-- ❌ Common mistakes -->
 
-Date: {{formatdate(@today, "MMMM Do, YYYY")}} <!-- Wrong case --> Amount:
-{{formatCurrency("1000", "USD")}} <!-- String instead of number -->
+Date: {{formatdate @today "MMMM Do, YYYY"}} <!-- Wrong case --> Amount:
+{{formatCurrency "1000" "USD"}} <!-- String instead of number -->
 ```
 
 ### Diagnostic Commands

@@ -196,6 +196,18 @@ Description: ... Price: $1,000.00
 **Implementation:** `processTemplateLoops()` in
 `src/extensions/template-loops.ts`
 
+#### Experimental token emission
+
+With `enableFieldTracking=true` and `astFieldTracking=true`,
+template-loop helper resolution emits internal tracking tokens:
+
+- `lm-field` for value/helper tracking
+- `lm-logic-start` / `lm-logic-end` for winner branch markers (when
+  `logicBranchHighlighting=true`)
+
+These tokens are converted to final legal-field spans in Phase 3. Legacy mode
+continues emitting spans directly in Phase 2 for backward compatibility.
+
 ## Features That MUST Be String Transformations
 
 These features **cannot** work as remark plugins:

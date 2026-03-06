@@ -129,7 +129,8 @@ force_commands: >
 
 ## Available Commands
 
-All CLI options are supported in force_commands:
+`force_commands` supports a focused subset of options, plus force-only aliases
+for output naming and page layout:
 
 ### Output Control
 
@@ -145,6 +146,7 @@ All CLI options are supported in force_commands:
 | -------------- | ------------------------------ | ------------- |
 | `--pdf`        | Generate PDF output            | `--pdf`       |
 | `--html`       | Generate HTML output           | `--html`      |
+| `--docx`       | Generate DOCX output           | `--docx`      |
 | `--format <f>` | PDF format (A4, letter, legal) | `--format A4` |
 | `--landscape`  | Landscape orientation          | `--landscape` |
 
@@ -190,15 +192,17 @@ Critical system options cannot be overridden:
 ```yaml
 # These commands are blocked for security
 force_commands: >
-  --stdin --stdout    # I/O redirection (blocked) --yaml --headers    # Core
-  processing flags (blocked) --no-mixins         # Processing control (blocked)
+  --stdin --stdout --yaml --headers --no-headers --no-clauses --no-references
+  --no-imports --no-mixins --throwOnYamlError
 ```
 
-**Protected command categories:**
+**Protected commands:**
 
-- `--stdin`, `--stdout` (I/O redirection)
-- `--yaml`, `--headers` (Core processing flags)
-- `--no-*` flags (Processing control)
+- `--stdin`, `--stdout`
+- `--yaml`, `--headers`
+- `--no-headers`, `--no-clauses`, `--no-references`, `--no-imports`,
+  `--no-mixins`
+- `--throwOnYamlError`
 
 ### Path Validation
 
@@ -254,9 +258,34 @@ different environments.
 
 ### Override Behavior
 
-1. **Force commands win**: Document settings always override CLI
-2. **Complete replacement**: CLI arguments are ignored when force commands exist
-3. **No merging**: Force commands completely replace CLI options
+1. **Force commands win for explicit keys**: Document settings override matching
+   CLI options
+2. **Selective override**: Unspecified options keep CLI/default values
+3. **Safe filtering**: Protected and unsafe options are ignored
+
+### DOCX-Oriented Example
+
+```yaml
+---
+title: Board Resolution
+client_name: ACME Corp
+force_commands: >
+  --docx --highlight --css styles/legal.css --title "{{title}} -
+  {{client_name}}"
+---
+```
+
+Running `legal-md board-resolution.md` will produce:
+
+- `board-resolution.docx`
+- `board-resolution.HIGHLIGHT.docx`
+
+without passing extra CLI flags.
+
+### Binary Output Note
+
+If force commands enable DOCX/PDF, output remains file-based. Binary formats do
+not stream via `--stdout`.
 
 ## Multi-line Commands
 
@@ -268,7 +297,7 @@ For complex configurations, use YAML multi-line syntax:
 ---
 force_commands: >
   --css corporate-theme.css --pdf --highlight --format A4 --export-yaml
-  --export-json --title "{{document_type}} - Generated {{formatDate(@today,
+  --export-json --title "{{document_type}} - Generated {{formatDate @today
   "YYYY-MM-DD")}}" --output-name {{document_type}}_{{client}}_Final.pdf
 ---
 ```
@@ -281,22 +310,13 @@ force_commands: |
   --css corporate-theme.css
   --pdf --highlight --format A4
   --export-yaml --export-json
-  --title "{{document_type}} - Generated {{formatDate(@today, "YYYY-MM-DD")}}"
+  --title "{{document_type}} - Generated {{formatDate @today "YYYY-MM-DD"}}"
   --output-name {{document_type}}_{{client}}_Final.pdf
 ---
 ```
 
-### Array Format
-
-```yaml
----
-force_commands:
-  - '--css corporate-theme.css'
-  - '--pdf --highlight'
-  - '--export-yaml --export-json'
-  - '--title {{document_type}} - {{client}}'
----
-```
+`force_commands` currently expects a string value. Use folded (`>`) or literal
+(`|`) YAML blocks for multi-line command authoring.
 
 ## Use Cases
 
@@ -384,7 +404,7 @@ Make force commands dynamic with template variables:
 # ✅ Good - dynamic configuration
 force_commands: >
   --title "{{document_type}} - {{client_name}}"
-  --output-name {{client_code}}_{{formatDate(@today, "YYYYMMDD")}}.pdf
+  --output-name {{client_code}}_{{formatDate @today "YYYYMMDD"}}.pdf
 
 # ❌ Static - hard to reuse
 force_commands: --title "Contract - Acme Corp" --output-name contract.pdf
@@ -404,7 +424,7 @@ Comment complex force command configurations:
 force_commands: >
   --css corporate-theme.css --pdf --highlight --export-yaml --export-json
   --title "{{document_type}} - {{client_name}}" --output-name
-  {{client_code}}_{{formatDate(@today, "YYYYMMDD")}}.pdf
+  {{client_code}}_{{formatDate @today "YYYYMMDD"}}.pdf
 ---
 ```
 
@@ -521,12 +541,12 @@ force_commands: >
 ---
 # Invoice details
 invoice:
-  number: "INV-{{formatDate(@today, 'YYYYMMDD')}}-001"
+  number: "INV-{{formatDate @today 'YYYYMMDD'}}-001"
   date: '@today'
 client:
   name: 'Acme Corporation'
   code: 'ACME'
-billing_period: "{{formatDate(addMonths(@today, -1), 'MMMM YYYY')}}"
+billing_period: "{{formatDate (addMonths @today -1) 'MMMM YYYY'}}"
 
 # Invoice-specific processing
 force_commands: >

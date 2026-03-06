@@ -14,6 +14,8 @@ import type {
   PluginOrderValidationResult,
 } from '../../plugins/remark/types';
 import { PluginOrderValidator } from '../../plugins/remark/plugin-order-validator';
+import { PipelineError } from '../../errors';
+import { getRuntimeConfig } from '../../config/runtime';
 
 /**
  * Ordered pipeline result from builder
@@ -21,7 +23,7 @@ import { PluginOrderValidator } from '../../plugins/remark/plugin-order-validato
  * Contains the final plugin execution order, grouped by phase,
  * with validation results and capabilities tracking.
  */
-export interface OrderedPipeline {
+interface OrderedPipeline {
   /** Plugin names in execution order */
   names: string[];
 
@@ -47,7 +49,7 @@ export interface OrderedPipeline {
  * Defines which plugins to enable, metadata, processing options,
  * and validation behavior.
  */
-export interface PipelineConfig {
+interface PipelineConfig {
   /** Plugins to enable (by name) */
   enabledPlugins: string[];
 
@@ -72,7 +74,7 @@ export interface PipelineConfig {
 /**
  * Validation options for plugin order validation
  */
-export interface ValidationOptions {
+interface ValidationOptions {
   /** Throw error on critical violations */
   throwOnError?: boolean;
 
@@ -92,18 +94,19 @@ export interface ValidationOptions {
  * Returns 'strict' in development/CI, 'warn' in production
  */
 export function detectValidationMode(): 'strict' | 'warn' | 'silent' {
-  // Check for explicit environment variable
-  const envMode = process.env.LEGAL_MD_VALIDATION_MODE;
-  if (envMode === 'strict' || envMode === 'warn' || envMode === 'silent') {
-    return envMode;
+  const configuredMode = getRuntimeConfig().processing.validationMode;
+  if (configuredMode === 'strict') {
+    return 'strict';
   }
 
-  // Check if running in CI
+  if (configuredMode === 'permissive') {
+    return 'warn';
+  }
+
   if (process.env.CI === 'true') {
     return 'strict';
   }
 
-  // Check NODE_ENV
   if (process.env.NODE_ENV === 'production') {
     return 'warn';
   }
@@ -137,14 +140,14 @@ export function groupPluginsByPhase(
   for (const name of pluginNames) {
     const metadata = registry.get(name);
     if (!metadata) {
-      throw new Error(
+      throw new PipelineError(
         `[PipelineBuilder] Plugin "${name}" not found in registry. ` +
           `Available plugins: ${Array.from(registry.keys()).join(', ')}`
       );
     }
 
     if (!metadata.phase) {
-      throw new Error(
+      throw new PipelineError(
         `[PipelineBuilder] Plugin "${name}" has no phase assigned. ` +
           `All plugins must have a phase field.`
       );
@@ -204,7 +207,7 @@ export function validateCapabilities(
   }
 
   if (errors.length > 0) {
-    throw new Error(
+    throw new PipelineError(
       '[PipelineBuilder] Capability validation failed:\n' + errors.map(e => `  - ${e}`).join('\n')
     );
   }

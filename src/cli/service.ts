@@ -8,7 +8,7 @@
  *
  * Features:
  * - File and content processing orchestration
- * - Multi-format output generation (HTML, PDF, Markdown)
+ * - Multi-format output generation (HTML, PDF, DOCX, Markdown)
  * - Error handling and user feedback
  * - Verbose logging and debugging support
  * - Path resolution and file system operations
@@ -30,10 +30,10 @@
  * @module
  */
 
-import { processLegalMarkdownWithRemark } from '../extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../extensions/remark/legal-markdown-processor';
 import { LegalMarkdownOptions } from '../types';
 import { readFileSync, writeFileSync, resolveFilePath } from '../utils/index';
-import { LegalMarkdownError, FileNotFoundError } from '../errors/index';
+import { LegalMarkdownError, FileNotFoundError, PdfDependencyError } from '../errors/index';
 import {
   extractForceCommands,
   parseForceCommands,
@@ -47,9 +47,14 @@ import {
   generateAllFormats,
   buildFormatGenerationOptions,
 } from '../core/pipeline';
+import {
+  resolvePdfConnector,
+  type PdfConnectorPreference,
+} from '../extensions/generators/pdf-connectors';
 import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
+import { getConfig } from '../config';
 
 /**
  * Get the path to the highlight CSS file from the package
@@ -85,6 +90,8 @@ export interface CliOptions extends LegalMarkdownOptions {
   pdf?: boolean;
   /** Generate HTML output */
   html?: boolean;
+  /** Generate DOCX output */
+  docx?: boolean;
   /** Enable field highlighting */
   highlight?: boolean;
   /** Path to custom CSS file */
@@ -93,10 +100,13 @@ export interface CliOptions extends LegalMarkdownOptions {
   title?: string;
   /** Archive source file after successful processing */
   archiveSource?: string | boolean;
+  /** Write output to stdout instead of a file */
+  stdout?: boolean;
   /** Page format for PDF */
   format?: 'A4' | 'Letter' | 'Legal';
   /** Landscape orientation */
   landscape?: boolean;
+  pdfConnector?: PdfConnectorPreference;
 }
 
 /**
@@ -190,7 +200,7 @@ export class CliService {
       });
 
       // Determine output format using effective options (after force commands)
-      if (effectiveOptions.pdf || effectiveOptions.html) {
+      if (effectiveOptions.pdf || effectiveOptions.html || effectiveOptions.docx) {
         await this.generateFormattedOutputWithOptions(
           content,
           inputPath,
@@ -198,9 +208,8 @@ export class CliService {
           effectiveOptions
         );
       } else {
-        // Process using remark-based processor
         this.log('Using remark-based processor', 'info');
-        const result = await processLegalMarkdownWithRemark(content, {
+        const result = await processLegalMarkdown(content, {
           basePath: effectiveOptions.basePath,
           enableFieldTracking: effectiveOptions.enableFieldTracking,
           debug: effectiveOptions.debug,
@@ -211,11 +220,16 @@ export class CliService {
           noImports: effectiveOptions.noImports,
           noMixins: effectiveOptions.noMixins,
           noReset: effectiveOptions.noReset,
-          noIndent: false, // CLI markdown output should preserve indentation
+          noIndent: false,
           throwOnYamlError: effectiveOptions.throwOnYamlError,
           exportMetadata: effectiveOptions.exportMetadata,
           exportFormat: effectiveOptions.exportFormat,
           exportPath: effectiveOptions.exportPath,
+          importTracing: effectiveOptions.importTracing,
+          validateImportTypes: effectiveOptions.validateImportTypes,
+          logImportOperations: effectiveOptions.logImportOperations,
+          astFieldTracking: effectiveOptions.astFieldTracking,
+          logicBranchHighlighting: effectiveOptions.logicBranchHighlighting,
         });
 
         if (outputPath) {
@@ -266,8 +280,7 @@ export class CliService {
         return autoPopulateYamlFrontMatter(content);
       }
 
-      // Process using remark-based processor
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         basePath: effectiveOptions.basePath,
         enableFieldTracking: effectiveOptions.enableFieldTracking,
         debug: effectiveOptions.debug,
@@ -278,11 +291,16 @@ export class CliService {
         noImports: effectiveOptions.noImports,
         noMixins: effectiveOptions.noMixins,
         noReset: effectiveOptions.noReset,
-        noIndent: false, // CLI markdown output should preserve indentation
+        noIndent: false,
         throwOnYamlError: effectiveOptions.throwOnYamlError,
         exportMetadata: effectiveOptions.exportMetadata,
         exportFormat: effectiveOptions.exportFormat,
         exportPath: effectiveOptions.exportPath,
+        importTracing: effectiveOptions.importTracing,
+        validateImportTypes: effectiveOptions.validateImportTypes,
+        logImportOperations: effectiveOptions.logImportOperations,
+        astFieldTracking: effectiveOptions.astFieldTracking,
+        logicBranchHighlighting: effectiveOptions.logicBranchHighlighting,
       });
 
       return result.content;
@@ -321,7 +339,7 @@ export class CliService {
   }
 
   /**
-   * Generates formatted output (HTML/PDF) using 3-phase pipeline
+   * Generates formatted output (HTML/PDF/DOCX) using 3-phase pipeline
    *
    * This method uses the new 3-phase pipeline architecture:
    * - Phase 1: Build context (parse YAML, resolve force-commands)
@@ -340,6 +358,14 @@ export class CliService {
     outputPath: string | undefined,
     options: Partial<CliOptions>
   ): Promise<void> {
+    const config = getConfig();
+
+    let resolvedPdfConnector;
+    if (options.pdf) {
+      const connectorPreference = options.pdfConnector ?? config.pdf.connector;
+      resolvedPdfConnector = await resolvePdfConnector(connectorPreference);
+    }
+
     const baseOutputPath = outputPath || inputPath;
     const baseName = path.basename(baseOutputPath, path.extname(baseOutputPath));
     const dirName = this.getOutputDirectory(outputPath);
@@ -370,12 +396,12 @@ export class CliService {
     );
 
     // PHASE 2: Process content ONCE (runs remark pipeline, caches AST)
-    // For HTML/PDF generation, we need noIndent: true to prevent indented headers
+    // For HTML/PDF/DOCX generation, we need noIndent: true to prevent indented headers
     // from being interpreted as code blocks
-    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+    const processedResult = await processLegalMarkdown(context.content, {
       ...context.options,
       additionalMetadata: context.metadata, // Pass YAML metadata for header processing
-      noIndent: true, // Force noIndent for HTML/PDF generation
+      noIndent: true, // Force noIndent for HTML/PDF/DOCX generation
     });
 
     // PHASE 3: Generate all formats from cached result (NO re-processing!)
@@ -388,7 +414,8 @@ export class CliService {
       baseFilename: baseName,
       pdf: options.pdf,
       html: options.html,
-      markdown: options.toMarkdown || (!options.html && !options.pdf),
+      docx: options.docx,
+      markdown: options.toMarkdown || (!options.html && !options.pdf && !options.docx),
       metadata: options.exportMetadata,
       highlight: options.highlight,
       cssPath,
@@ -396,11 +423,25 @@ export class CliService {
       title: options.title || baseName,
       format: options.format,
       landscape: options.landscape,
+      pdfConnector: resolvedPdfConnector,
+      pdfMargin: config.pdf.margin,
       exportFormat: options.exportFormat,
       exportPath: options.exportPath,
     });
 
+    const isStdout = !outputPath && options.stdout;
+
     const formatResult = await generateAllFormats(processedResult, formatGenerationOptions);
+
+    // When --html --stdout is requested, pipe the HTML content to stdout instead of reporting file
+    if (isStdout && options.html && !options.pdf) {
+      const htmlPath = formatResult.results.html?.normal;
+      if (htmlPath) {
+        process.stdout.write(fs.readFileSync(htmlPath, 'utf8'));
+        fs.unlinkSync(htmlPath); // clean up temp file - caller wanted stdout, not a file artifact
+      }
+      return;
+    }
 
     // Show generated files
     this.showGeneratedFiles(formatResult.generatedFiles, formatGenerationOptions.highlight);
@@ -452,7 +493,7 @@ export class CliService {
         Array.from(grouped.keys()).map(key => key.split('.').pop()?.toLowerCase())
       );
 
-      for (const ext of ['md', 'html', 'pdf']) {
+      for (const ext of ['md', 'html', 'pdf', 'docx']) {
         if (!extensions.has(ext)) continue;
 
         console.log(chalk.gray(`\n   ${ext.toUpperCase()}:`));
@@ -542,6 +583,18 @@ export class CliService {
    * @returns {void}
    */
   private handleError(error: unknown): void {
+    if (error instanceof PdfDependencyError) {
+      this.log('PDF support is not currently installed.', 'error');
+      console.log(chalk.cyan('Install with: npm install puppeteer'));
+      console.log(
+        chalk.cyan(
+          'Or install Chrome/Chromium/Edge/Brave/Arc and use --pdf-connector=system-chrome'
+        )
+      );
+      console.log(chalk.cyan('Or install WeasyPrint and use --pdf-connector=weasyprint'));
+      return;
+    }
+
     if (error instanceof LegalMarkdownError) {
       this.log(`${error.name}: ${error.message}`, 'error');
       if (error.context && this.options.verbose) {

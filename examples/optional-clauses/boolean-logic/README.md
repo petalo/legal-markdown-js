@@ -30,5 +30,5 @@ Complex boolean logic in conditional clauses with AND/OR operations.
 
 ## 💡 Learn more
 
-- [Boolean Logic Guide](../../../docs/boolean-logic.md)
-- [Advanced Conditions](../../../docs/advanced-clauses.md)
+- [Optional Clauses](../../../docs/features/optional-clauses.md)
+- [Conditionals](../../../docs/features/conditionals.md)

@@ -6,7 +6,7 @@
  * validation modes, and error handling.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   buildRemarkPipeline,
   detectValidationMode,
@@ -15,11 +15,15 @@ import {
 } from '../../../../src/core/pipeline/pipeline-builder';
 import { ProcessingPhase } from '../../../../src/plugins/remark/types';
 import type { PluginMetadata } from '../../../../src/plugins/remark/types';
+import { DEFAULT_CONFIG } from '../../../../src/config/schema';
+import { setRuntimeConfig } from '../../../../src/config/runtime';
 
 describe('Pipeline Builder', () => {
   let testRegistry: Map<string, PluginMetadata>;
 
   beforeEach(() => {
+    setRuntimeConfig(DEFAULT_CONFIG);
+
     // Create a test registry with plugins across all 5 phases
     testRegistry = new Map([
       [
@@ -396,6 +400,10 @@ describe('Pipeline Builder', () => {
     it('should use strict mode in development environment', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'auto' },
+      });
 
       const mode = detectValidationMode();
       expect(mode).toBe('strict');
@@ -409,6 +417,10 @@ describe('Pipeline Builder', () => {
 
       process.env.NODE_ENV = 'production';
       delete process.env.CI; // Ensure CI is not set
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'auto' },
+      });
 
       const mode = detectValidationMode();
       expect(mode).toBe('warn');
@@ -425,6 +437,10 @@ describe('Pipeline Builder', () => {
 
       process.env.CI = 'true';
       process.env.NODE_ENV = 'production'; // Even in prod, CI should be strict
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'auto' },
+      });
 
       const mode = detectValidationMode();
       expect(mode).toBe('strict');
@@ -433,19 +449,18 @@ describe('Pipeline Builder', () => {
       process.env.NODE_ENV = originalEnv;
     });
 
-    it('should respect explicit LEGAL_MD_VALIDATION_MODE environment variable', () => {
-      const originalMode = process.env.LEGAL_MD_VALIDATION_MODE;
-
-      process.env.LEGAL_MD_VALIDATION_MODE = 'silent';
-      expect(detectValidationMode()).toBe('silent');
-
-      process.env.LEGAL_MD_VALIDATION_MODE = 'warn';
-      expect(detectValidationMode()).toBe('warn');
-
-      process.env.LEGAL_MD_VALIDATION_MODE = 'strict';
+    it('should respect configured validation mode', () => {
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'strict' },
+      });
       expect(detectValidationMode()).toBe('strict');
 
-      process.env.LEGAL_MD_VALIDATION_MODE = originalMode;
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'permissive' },
+      });
+      expect(detectValidationMode()).toBe('warn');
     });
 
     it('should use warn mode in test environment', () => {
@@ -454,6 +469,10 @@ describe('Pipeline Builder', () => {
 
       process.env.NODE_ENV = 'test';
       delete process.env.CI; // Ensure CI is not set
+      setRuntimeConfig({
+        ...DEFAULT_CONFIG,
+        processing: { ...DEFAULT_CONFIG.processing, validationMode: 'auto' },
+      });
 
       const mode = detectValidationMode();
       expect(mode).toBe('warn');

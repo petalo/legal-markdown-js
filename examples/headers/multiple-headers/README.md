@@ -31,5 +31,5 @@ the traditional l., ll., lll. syntax.
 
 ## 💡 Learn more
 
-- [Header Processing Guide](../../../docs/headers.md)
-- [Formatting Options](../../../docs/formatting.md)
+- [Header Processing Guide](../../../docs/features/headers-numbering.md)
+- [Custom Headers](../../../docs/advanced/custom-headers.md)

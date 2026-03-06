@@ -33,8 +33,9 @@
  */
 
 import { Plugin } from 'unified';
-import { Root, Paragraph, Text, Content } from 'mdast';
+import { Root, Paragraph, Content, type Html } from 'mdast';
 import { visit, SKIP } from 'unist-util-visit';
+import type { YamlValue } from '../../types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { unified } from 'unified';
@@ -43,11 +44,6 @@ import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
 import type { PluginMetadata } from './types';
 import { ProcessingPhase } from './types';
-
-/**
- * Maximum header level supported in legal markdown (l. to lllllllll.)
- */
-const MAX_HEADER_LEVEL = 9;
 
 /**
  * Options for the remark imports plugin
@@ -78,8 +74,11 @@ export interface RemarkImportsOptions {
   /** Whether to log import operations for debugging */
   logImportOperations?: boolean;
 
+  /** Whether to add HTML comments showing import boundaries in output */
+  importTracing?: boolean;
+
   /** Callback for handling imported metadata */
-  onMetadataMerged?: (mergedMetadata: Record<string, any>, fromFile: string) => void;
+  onMetadataMerged?: (mergedMetadata: Record<string, YamlValue>, fromFile: string) => void;
 
   /** List of files currently being processed (for circular import detection) */
   importStack?: string[];
@@ -137,8 +136,11 @@ interface ImportContext {
   /** Whether to log import operations */
   logImportOperations: boolean;
 
+  /** Whether to add HTML comment boundaries around imported content */
+  importTracing: boolean;
+
   /** Callback for metadata merging */
-  onMetadataMerged?: (mergedMetadata: Record<string, any>, fromFile: string) => void;
+  onMetadataMerged?: (mergedMetadata: Record<string, YamlValue>, fromFile: string) => void;
 
   /** Stack of files being imported (for circular detection) */
   importStack: string[];
@@ -147,13 +149,13 @@ interface ImportContext {
   contentCache: Map<string, string>;
 
   /** List of all imported metadata for sequential merging */
-  importedMetadataList: Array<{ metadata: Record<string, any>; source: string }>;
+  importedMetadataList: Array<{ metadata: Record<string, YamlValue>; source: string }>;
 
   /** List of successfully imported files */
   importedFiles: string[];
 
   /** Accumulated metadata from all imports (for mixin expansion) */
-  accumulatedMetadata: Record<string, any>;
+  accumulatedMetadata: Record<string, YamlValue>;
 }
 
 /**
@@ -164,7 +166,7 @@ export interface ImportResult {
   content: string;
 
   /** Merged metadata from all imports */
-  mergedMetadata: Record<string, any>;
+  mergedMetadata: Record<string, YamlValue>;
 
   /** List of successfully imported files */
   importedFiles: string[];
@@ -200,6 +202,7 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
     filterReserved = true,
     validateTypes = true,
     logImportOperations = false,
+    importTracing = false,
     onMetadataMerged,
     importStack = [],
   } = options;
@@ -230,8 +233,9 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
       filterReserved,
       validateTypes,
       logImportOperations,
+      importTracing,
       onMetadataMerged,
-      importStack: [...importStack],
+      importStack: importStack.map(stackPath => getCanonicalImportPath(stackPath)),
       contentCache: new Map(),
       importedMetadataList: [],
       importedFiles: [],
@@ -283,8 +287,8 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
     // Perform sequential merge of all imported metadata at the end
     if (context.mergeMetadata && context.importedMetadataList.length > 0) {
       const mergedResult = performSequentialMerge(context);
-      (tree as any)._importedMetadata = mergedResult.metadata;
-      (tree as any)._importStats = mergedResult.stats;
+      (tree as unknown as Record<string, unknown>)._importedMetadata = mergedResult.metadata;
+      (tree as unknown as Record<string, unknown>)._importStats = mergedResult.stats;
     }
   };
 };
@@ -368,16 +372,22 @@ async function processParagraphWithImports(
 function extractImportDirectives(text: string): ImportDirective[] {
   const directives: ImportDirective[] = [];
 
-  // Regex to match import directives: @import file.md or @import file.md#section
-  const importRegex = /@import\s+([^\s#]+)(?:#([^\s]+))?/g;
+  // Regex to match import directives:
+  //   @import file.md              (unquoted)
+  //   @import "path/to file.md"     (double-quoted, allows spaces)
+  //   @import file.md#section       (with section anchor)
+  const importRegex = /@import\s+(?:"([^"]+)"|([^\s#]+))(?:#([^\s]+))?/g;
 
   let match;
   while ((match = importRegex.exec(text)) !== null) {
-    const [fullMatch, filePath, section] = match;
+    const fullMatch = match[0];
+    // Group 1 = quoted path, Group 2 = unquoted path, Group 3 = section
+    const filePath = (match[1] || match[2]).trim();
+    const section = match[3]?.trim();
 
     directives.push({
-      filePath: filePath.trim(),
-      section: section?.trim(),
+      filePath,
+      section,
       start: match.index,
       end: match.index + fullMatch.length,
       fullMatch,
@@ -433,10 +443,11 @@ async function processImportDirectiveToAST(
   // Resolve file path
   const absolutePath = path.resolve(context.basePath, directive.filePath);
   const normalizedPath = path.normalize(absolutePath);
+  const canonicalPath = getCanonicalImportPath(normalizedPath);
 
   // Check for circular imports
-  if (context.importStack.includes(normalizedPath)) {
-    console.warn(`[remarkImports] Circular import detected: ${normalizedPath}`);
+  if (context.importStack.includes(canonicalPath)) {
+    console.warn(`[remarkImports] Circular import detected: ${canonicalPath}`);
     return [{ type: 'text', value: directive.fullMatch }];
   }
 
@@ -447,7 +458,7 @@ async function processImportDirectiveToAST(
   }
 
   // Load file content
-  const fileContent = loadFileContent(normalizedPath, context);
+  const fileContent = loadFileContent(canonicalPath, context);
 
   if (!fileContent) {
     console.warn(`[remarkImports] Import file not found: ${directive.filePath}`);
@@ -464,7 +475,7 @@ async function processImportDirectiveToAST(
       // Add metadata to list for sequential merging later
       context.importedMetadataList.push({
         metadata,
-        source: normalizedPath,
+        source: canonicalPath,
       });
 
       // Accumulate metadata for mixin expansion in imported content
@@ -475,8 +486,8 @@ async function processImportDirectiveToAST(
       };
 
       // Track imported file
-      if (!context.importedFiles.includes(normalizedPath)) {
-        context.importedFiles.push(normalizedPath);
+      if (!context.importedFiles.includes(canonicalPath)) {
+        context.importedFiles.push(canonicalPath);
       }
 
       if (context.debug) {
@@ -497,19 +508,35 @@ async function processImportDirectiveToAST(
   const nestedContext: ImportContext = {
     ...context,
     depth: context.depth + 1,
-    importStack: [...context.importStack, normalizedPath],
-    basePath: path.dirname(normalizedPath), // Update base path for relative imports
+    importStack: [...context.importStack, canonicalPath],
+    basePath: path.dirname(canonicalPath), // Update base path for relative imports
   };
 
   const processedContent = await processNestedImportsToAST(contentToImport, nestedContext);
 
   // Expand mixins using accumulated metadata
   // This allows mixins defined in imported file frontmatter to work
+  let result: Content[];
   if (context.mergeMetadata && Object.keys(context.accumulatedMetadata).length > 0) {
-    return await expandMixinsInAST(processedContent, context.accumulatedMetadata);
+    result = await expandMixinsInAST(processedContent, context.accumulatedMetadata);
+  } else {
+    result = processedContent;
   }
 
-  return processedContent;
+  // Wrap with HTML comment nodes if importTracing is enabled
+  if (context.importTracing) {
+    const relPath = path.relative(context.basePath, canonicalPath);
+    const startNode: Html = {
+      type: 'html',
+      value: `<!-- start import: ${relPath} -->`,
+    };
+    const endNode: Html = {
+      type: 'html',
+      value: `<!-- end import: ${relPath} -->`,
+    };
+    return [startNode, ...result, endNode];
+  }
+  return result;
 }
 
 /**
@@ -589,6 +616,20 @@ function loadFileContent(filePath: string, context: ImportContext): string | nul
   }
 
   return null;
+}
+
+function getCanonicalImportPath(filePath: string): string {
+  const normalizedPath = path.normalize(filePath);
+
+  try {
+    const realPath = fs.realpathSync.native
+      ? fs.realpathSync.native(normalizedPath)
+      : fs.realpathSync(normalizedPath);
+
+    return path.normalize(realPath);
+  } catch {
+    return normalizedPath;
+  }
 }
 
 /**
@@ -719,7 +760,7 @@ async function processNestedImportsToAST(
  */
 async function expandMixinsInAST(
   nodes: Content[],
-  metadata: Record<string, any>
+  _metadata: Record<string, YamlValue>
 ): Promise<Content[]> {
   const processedNodes: Content[] = [];
 
@@ -758,7 +799,15 @@ async function expandMixinsInAST(
  * - Must run BEFORE remarkLegalHeadersParser (legal headers in imported content need parsing)
  * - Must run BEFORE remarkFieldTracking (imported fields need tracking)
  */
-export const remarkImportsMetadata: PluginMetadata = {
+// Exported for testing - not part of public API
+export {
+  extractImportDirectives as _extractImportDirectives,
+  loadFileContent as _loadFileContent,
+  getCanonicalImportPath as _getCanonicalImportPath,
+  extractSection as _extractSection,
+};
+
+const _remarkImportsMetadata: PluginMetadata = {
   name: 'remarkImports',
   phase: ProcessingPhase.CONTENT_LOADING,
   description: 'Process @import directives and insert content as AST nodes',
@@ -767,5 +816,3 @@ export const remarkImportsMetadata: PluginMetadata = {
   required: false,
   version: '2.0.0', // Version 2.0 uses AST-based insertion
 };
-
-export default remarkImports;

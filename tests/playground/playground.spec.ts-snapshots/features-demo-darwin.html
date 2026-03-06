@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Services Agreement</title>
+    <style>
+/**
+ * Default Legal Markdown Styles
+ *
+ * Professional stylesheet for legal documents, optimized for both screen and print media.
+ * Features modern typography, clean design, and comprehensive print optimizations.
+ *
+ * Structure:
+ * 1. Variables and base configuration
+ * 2. Typography and visual hierarchy
+ * 3. Content elements
+ * 4. Tables and signatures
+ * 5. Print optimizations
+ * 6. Utilities and special classes
+ */
+
+/* Variables and base configuration
+   ========================================================================== */
+:root {
+  /* Colors - Professional slate and teal palette */
+  --color-primary: #1e293b;    /* Slate 800 */
+  --color-accent: #0891b2;     /* Cyan 600 */
+  --color-link: #0891b2;       /* Cyan 600 */
+  --color-text: #334155;       /* Slate 700 */
+  --color-error: #dc2626;      /* Red 600 */
+  --color-bg: #ffffff;         /* White */
+  --color-muted: #64748b;      /* Slate 500 */
+
+  /* Typography */
+  --font-primary: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+
+  /* Assets - Default logo placeholder */
+  --logo-filename: https://placehold.co/120x40/2563eb/ffffff.png?text=LOGO;
+
+  /* Spacing */
+  --spacing-xsmall: 4px;
+  --spacing-small: 8px;
+  --spacing-medium: 16px;
+  --spacing-large: 32px;
+  --spacing-xlarge: 48px;
+
+  /* Sizes */
+  --font-size-base: 12pt;
+  --font-size-h1: 1.8em;
+  --font-size-h2: 1.4em;
+  --font-size-h3: 1.2em;
+  --font-size-h4: 1.1em;
+
+  /* Layout */
+  --max-width: 210mm; /* A4 width */
+  --border-radius: 6px;
+  --border-width: 1px;
+}
+
+/* Base document configuration
+   ========================================================================== */
+body {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-text);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 20mm 15mm;
+  background-color: var(--color-bg);
+}
+
+/* Typography hierarchy
+   ========================================================================== */
+/* Prevent page breaks in headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  page-break-after: avoid;
+  page-break-inside: avoid;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Main document title */
+h1,
+.legal-header-level-1 {
+  font-size: var(--font-size-h1);
+  line-height: 1.3;
+  margin: var(--spacing-medium) 0 var(--spacing-large);
+  text-align: center;
+  border-bottom: 3px solid var(--color-accent);
+  padding-bottom: var(--spacing-medium);
+  color: var(--color-primary);
+}
+
+/* Section headings */
+h2,
+.legal-header-level-2 {
+  font-size: var(--font-size-h2);
+  margin-top: var(--spacing-large);
+  margin-bottom: var(--spacing-medium);
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: var(--spacing-small);
+  color: var(--color-primary);
+}
+
+/* Subsection headings */
+h3,
+.legal-header-level-3 {
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  margin-top: var(--spacing-large);
+  margin-bottom: var(--spacing-medium);
+  border-bottom: 1px solid var(--color-accent);
+  padding-bottom: var(--spacing-xsmall);
+  color: var(--color-primary);
+}
+
+/* Minor headings */
+h4,
+.legal-header-level-4 {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  margin-top: var(--spacing-medium);
+  margin-bottom: var(--spacing-small);
+  color: var(--color-primary);
+}
+
+/* Legal headers */
+h5,
+h6,
+.legal-header-level-5,
+.legal-header-level-6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: var(--spacing-medium);
+  margin-bottom: var(--spacing-small);
+  color: var(--color-primary);
+}
+
+/* Content elements
+   ========================================================================== */
+/* Paragraphs */
+p {
+  margin-bottom: var(--spacing-medium);
+  text-align: justify;
+  orphans: 3; /* Minimum lines at start of page */
+  widows: 3; /* Minimum lines at end of page */
+  page-break-inside: avoid;
+}
+
+/* Links */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--color-accent);
+}
+
+/* Lists */
+ul,
+ol {
+  margin: var(--spacing-medium) 0;
+  padding-left: var(--spacing-large);
+  page-break-inside: auto;
+}
+
+li {
+  margin-bottom: var(--spacing-small);
+  page-break-inside: auto;
+}
+
+/* Code blocks */
+pre {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-medium) 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+code {
+  background-color: #f1f5f9;
+  color: var(--color-primary);
+  padding: var(--spacing-xsmall) var(--spacing-small);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* Horizontal separators */
+hr {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  margin: var(--spacing-large) 0;
+}
+
+/* Empty fields and missing values */
+.missing-value {
+  background-color: #fef2f2;
+  color: var(--color-error);
+  padding: var(--spacing-xsmall) var(--spacing-small);
+  border-radius: 4px;
+  border: var(--border-width) dashed var(--color-error);
+  font-style: italic;
+}
+
+
+/* Tables
+   ========================================================================== */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: var(--spacing-medium) 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-medium) 0;
+  table-layout: fixed;
+  background-color: var(--color-bg);
+}
+
+th,
+td {
+  border: var(--border-width) solid #e2e8f0;
+  padding: var(--spacing-small) var(--spacing-medium);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Signature table
+   ========================================================================== */
+.signatures {
+  page-break-inside: avoid;
+  margin-top: var(--spacing-xlarge);
+  border: none;
+}
+
+.signatures th {
+  display: none; /* Hide headers while maintaining structure */
+}
+
+.signatures th,
+.signatures td {
+  padding: var(--spacing-medium);
+  text-align: left;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Two-column layout: 1/3 for labels, 2/3 for signatures */
+.signatures th:first-child,
+.signatures td:first-child {
+  width: 33.33%;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.signatures th:last-child,
+.signatures td:last-child {
+  width: 66.67%;
+}
+
+.signatures td:last-child {
+  height: 6em;
+  vertical-align: bottom;
+  font-weight: normal;
+}
+
+/* Table of contents
+   ========================================================================== */
+.table-of-contents {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-large) 0;
+}
+
+.table-of-contents li {
+  margin-bottom: var(--spacing-small);
+  list-style-type: none;
+}
+
+/* Confidential section
+   ========================================================================== */
+.confidential {
+  width: 100%;
+  background-color: var(--color-accent) !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: var(--spacing-medium) 0 !important;
+  margin: var(--spacing-large) 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  display: block !important;
+  border-radius: var(--border-radius) !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Separator section
+   ========================================================================== */
+.separator {
+  width: 100%;
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  padding: var(--spacing-small) 0 !important;
+  margin: var(--spacing-large) 0 var(--spacing-medium) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  display: block !important;
+  border-radius: var(--border-radius) !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Algorithm blocks
+   ========================================================================== */
+.algorithm {
+  background-color: #f8fafc;
+  border: var(--border-width) solid #e2e8f0;
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-medium);
+  margin: var(--spacing-medium) 0;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.algorithm pre {
+  margin: 0;
+  white-space: pre-wrap;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Utilities
+   ========================================================================== */
+.no-break {
+  page-break-inside: avoid !important;
+}
+
+.page-break-before {
+  page-break-before: always !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-muted {
+  color: var(--color-muted) !important;
+}
+
+
+/* Print optimizations
+   ========================================================================== */
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 20mm 15mm 15mm 15mm;
+  }
+
+  body {
+    font-size: 11pt;
+    color: black;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Links */
+  a {
+    text-decoration: none;
+    color: var(--color-link);
+  }
+
+  /* Internal links */
+  a[href^='#'] {
+    color: var(--color-link);
+    text-decoration: none;
+  }
+
+  a[data-internal-link='true'] {
+    color: var(--color-link) !important;
+    text-decoration: none !important;
+  }
+
+  /* Show URLs after external links */
+  a[href^='http']:after {
+    content: ' (' attr(href) ')';
+    font-size: 90%;
+    color: var(--color-muted);
+  }
+
+  /* Page break control */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  p, li {
+    page-break-inside: avoid;
+  }
+
+  ul, ol {
+    page-break-inside: auto;
+  }
+
+  img {
+    page-break-inside: avoid;
+    max-width: 100%;
+  }
+
+  /* Maintain colors in print */
+  .confidential,
+  .separator {
+    background-color: var(--color-accent) !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .algorithm {
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+
+  /* Remove backgrounds for better printing */
+  pre,
+  code {
+    background-color: transparent !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+
+/* Field highlighting */
+/**
+ * Highlight Styles for Legal Documents
+ * 
+ * Provides visual indicators for:
+ * - Imported values (blue): Fields filled from data
+ * - Missing values (red): Required fields without values  
+ * - Logic fields (yellow): Fields with conditional logic or mixins
+ */
+
+/* Imported values - Successfully filled from data */
+.imported-value,
+.legal-field.imported-value {
+  border: 1px solid #0066cc;
+  border-radius: 2px;
+  padding: 1px 3px;
+  background-color: #e6f3ff;
+  color: #004085;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+}
+
+/* Nested elements in imported values */
+.imported-value a,
+.legal-field.imported-value a {
+  display: inline;
+  white-space: normal;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+/* Print styles for imported values */
+@media print {
+  .imported-value,
+  .legal-field.imported-value {
+    border-color: #0066cc;
+    background-color: #e6f3ff;
+    color: #004085;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Missing values - Required fields without data */
+.missing-value,
+.legal-field.missing-value {
+  border: 1px solid #dc3545;
+  border-radius: 2px;
+  padding: 1px 3px;
+  background-color: #fff5f5;
+  color: #dc3545;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+  font-weight: 500;
+}
+
+/* Nested elements in missing values */
+.missing-value a,
+.legal-field.missing-value a {
+  display: inline;
+  white-space: normal;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+/* Print styles for missing values */
+@media print {
+  .missing-value,
+  .legal-field.missing-value {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+    color: #dc3545;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Logic fields - Fields with conditional logic or mixins */
+.highlight,
+.legal-field.highlight {
+  border: 1px solid #ffc107;
+  border-radius: 2px;
+  padding: 3px 3px;
+  background-color: #f9f3df;
+  color: #856404;
+  display: inline;
+  vertical-align: baseline;
+  white-space: normal;
+  margin: 1px 0;
+}
+
+/* Nested highlighting */
+.highlight .imported-value,
+.highlight .missing-value,
+.legal-field.highlight .legal-field.imported-value,
+.legal-field.highlight .legal-field.missing-value {
+  margin: 0;
+  padding: 0 3px;
+  border-radius: 1px;
+}
+
+/* Print styles for logic fields */
+@media print {
+  .highlight,
+  .legal-field.highlight {
+    border-color: #ffc107;
+    background-color: #f9f3df;
+    color: #856404;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Additional helper classes */
+
+/* Legend for highlighting */
+.highlight-legend {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  page-break-inside: avoid;
+}
+
+.highlight-legend h3 {
+  margin-top: 0;
+  font-size: 1.1em;
+}
+
+.highlight-legend ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0 0 0;
+}
+
+.highlight-legend li {
+  margin: 5px 0;
+  padding: 5px 10px;
+  border-radius: 3px;
+}
+
+.highlight-legend .imported-example {
+  background-color: #e6f3ff;
+  border: 1px solid #0066cc;
+  color: #004085;
+}
+
+.highlight-legend .missing-example {
+  background-color: #fff5f5;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+}
+
+.highlight-legend .logic-example {
+  background-color: #f9f3df;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+/* Ensure visibility in different contexts */
+@media screen {
+  .imported-value,
+  .missing-value,
+  .highlight,
+  .legal-field.imported-value,
+  .legal-field.missing-value,
+  .legal-field.highlight {
+    transition: background-color 0.2s ease;
+  }
+  
+  .imported-value:hover,
+  .legal-field.imported-value:hover {
+    background-color: #cce5ff;
+  }
+  
+  .missing-value:hover,
+  .legal-field.missing-value:hover {
+    background-color: #ffe5e5;
+  }
+  
+  .highlight:hover,
+  .legal-field.highlight:hover {
+    background-color: #fff3cd;
+  }
+}
+  </style>
+  </head>
+
+  <body>
+    <h1><span class="legal-field highlight" data-field="provider.legalName">MERIDIAN CONSULTING GROUP LLC</span> / <span class="legal-field highlight" data-field="client.legalName">HARGROVE INDUSTRIAL PARTNERS INC</span></h1>
+    <h2><span class="legal-field imported-value" data-field="title">Master Services Agreement</span></h2>
+    <p><strong>Agreement Reference:</strong> <span class="legal-field highlight" data-field="referenceNumber">MSA-02024</span><br><strong>Execution Date:</strong> <span class="legal-field highlight" data-field="formatDate">March 4th, 2026</span><br><strong>Effective Date:</strong> <span class="legal-field highlight" data-field="effectiveDate">January 15, 2026</span><br><strong>Expiration:</strong> <span class="legal-field highlight" data-field="formatDate">January 15, 2028</span></p>
+    <hr>
+    <p>This <span class="legal-field imported-value" data-field="title">Master Services Agreement</span> (the &quot;Agreement&quot;) is entered into as of <span class="legal-field highlight" data-field="formatDate">March 4, 2026</span> by and between:</p>
+    <p><strong><span class="legal-field highlight" data-field="provider.legalName">MERIDIAN CONSULTING GROUP LLC</span></strong> (&quot;<span class="legal-field imported-value" data-field="provider.shortName">Meridian</span>&quot;), a limited liability company organized under the laws of <span class="legal-field imported-value" data-field="governingState">Delaware</span>, with its principal place of business at <span class="legal-field imported-value" data-field="provider.address">1440 G Street NW, Suite 600, Washington, DC 20005</span>, Tax ID <span class="legal-field imported-value" data-field="provider.taxId">47-3821045</span>, represented herein by <span class="legal-field highlight" data-field="provider.contact.name">Eleanor Voss</span>, <span class="legal-field highlight" data-field="provider.contact.title">Managing Director</span>; and</p>
+    <p><strong><span class="legal-field highlight" data-field="client.legalName">HARGROVE INDUSTRIAL PARTNERS INC</span></strong> (&quot;<span class="legal-field imported-value" data-field="client.shortName">Hargrove</span>&quot;), a corporation organized under the laws of the State of Illinois, with its principal place of business at <span class="legal-field imported-value" data-field="client.address">875 W. Randolph Street, Suite 1100, Chicago, IL 60661</span>, Tax ID <span class="legal-field imported-value" data-field="client.taxId">36-4409178</span>, represented herein by <span class="legal-field highlight" data-field="client.contact.name">Thomas P Hargrove</span>, <span class="legal-field highlight" data-field="client.contact.title">Chief Operating Officer</span>.</p>
+    <h1>Article 1. DEFINITIONS</h1>
+    <h2>Section 1. Agreement</h2>
+    <p>&quot;Agreement&quot; means this Master Services Agreement, bearing Reference No. <span class="legal-field highlight" data-field="referenceNumber">MSA-02024</span>, effective as of <span class="legal-field highlight" data-field="effectiveDate">2026-01-15</span>.</p>
+    <h2>Section 2. Engagement fee</h2>
+    <p>&quot;Engagement Fee&quot; means the total fees payable under this Agreement, being <span class="legal-field highlight" data-field="formatDollar">$203,500.00</span> (<span class="legal-field highlight" data-field="capitalize">Two hundred three thousand five hundred</span> dollars), exclusive of applicable taxes.</p>
+    <h2>Section 3. Initial Term</h2>
+    <p>&quot;Initial Term&quot; means the period of <span class="legal-field imported-value" data-field="term.initialYears">2</span> (<span class="legal-field highlight" data-field="term.initialYears">two</span>) <span class="legal-field highlight" data-field="term.initialYears">years</span> commencing on <span class="legal-field highlight" data-field="effectiveDate">January 15, 2026</span> and expiring on <span class="legal-field highlight" data-field="formatDate">January 15, 2028</span>.</p>
+    <h2>Section 4. Provider Contact</h2>
+    <p>&quot;Provider Contact&quot; means <span class="legal-field highlight" data-field="provider.contact.name">Eleanor Voss</span> (<span class="legal-field highlight" data-field="provider.contact.email"><a href="mailto:evoss@meridiancg.com">evoss@meridiancg.com</a></span>).</p>
+    <h2>Section 5. Client Contact</h2>
+    <p>&quot;Client Contact&quot; means <span class="legal-field highlight" data-field="client.contact.name">Thomas P Hargrove</span> (<span class="legal-field highlight" data-field="client.contact.email"><a href="mailto:thargrove@hargrove-ind.com">thargrove@hargrove-ind.com</a></span>).</p>
+    <h2>Section 6. Late Fee Rate</h2>
+    <p>&quot;Late Fee Rate&quot; means <span class="legal-field highlight" data-field="payment.lateRateDecimal">1.5%</span> per month applied to overdue balances.</p>
+    <h2>Section 7. Notice Period</h2>
+    <p>&quot;Notice Period&quot; means <span class="legal-field imported-value" data-field="term.noticeDays">90</span> (<span class="legal-field highlight" data-field="term.noticeDays">ninety</span>) calendar <span class="legal-field highlight" data-field="term.noticeDays">days</span>.</p>
+    <h1>Article 2. SCOPE OF SERVICES</h1>
+    <h2>Section 1. Engagement Overview</h2>
+    <p><span class="legal-field imported-value" data-field="client.shortName">Hargrove</span> engages <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> to perform the following <span class="legal-field highlight" data-field="services">3</span> (<span class="legal-field highlight" data-field="services">three</span>) <span class="legal-field highlight" data-field="services">services</span>:</p>
+    <h3>(1) <span class="legal-field highlight" data-field="ordinal">1st</span> Service Engagement: <span class="legal-field imported-value" data-field="name">Digital Transformation Assessment</span></h3>
+    <p><span class="legal-field imported-value" data-field="description">Comprehensive audit of existing IT infrastructure and roadmap development</span>. This engagement is scoped for <span class="legal-field imported-value" data-field="duration">3</span> (<span class="legal-field highlight" data-field="duration">three</span>) <span class="legal-field highlight" data-field="duration">months</span> and carries a fixed fee of <span class="legal-field highlight" data-field="fee">$48,000.00</span> (<span class="legal-field highlight" data-field="fee">Forty eight thousand</span> dollars).</p>
+    <p><span class="legal-field highlight" data-field="logic.branch.1" data-logic-helper="if" data-logic-result="true">This service constitutes the foundational assessment upon which subsequent engagements depend.</span></p>
+    <h3>(2) <span class="legal-field highlight" data-field="ordinal">2nd</span> Service Engagement: <span class="legal-field imported-value" data-field="name">Systems Integration</span></h3>
+    <p><span class="legal-field imported-value" data-field="description">End-to-end integration of ERP and supply chain management platforms</span>. This engagement is scoped for <span class="legal-field imported-value" data-field="duration">8</span> (<span class="legal-field highlight" data-field="duration">eight</span>) <span class="legal-field highlight" data-field="duration">months</span> and carries a fixed fee of <span class="legal-field highlight" data-field="fee">$124,000.00</span> (<span class="legal-field highlight" data-field="fee">One hundred twenty four thousand</span> dollars).</p>
+    <h3>(3) <span class="legal-field highlight" data-field="ordinal">3rd</span> Service Engagement: <span class="legal-field imported-value" data-field="name">Change Management &amp; Training</span></h3>
+    <p><span class="legal-field imported-value" data-field="description">Organizational change facilitation and staff enablement programs</span>. This engagement is scoped for <span class="legal-field imported-value" data-field="duration">4</span> (<span class="legal-field highlight" data-field="duration">four</span>) <span class="legal-field highlight" data-field="duration">months</span> and carries a fixed fee of <span class="legal-field highlight" data-field="fee">$31,500.00</span> (<span class="legal-field highlight" data-field="fee">Thirty one thousand five hundred</span> dollars).</p>
+    <p><span class="legal-field highlight" data-field="logic.branch.2" data-logic-helper="if" data-logic-result="true">This service shall commence no earlier than the completion of the Systems Integration engagement described above.</span></p>
+    <h2>Section 2. Aggregate Scope</h2>
+    <p>The combined scope encompasses <span class="legal-field highlight" data-field="formatInteger">15</span> months across <span class="legal-field highlight" data-field="services">3</span> distinct service lines, representing a total Engagement Fee of <span class="legal-field highlight" data-field="formatDollar">$203,500.00</span>.</p>
+    <h1>Article 3. COMPENSATION AND PAYMENT</h1>
+    <h2>Section 1. Retainer</h2>
+    <p>Upon execution, <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span> shall pay a non-refundable retainer of <span class="legal-field highlight" data-field="payment.retainerAmount">$25,000.00</span> (<span class="legal-field highlight" data-field="payment.retainerAmount">Twenty five thousand</span> dollars), which shall be credited against the first invoice issued hereunder.</p>
+    <h2>Section 2. Invoicing and Payment Terms</h2>
+    <p><span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> shall issue invoices monthly in arrears. Payment shall be due within <span class="legal-field imported-value" data-field="payment.netDays">30</span> (<span class="legal-field highlight" data-field="payment.netDays">thirty</span>) calendar <span class="legal-field highlight" data-field="payment.netDays">days</span> of the invoice date, with the first payment due no later than <span class="legal-field highlight" data-field="formatDate">February 14th, 2026</span>.</p>
+    <h2>Section 3. Late Payment</h2>
+    <p>Invoices not paid by the due date shall accrue interest at <span class="legal-field highlight" data-field="payment.lateRateDecimal">1.5%</span> per month (<span class="legal-field highlight" data-field="payment.lateRateDecimal">18.0%</span> per annum) calculated on the outstanding balance from the due date until paid in full.</p>
+    <h2>Section 4. Taxes</h2>
+    <p>All fees are exclusive of applicable taxes. <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span> shall remit an additional <span class="legal-field highlight" data-field="payment.taxRateDecimal">8.75%</span> in sales tax on each invoice, equal to approximately <span class="legal-field highlight" data-field="formatDollar">$17,806.25</span> on the aggregate Engagement Fee.</p>
+    <h2>Section 5. Per-Service Fee Schedule</h2>
+    <p>The following schedule sets forth the base fee, applicable sales tax, and gross amount due for each service line. The Change Management engagement qualifies as a tax-exempt training service under applicable regulations.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Service Engagement</th>
+          <th>Duration</th>
+          <th>Base Fee</th>
+          <th>Sales Tax (<span class="legal-field highlight" data-field="payment.taxRateDecimal">8.75%</span>)</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="legal-field highlight" data-field="add">1</span></td>
+          <td><span class="legal-field imported-value" data-field="name">Digital Transformation Assessment</span></td>
+          <td><span class="legal-field imported-value" data-field="duration">3</span> <span class="legal-field highlight" data-field="duration">months</span></td>
+          <td><span class="legal-field highlight" data-field="fee">$48,000.00</span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.3" data-logic-helper="if" data-logic-result="false"><span class="legal-field highlight" data-field="fee">$4,200.00</span></span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.4" data-logic-helper="if" data-logic-result="false"><span class="legal-field highlight" data-field="fee">$52,200.00</span></span></td>
+        </tr>
+        <tr>
+          <td><span class="legal-field highlight" data-field="add">2</span></td>
+          <td><span class="legal-field imported-value" data-field="name">Systems Integration</span></td>
+          <td><span class="legal-field imported-value" data-field="duration">8</span> <span class="legal-field highlight" data-field="duration">months</span></td>
+          <td><span class="legal-field highlight" data-field="fee">$124,000.00</span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.5" data-logic-helper="if" data-logic-result="false"><span class="legal-field highlight" data-field="fee">$10,850.00</span></span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.6" data-logic-helper="if" data-logic-result="false"><span class="legal-field highlight" data-field="fee">$134,850.00</span></span></td>
+        </tr>
+        <tr>
+          <td><span class="legal-field highlight" data-field="add">3</span></td>
+          <td><span class="legal-field imported-value" data-field="name">Change Management &amp; Training</span></td>
+          <td><span class="legal-field imported-value" data-field="duration">4</span> <span class="legal-field highlight" data-field="duration">months</span></td>
+          <td><span class="legal-field highlight" data-field="fee">$31,500.00</span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.7" data-logic-helper="if" data-logic-result="true">Exempt</span></td>
+          <td><span class="legal-field highlight" data-field="logic.branch.8" data-logic-helper="if" data-logic-result="true"><span class="legal-field highlight" data-field="fee">$31,500.00</span></span></td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Section 6. Payment Milestone Schedule</h2>
+    <p>The Engagement Fee of <span class="legal-field highlight" data-field="payment.totalFee">$203,500.00</span> (<span class="legal-field highlight" data-field="payment.totalFee">Two hundred three thousand five hundred</span> dollars) shall be invoiced in <span class="legal-field highlight" data-field="milestones">5</span> (<span class="legal-field highlight" data-field="milestones">five</span>) installments tied to the following project milestones:</p>
+    <p><span class="legal-field highlight" data-field="ordinal">1st</span>. <strong><span class="legal-field imported-value" data-field="name">Contract Execution and Retainer</span></strong> - Month <span class="legal-field imported-value" data-field="invoiceMonth">1</span>: <span class="legal-field highlight" data-field="percentage">$24,420.00</span> (<span class="legal-field imported-value" data-field="percentage">12</span>% of Engagement Fee)<span class="legal-field highlight" data-field="logic.branch.10" data-logic-helper="unless" data-logic-result="true"><span class="legal-field highlight" data-field="logic.branch.9" data-logic-helper="if" data-logic-result="false">;</span></span> <span class="legal-field highlight" data-field="ordinal">2nd</span>. <strong><span class="legal-field imported-value" data-field="name">Phase 1 - Assessment Delivery</span></strong> - Month <span class="legal-field imported-value" data-field="invoiceMonth">3</span>: <span class="legal-field highlight" data-field="percentage">$50,875.00</span> (<span class="legal-field imported-value" data-field="percentage">25</span>% of Engagement Fee)<span class="legal-field highlight" data-field="logic.branch.12" data-logic-helper="unless" data-logic-result="true"><span class="legal-field highlight" data-field="logic.branch.11" data-logic-helper="if" data-logic-result="false">;</span></span> <span class="legal-field highlight" data-field="ordinal">3rd</span>. <strong><span class="legal-field imported-value" data-field="name">Phase 2 - Integration Midpoint</span></strong> - Month <span class="legal-field imported-value" data-field="invoiceMonth">7</span>: <span class="legal-field highlight" data-field="percentage">$56,980.00</span> (<span class="legal-field imported-value" data-field="percentage">28</span>% of Engagement Fee)<span class="legal-field highlight" data-field="logic.branch.14" data-logic-helper="unless" data-logic-result="true"><span class="legal-field highlight" data-field="logic.branch.13" data-logic-helper="if" data-logic-result="false">;</span></span> <span class="legal-field highlight" data-field="ordinal">4th</span>. <strong><span class="legal-field imported-value" data-field="name">Go-Live Acceptance</span></strong> - Month <span class="legal-field imported-value" data-field="invoiceMonth">11</span>: <span class="legal-field highlight" data-field="percentage">$50,875.00</span> (<span class="legal-field imported-value" data-field="percentage">25</span>% of Engagement Fee)<span class="legal-field highlight" data-field="logic.branch.16" data-logic-helper="unless" data-logic-result="true"><span class="legal-field highlight" data-field="logic.branch.15" data-logic-helper="if" data-logic-result="false">;</span></span> <span class="legal-field highlight" data-field="ordinal">5th</span>. <strong><span class="legal-field imported-value" data-field="name">Final Training and Project Close</span></strong> - Month <span class="legal-field imported-value" data-field="invoiceMonth">15</span>: <span class="legal-field highlight" data-field="percentage">$20,350.00</span> (<span class="legal-field imported-value" data-field="percentage">10</span>% of Engagement Fee)</p>
+    <p>All milestone invoices are due within <span class="legal-field imported-value" data-field="payment.netDays">30</span> (<span class="legal-field highlight" data-field="payment.netDays">thirty</span>) calendar <span class="legal-field highlight" data-field="payment.netDays">days</span> of written milestone acceptance by <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span>.</p>
+    <h2>Section 7. Liability Cap</h2>
+    <p><span class="legal-field imported-value" data-field="provider.shortName">Meridian</span>&#39;s aggregate liability under this Agreement shall not exceed <span class="legal-field highlight" data-field="formatDollar">$75,000.00</span> (<span class="legal-field highlight" data-field="capitalize">Seventy five thousand</span> dollars), being <span class="legal-field highlight" data-field="liability.capMultiplier">3rd</span> multiples of the Retainer amount.</p>
+    <h1>Article 4. TERM AND RENEWAL</h1>
+    <h2>Section 1. Initial Term</h2>
+    <p>This Agreement commences on <span class="legal-field highlight" data-field="formatDate">2026-03-04</span> and continues for <span class="legal-field imported-value" data-field="term.initialYears">2</span> (<span class="legal-field highlight" data-field="term.initialYears">two</span>) <span class="legal-field highlight" data-field="term.initialYears">years</span>, expiring on <span class="legal-field highlight" data-field="formatDate">March 4, 2028</span>, unless earlier terminated in accordance with this Agreement.</p>
+    <h2>Section 2. Renewal</h2>
+    <p>Unless either party provides written notice of non-renewal at least <span class="legal-field imported-value" data-field="term.noticeDays">90</span> (<span class="legal-field highlight" data-field="term.noticeDays">ninety</span>) calendar <span class="legal-field highlight" data-field="term.noticeDays">days</span> prior to expiration, this Agreement shall automatically renew for successive periods of <span class="legal-field imported-value" data-field="term.renewalMonths">6</span> (<span class="legal-field highlight" data-field="term.renewalMonths">six</span>) <span class="legal-field highlight" data-field="term.renewalMonths">months</span> each.</p>
+    <h2>Section 3. Post-Termination Wind-Down</h2>
+    <p>Upon expiration or termination, <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> shall have <span class="legal-field imported-value" data-field="term.renewalMonths">6</span> (<span class="legal-field highlight" data-field="term.renewalMonths">six</span>) <span class="legal-field highlight" data-field="term.renewalMonths">months</span> to complete any work-in-progress deliverables. The wind-down period shall end no later than <span class="legal-field highlight" data-field="formatDate">July 15, 2028</span>.</p>
+    <h1>Article 5. CONFIDENTIALITY</h1>
+    <h2>Section 1. Obligation</h2>
+    <p>Each party (&quot;Receiving Party&quot;) shall hold in strict confidence all non-public information of the other party (&quot;Disclosing Party&quot;) disclosed in connection with this Agreement (&quot;Confidential Information&quot;) and shall not disclose such information to any third party without prior written consent.</p>
+    <h2>Section 2. Permitted Disclosures</h2>
+    <p>A Receiving Party may disclose Confidential Information to its employees, officers, agents, and advisors on a need-to-know basis, provided such persons are bound by obligations at least as protective as those set forth herein.</p>
+    <h2>Section 3. Survival</h2>
+    <p>The obligations of this Article shall survive termination or expiration of this Agreement for a period of <span class="legal-field imported-value" data-field="term.initialYears">2</span> (<span class="legal-field highlight" data-field="term.initialYears">two</span>) <span class="legal-field highlight" data-field="term.initialYears">years</span> from the date of disclosure.</p>
+    <h2>Section 4. Return of Materials</h2>
+    <p>Upon written request or termination, the Receiving Party shall promptly return or destroy all Confidential Information and certify such destruction in writing within <span class="legal-field highlight" data-field="payment.netDays">30</span> (<span class="legal-field highlight" data-field="payment.netDays">thirty</span>) <span class="legal-field highlight" data-field="payment.netDays">days</span> of such request.</p>
+    <h1>Article 6. INTELLECTUAL PROPERTY</h1>
+    <h2>Section 1. Background IP</h2>
+    <p>Each party retains all right, title, and interest in and to its Background Intellectual Property. Nothing in this Agreement grants either party any license to the other&#39;s Background Intellectual Property except as expressly set forth herein.</p>
+    <h2>Section 2. Deliverable Ownership</h2>
+    <p><span class="legal-field highlight" data-field="logic.branch.17" data-logic-helper="if" data-logic-result="true">All Deliverables created by <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> specifically for <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span> under this Agreement shall constitute works made for hire to the fullest extent permitted by applicable law. To the extent any Deliverable does not qualify as a work made for hire, <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> hereby irrevocably assigns to <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span> all right, title, and interest therein.</span></p>
+    <h2>Section 3. Provider Tools and Methodologies</h2>
+    <p><span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> retains all right, title, and interest in its proprietary tools, methodologies, and know-how, including any improvements thereto developed during the performance of this Agreement.</p>
+    <h1>Article 7. REPRESENTATIONS AND WARRANTIES</h1>
+    <h2>Section 1. Mutual Representations</h2>
+    <p>Each party represents and warrants that: (a) it is duly organized, validly existing, and in good standing under the laws of its jurisdiction of organization; (b) it has full power and authority to enter into and perform this Agreement; and (c) the execution, delivery, and performance of this Agreement does not violate any applicable law or conflict with any agreement to which such party is bound.</p>
+    <h2>Section 2. Provider Warranties</h2>
+    <p><span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> additionally warrants that: (a) Services will be performed in a professional and workmanlike manner consistent with industry standards; (b) personnel assigned to this engagement possess the qualifications represented; and (c) <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span> shall maintain errors and omissions insurance with limits of not less than <span class="legal-field highlight" data-field="payment.retainerAmount">$100,000.00</span> per occurrence.</p>
+    <h2>Section 3. Disclaimer</h2>
+    <p><span class="legal-field highlight" data-field="logic.branch.19" data-logic-helper="unless" data-logic-result="true"><span class="legal-field highlight" data-field="logic.branch.18" data-logic-helper="if" data-logic-result="false">EXCEPT AS EXPRESSLY SET FORTH HEREIN, NEITHER PARTY MAKES ANY WARRANTY, EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.</span></span></p>
+    <h2>Section 4. Indemnification Threshold</h2>
+    <p>Claims for indemnification shall not be actionable unless and until aggregate losses exceed <span class="legal-field highlight" data-field="liability.indemnityThreshold">$10,000.00</span> (<span class="legal-field highlight" data-field="liability.indemnityThreshold">Ten thousand</span> dollars).</p>
+    <h1>Article 8. NON-SOLICITATION</h1>
+    <h2>Section 1. Restriction</h2>
+    <p>During the term of this Agreement and for a period of <span class="legal-field imported-value" data-field="term.initialYears">2</span> (<span class="legal-field highlight" data-field="term.initialYears">two</span>) <span class="legal-field highlight" data-field="term.initialYears">years</span> following expiration or termination, neither party shall, directly or indirectly, solicit or recruit for employment any personnel of the other party who was involved in the performance of this Agreement.</p>
+    <h2>Section 2. Liquidated Damages</h2>
+    <p>A breach of this Article shall entitle the non-breaching party to liquidated damages of <span class="legal-field highlight" data-field="payment.retainerAmount">$50,000.00</span> (<span class="legal-field highlight" data-field="payment.retainerAmount">Fifty thousand</span> dollars) per breach, the parties acknowledging that actual damages would be difficult to ascertain.</p>
+    <h2>Section 3. Geographic Scope</h2>
+    <p>This restriction shall apply without geographic limitation.</p>
+    <h1>Article 9. DISPUTE RESOLUTION AND GOVERNING LAW</h1>
+    <h2>Section 1. Governing Law</h2>
+    <p>This Agreement shall be governed by and construed in accordance with the laws of the State of <span class="legal-field imported-value" data-field="governingState">Delaware</span>, without regard to conflict-of-laws principles.</p>
+    <h2>Section 2. Negotiation</h2>
+    <p>In the event of any dispute arising out of or relating to this Agreement, the parties shall first endeavor to resolve the dispute through good-faith negotiation for a period of not less than <span class="legal-field imported-value" data-field="term.noticeDays">90</span> (<span class="legal-field highlight" data-field="term.noticeDays">ninety</span>) calendar <span class="legal-field highlight" data-field="term.noticeDays">days</span>.</p>
+    <h2>Section 3. Arbitration</h2>
+    <p>If negotiation fails, disputes shall be submitted to binding arbitration administered by the <span class="legal-field imported-value" data-field="arbitration.rulesBody">American Arbitration Association</span> pursuant to its Commercial Arbitration Rules. The arbitration shall be conducted in <span class="legal-field imported-value" data-field="arbitration.venue">Wilmington</span>, <span class="legal-field imported-value" data-field="governingState">Delaware</span>, before a panel of <span class="legal-field imported-value" data-field="arbitration.arbitratorCount">3</span> (<span class="legal-field highlight" data-field="arbitration.arbitratorCount">three</span>) <span class="legal-field highlight" data-field="arbitration.arbitratorCount">arbitrators</span>.</p>
+    <h1>Article 10. GENERAL PROVISIONS</h1>
+    <h2>Section 1. Entire Agreement</h2>
+    <p>This Agreement, bearing Reference No. <span class="legal-field highlight" data-field="referenceNumber">MSA-02024</span>, constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior negotiations, representations, warranties, and understandings.</p>
+    <h2>Section 2. Notices</h2>
+    <p>All notices shall be in writing, addressed as follows:</p>
+    <p>To <span class="legal-field imported-value" data-field="provider.shortName">Meridian</span>: <span class="legal-field highlight" data-field="provider.contact.name">Eleanor Voss</span>, <span class="legal-field imported-value" data-field="provider.address">1440 G Street NW, Suite 600, Washington, DC 20005</span>, <span class="legal-field highlight" data-field="provider.contact.email"><a href="mailto:evoss@meridiancg.com">evoss@meridiancg.com</a></span></p>
+    <p>To <span class="legal-field imported-value" data-field="client.shortName">Hargrove</span>: <span class="legal-field highlight" data-field="client.contact.name">Thomas P Hargrove</span>, <span class="legal-field imported-value" data-field="client.address">875 W. Randolph Street, Suite 1100, Chicago, IL 60661</span>, <span class="legal-field highlight" data-field="client.contact.email"><a href="mailto:thargrove@hargrove-ind.com">thargrove@hargrove-ind.com</a></span></p>
+    <h2>Section 3. Amendments</h2>
+    <p>No amendment shall be effective unless signed by authorized representatives of both parties. Authorized representatives are identified by their initials: Provider (<span class="legal-field highlight" data-field="provider.contact.name">EV</span>) and Client (<span class="legal-field highlight" data-field="client.contact.name">TPH</span>).</p>
+    <h2>Section 4. Counterparts and Electronic Execution</h2>
+    <p>This Agreement may be executed in counterparts, including by electronic signature, each of which shall be deemed an original and all of which together shall constitute one and the same instrument.</p>
+    <h2>Section 5. Severability</h2>
+    <p>If any provision is held unenforceable, it shall be modified to the minimum extent necessary to make it enforceable, and the remaining provisions shall continue in full force and effect.</p>
+    <h2>Section 6. Effective Date Confirmation</h2>
+    <p>The parties confirm this Agreement effective as of <span class="legal-field highlight" data-field="formatDate">Mar 4, 2026</span>, corresponding to <span class="legal-field highlight" data-field="formatDate">2026-03-04</span>.</p>
+    <hr>
+    <p>IN WITNESS WHEREOF, the parties have executed this <span class="legal-field imported-value" data-field="title">Master Services Agreement</span> as of the date set forth above.</p>
+    <p><strong><span class="legal-field highlight" data-field="provider.legalName">MERIDIAN CONSULTING GROUP LLC</span></strong></p>
+    <p>Signature: <span class="signature-line">____________________________</span></p>
+    <p>Name: <span class="legal-field highlight" data-field="provider.contact.name">Eleanor Voss</span></p>
+    <p>Title: <span class="legal-field highlight" data-field="provider.contact.title">Managing Director</span></p>
+    <p>Date: <span class="legal-field highlight" data-field="formatDate">04/03/2026</span></p>
+    <p>Tax ID: <span class="legal-field imported-value" data-field="provider.taxId">47-3821045</span></p>
+    <hr>
+    <p><strong><span class="legal-field highlight" data-field="client.legalName">HARGROVE INDUSTRIAL PARTNERS INC</span></strong></p>
+    <p>Signature: <span class="signature-line">____________________________</span></p>
+    <p>Name: <span class="legal-field highlight" data-field="client.contact.name">Thomas P Hargrove</span></p>
+    <p>Title: <span class="legal-field highlight" data-field="client.contact.title">Chief Operating Officer</span></p>
+    <p>Date: <span class="legal-field highlight" data-field="formatDate">04/03/2026</span></p>
+    <p>Tax ID: <span class="legal-field imported-value" data-field="client.taxId">36-4409178</span></p>
+
+  </body>
+
+</html>

@@ -49,7 +49,7 @@ businessHours:
 
 # Purchase Ticket - {{ticketNumber}}
 
-**Date:** {{formatDate(purchaseDate, "DD/MM/YYYY")}} **Store:** {{storeName}}
+**Date:** {{formatDate purchaseDate "DD/MM/YYYY"}} **Store:** {{storeName}}
 **Cashier:** {{cashierName}}
 
 </div>
@@ -58,7 +58,7 @@ businessHours:
 
 <ul class="items-list">
 {{#items}}
-- {{name}} {{onSale ? "(ON SALE!)" : ""}} - ${{price}}
+- {{name}} {{#if onSale}}(ON SALE!){{/if}} - ${{price}}
 {{/items}}
 </ul>
 
@@ -76,7 +76,7 @@ businessHours:
 **Points Earned:** {{pointsEarned}}  
 **Total Points:** {{pointsBalance}} {{/isMember}}
 
-{{isMember ? "" : "Not a member yet - sign up today!"}}
+{{#unless isMember}}Not a member yet - sign up today!{{/unless}}
 
 ## Receipt Information
 

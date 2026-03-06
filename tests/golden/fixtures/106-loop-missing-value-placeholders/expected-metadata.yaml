@@ -1,0 +1,14 @@
+_cross_references: []
+_field_mappings: {}
+company: \[Acme Corp\]
+insurance:
+  lessee_requirements:
+    - ''
+    - ''
+    - ''
+    - Workers' compensation insurance
+other_party: '[Other Party]'
+services:
+  - Integration testing
+  - ''
+  - Quality assurance

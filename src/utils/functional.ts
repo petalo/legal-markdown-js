@@ -35,6 +35,7 @@
  * debouncedSave(content); // Will only execute after 300ms of inactivity
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -61,6 +62,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * // Returns: { a: { b: 1, c: 2 } }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function deepMerge<T extends Record<string, any>>(target: T, ...sources: Partial<T>[]): T {
   if (!sources.length) return target;
   const source = sources.shift();
@@ -69,6 +71,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, ...sources: 
     for (const key in source) {
       if (isObject(source[key])) {
         if (!target[key]) Object.assign(target, { [key]: {} });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         deepMerge(target[key] as Record<string, any>, source[key] as Record<string, any>);
       } else {
         Object.assign(target, { [key]: source[key] });
@@ -85,6 +88,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, ...sources: 
  * @param {any} item - The item to check
  * @returns {boolean} True if the item is a plain object, false otherwise
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isObject(item: any): item is Record<string, any> {
   return item && typeof item === 'object' && !Array.isArray(item);
 }

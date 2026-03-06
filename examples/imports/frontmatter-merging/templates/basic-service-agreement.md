@@ -40,7 +40,7 @@ l. Project Details
 
 **Project:** {{project.name}}  
 **Duration:** {{project.duration}}  
-**Budget:** ${{project.budget | currency}} {{project.currency}}
+**Budget:** {{formatCurrency project.budget project.currency}} {{project.currency}}
 
 ---
 
@@ -55,11 +55,11 @@ l. Project Details
 l. Financial Terms
 
 ll. Total Project Cost The total cost for this engagement is
-**${{project.budget | currency}} {{project.currency}}**.
+**{{formatCurrency project.budget project.currency}} {{project.currency}}**.
 
 ll. Payment Terms Payment terms are **{{payment_terms}}** from invoice date.
 
-ll. Liability Total liability is capped at **${{liability_cap | currency}}**.
+ll. Liability Total liability is capped at **{{formatCurrency liability_cap project.currency}}**.
 
 ---
 

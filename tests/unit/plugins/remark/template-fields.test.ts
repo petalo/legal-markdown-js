@@ -268,7 +268,7 @@ describe('Template Fields Plugin', () => {
   // ==========================================================================
 
   describe('@today Syntax', () => {
-    it('should replace @today with current date', async () => {
+    it('should not replace bare @today outside {{...}}', async () => {
       const processor = unified()
         .use(remarkParse)
         .use(remarkTemplateFields, {
@@ -277,8 +277,7 @@ describe('Template Fields Plugin', () => {
         .use(remarkStringify);
 
       const result = await processor.process('Date: @today');
-      const today = new Date().toISOString().split('T')[0];
-      expect(result.toString().trim()).toContain(today);
+      expect(result.toString().trim()).toBe('Date: @today');
     });
 
     it('should replace @today in template field', async () => {
@@ -303,7 +302,7 @@ describe('Template Fields Plugin', () => {
         })
         .use(remarkStringify);
 
-      const result = await processor.process('Date: @today');
+      const result = await processor.process('Date: {{@today}}');
       expect(result.toString().trim()).toBe('Date: 2025-06-15');
     });
 
@@ -315,7 +314,7 @@ describe('Template Fields Plugin', () => {
         })
         .use(remarkStringify);
 
-      const result = await processor.process('Date: @today[iso]');
+      const result = await processor.process('Date: {{@today[iso]}}');
       const today = new Date().toISOString().split('T')[0];
       expect(result.toString().trim()).toContain(today);
     });
@@ -328,7 +327,7 @@ describe('Template Fields Plugin', () => {
         })
         .use(remarkStringify);
 
-      const result = await processor.process('Date: @today[long]');
+      const result = await processor.process('Date: {{@today[long]}}');
       const today = new Date();
       const longFormat = today.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -346,7 +345,7 @@ describe('Template Fields Plugin', () => {
         })
         .use(remarkStringify);
 
-      const result = await processor.process('Date: @today[european]');
+      const result = await processor.process('Date: {{@today[european]}}');
       const today = new Date();
       const europeanFormat = today.toLocaleDateString('en-GB');
       expect(result.toString().trim()).toBe(`Date: ${europeanFormat}`);
@@ -394,6 +393,30 @@ describe('Template Fields Plugin', () => {
       const result = await processor.process('{{formatDate date "MMMM Do, YYYY"}}');
       expect(result.toString().trim()).toContain('March');
       expect(result.toString().trim()).toContain('2025');
+    });
+
+    it('should handle formatDate helper when metadata date is a string', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { date: '2025-03-15' },
+        })
+        .use(remarkStringify);
+
+      const result = await processor.process('{{formatDate date "YYYY-MM-DD"}}');
+      expect(result.toString().trim()).toBe('2025-03-15');
+    });
+
+    it('should handle formatDate helper when metadata date is a Date object', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { date: new Date('2025-03-15') },
+        })
+        .use(remarkStringify);
+
+      const result = await processor.process('{{formatDate date "YYYY-MM-DD"}}');
+      expect(result.toString().trim()).toBe('2025-03-15');
     });
 
     it('should call helper with number literal', async () => {
@@ -968,6 +991,277 @@ Other
       visit(tree);
 
       expect(hasHtmlNode).toBe(true);
+    });
+
+    it('should process {{variable}} inside an HTML node that already has field spans', async () => {
+      // Regression: remarkDates converts text nodes containing @today to HTML nodes,
+      // but leaves {{variable}} patterns unresolved. remarkTemplateFields must not
+      // skip such nodes — it should resolve the remaining {{...}} patterns.
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { title: 'Test Agreement' },
+          enableFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      // Simulate what remarkDates produces: an HTML node with an existing
+      // field span (from @today) alongside an unresolved {{title}} pattern.
+      const simulatedHtml =
+        'This {{title}} is entered as of ' +
+        '<span class="legal-field imported-value" data-field="date.todaylong">March 3, 2026</span>.';
+
+      // Inject directly as an html block so remark parses it as an html node
+      const result = await processor.process(simulatedHtml);
+      const output = result.toString();
+
+      // {{title}} should be resolved (not left as-is)
+      expect(output).not.toContain('{{title}}');
+      expect(output).toContain('Test Agreement');
+    });
+
+    it('should process text node between two complete Phase-2 field spans', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { provider: { address: '123 Legal Ave' } },
+          enableFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '<span class="legal-field highlight" data-field="titleCase">Eleanor Voss</span>, ' +
+        '{{provider.address}}, ' +
+        '<span class="legal-field highlight" data-field="lower">evoss@meridiancg.com</span>';
+
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      expect(output).toContain('data-field="titleCase"');
+      expect(output).toContain('data-field="lower"');
+      expect(output).toContain('data-field="provider.address"');
+      expect(output).toContain('123 Legal Ave');
+      expect(output).not.toContain('{{provider.address}}');
+    });
+
+    it('should resolve a text node between two experimental lm-field tokens', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { provider: { address: '123 Legal Ave' } },
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '<lm-field data-field="provider.name" data-kind="highlight">Eleanor Voss</lm-field>, ' +
+        '{{provider.address}}, ' +
+        '<lm-field data-field="provider.email" data-kind="highlight">evoss@meridiancg.com</lm-field>';
+
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      expect(output).toContain('data-field="provider.name"');
+      expect(output).toContain('data-field="provider.email"');
+      expect(output).toContain('data-field="provider.address"');
+      expect(output).toContain('123 Legal Ave');
+      expect(output).not.toContain('{{provider.address}}');
+      expect(output).toContain('<span class="legal-field highlight"');
+    });
+
+    it('should convert experimental logic tokens into highlight spans', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: {},
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '<lm-logic-start data-field="logic.branch.1" data-logic-helper="if" data-logic-result="true"></lm-logic-start>' +
+        'Winner branch text' +
+        '<lm-logic-end></lm-logic-end>';
+
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      expect(output).toContain('data-field="logic.branch.1"');
+      expect(output).toContain('data-logic-helper="if"');
+      expect(output).toContain('data-logic-result="true"');
+      expect(output).toContain('Winner branch text');
+      expect(output).toContain('<span class="legal-field highlight"');
+    });
+
+    it('should keep logic token conversion when resolving {{...}} in the same html node', async () => {
+      const processor = unified()
+        .use(remarkTemplateFields, {
+          metadata: { name: 'Acme Corp' },
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const tree = {
+        type: 'root',
+        children: [
+          {
+            type: 'html',
+            value:
+              '<lm-logic-start data-field="logic.branch.7" data-logic-helper="if" data-logic-result="true"></lm-logic-start>\n' +
+              'Winner {{name}}\n' +
+              '<lm-logic-end></lm-logic-end>',
+          },
+        ],
+      } as any;
+
+      await processor.run(tree);
+      const output = String(processor.stringify(tree));
+
+      expect(output).toContain('data-field="logic.branch.7"');
+      expect(output).toContain('data-logic-helper="if"');
+      expect(output).toContain('data-logic-result="true"');
+      expect(output).toContain('data-field="name"');
+      expect(output).toContain('Acme Corp');
+      expect(output).not.toContain('{{name}}');
+      expect(output).not.toContain('<lm-logic');
+    });
+
+    it('should preserve newline before next lll heading when converting logic tokens to spans', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: {},
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '<lm-logic-start data-field="logic.branch.3" data-logic-helper="if" data-logic-result="true"></lm-logic-start>\n' +
+        'This is the first service.\n' +
+        '<lm-logic-end></lm-logic-end>\n' +
+        'lll. 2nd Service Engagement';
+
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      expect(output).toMatch(/This is the first service\.\s*<\/span>\nlll\. 2nd Service Engagement/);
+      expect(output).not.toContain('</span>lll. 2nd Service Engagement');
+      expect(output).not.toContain('<lm-logic');
+    });
+
+    it('should preserve heading/list markdown markers when converting logic tokens to spans', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: {},
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '## <lm-logic-start data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true"></lm-logic-start>Customer Loyalty<lm-logic-end></lm-logic-end>\n\n' +
+        '- <lm-logic-start data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true"></lm-logic-start>Member Points Earned: 112<lm-logic-end></lm-logic-end>\n' +
+        '- <lm-logic-start data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true"></lm-logic-start>Current Balance: 1523<lm-logic-end></lm-logic-end>';
+
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      expect(output).toContain('## <span class="legal-field highlight" data-field="logic.branch.9"');
+      expect(output).toMatch(/^[*-] <span class="legal-field highlight" data-field="logic\.branch\.9"/m);
+      expect(output).not.toContain('<span class="legal-field highlight" data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true">##');
+      expect(output).not.toContain('<span class="legal-field highlight" data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true">- ');
+      expect(output).not.toContain('<span class="legal-field highlight" data-field="logic.branch.9" data-logic-helper="if" data-logic-result="true">* ');
+      expect(output).not.toContain('<lm-logic');
+    });
+
+    it('should continue processing sibling text nodes after converting one text node to html', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { first: 'Alice', second: 'Agreement' },
+          enableFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const result = await processor.process('{{first}} **and** {{second}}');
+      const output = result.toString();
+
+      expect(output).toContain('data-field="first"');
+      expect(output).toContain('data-field="second"');
+      expect(output).toContain('Alice');
+      expect(output).toContain('Agreement');
+    });
+
+    it('should preserve inline tracking spans when serializing list items', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { item: 'Tracked item' },
+          enableFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const result = await processor.process('- {{item}}');
+      const output = result.toString();
+      expect(output).toMatch(/^[*-] <span class="legal-field imported-value"/m);
+      expect(output).toContain('Tracked item');
+    });
+
+    it('should skip HTML node that has field spans and NO unresolved patterns', async () => {
+      // Nodes that already have spans and no remaining {{...}} should not be
+      // double-processed (no double wrapping).
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { title: 'Test Agreement' },
+          enableFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      // A fully-resolved HTML node — no {{...}} remaining
+      const fullyResolved =
+        '<span class="legal-field imported-value" data-field="title">Test Agreement</span>';
+
+      const result = await processor.process(fullyResolved);
+      const output = result.toString();
+
+      // Should not add extra nested spans — the span count should stay the same
+      const spanCount = (output.match(/class="legal-field/g) ?? []).length;
+      expect(spanCount).toBe(1);
+    });
+
+    it('should not reprocess {{...}} inside existing legal-field spans in ast tracking mode', async () => {
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkTemplateFields, {
+          metadata: { empty_field: '', client_name: 'ACME Corp' },
+          enableFieldTracking: true,
+          astFieldTracking: true,
+        })
+        .use(remarkStringify);
+
+      const markdown =
+        '<span class="legal-field missing-value" data-field="empty_field">{{empty_field}}</span> and {{client_name}}';
+      const result = await processor.process(markdown);
+      const output = result.toString();
+
+      // Keep original tracked span untouched (no nested span)
+      expect(output).toMatch(
+        /<span class="legal-field missing-value" data-field="empty_field">\{\{empty\\?_field\}\}<\/span>/
+      );
+      expect(output).not.toContain(
+        '<span class="legal-field missing-value" data-field="empty_field"><span class="legal-field missing-value"'
+      );
+
+      // Still resolve fields outside the existing tracked span
+      expect(output).toContain('data-field="client_name"');
+      expect(output).toContain('ACME Corp');
+      expect(output).not.toContain('and {{client_name}}');
     });
   });
 

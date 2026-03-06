@@ -26,9 +26,9 @@ default_penalties:
 
 ### Confidentiality
 
-{{#confidentiality}} All information exchanged between the parties shall remain
-strictly confidential and shall not be disclosed to third parties without prior
-written consent. {{/confidentiality}}
+{{#if confidentiality}} All information exchanged between the parties shall
+remain strictly confidential and shall not be disclosed to third parties without
+prior written consent. {{/if}}
 
 ### Termination
 
@@ -43,7 +43,7 @@ regard to conflict of law principles.
 ### Liability Cap
 
 The total liability of either party under this agreement shall not exceed
-**${{liability_cap | currency}}**.
+**${{formatCurrency liability_cap "USD"}}**.
 
 ### Payment Terms
 
@@ -52,32 +52,32 @@ specified.
 
 ### Warranty
 
-{{#warranty_period}} Provider warrants that services will be performed in a
+{{#if warranty_period}} Provider warrants that services will be performed in a
 professional manner for a period of **{{warranty_period}}** from completion.
-{{/warranty_period}}
+{{/if}}
 
 ### Dispute Resolution
 
-{{#dispute_resolution}} Any disputes arising under this agreement shall be
-resolved through **{{dispute_resolution}}**. {{/dispute_resolution}}
+{{#if dispute_resolution}} Any disputes arising under this agreement shall be
+resolved through **{{dispute_resolution}}**. {{/if}}
 
 ### Intellectual Property
 
 - **Ownership**: {{intellectual_property.ownership}}
 - **License**: {{intellectual_property.license}}
-- **Restrictions**: {{intellectual_property.restrictions | join: ", "}}
+- **Restrictions**: {{intellectual_property.restrictions}}
 
 ### Force Majeure
 
-{{#force_majeure}} Neither party shall be liable for delays or failures in
+{{#if force_majeure}} Neither party shall be liable for delays or failures in
 performance resulting from circumstances beyond their reasonable control.
-{{/force_majeure}}
+{{/if}}
 
 ### Severability
 
-{{#severability}} If any provision of this agreement is found to be
+{{#if severability}} If any provision of this agreement is found to be
 unenforceable, the remaining provisions shall remain in full force and effect.
-{{/severability}}
+{{/if}}
 
 ### Amendments
 
@@ -92,9 +92,8 @@ All notices under this agreement shall be sent to:
 
 ### Default and Penalties
 
-{{#default_penalties}} In the event of late payment:
+{{#if default_penalties}} In the event of late payment:
 
-- Late fee: {{default_penalties.late_payment_fee | percent}} per month
+- Late fee: {{formatPercent default_penalties.late_payment_fee}} per month
 - Grace period: {{default_penalties.grace_period_days}} days
-- Compound interest: {{default_penalties.compound_interest}}
-  {{/default_penalties}}
+- Compound interest: {{default_penalties.compound_interest}} {{/if}}

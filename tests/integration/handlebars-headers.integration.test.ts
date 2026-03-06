@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Handlebars + Legal Headers Integration', () => {
   describe('Helpers in Header Text', () => {
@@ -122,7 +122,7 @@ isFinal: false
 level-one: "Article %n."
 level-two: "Section %n.%s"
 ---
-ll. {{isFinal ? "Final" : "Draft"}} Version
+ll. {{#if isFinal}}Final{{else}}Draft{{/if}} Version
 
 Content.`;
 

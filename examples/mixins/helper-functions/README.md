@@ -52,16 +52,16 @@ legal-md formatted-contract.md output.html
 4. **String Helpers**: Text manipulation and formatting (`titleCase`, `upper`,
    `lower`, `initials`, etc.)
 5. **Subexpressions**: Nested helper calls like
-   `{{formatDate (addYears today 2) "YYYY-MM-DD"}}`
+   `{{formatDate (addYears @today 2) "YYYY-MM-DD"}}`
 
 ## 📝 Syntax Examples
 
 ### Handlebars Syntax (Current - v3.5.0+)
 
 ```markdown
-**Date:** {{formatDate today "MMMM Do, YYYY"}} **Amount:**
+**Date:** {{formatDate @today "MMMM Do, YYYY"}} **Amount:**
 {{formatCurrency amount "USD"}} **Client:** {{titleCase client_name}} **Due
-Date:** {{formatDate (addDays today 30) "YYYY-MM-DD"}}
+Date:** {{formatDate (addDays @today 30) "YYYY-MM-DD"}}
 ```
 
 ### Legacy Syntax (Deprecated - Removed in v4.0.0)
@@ -74,7 +74,7 @@ Date:** {{formatDate(addDays(@today, 30), "YYYY-MM-DD")}}
 
 ## 💡 Learn more
 
-- [Handlebars Helpers Reference](../../../docs/handlebars-helpers-reference.md) -
+- [Helpers Reference](../../../docs/features/helpers-reference.md) -
   Complete reference with 30+ helpers
 - [Handlebars Migration Guide](../../../docs/handlebars-migration.md) -
   Migrating from legacy to Handlebars syntax

@@ -16,13 +16,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import {
-  buildProcessingContext,
-  generateAllFormats,
-} from '../../src/core/pipeline';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { buildProcessingContext, generateAllFormats } from '../../src/core/pipeline';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
+import { isPdfAvailable } from '../../src/extensions/generators';
 
-describe('3-Phase Pipeline Integration', () => {
+const pdfAvailable = await isPdfAvailable();
+const describePdf = pdfAvailable ? describe : describe.skip;
+
+describePdf('3-Phase Pipeline Integration', () => {
   let testDir: string;
 
   beforeAll(() => {
@@ -88,7 +89,7 @@ Final content.`;
 
     // PHASE 2: Process content ONCE with remark
     const startPhase2 = Date.now();
-    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+    const processedResult = await processLegalMarkdown(context.content, {
       ...context.options,
       additionalMetadata: context.metadata,
       noIndent: true,
@@ -159,21 +160,25 @@ l. First Article
 Content here.`;
 
     // PHASE 1
-    const context = await buildProcessingContext(simpleContent, {
-      html: true,
-    }, testDir);
+    const context = await buildProcessingContext(
+      simpleContent,
+      {
+        html: true,
+      },
+      testDir
+    );
 
     expect(context.metadata).toEqual({});
     expect(context.content).toContain('# Simple Document');
 
     // PHASE 2
-    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+    const processedResult = await processLegalMarkdown(context.content, {
       ...context.options,
       additionalMetadata: context.metadata,
     });
 
     // Without level-one metadata, should use undefined template
-    expect(processedResult.content).toContain('{{undefined-level-1}}');
+    expect(processedResult.content).toContain('1.');
     expect(processedResult.ast).toBeDefined();
 
     // PHASE 3
@@ -202,7 +207,7 @@ force_commands: '--pdf --html'
     expect(context.options.html).toBe(true);
 
     // PHASE 2
-    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+    const processedResult = await processLegalMarkdown(context.content, {
       ...context.options,
       additionalMetadata: context.metadata,
     });
@@ -235,15 +240,19 @@ Second party: {{party_b}}
 Amount: {{amount}}`;
 
     // PHASE 1: Enable highlight (should auto-enable field tracking)
-    const context = await buildProcessingContext(contentWithFields, {
-      highlight: true,
-      basePath: testDir,
-    }, testDir);
+    const context = await buildProcessingContext(
+      contentWithFields,
+      {
+        highlight: true,
+        basePath: testDir,
+      },
+      testDir
+    );
 
     expect(context.options.enableFieldTracking).toBe(true);
 
     // PHASE 2
-    const processedResult = await processLegalMarkdownWithRemark(context.content, {
+    const processedResult = await processLegalMarkdown(context.content, {
       ...context.options,
       additionalMetadata: context.metadata,
     });

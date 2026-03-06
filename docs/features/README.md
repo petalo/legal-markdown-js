@@ -15,6 +15,7 @@ This section contains detailed documentation for all Legal Markdown JS features.
   and boolean operators
 - [Partial Imports](partial-imports.md) - File inclusion and frontmatter merging
 - [Variables & Mixins](mixins-variables.md) - Template variable substitution
+- [Date Processing](date-processing.md) - `@today` token and date formatting
 - [Signature Lines](signature-lines.md) - Automatic detection and CSS styling of
   signature lines
 - [Force Commands](force-commands.md) - Self-configuring documents

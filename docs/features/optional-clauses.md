@@ -451,7 +451,7 @@ legal-md document.md --debug
 ### With Helper Functions
 
 ```markdown
-{{#if showDate}} Effective date: {{formatDate(@today, "MMMM Do, YYYY")}} {{/if}}
+{{#if showDate}} Effective date: {{formatDate @today "MMMM Do, YYYY"}} {{/if}}
 ```
 
 ### With Header System

@@ -33,6 +33,7 @@
 
 // Re-export branded content format types
 export type { MarkdownString, HtmlString, PlainTextString } from './types/content-formats';
+export type { ProcessingContext, ProcessingOptions } from './types/pipeline';
 export {
   isHtml,
   isMarkdown,
@@ -130,7 +131,7 @@ export interface LegalMarkdownOptions {
   noIndent?: boolean;
 
   /**
-   * Enable field tracking for highlighting in HTML/PDF output
+   * Enable field tracking for highlighting in HTML/PDF/DOCX output
    * @deprecated Use enableFieldTrackingInMarkdown for markdown output
    */
   enableFieldTracking?: boolean;
@@ -141,6 +142,16 @@ export interface LegalMarkdownOptions {
    * When true, adds HTML spans for field tracking in markdown
    */
   enableFieldTrackingInMarkdown?: boolean;
+
+  /**
+   * Use AST-first field tracking pipeline between Phase 2 and Phase 3
+   */
+  astFieldTracking?: boolean;
+
+  /**
+   * Highlight winner branch content for conditional blocks
+   */
+  logicBranchHighlighting?: boolean;
 
   /**
    * Disable automatic frontmatter merging from imported files
@@ -169,11 +180,29 @@ export interface LegalMarkdownOptions {
   logImportOperations?: boolean;
 
   /**
-   * Internal flag to indicate HTML/PDF generation context
+   * Internal flag to indicate HTML/PDF/DOCX generation context
    * @internal
    */
   _htmlGeneration?: boolean;
+
+  /**
+   * Generate DOCX output
+   */
+  docx?: boolean;
 }
+
+/**
+ * Represents any value that can appear in a YAML front matter document.
+ * Covers all types js-yaml can produce: scalars, dates, arrays, and nested objects.
+ */
+export type YamlValue =
+  | string
+  | number
+  | boolean
+  | null
+  | Date
+  | YamlValue[]
+  | { [key: string]: YamlValue };
 
 /**
  * Structure for YAML Front Matter parsing result
@@ -189,7 +218,7 @@ export interface YamlParsingResult {
   /**
    * Parsed metadata from YAML front matter
    */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 }
 
 /**
@@ -244,7 +273,7 @@ export interface HeaderOptions {
   noIndent?: boolean;
 
   /**
-   * Enable field tracking for header styling in HTML/PDF output
+   * Enable field tracking for header styling in HTML/PDF/DOCX output
    * @deprecated Use enableFieldTrackingInMarkdown for markdown output
    */
   enableFieldTracking?: boolean;
@@ -255,6 +284,16 @@ export interface HeaderOptions {
    * When true, adds HTML spans for field tracking in markdown
    */
   enableFieldTrackingInMarkdown?: boolean;
+
+  /**
+   * Use AST-first field tracking pipeline between Phase 2 and Phase 3
+   */
+  astFieldTracking?: boolean;
+
+  /**
+   * Highlight winner branch content for conditional blocks
+   */
+  logicBranchHighlighting?: boolean;
 }
 
 /**
@@ -277,7 +316,7 @@ export interface ImportProcessingResult {
    * Merged metadata from all imported files
    * Available when frontmatter merging is enabled
    */
-  mergedMetadata?: Record<string, any>;
+  mergedMetadata?: Record<string, YamlValue>;
 }
 
 /**

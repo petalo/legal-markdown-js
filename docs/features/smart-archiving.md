@@ -41,7 +41,7 @@ The smart archiving system makes decisions based on content comparison:
 ```typescript
 // Smart archiving workflow
 const originalContent = readFile('document.md');
-const processedContent = processLegalMarkdown(originalContent);
+const processedContent = await processLegalMarkdown(originalContent);
 
 if (contentsAreIdentical(originalContent, processedContent)) {
   // Archive only the original file

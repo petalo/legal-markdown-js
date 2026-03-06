@@ -20,14 +20,14 @@ the single truth.
 
 ## Build Targets
 
-| Target           | Output                                                   | Source Scripts                                                               |
-| ---------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| ESM bundle       | `dist/index.js` + `dist/index.d.ts`                      | `npm run build:esm` (tsc + `tsc-alias` + import fixer)                       |
-| CJS bundle       | `dist/index.cjs`                                         | `npm run build:cjs` (tsc + `tsc-alias`)                                      |
-| CLI entry points | `dist/cli/index.js`, `dist/cli/interactive/index.js`     | Built as part of TypeScript compilation, then patched by `build:restore-cli` |
-| Web SPA          | `dist/web/`                                              | `npm run build:vite` + `npm run build:web`                                   |
-| UMD bundle       | `dist/legal-markdown.umd.min.js` + copies in `dist/web/` | `npm run build:umd` + `npm run build:copy-umd`                               |
-| Assets           | `dist/styles/`, `dist/assets/`, `dist/examples/`         | `build:styles`, `build:assets`, `build:examples`                             |
+| Target           | Output                                               | Source Scripts                                                                     |
+| ---------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| ESM bundle       | `dist/index.js` + `dist/index.d.ts`                  | `npm run build:esm` (tsc + `tsc-alias` + import fixer)                             |
+| CJS bundle       | `dist/index.cjs`                                     | `npm run build:cjs` (tsc + `tsc-alias`)                                            |
+| CLI entry points | `dist/cli/index.js`, `dist/cli/interactive/index.js` | Built as part of TypeScript compilation, then patched by `build:restore-cli`       |
+| Browser bundle   | `dist/legal-markdown-browser.js` (ES module)         | `npx vite build` (vite.config.ts library mode)                                     |
+| Web SPA          | `dist/web/`                                          | `npm run build:web` (copies bundle + `vite build --config src/web/vite.config.ts`) |
+| Assets           | `dist/styles/`, `dist/assets/`, `dist/examples/`     | `build:styles`, `build:assets`, `build:examples`                                   |
 
 The combined `npm run build` task runs all subtasks sequentially (TypeScript,
 styles, assets, examples, Vite web build, pipeline to prepare SPA, webpack UMD,
@@ -41,11 +41,14 @@ copy UMD artefacts).
   `scripts/fix-build-extensions.js` adjust emitted file extensions for Node
   compatibility; `scripts/build-packages.cjs` prepares secondary package outputs
   when needed
-- **Vite** - handles the SPA build (`npm run build:vite`)
-- **Webpack** - produces the minified UMD bundle consumed by the browser API
+- **Vite (library mode)** - `vite.config.ts` builds the browser ES module
+  (`dist/legal-markdown-browser.js`)
+- **Vite (SPA mode)** - `src/web/vite.config.ts` builds the React playground to
+  `dist/web/`
+- **`scripts/copy-web-bundle.js`** - BFS-traverses the browser bundle's import
+  graph and copies all chunks to `src/web/public/` before dev or SPA builds
 - **Utility scripts** - `scripts/build-paths.js` discovers assets/styles,
-  `scripts/build-web.js` assembles SPA artefacts, `scripts/web-serve.cjs` serves
-  the playground locally
+  `scripts/web-serve.cjs` serves the legacy playground locally
 
 ## Publishing Workflow
 
@@ -76,17 +79,21 @@ CLI binaries are exposed through `bin` entries pointing at the compiled outputs.
 
 ## Browser Distribution
 
-- UMD bundle located at `dist/legal-markdown.umd.min.js` and referenced via
-  `package.json` `jsdelivr`/`unpkg` fields
-- Web SPA artefacts (Vite + supplemental scripts) live under `dist/web/`
-- Browser consumers import from the UMD bundle or leverage the Vite-generated
-  assets for self-hosted interfaces
+- Browser ES module at `dist/legal-markdown-browser.js` (Vite library mode);
+  loaded via `<script type="module">` or served as a static asset
+- Web SPA artefacts live under `dist/web/` after `npm run build:web`
+- Browser consumers import from `dist/legal-markdown-browser.js`; the web
+  playground loads it via `src/web/public/` (populated by `copy-web-bundle.js`)
 
 ## Local Development Tips
 
 - `npm run build:watch` - incremental TypeScript compilation during development
 - `npm run dev` - run the CLI in watch mode with hot reload
-- `npm run web` - serve the playground/web UI with live reload
+- `npm run dev:web` - copy browser bundle + start Vite dev server for the React
+  playground (hot-reloads playground components; pipeline changes require
+  re-running `npx vite build` first)
+- `npm run dev:web:server` - same as `dev:web` but on port 5174 (no auto-open)
+- `npm run dev:web` / `npm run web:serve` - run or serve the web playground
 - `npm run test:watch` / `npm run test:unit` - iterate on tests with Vitest
 
 The build system intentionally keeps cross-platform compatibility while reusing

@@ -62,16 +62,15 @@ compliance:
 
 ### Company Profile
 
-**{{client.name}}** is a {{client.size | downcase}} {{client.type | downcase}}
-established in {{client.established}}, operating in the
-{{client.industry | downcase}} industry.
+**{{client.name}}** is a {{lower client.size}} {{lower client.type}} established
+in {{client.established}}, operating in the {{lower client.industry}} industry.
 
 - **Type**: {{client.type}}
 - **Industry**: {{client.industry}}
 - **Jurisdiction**: {{client.jurisdiction}}
 - **Registration**: {{client.registration_number}}
-- **Employees**: {{business_details.employees | number_with_delimiter}}
-- **Annual Revenue**: ${{business_details.annual_revenue | currency}}
+- **Employees**: {{formatInteger business_details.employees}}
+- **Annual Revenue**: ${{formatCurrency business_details.annual_revenue "USD"}}
 
 ### Primary Contacts
 
@@ -115,25 +114,26 @@ established in {{client.established}}, operating in the
 
 #### Security
 
-{{#security_clearance}} **Security Clearance**: {{security_clearance | upcase}}
-for all personnel working on this engagement. {{/security_clearance}}
+{{#if security_clearance}} **Security Clearance**: {{upper security_clearance}}
+for all personnel working on this engagement. {{/if}}
 
 #### Insurance Requirements
 
 The following minimum insurance coverage is required:
 
 - **General Liability**:
-  ${{insurance_requirements.general_liability | currency}}
+  ${{formatCurrency insurance_requirements.general_liability "USD"}}
 - **Professional Liability**:
-  ${{insurance_requirements.professional_liability | currency}}
-- **Cyber Liability**: ${{insurance_requirements.cyber_liability | currency}}
+  ${{formatCurrency insurance_requirements.professional_liability "USD"}}
+- **Cyber Liability**:
+  ${{formatCurrency insurance_requirements.cyber_liability "USD"}}
 
 #### Compliance Standards
 
 {{client.name}} requires compliance with the following standards:
-{{#compliance.standards}}
+{{#each compliance.standards}}
 
-- {{.}} {{/compliance.standards}}
+- {{this}} {{/each}}
 
 **Audit Requirements**: {{compliance.audits}} **Certifications Required**:
 {{compliance.certifications_required}}

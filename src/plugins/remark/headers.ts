@@ -35,6 +35,19 @@
 import { Plugin } from 'unified';
 import { Root, Heading } from 'mdast';
 import { visit } from 'unist-util-visit';
+import { DEFAULT_HEADER_PATTERNS } from '../../constants/headers';
+import type { YamlValue } from '../../types';
+
+/** Extended heading node with remark-specific data properties */
+interface LegalHeading extends Heading {
+  data?: {
+    isLegalHeader?: boolean;
+    hProperties?: { className?: string | string[] };
+    [key: string]: unknown;
+  };
+  __needsHtmlReplacement?: boolean;
+  __htmlContent?: string;
+}
 
 /**
  * Options for the remark headers plugin
@@ -42,7 +55,7 @@ import { visit } from 'unist-util-visit';
  */
 export interface RemarkHeadersOptions {
   /** Document metadata containing header configurations */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Disable automatic numbering reset */
   noReset?: boolean;
@@ -115,7 +128,7 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
     // Count legal headings first
     let headingCount = 0;
     visit(tree, 'heading', (node: Heading) => {
-      if ((node as any).data?.isLegalHeader) {
+      if ((node as LegalHeading).data?.isLegalHeader) {
         headingCount++;
       }
     });
@@ -125,8 +138,8 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
     }
 
     // Process only headings that come from legal header syntax
-    visit(tree, 'heading', (node: Heading, index, parent) => {
-      if ((node as any).data?.isLegalHeader) {
+    visit(tree, 'heading', (node: Heading, _index, _parent) => {
+      if ((node as LegalHeading).data?.isLegalHeader) {
         if (debug) {
           console.log(
             `[remarkHeaders] Processing legal heading at depth ${node.depth}:`,
@@ -139,7 +152,7 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
 
     // Second pass: Replace heading nodes marked for HTML replacement
     visit(tree, 'heading', (node: Heading, index, parent) => {
-      if ((node as any).__needsHtmlReplacement && parent && typeof index === 'number') {
+      if ((node as LegalHeading).__needsHtmlReplacement && parent && typeof index === 'number') {
         if (debug) {
           console.log('[remarkHeaders] Replacing heading with HTML node to preserve indentation');
         }
@@ -147,10 +160,10 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
         // Replace the heading node with an HTML node
         const htmlNode = {
           type: 'html',
-          value: (node as any).__htmlContent,
+          value: (node as LegalHeading).__htmlContent ?? '',
         };
 
-        parent.children[index] = htmlNode as any;
+        parent.children[index] = htmlNode as unknown as import('mdast').Content;
       }
     });
 
@@ -163,12 +176,13 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
 /**
  * Extract header configuration from document metadata
  */
-function extractHeaderConfig(metadata: Record<string, any>): HeaderConfig {
+function extractHeaderConfig(metadata: Record<string, YamlValue>): HeaderConfig {
   // Helper to get first defined value (including empty strings)
   const getFirstDefined = (...keys: string[]): string | null => {
     for (const key of keys) {
       if (key in metadata) {
-        return metadata[key];
+        const v = metadata[key];
+        return typeof v === 'string' ? v : null;
       }
     }
     return null;
@@ -256,7 +270,7 @@ function processHeader(
   }
 
   // Use type assertion for hProperties (not in base mdast types but supported by remark-html)
-  const nodeData = node.data as any;
+  const nodeData = (node as LegalHeading).data!;
   if (!nodeData.hProperties) {
     nodeData.hProperties = {};
   }
@@ -290,8 +304,8 @@ function processHeader(
     if (hasIndentation) {
       // We need to return this information to the main processor
       // to replace the heading node with an HTML node
-      (node as any).__needsHtmlReplacement = true;
-      (node as any).__htmlContent = `${'#'.repeat(level)} ${headerText}`;
+      (node as LegalHeading).__needsHtmlReplacement = true;
+      (node as LegalHeading).__htmlContent = `${'#'.repeat(level)} ${headerText}`;
     }
 
     updateHeaderNode(node, headerText);
@@ -341,9 +355,10 @@ function getHeaderFormat(level: number, config: HeaderConfig): string {
       format = null;
   }
 
-  // If no format is defined, return undefined template
+  // Fallback to shared default constant (aligned with Go/Ruby spec: '%n.' for all levels)
   if (format === null || format === undefined) {
-    return `{{undefined-level-${level}}}`;
+    const key = `level-${level}` as keyof typeof DEFAULT_HEADER_PATTERNS;
+    return DEFAULT_HEADER_PATTERNS[key] || '%n.';
   }
 
   return format;
@@ -559,7 +574,7 @@ function extractTextContent(node: Heading): string {
 /**
  * Check if header already has numbering
  */
-function hasExistingNumbering(text: string, format: string): boolean {
+function hasExistingNumbering(text: string, _format: string): boolean {
   // Check if text already starts with a numbering pattern
   // Common patterns: "Article 1.", "Section 2.", "(1)", "1.", "1.1", etc.
   const numberingPatterns = [
@@ -592,14 +607,14 @@ function applyNumberingFormat(
 
   // Handle %0Xn format (leading zero numbers for current level)
   const leadingZeroPattern = /%0(\d+)n/g;
-  result = result.replace(leadingZeroPattern, (match, digits) => {
+  result = result.replace(leadingZeroPattern, (_match, digits) => {
     return number.toString().padStart(parseInt(digits), '0');
   });
 
   // Handle leading zero formats for direct level references (%0Xl1, %0Xl2, etc.)
   for (let i = 1; i <= 9; i++) {
     const leadingZeroLevelPattern = new RegExp(`%0(\\d+)l${i}`, 'g');
-    result = result.replace(leadingZeroLevelPattern, (match, digits) => {
+    result = result.replace(leadingZeroLevelPattern, (_match, digits) => {
       const levelValue = getLevelValue(i, state);
       return levelValue.toString().padStart(parseInt(digits), '0');
     });
@@ -618,6 +633,21 @@ function applyNumberingFormat(
   result = result.replace(/%l7/g, state.levelSeven.toString());
   result = result.replace(/%l8/g, state.levelEight.toString());
   result = result.replace(/%l9/g, state.levelNine.toString());
+
+  // Relative parent references: %s = parent level, %t = grandparent, %f, %i
+  // Only substituted when the referenced ancestor level exists; left as-is otherwise.
+  if (format.includes('%s') && level > 1) {
+    result = result.replace(/%s/g, getLevelValue(level - 1, state).toString());
+  }
+  if (format.includes('%t') && level > 2) {
+    result = result.replace(/%t/g, getLevelValue(level - 2, state).toString());
+  }
+  if (format.includes('%f') && level > 3) {
+    result = result.replace(/%f/g, getLevelValue(level - 3, state).toString());
+  }
+  if (format.includes('%i') && level > 4) {
+    result = result.replace(/%i/g, getLevelValue(level - 4, state).toString());
+  }
 
   // Replace alphabetic variables
   // %A = uppercase letters (A, B, C, ...)
@@ -701,14 +731,6 @@ function toRomanNumeral(num: number): string {
 }
 
 /**
- * Get indentation for header level
- */
-function getIndentationForLevel(level: number): string {
-  // Each level adds 2 spaces of indentation
-  return '  '.repeat(Math.max(0, level - 1));
-}
-
-/**
  * Checks if text contains field tracking spans
  * @param text - The text to check
  * @returns True if text contains field tracking HTML spans
@@ -720,43 +742,6 @@ function containsFieldTrackingSpans(text: string): boolean {
     text.includes('<span class="missing-value') ||
     text.includes('<span class="highlight')
   );
-}
-
-/**
- * Update header node with new text content
- */
-/**
- * Preserve original formatting while adding numbering prefix
- * @param node - The heading node with original formatting
- * @param newText - The complete new text with numbering
- * @returns Array of children nodes or null if preservation not possible
- */
-function preserveFormattingInHeader(node: Heading, newText: string): any[] | null {
-  // Extract the original text content to find where the numbering ends
-  const originalText = extractTextContent(node);
-  if (!originalText) return null;
-
-  // Find the numbering part by comparing newText with originalText
-  const numberingIndex = newText.lastIndexOf(originalText);
-  if (numberingIndex === -1) return null;
-
-  const numberingPrefix = newText.substring(0, numberingIndex);
-
-  // Create new children array: numbering prefix + original formatted children
-  const newChildren: any[] = [];
-
-  // Add numbering prefix as text node
-  if (numberingPrefix) {
-    newChildren.push({
-      type: 'text',
-      value: numberingPrefix,
-    });
-  }
-
-  // Add all original children (which contain the formatting)
-  newChildren.push(...node.children);
-
-  return newChildren;
 }
 
 function updateHeaderNode(node: Heading, newText: string) {
@@ -772,7 +757,7 @@ function updateHeaderNode(node: Heading, newText: string) {
       {
         type: 'html',
         value: newText,
-      } as any,
+      } as unknown as import('mdast').PhrasingContent,
     ];
   } else {
     // For headers, always use plain text to ensure clean, consistent formatting
@@ -786,4 +771,14 @@ function updateHeaderNode(node: Heading, newText: string) {
   }
 }
 
-export default remarkHeaders;
+// Exported for testing - not part of public API
+export {
+  extractHeaderConfig as _extractHeaderConfig,
+  processHeader as _processHeader,
+  getHeaderFormat as _getHeaderFormat,
+  updateHeaderState as _updateHeaderState,
+  formatHeaderText as _formatHeaderText,
+  extractTextContent as _extractTextContent,
+  applyNumberingFormat as _applyNumberingFormat,
+  updateHeaderNode as _updateHeaderNode,
+};

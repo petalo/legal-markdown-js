@@ -31,10 +31,6 @@
       "@plugins": ["src/plugins/index.ts"]
     }
   },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "coverage", "examples"]
+  "exclude": ["node_modules", "dist", "coverage", "examples", "src/web"]
 }

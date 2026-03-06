@@ -25,6 +25,19 @@
  * ```
  */
 
+import { getConfig } from '../../config';
+
+function parseDate(input: string | Date): Date {
+  if (input instanceof Date) return new Date(input);
+
+  const str = String(input);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T00:00:00`);
+  }
+
+  return new Date(str);
+}
+
 /**
  * Adds a specified number of years to a date
  *
@@ -55,7 +68,7 @@ export function addYears(date: Date | string, years: number): Date {
   if (!date) {
     throw new Error('Date is required for addYears');
   }
-  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  const d = parseDate(date);
 
   if (isNaN(d.getTime())) {
     throw new Error(`Invalid date: ${date}`);
@@ -92,7 +105,7 @@ export function addDays(date: Date | string, days: number): Date {
   if (!date) {
     throw new Error('Date is required for addDays');
   }
-  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  const d = parseDate(date);
 
   if (isNaN(d.getTime())) {
     throw new Error(`Invalid date: ${date}`);
@@ -131,13 +144,19 @@ export function addMonths(date: Date | string, months: number): Date {
   if (!date) {
     throw new Error('Date is required for addMonths');
   }
-  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  const d = parseDate(date);
 
   if (isNaN(d.getTime())) {
     throw new Error(`Invalid date: ${date}`);
   }
 
-  d.setMonth(d.getMonth() + months);
+  const targetMonth = d.getMonth() + months;
+  d.setMonth(targetMonth);
+
+  if (d.getMonth() !== ((targetMonth % 12) + 12) % 12) {
+    d.setDate(0);
+  }
+
   return d;
 }
 
@@ -181,8 +200,12 @@ export function addMonths(date: Date | string, months: number): Date {
  * formatDate(date, 'MMMM Do, YYYY');     // "July 16th, 2025"
  * ```
  */
-export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+export function formatDate(
+  date: Date | string,
+  format: string = 'YYYY-MM-DD',
+  locale?: string
+): string {
+  const d = parseDate(date);
 
   if (isNaN(d.getTime())) {
     throw new Error(`Invalid date: ${date}`);
@@ -192,37 +215,11 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
   const month = d.getMonth();
   const day = d.getDate();
   const dayOfWeek = d.getDay();
+  const lang = locale || getConfig().processing.locale || 'en';
 
   // Month names
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  const monthNamesShort = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const monthNames = getMonthNames(lang);
+  const monthNamesShort = getMonthShortNames(lang);
 
   const monthNamesSpanish = [
     'enero',
@@ -310,6 +307,56 @@ function addOrdinalSuffix(num: number): string {
   // Handle regular cases: 1st, 2nd, 3rd, 4th, etc.
   const lastDigit = value % 10;
   return num + (suffix[lastDigit] || suffix[0]);
+}
+
+const ENGLISH_MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const ENGLISH_MONTH_NAMES_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+function getMonthNames(locale: string): string[] {
+  try {
+    return Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2025, i, 1))
+    );
+  } catch {
+    return ENGLISH_MONTH_NAMES;
+  }
+}
+
+function getMonthShortNames(locale: string): string[] {
+  try {
+    return Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(2025, i, 1))
+    );
+  } catch {
+    return ENGLISH_MONTH_NAMES_SHORT;
+  }
 }
 
 /**

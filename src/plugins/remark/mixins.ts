@@ -37,6 +37,7 @@ import { Root, Paragraph, Text } from 'mdast';
 import { visit } from 'unist-util-visit';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { YamlValue } from '../../types';
 
 /**
  * Options for the remark mixins plugin
@@ -44,7 +45,7 @@ import * as path from 'path';
  */
 export interface RemarkMixinsOptions {
   /** Document metadata for variable substitution */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Base path for resolving mixin files */
   basePath?: string;
@@ -67,7 +68,7 @@ interface MixinDirective {
   name: string;
 
   /** Parameters passed to the mixin */
-  parameters?: Record<string, any>;
+  parameters?: Record<string, YamlValue>;
 
   /** Start and end positions in the text */
   start: number;
@@ -91,7 +92,7 @@ interface MixinContext {
   basePath: string;
 
   /** Global metadata */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Debug mode flag */
   debug: boolean;
@@ -201,7 +202,7 @@ function extractMixinDirectives(text: string): MixinDirective[] {
     const [fullMatch, mixinName, paramString] = match;
 
     // Parse parameters if present
-    let parameters: Record<string, any> = {};
+    let parameters: Record<string, YamlValue> = {};
     if (paramString) {
       try {
         parameters = parseParameters(paramString);
@@ -225,8 +226,8 @@ function extractMixinDirectives(text: string): MixinDirective[] {
 /**
  * Parse parameter string into object
  */
-function parseParameters(paramString: string): Record<string, any> {
-  const parameters: Record<string, any> = {};
+function parseParameters(paramString: string): Record<string, YamlValue> {
+  const parameters: Record<string, YamlValue> = {};
 
   // Simple parameter parsing: key: value, key: value
   const paramRegex = /([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*([^,]+)/g;
@@ -243,7 +244,7 @@ function parseParameters(paramString: string): Record<string, any> {
 /**
  * Parse a parameter value (string, number, boolean)
  */
-function parseParameterValue(value: string): any {
+function parseParameterValue(value: string): YamlValue {
   // Remove quotes for strings
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
@@ -346,7 +347,7 @@ function loadMixinContent(mixinName: string, context: MixinContext): string | nu
  */
 function processTemplateFields(
   content: string,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean
 ): string {
   // Simple template field processing: {{field}}
@@ -374,9 +375,17 @@ function processTemplateFields(
 /**
  * Get nested value from object using dot notation
  */
-function getNestedValue(obj: any, path: string): any {
-  return path.split('.').reduce((current, key) => {
-    return current && current[key] !== undefined ? current[key] : undefined;
+function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue | undefined {
+  return path.split('.').reduce<YamlValue | undefined>((current, key) => {
+    if (
+      current !== null &&
+      current !== undefined &&
+      typeof current === 'object' &&
+      !Array.isArray(current)
+    ) {
+      return (current as Record<string, YamlValue>)[key];
+    }
+    return undefined;
   }, obj);
 }
 
@@ -406,4 +415,13 @@ function processNestedMixins(content: string, context: MixinContext): string {
   return processedContent;
 }
 
-export default remarkMixins;
+// Exported for testing - not part of public API
+export {
+  processTextNode as _processTextNode,
+  extractMixinDirectives as _extractMixinDirectives,
+  parseParameters as _parseParameters,
+  parseParameterValue as _parseParameterValue,
+  processMixinDirective as _processMixinDirective,
+  loadMixinContent as _loadMixinContent,
+  processTemplateFields as _processTemplateFields,
+};

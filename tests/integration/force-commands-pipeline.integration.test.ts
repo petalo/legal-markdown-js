@@ -11,13 +11,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { buildProcessingContext, processLegalMarkdownWithRemark, generateAllFormats } from '../../src/core/pipeline';
+import { buildProcessingContext, processLegalMarkdown, generateAllFormats } from '../../src/core/pipeline';
 import * as HtmlGeneratorModule from '../../src/extensions/generators/html-generator';
 import * as PdfGeneratorModule from '../../src/extensions/generators/pdf-generator';
 import * as path from 'path';
 import * as fs from 'fs';
 
 describe('Force-Commands with 3-Phase Pipeline', () => {
+  // PDF+HTML generation in this suite can be slow when many files run in parallel.
+  // Keep a higher per-test timeout to reduce flaky failures under CI/pre-commit load.
+  const LONG_TIMEOUT = process.env.CI ? 90_000 : 45_000;
   const outputDir = path.join(__dirname, '../output/force-commands-pipeline');
 
   beforeEach(async () => {
@@ -53,7 +56,7 @@ This is {{field1}}.`;
       expect(context.options.highlight).toBe(true);
 
       // Phase 2: Process
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: metadata,
       });
@@ -75,7 +78,7 @@ This is {{field1}}.`;
       expect(result.results.html?.highlight).toBeDefined();
       expect(result.results.pdf?.normal).toBeDefined();
       expect(result.results.pdf?.highlight).toBeDefined();
-    });
+    }, LONG_TIMEOUT);
 
     it('should apply force-commands pdf/html options in Phase 3', async () => {
       const content = `---
@@ -94,7 +97,7 @@ force_commands: >
       expect(context.options.html).toBe(true);
 
       // Phase 2
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       // Phase 3 - Must use context.options, not original empty options
       const result = await generateAllFormats(processedResult, {
@@ -108,7 +111,7 @@ force_commands: >
       // ASSERTION: Both formats should be generated
       expect(result.results.pdf?.normal).toBeDefined();
       expect(result.results.html?.normal).toBeDefined();
-    });
+    }, LONG_TIMEOUT);
 
     it('should prioritize force-commands over CLI options', async () => {
       const content = `---
@@ -126,7 +129,7 @@ force_commands: >
 
       // ASSERTION: Force-commands should override CLI
       expect(context.options.highlight).toBe(true);
-    });
+    }, LONG_TIMEOUT);
   });
 
   describe('PDF HIGHLIGHT with Force-Commands', () => {
@@ -155,7 +158,7 @@ Missing: {{field2}}`;
       expect(context.options.pdf).toBe(true);
 
       // Phase 2
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata,
       });
@@ -187,7 +190,7 @@ Missing: {{field2}}`;
 
       generateHtmlSpy.mockRestore();
       generatePdfFromHtmlSpy.mockRestore();
-    });
+    }, LONG_TIMEOUT);
 
     it('should include highlightCssPath in HTML generation for PDF', async () => {
       const content = `---
@@ -203,7 +206,7 @@ force_commands: >
 
       // Full pipeline
       const context = await buildProcessingContext(content, {}, __dirname);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       await generateAllFormats(processedResult, {
         outputDir,
@@ -226,7 +229,7 @@ force_commands: >
       });
 
       generateHtmlSpy.mockRestore();
-    });
+    }, LONG_TIMEOUT);
   });
 
   describe('No Reprocessing with Force-Commands', () => {
@@ -242,14 +245,14 @@ force_commands: >
 
       const processLegalMarkdownSpy = vi.spyOn(
         await import('../../src/extensions/remark/legal-markdown-processor'),
-        'processLegalMarkdownWithRemark'
+        'processLegalMarkdown'
       );
 
       // Phase 1
       const context = await buildProcessingContext(content, {}, __dirname);
 
       // Phase 2 - Called ONCE
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: { field: 'value' },
       });
@@ -268,7 +271,7 @@ force_commands: >
       expect(processLegalMarkdownSpy).toHaveBeenCalledTimes(1);
 
       processLegalMarkdownSpy.mockRestore();
-    });
+    }, LONG_TIMEOUT);
 
     it('should generate HTML from same markdown source for both PDF variants', async () => {
       const content = `---
@@ -281,7 +284,7 @@ force_commands: >
       const generateHtmlSpy = vi.spyOn(HtmlGeneratorModule.HtmlGenerator.prototype, 'generateHtml');
 
       const context = await buildProcessingContext(content, {}, __dirname);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       await generateAllFormats(processedResult, {
         outputDir,
@@ -335,7 +338,7 @@ force_commands: >
       const highlightCssPath = path.join(__dirname, '../../src/styles/highlight.css');
 
       const context = await buildProcessingContext(content, {}, __dirname);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       await generateAllFormats(processedResult, {
         outputDir,
@@ -375,7 +378,7 @@ force_commands: ""
 # Test`;
 
       const context = await buildProcessingContext(content, {}, __dirname);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       const result = await generateAllFormats(processedResult, {
         outputDir,
@@ -397,7 +400,7 @@ title: "Test"
 # Test`;
 
       const context = await buildProcessingContext(content, { pdf: true }, __dirname);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, context.options);
+      const processedResult = await processLegalMarkdown(context.content, context.options);
 
       const result = await generateAllFormats(processedResult, {
         outputDir,

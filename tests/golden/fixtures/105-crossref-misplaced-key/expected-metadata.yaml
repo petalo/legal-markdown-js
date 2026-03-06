@@ -1,0 +1,7 @@
+_cross_references:
+  - key: sec-correct
+    sectionNumber: Article 1.
+    sectionText: Article 1. Correct Definition
+_field_mappings: {}
+level-one: Article %n.
+level-two: Section %n.

@@ -267,3 +267,66 @@ export class ProcessingError extends LegalMarkdownError {
     this.name = 'ProcessingError';
   }
 }
+
+/**
+ * Error thrown when pipeline orchestration fails.
+ *
+ * @example
+ * ```typescript
+ * throw new PipelineError('Plugin ordering failed', { stage: 'remark' });
+ * ```
+ */
+export class PipelineError extends LegalMarkdownError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, 'PIPELINE_ERROR', context);
+    this.name = 'PipelineError';
+  }
+}
+
+/**
+ * Error thrown when parser-level processing fails.
+ *
+ * @example
+ * ```typescript
+ * throw new ParseError('Unable to parse markdown heading token', { line: 12 });
+ * ```
+ */
+export class ParseError extends LegalMarkdownError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, 'PARSE_ERROR', context);
+    this.name = 'ParseError';
+  }
+}
+
+/**
+ * Error thrown when requested PDF generation dependencies are unavailable.
+ *
+ * @example
+ * ```typescript
+ * throw new PdfDependencyError();
+ * ```
+ */
+export class PdfDependencyError extends PipelineError {
+  constructor(
+    message = 'PDF generation requires the optional Puppeteer dependency. Install with: npm install puppeteer',
+    context?: Record<string, unknown>
+  ) {
+    super(message, context);
+    this.name = 'PdfDependencyError';
+  }
+}
+
+/**
+ * Error thrown when import resolution or import graph processing fails.
+ *
+ * @example
+ * ```typescript
+ * throw new ImportError('Circular import detected', { chain: ['a.md', 'b.md', 'a.md'] });
+ * ```
+ */
+export class ImportError extends LegalMarkdownError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, 'IMPORT_ERROR', context);
+    this.name = 'ImportError';
+  }
+}

@@ -41,6 +41,18 @@ Date:** {{missing_field}}
 <span class="missing-value">{{missing_field}}</span>
 ```
 
+### Logic branch annotations
+
+With `enableFieldTracking=true`, `astFieldTracking=true`, and
+`logicBranchHighlighting=true`, winner branches from `#if` and
+`#unless` are annotated with:
+
+- `data-field="logic.branch.N"`
+- `data-logic-helper="if|unless"`
+- `data-logic-result="true|false"`
+
+This annotation does not alter functional output text.
+
 ## Highlight Colors
 
 ### Color Coding System
@@ -157,7 +169,7 @@ Override default styles for your brand:
 import { processLegalMarkdown } from 'legal-markdown-js';
 
 // For HTML/PDF output (automatic field tracking)
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   enableFieldTracking: true, // Always enabled for HTML/PDF
   outputFormat: 'html',
 });
@@ -236,33 +248,28 @@ legal-md document.md --enable-field-tracking
 ### Programmatic Configuration
 
 ```typescript
-// HTML/PDF with highlighting
-const result = processLegalMarkdown(content, {
-  outputFormat: 'html',
+import { processLegalMarkdown, generateHtml } from 'legal-markdown-js';
+
+// Markdown output with tracking
+const markdownResult = await processLegalMarkdown(content, {
   enableFieldTracking: true,
-  highlightFields: true,
 });
 
-// Markdown with field tracking (legacy mode)
-const result = processLegalMarkdown(content, {
-  outputFormat: 'markdown',
-  enableFieldTrackingInMarkdown: true,
+// HTML output with highlighting CSS
+const html = await generateHtml(content, {
+  includeHighlighting: true,
 });
 
-// Custom highlighting options
-const result = processLegalMarkdown(content, {
-  outputFormat: 'html',
+// AST-first tracking route
+const trackedResult = await processLegalMarkdown(content, {
   enableFieldTracking: true,
-  highlightingOptions: {
-    showTooltips: true,
-    includeFieldNames: true,
-    customClasses: {
-      filled: 'my-filled-class',
-      missing: 'my-missing-class',
-      logic: 'my-logic-class',
-    },
-  },
+  astFieldTracking: true,
+  logicBranchHighlighting: true,
 });
+
+console.log(markdownResult.content);
+console.log(html);
+console.log(trackedResult.content);
 ```
 
 ### Field Tracking Behavior
@@ -270,8 +277,8 @@ const result = processLegalMarkdown(content, {
 | Output Format | Default Behavior                    | Enable Flag               |
 | ------------- | ----------------------------------- | ------------------------- |
 | **Markdown**  | Clean output (no tracking)          | `--enable-field-tracking` |
-| **HTML**      | Tracking enabled with `--highlight` | `--highlight`             |
-| **PDF**       | Tracking enabled with `--highlight` | `--highlight`             |
+| **HTML**      | Tracking always enabled             | Optional `--highlight` CSS |
+| **PDF**       | Tracking always enabled             | Optional `--highlight` CSS |
 
 ## Examples
 
@@ -312,7 +319,7 @@ warranty_included: true
 ### Invoice Template
 
 ```typescript
-const invoiceResult = processLegalMarkdown(invoiceTemplate, {
+const invoiceResult = await processLegalMarkdown(invoiceTemplate, {
   outputFormat: 'html',
   enableFieldTracking: true,
   data: {
@@ -334,7 +341,7 @@ if (report.empty > 0) {
 
 ```typescript
 function validateDocument(content, requiredFields) {
-  const result = processLegalMarkdown(content, {
+  const result = await processLegalMarkdown(content, {
     enableFieldTracking: true,
     outputFormat: 'html',
   });
@@ -364,7 +371,7 @@ const validatedResult = validateDocument(contractTemplate, requiredFields);
 
 ```typescript
 // Step 1: Generate with highlighting
-const draftResult = processLegalMarkdown(template, {
+const draftResult = await processLegalMarkdown(template, {
   outputFormat: 'html',
   enableFieldTracking: true,
   data: partialData,
@@ -381,7 +388,7 @@ const missingFields = report.fields
 
 // Step 4: Generate final version
 const finalData = { ...partialData, ...additionalData };
-const finalResult = processLegalMarkdown(template, {
+const finalResult = await processLegalMarkdown(template, {
   outputFormat: 'pdf',
   enableFieldTracking: false, // Clean final output
   data: finalData,
@@ -444,7 +451,7 @@ const finalResult = processLegalMarkdown(template, {
 ```typescript
 // QA checking function
 function performQACheck(template, data) {
-  const result = processLegalMarkdown(template, {
+  const result = await processLegalMarkdown(template, {
     enableFieldTracking: true,
     outputFormat: 'html',
     data,
@@ -485,7 +492,7 @@ function performQACheck(template, data) {
 describe('Field Highlighting', () => {
   test('highlights missing fields', () => {
     const template = '**Client:** {{client_name}}';
-    const result = processLegalMarkdown(template, {
+    const result = await processLegalMarkdown(template, {
       enableFieldTracking: true,
       outputFormat: 'html',
       data: {}, // No data provided
@@ -497,7 +504,7 @@ describe('Field Highlighting', () => {
 
   test('highlights filled fields', () => {
     const template = '**Client:** {{client_name}}';
-    const result = processLegalMarkdown(template, {
+    const result = await processLegalMarkdown(template, {
       enableFieldTracking: true,
       outputFormat: 'html',
       data: { client_name: 'Acme Corp' },
@@ -517,7 +524,7 @@ function checkDocumentQuality(templatePath, dataPath) {
   const template = fs.readFileSync(templatePath, 'utf8');
   const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
-  const result = processLegalMarkdown(template, {
+  const result = await processLegalMarkdown(template, {
     enableFieldTracking: true,
     outputFormat: 'html',
     data,
@@ -562,7 +569,7 @@ function checkDocumentQuality(templatePath, dataPath) {
 
 ```typescript
 // Enable debug information
-const result = processLegalMarkdown(content, {
+const result = await processLegalMarkdown(content, {
   enableFieldTracking: true,
   debug: true,
   outputFormat: 'html',

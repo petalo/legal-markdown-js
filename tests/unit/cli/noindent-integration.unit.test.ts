@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../../src/extensions/remark/legal-markdown-processor';
 
 describe('noIndent Integration with CLI Scenarios', () => {
   const testInput = `l. Main Section
@@ -23,7 +23,7 @@ ll. Subsection Two`;
   describe('CLI Markdown Output Scenario', () => {
     it('should use default behavior (noIndent: false) for markdown files', async () => {
       // Simulates: legal2md input.lmd output.md
-      const result = await processLegalMarkdownWithRemark(testInput, {
+      const result = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         // noIndent: undefined (defaults to false)
@@ -42,7 +42,7 @@ ll. Subsection Two`;
 
     it('should explicitly support noIndent: false for markdown output', async () => {
       // Explicit configuration for markdown output
-      const result = await processLegalMarkdownWithRemark(testInput, {
+      const result = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: false,
@@ -62,7 +62,7 @@ ll. Subsection Two`;
   describe('CLI HTML/PDF Output Scenario', () => {
     it('should use noIndent: true for HTML output', async () => {
       // Simulates: legal2md input.lmd --format html
-      const result = await processLegalMarkdownWithRemark(testInput, {
+      const result = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: true, // Critical for HTML processing
@@ -84,7 +84,7 @@ ll. Subsection Two`;
 
     it('should use noIndent: true for PDF output', async () => {
       // Simulates: legal2md input.lmd --format pdf
-      const result = await processLegalMarkdownWithRemark(testInput, {
+      const result = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: true, // Critical for PDF processing
@@ -107,7 +107,7 @@ ll. Subsection Two`;
       // Web playground shows both markdown and HTML preview
       
       // Markdown preview (with indentation)
-      const markdownPreview = await processLegalMarkdownWithRemark(testInput, {
+      const markdownPreview = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: false,
@@ -119,7 +119,7 @@ ll. Subsection Two`;
       });
 
       // HTML preview (without indentation)
-      const htmlPreview = await processLegalMarkdownWithRemark(testInput, {
+      const htmlPreview = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: true,
@@ -140,7 +140,7 @@ ll. Subsection Two`;
   describe('Unit Test Scenarios', () => {
     it('should use noIndent: true for clean test comparisons', async () => {
       // Unit tests should use noIndent: true for cleaner assertions
-      const result = await processLegalMarkdownWithRemark(testInput, {
+      const result = await processLegalMarkdown(testInput, {
         enableFieldTracking: false,
         debug: false,
         noIndent: true,
@@ -169,7 +169,7 @@ Client: {{client_name}}
 Amount: {{amount}}`;
 
       // Test with field tracking and no indentation (HTML scenario)
-      const result = await processLegalMarkdownWithRemark(inputWithFields, {
+      const result = await processLegalMarkdown(inputWithFields, {
         enableFieldTracking: true,
         debug: false,
         noIndent: true,
@@ -197,7 +197,7 @@ Amount: {{amount}}`;
 
 ll. Contract Details`;
 
-      const result = await processLegalMarkdownWithRemark(inputWithFields, {
+      const result = await processLegalMarkdown(inputWithFields, {
         enableFieldTracking: true,
         debug: false,
         noIndent: false,

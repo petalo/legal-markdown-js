@@ -1,380 +1,345 @@
 # Legal Markdown JS
 
-> A Node.js and TypeScript implementation of the original Ruby
-> [LegalMarkdown](https://github.com/compleatang/legal-markdown) project. Legal
-> Markdown JS processes legal markdown documents with advanced features and
-> PDF/HTML exports.
+TypeScript/Node.js implementation of
+[LegalMarkdown](https://github.com/compleatang/legal-markdown)
 
-Process markdown with YAML front matter, conditional clauses
-`[text]{condition}`, cross-references `|reference|`, mixins `{{variable}}`,
-imports `@import`, and generate professional PDFs ready to be shared.
+**Check out the [playground](https://petalo.github.io/legal-markdown-js/) for an
+interactive experience!**
 
-![Legal Markdown JS Example](docs/legal-markdown-js-example.png)
+## What It Does
 
-## Table of Contents
+Legal Markdown JS processes legal markdown documents and can generate:
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Key Features](#key-features)
-- [Documentation](#documentation)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
+- Processed markdown
+- HTML
+- PDF
+- DOCX
 
-## Installation
+Core syntax supported:
+
+- Variables/helpers (`{{field}}`, helpers, loops)
+- Legal headers (`l.`, `ll.`, `lll.`, ...)
+- Optional clauses (`[text]{condition}`)
+- Cross references between sections (`|reference|`)
+- Imports (`@import path/to/file.md`)
+
+![Legal Markdown JS Playground](docs/playground-master-services-agreement.png)
+
+## Quick Start
+
+### 1. Install
 
 ```bash
 npm install legal-markdown-js
 ```
 
-After installation, you'll have access to these commands:
-
-- **`legal-md`** - Standard command-line interface with options and flags
-- **`legal-md-ui`** - Interactive CLI with guided prompts and smart defaults
-- **`legal-md-setup`** - Configuration setup script for easy environment setup
-- **`legal-md-playground`** - Local playground server for testing and
-  exploration
-
-## 🚀 Try it Online
-
-**[Live Playground](https://petalo.github.io/legal-markdown-js/)** - Try Legal
-Markdown JS directly in your browser with live examples and real-time
-processing.
-
-### Local Playground
-
-You can also run the playground locally for offline use or testing:
+### 2. Quick example
 
 ```bash
-# Start local playground server (when installed globally)
-legal-md-playground
-
-# Or with custom port
-legal-md-playground --port=3000
-
-# Or if installed locally in a project
-npm run web:serve
+npx legal-md contract.md output.md
 ```
 
-The playground provides the same interactive experience as the online version,
-including real-time processing, syntax highlighting, and example templates.
+<table>
+<tr>
+<th>Input (<code>contract.md</code>)</th>
+<th>Output markdown</th>
+<th>Output HTML</th>
+</tr>
+<tr>
+<td>
+<pre><code class="language-md">---
+client: ACME Corp
+amount: 5000
+include_warranty: true
+---
 
-## Quick Start
+l. Parties
 
-### Initial Setup (Optional)
+Agreement with **{{client}}**.
 
-For the best experience, especially if you're new to Legal Markdown JS, run the
-setup script to configure your environment:
+l. Services
+
+ll. Payment
+
+Total due: ${{amount}}.
+
+[ll. Warranty
+
+Full warranty included.]{include_warranty} </code></pre>
+
+</td>
+<td>
+<pre><code class="language-md">
+&#35; 1. Parties
+Agreement with **ACME Corp**.
+&#35; 2. Services
+&#35;&#35; 2.1. Payment Total due: $5000.
+&#35;&#35; 2.2. Warranty Full warranty included. </code></pre>
+
+</td>
+<td>
+<pre><code class="language-html">&lt;h1&gt;1. Parties&lt;/h1&gt;
+&lt;p&gt;Agreement with
+  &lt;strong&gt;ACME Corp&lt;/strong&gt;.
+&lt;/p&gt;
+&lt;h1&gt;2. Services&lt;/h1&gt;
+&lt;h2&gt;2.1. Payment&lt;/h2&gt;
+&lt;p&gt;Total due: $5000.&lt;/p&gt;
+&lt;h2&gt;2.2. Warranty&lt;/h2&gt;
+&lt;p&gt;Full warranty included.&lt;/p&gt;
+</code></pre>
+</td>
+</tr>
+</table>
+
+### 3. Generate PDF
 
 ```bash
-# Configure paths and directories (when installed globally)
-legal-md-setup
-
-# Or if installed locally in a project
-npm run setup-config
+npx legal-md input.md output.pdf --pdf
 ```
 
-This creates a personalized configuration file that the tool will automatically
-find and use.
+## Installation Options
 
-### Command Line Usage
-
-#### Standard CLI
+### npm package (recommended)
 
 ```bash
-# Basic document processing
+npm install legal-markdown-js
+```
+
+Available binaries:
+
+- `legal-md`
+- `legal-md-ui`
+- `legal-md-playground`
+
+### macOS standalone binary
+
+```bash
+brew tap petalo/legal-markdown
+brew install legal-md
+```
+
+Or install script:
+
+```bash
+curl -fsSL https://github.com/petalo/legal-markdown-js/releases/latest/download/install.sh | sh
+```
+
+## CLI Usage
+
+### Basic processing
+
+```bash
+# Input -> output markdown
 legal-md input.md output.md
 
-# Generate PDF with highlighting
-legal-md document.md --pdf --highlight
+# Input -> stdout markdown
+legal-md input.md
 
-# Process with custom CSS and archive source
-legal-md document.md --html --css styles.css --archive-source
-
-# Archive to custom directory
-legal-md document.md --archive-source ./processed
+# Read from stdin
+cat input.md | legal-md --stdin --stdout
 ```
 
-#### Interactive CLI
-
-For a guided, user-friendly experience, use the interactive CLI:
+### Output formats
 
 ```bash
-# Launch interactive mode
+# HTML
+legal-md input.md --html
+
+# PDF
+legal-md input.md --pdf
+
+# DOCX
+legal-md input.md --docx
+
+# Highlighted review variants
+legal-md input.md --pdf --highlight
+legal-md input.md --docx --highlight
+```
+
+### PDF connector selection
+
+```bash
+# Auto (default)
+legal-md input.md --pdf
+
+# Force specific backend
+legal-md input.md --pdf --pdf-connector puppeteer
+legal-md input.md --pdf --pdf-connector system-chrome
+legal-md input.md --pdf --pdf-connector weasyprint
+```
+
+`auto` resolution order is:
+
+1. `puppeteer`
+2. `system-chrome`
+3. `weasyprint`
+
+### Interactive mode
+
+```bash
 legal-md-ui
 ```
 
-The interactive CLI provides:
+### Local playground
 
-- **📁 Smart file discovery**: Automatically scans your input directory for
-  supported files (`.md`, `.markdown`, `.rst`, `.tex`, `.latex`, `.txt`)
-- **🎯 Multiple output formats**: Select any combination of PDF, HTML, Markdown,
-  and metadata export
-- **⚙️ Conditional options**: Processing options adapt based on your selected
-  formats
-- **🎨 CSS selection**: Choose from available stylesheets or proceed without
-  custom styling
-- **📦 Source archiving**: Configure automatic archiving of source files after
-  successful processing
-- **📋 Configuration summary**: Review all settings before processing
-- **✅ Clear results**: See exactly which files were generated
+```bash
+legal-md-playground
+# or
+npm run web:serve
+```
 
-### Programmatic Usage
+## Programmatic API
 
-```typescript
+```ts
 import {
   processLegalMarkdown,
-  processLegalMarkdownAsync,
+  generateHtml,
+  generatePdf,
+  generatePdfVersions,
+  generateDocx,
+  generateDocxVersions,
 } from 'legal-markdown-js';
 
-// Synchronous processing
-const result = processLegalMarkdown(content, {
-  basePath: './documents',
-  exportMetadata: true,
-  exportFormat: 'json',
-});
+const source = `---\ntitle: Service Agreement\nclient: ACME\n---\n\nl. Parties\n\nAgreement with {{client}}.`;
 
-// Asynchronous processing with remark pipeline (recommended)
-const asyncResult = await processLegalMarkdownAsync(content, {
-  basePath: './documents',
-  exportMetadata: true,
-  exportFormat: 'json',
+const processed = await processLegalMarkdown(source, {
   enableFieldTracking: true,
 });
 
-console.log(asyncResult.content);
-console.log(asyncResult.metadata);
-console.log(asyncResult.fieldReport); // Enhanced field tracking
+const html = await generateHtml(source, {
+  title: 'Service Agreement',
+  includeHighlighting: true,
+});
+
+const pdf = await generatePdf(source, './output/agreement.pdf', {
+  format: 'A4',
+  includeHighlighting: false,
+  pdfConnector: 'auto', // auto | puppeteer | system-chrome | weasyprint
+});
+
+const { normal, highlighted } = await generatePdfVersions(
+  source,
+  './output/agreement.pdf',
+  {
+    format: 'Letter',
+    pdfConnector: 'weasyprint',
+  }
+);
+
+const docx = await generateDocx(source, './output/agreement.docx', {
+  title: 'Service Agreement',
+});
+
+const docxPair = await generateDocxVersions(source, './output/agreement.docx');
+
+console.log(
+  processed.content,
+  html.length,
+  pdf.length,
+  normal.length,
+  highlighted.length
+);
+console.log(docx.length, docxPair.normal.length, docxPair.highlighted.length);
 ```
 
-## Key Features
+## PDF Backends
 
-### Core Compatibility
+Supported backends:
 
-All original Legal Markdown features are fully implemented:
+- `puppeteer`
+- `system-chrome`
+- `weasyprint`
 
-- **File Formats**: Markdown, ASCII, reStructuredText, LaTeX
-- **YAML Front Matter**: Complete parsing with all standard fields
-- **Headers & Numbering**: Full hierarchical numbering system (`l.`, `ll.`,
-  `lll.`)
-- **Optional Clauses**: Boolean, equality, and logical operations
-  (`[text]{condition}`)
-- **Cross-References**: Internal section references using (`|reference|`) syntax
-- **Partial Imports**: File inclusion with path resolution (`@import`)
-- **Metadata Export**: YAML and JSON export with custom paths
+Installation examples:
 
-### Node.js Enhancements
+```bash
+# Puppeteer browser install (if needed)
+npx puppeteer browsers install chrome
 
-Additional features available only in the Node.js version:
+# macOS
+brew install weasyprint
 
-- **Interactive CLI**: User-friendly guided interface with smart file discovery
-  and configuration management
-- **Mixins System**: Template substitution and helpers with `{{variable}}`
-  syntax
-- **AST-Based Processing**: Modern AST-based mixin processing to prevent text
-  contamination (v2.4.0+)
-- **Pipeline Architecture**: Configurable step-based processing pipeline with
-  dependency management and performance monitoring (v2.4.0+)
-- **PDF Generation**: Professional PDF output with styling and field
-  highlighting
-- **HTML Generation**: Custom HTML output with CSS support
-- **Template Loops**: Array iteration with `{{#items}}...{{/items}}` syntax
-- **Helper Functions**: Date, number, and string formatting helpers
-- **Force Commands**: Document-driven configuration with embedded CLI options
-- **Batch Processing**: Multi-file processing with concurrency control
-- **Field Tracking**: Enhanced field tracking with proper categorization for
-  document review
-- **Source File Archiving**: Automatic archiving of source files after
-  successful processing with conflict resolution
-
-## Architecture & Performance
-
-### Modern Pipeline System (v2.4.0+)
-
-Legal Markdown JS features a completely rewritten processing pipeline that
-provides:
-
-- **Step-Based Architecture**: Configurable processing steps with dependency
-  management
-- **AST-Based Processing**: Modern AST parsing for mixin processing to prevent
-  text contamination
-- **Performance Monitoring**: Built-in step profiling and performance metrics
-- **Error Recovery**: Graceful error handling and comprehensive logging
-- **Field Tracking**: Enhanced field tracking with proper status categorization
-
-#### Processing Order
-
-The new pipeline ensures correct processing order to prevent conflicts:
-
-1. **YAML Front Matter** - Parse document metadata
-2. **Import Processing** - Handle file imports and inclusions
-3. **Optional Clauses** - Process conditional text blocks
-4. **Cross-References** - Resolve internal document references
-5. **Template Loops** - Expand array iterations first
-6. **AST Mixin Processing** - Process variables and helpers (avoids loop
-   conflicts)
-7. **Header Processing** - Apply numbering and formatting
-8. **Field Tracking** - Apply highlighting and generate reports
-
-#### API Usage
-
-```typescript
-// Use the remark-based async API for best performance
-const result = await processLegalMarkdownAsync(content, options);
-
-// Comprehensive error handling and validation
-// Full remark-based processing for all documents
+# Ubuntu/Debian
+sudo apt-get install -y weasyprint
 ```
 
-## Documentation
+## Configuration
 
-### User Documentation
+Configuration loading supports:
 
-- **[Getting Started](docs/getting_started.md)** - Installation and setup guide
-- **[CLI Reference](docs/cli_reference.md)** - Complete command-line interface
-  documentation
-- **[Features Guide](docs/features/README.md)** - All features, helpers, and
-  advanced usage
-- **[Handlebars Helpers](docs/helpers/README.md)** - Complete reference of all
-  available Handlebars helpers (30+ helpers)
-- **[Handlebars Migration Guide](docs/handlebars-migration.md)** - ⚠️ Migrating
-  from legacy syntax to Handlebars (legacy syntax deprecated)
-- **[Headers & Numbering](docs/features/headers-numbering.md)** - Hierarchical
-  numbering system guide
-- **[CSS Classes Reference](docs/CSS-CLASSES.md)** - CSS classes for styling and
-  document review
-- **[Features Overview](docs/FEATURES.md)** - Complete feature implementation
-  status and testing coverage
+- `package.json` (`legalmd` key)
+- `.legalmdrc`
+- `.legalmdrc.yaml`
+- `.legalmdrc.json`
+- `legalmd.config.js`
+- `legalmd.config.ts`
 
-### Developer Documentation
+Useful env overrides:
 
-- **[Architecture](docs/architecture.md)** - Complete system architecture and
-  design patterns
-- **[Contributing Guide](docs/development/contributing.md)** - Development
-  workflow, standards, and contribution guidelines
-- **[Helper Functions](docs/helpers/README.md)** - Complete reference for
-  template helpers and functions
-- **[Development Guide](docs/development/development-guide.md)** - Complete
-  developer setup and workflow
-- **[Release Process](docs/development/release-process.md)** - Versioning and
-  release procedures
-- **[Scripts Reference](docs/development/scripts-reference.md)** - Available npm
-  scripts and commands
-- **[API Documentation](docs/api/)** - Auto-generated TypeScript API docs
+- `LEGAL_MD_PDF_CONNECTOR`
+- `LEGAL_MD_VALIDATION_MODE`
+- `LOG_LEVEL`
+- `DEBUG`
+- `IMAGES_DIR`
+- `STYLES_DIR`
+- `DEFAULT_INPUT_DIR`
+- `DEFAULT_OUTPUT_DIR`
+- `ARCHIVE_DIR`
+
+Example:
+
+```bash
+LEGAL_MD_PDF_CONNECTOR=weasyprint legal-md input.md --pdf
+```
 
 ## Testing
 
 ```bash
-# Run all tests
+# Full local suite
 npm test
 
-# Run specific test types
+# CI-like run (includes PDF backend precheck)
+npm run test:ci
+
+# Backend availability check only
+npm run test:pdf:backends
+
+# Targeted suites
 npm run test:unit
 npm run test:integration
 npm run test:e2e
-
-# Run with coverage
-npm run test:coverage
+npm run test:e2e:cli
 ```
 
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test complete workflows and feature combinations
-- **E2E Tests**: Test CLI interface and full application behavior
-- **Path Validation Tests**: Test environment configuration and error handling
+`test:e2e` and `test:ci` require both PDF paths to be available:
 
-## Configuration
+- Puppeteer launchable Chrome/Chromium
+- WeasyPrint executable
 
-Legal Markdown JS supports environment-based configuration for customizing file
-paths and directories.
+## Documentation
 
-### Quick Setup (Recommended)
-
-For easy configuration setup, especially for non-technical users:
-
-```bash
-# Run the setup script (when installed globally)
-legal-md-setup
-
-# Or if installed locally in a project
-npm run setup-config
-```
-
-This script will:
-
-- Create a configuration directory at `~/.config/legal-markdown-js/`
-- Copy the configuration template with helpful comments
-- Provide clear instructions on how to customize your paths
-- Show you exactly where to edit your settings
-
-### Manual Configuration
-
-If you prefer manual setup, create a `.env` file in one of these locations (in
-order of precedence):
-
-1. **Current working directory**: `./.env`
-2. **Your home directory**: `~/.env`
-3. **Config directory**: `~/.config/legal-markdown-js/.env`
-
-```bash
-# Copy the example configuration
-cp .env.example .env
-
-# Edit the configuration
-nano .env
-```
-
-### Path Configuration Examples
-
-```bash
-# Custom asset organization
-IMAGES_DIR=assets/media
-STYLES_DIR=assets/css
-
-# Separate project structure
-DEFAULT_INPUT_DIR=documents/source
-DEFAULT_OUTPUT_DIR=documents/generated
-ARCHIVE_DIR=documents/archive
-
-# Absolute paths (useful for CI/CD)
-IMAGES_DIR=/var/lib/legal-markdown/images
-DEFAULT_OUTPUT_DIR=/var/lib/legal-markdown/output
-ARCHIVE_DIR=/var/lib/legal-markdown/archive
-```
-
-### Using Custom Paths in Code
-
-```typescript
-import { PATHS, RESOLVED_PATHS } from 'legal-markdown-js';
-
-// Access configured paths
-console.log(PATHS.STYLES_DIR); // Relative path from .env
-console.log(RESOLVED_PATHS.STYLES_DIR); // Absolute resolved path
-```
+- [Getting Started](docs/getting_started.md)
+- [CLI Reference](docs/cli_reference.md)
+- [Features Overview](docs/features/README.md)
+- [Output Guides](docs/output/README.md)
+- [PDF Generation](docs/output/pdf-generation.md)
+- [DOCX Generation](docs/output/docx-generation.md)
+- [Configuration](docs/advanced/configuration.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development Guide](docs/development/development-guide.md)
+- [Contributing](docs/development/contributing.md)
 
 ## Contributing
 
-We welcome contributions! Please see our
-[Contributing Guide](docs/development/contributing.md) for:
-
-- Development setup and workflow
-- Coding standards and best practices
-- Testing requirements
-- Pull request process
-
-### Quick Start for Contributors
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow the development guidelines
-4. Run the test suite (`npm test`)
-5. Submit a Pull Request
+See [docs/development/contributing.md](docs/development/contributing.md).
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-- Original [LegalMarkdown](https://github.com/compleatang/legal-markdown)
-  project by Casey Kuhlman
-- The legal tech community for inspiration and feedback
+Based on the original
+[LegalMarkdown](https://github.com/compleatang/legal-markdown) project by Casey
+Kuhlman.

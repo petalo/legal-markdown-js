@@ -57,7 +57,7 @@ businessHours:
 
 <ul class="items-list">
 {{#items}}
-- {{name}} {{onSale ? "<span class="on-sale" >(ON SALE!)</span>" : ""}} - ${{price}}
+<li>{{name}} {{#if onSale}}<span class="on-sale">(ON SALE!)</span>{{/if}} - ${{price}}</li>
 {{/items}}
 </ul>
 
@@ -72,9 +72,13 @@ businessHours:
 ## Customer Loyalty
 
 <ul>
-{{isMember ? "**Member Status:** Active" : "Not a member yet"}}
-{{isMember ? "**Points Earned:** " + pointsEarned : ""}}
-{{isMember ? "**Total Points:** " + pointsBalance : ""}}
+{{#if isMember}}
+**Member Status:** Active
+**Points Earned:** {{pointsEarned}}
+**Total Points:** {{pointsBalance}}
+{{else}}
+Not a member yet
+{{/if}}
 </ul>
 
 ## Receipt Information
@@ -85,7 +89,7 @@ businessHours:
 
 <ul>
 {{#businessHours}}
-- <span>{{day}}:</span> <span>{{hours}}</span>
+<li><span>{{day}}:</span> <span>{{hours}}</span></li>
 {{/businessHours}}
 </ul>
 

@@ -36,15 +36,17 @@
  * For complete documentation on all available variables and formatting options,
  * see: docs/headers_numbering.md
  */
+// Default header level patterns aligned with Go/Ruby spec: all levels use '%n.' as fallback.
+// Users specify 'Article %n.', 'Section %n.', etc. in their document YAML frontmatter.
 export const DEFAULT_HEADER_PATTERNS = {
-  'level-1': 'Article %n.',
-  'level-2': 'Section %n.',
+  'level-1': '%n.',
+  'level-2': '%n.',
   'level-3': '%n.',
-  'level-4': '(%n)',
-  'level-5': '(%A)',
-  'level-6': '(%a)',
-  'level-7': '(%R)',
-  'level-8': '(%r)',
+  'level-4': '%n.',
+  'level-5': '%n.',
+  'level-6': '%n.',
+  'level-7': '%n.',
+  'level-8': '%n.',
   'level-9': '%n.',
 } as const;
 
@@ -60,17 +62,3 @@ export const DEFAULT_PROPERTIES = {
   'level-style': '',
 } as const;
 
-/**
- * Type definition for header patterns
- */
-export type HeaderPatterns = typeof DEFAULT_HEADER_PATTERNS;
-
-/**
- * Type definition for header pattern keys
- */
-export type HeaderPatternKey = keyof HeaderPatterns;
-
-/**
- * Type definition for properties configuration
- */
-export type PropertiesConfig = typeof DEFAULT_PROPERTIES;

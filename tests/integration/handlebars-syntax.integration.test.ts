@@ -5,11 +5,11 @@
  * across all features: helpers, loops, conditionals, subexpressions, etc.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { processLegalMarkdownWithRemark as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
+import { describe, it, expect } from 'vitest';
+import { processLegalMarkdown as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Handlebars Syntax Support - Integration Tests', () => {
-  describe('Syntax Detection', () => {
+  describe('Legacy Syntax Rejection', () => {
     it('should detect and process Handlebars helper syntax', async () => {
       const content = `---
 date: 2025-01-15
@@ -20,39 +20,27 @@ Formatted: {{formatDate date "YYYY-MM-DD"}}`;
       expect(result.content).toContain('2025-01-15');
     });
 
-    it('should detect legacy syntax and log warnings', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
+    it('should throw on legacy helper syntax', async () => {
       const content = `---
 date: 2025-01-15
 ---
 Legacy: {{formatDate(date, "YYYY-MM-DD")}}`;
 
-      await processLegalMarkdown(content);
-
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('DEPRECATED: Legacy Template Syntax')
+      await expect(processLegalMarkdown(content)).rejects.toThrow(
+        'Legacy template syntax detected'
       );
-
-      warnSpy.mockRestore();
     });
 
-    it('should error on mixed syntax', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+    it('should throw on mixed syntax when legacy pattern exists', async () => {
       const content = `---
 date: 2025-01-15
 ---
 {{formatDate date "YYYY-MM-DD"}}
 {{addYears(date, 2)}}`;
 
-      await processLegalMarkdown(content);
-
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Mixed template syntax')
+      await expect(processLegalMarkdown(content)).rejects.toThrow(
+        'Legacy template syntax detected'
       );
-
-      errorSpy.mockRestore();
     });
   });
 

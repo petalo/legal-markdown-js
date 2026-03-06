@@ -35,6 +35,7 @@ CLI-specific flags (`pdf`, `html`, `highlight`, `css`, etc.).
 
 ## Pipeline Types
 
+Canonical pipeline type definitions live in **`src/types/pipeline.ts`**.
 Pipeline modules introduce additional structures:
 
 - `ProcessingContext` - returned by `buildProcessingContext`, contains

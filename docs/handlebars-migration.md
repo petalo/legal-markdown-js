@@ -2,9 +2,12 @@
 
 ## Overview
 
-Legal Markdown now supports **Handlebars template syntax** as the standard,
-while maintaining backward compatibility with the legacy custom syntax. This
-guide will help you migrate your templates to the modern Handlebars standard.
+Legal Markdown now supports **Handlebars template syntax** as the standard.
+Legacy custom syntax is no longer supported in v4+. This guide will help you
+migrate older templates to the modern Handlebars standard.
+
+> **As of v4, legacy syntax is no longer supported. Use Handlebars syntax
+> exclusively.**
 
 ## Why Migrate?
 
@@ -15,7 +18,7 @@ guide will help you migrate your templates to the modern Handlebars standard.
 - ✅ **Bug Fixes**: Nested conditionals, loop context, and subexpressions work
   correctly
 - ✅ **Better Ecosystem**: VS Code extensions, syntax highlighting, and linters
-- ✅ **Future-Proof**: Legacy syntax will be removed in v4.0.0
+- ✅ **Future-Proof**: Handlebars is the only supported syntax in v4.0.0+
 - ✅ **More Features**: Subexpressions, parent context access (`{{../parent}}`),
   and more
 
@@ -174,8 +177,8 @@ startDate: @today
 
 ### Step 1: Identify Legacy Syntax
 
-When you process a document with legacy syntax, you'll see detailed migration
-hints:
+When you process a document with legacy syntax, you'll get a `ProcessingError`
+that includes migration instructions:
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
@@ -199,7 +202,8 @@ Found 3 legacy syntax pattern(s) that should be migrated to Handlebars:
 
 ### Step 2: Update Templates
 
-Use the suggestions from the migration hints to update your templates:
+Use the suggestions from the `ProcessingError` migration instructions to update
+your templates:
 
 **Before**:
 
@@ -242,7 +246,7 @@ Total: { { formatCurrency total "USD" } }
 
 Run your document through legal-markdown and verify:
 
-- ✅ No deprecation warnings
+- ✅ No `ProcessingError` for legacy syntax
 - ✅ Output is correct
 - ✅ All fields are properly substituted
 
@@ -466,9 +470,9 @@ This will automatically convert legacy syntax to Handlebars.
 
 ## Timeline
 
-- **v3.5.0** (Current): Dual syntax support with deprecation warnings
+- **v3.5.0**: Dual syntax support with deprecation warnings
 - **v3.x.x**: Migration tools and utilities
-- **v4.0.0**: Legacy syntax removed (Handlebars only)
+- **v4.0.0+** (Current): Legacy syntax removed (Handlebars only)
 
 ---
 
@@ -476,13 +480,13 @@ This will automatically convert legacy syntax to Handlebars.
 
 ### Q: Will my existing templates break?
 
-**A**: No! Legacy syntax continues to work with deprecation warnings. You have
-until v4.0.0 to migrate.
+**A**: Legacy syntax now throws a `ProcessingError` in v4+. Existing templates
+using legacy syntax must be migrated to Handlebars syntax.
 
 ### Q: Can I mix both syntaxes?
 
-**A**: No. If you mix syntaxes, you'll get an error and the document will be
-processed with legacy mode. Use one syntax consistently.
+**A**: No. If you mix syntaxes, you'll get a `ProcessingError`. Legacy mode is
+no longer available.
 
 ### Q: How do I disable deprecation warnings during migration?
 
@@ -553,5 +557,5 @@ templates. Some advanced features may not be available.
 
 ---
 
-**Remember**: Migrate at your own pace, but don't delay too long - legacy syntax
-will be removed in v4.0.0!
+**Remember**: As of v4.0.0+, legacy syntax has been removed. Use Handlebars
+syntax for all templates.

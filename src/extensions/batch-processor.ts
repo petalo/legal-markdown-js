@@ -259,6 +259,21 @@ export async function processBatch(
 }
 
 /**
+ * Public alias for batch Legal Markdown processing.
+ *
+ * @param options - Batch processing options including input/output paths and processing flags.
+ * @returns Promise resolving to batch processing statistics and file-level results.
+ * @throws {Error} When the input directory does not exist or cannot be read.
+ * @example
+ * ```typescript
+ * const result = await processLegalMarkdownBatch({
+ *   inputDir: './input',
+ *   outputDir: './output',
+ *   recursive: true,
+ * });
+ * ```
+ */
+/**
  * Finds all files to process in the given directory
  *
  * Recursively searches through directories to find files matching the specified
@@ -342,7 +357,7 @@ async function processFile(
     const content = await readFile(filePath, 'utf8');
 
     // Process the content
-    const processedResult = processLegalMarkdown(content, {
+    const processedResult = await processLegalMarkdown(content, {
       ...processingOptions,
       basePath: path.dirname(filePath),
     });
@@ -517,3 +532,6 @@ export function getProcessingStats(result: BatchProcessingResult): {
     filesPerSecond,
   };
 }
+
+// Exported for testing - not part of public API
+export { findFilesToProcess as _findFilesToProcess, processFile as _processFile };

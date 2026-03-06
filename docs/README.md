@@ -37,6 +37,7 @@ navigate through all available documentation.
 - [Output Overview](output/README.md) - Generation options
 - [PDF Generation](output/pdf-generation.md) - Creating PDF documents
 - [HTML Generation](output/html-generation.md) - Creating HTML documents
+- [DOCX Generation](output/docx-generation.md) - Creating Word documents
 - [Field Highlighting](output/field-highlighting.md) - Document review features
 - [CSS Classes](output/css-classes.md) - Styling reference
 
@@ -54,11 +55,15 @@ navigate through all available documentation.
 - [Processing Overview](processing/README.md) - How Legal Markdown works
 - [Remark Processing](processing/remark-processing.md) - Modern AST processing
 - [Field Tracking](processing/field-tracking.md) - Variable tracking details
+- [Phase2->Phase3 Refactor Plan](plans/2026-03-03-phase2-phase3-span-refactor-plan.md) -
+  AST-first tracking migration plan
+- [Phase2->Phase3 Validation Report](plans/2026-03-03-phase2-phase3-span-refactor-validation-report.md) -
+  Test matrix and outcome summary
 - [Performance](processing/performance.md) - Optimization guide
 
 ### 🏗️ Architecture
 
-- [System Architecture](architecture.md) - Technical design
+- [System Architecture](ARCHITECTURE.md) - Technical design
 - [Architecture Details](architecture/) - Component documentation
 
 ### 👩‍💻 Development
@@ -85,7 +90,7 @@ navigate through all available documentation.
 - **Template Authors**: See [Features](features/README.md) and
   [Helpers](helpers/README.md)
 - **Developers**: Check [Development](development/README.md) and
-  [Architecture](architecture.md)
+  [Architecture](ARCHITECTURE.md)
 - **System Admins**: Review [Configuration](advanced/configuration.md) and
   [CLI Reference](cli_reference.md)
 
@@ -93,6 +98,7 @@ navigate through all available documentation.
 
 - [Process a document](getting_started.md#basic-usage)
 - [Generate PDFs](output/pdf-generation.md)
+- [Generate DOCX](output/docx-generation.md)
 - [Use conditional content](features/optional-clauses.md)
 - [Format dates and numbers](helpers/README.md)
 - [Debug issues](reference/troubleshooting.md)

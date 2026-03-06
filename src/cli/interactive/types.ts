@@ -16,6 +16,8 @@ export interface OutputFormat {
   html: boolean;
   /** Generate PDF output with professional formatting */
   pdf: boolean;
+  /** Generate DOCX output with Word-compatible formatting */
+  docx: boolean;
   /** Generate processed Markdown output */
   markdown: boolean;
   /** Export document metadata as JSON/YAML */
@@ -28,12 +30,12 @@ export interface OutputFormat {
  * Defines additional processing features that can be enabled based on
  * the selected output formats and user preferences.
  */
-export interface ProcessingOptions {
+export interface CliProcessingOptions {
   /** Enable debug mode with verbose logging */
   debug: boolean;
   /** Include field tracking information in Markdown output */
   fieldTracking: boolean;
-  /** Enable field highlighting in HTML/PDF output */
+  /** Enable field highlighting in HTML/PDF/DOCX output */
   highlight: boolean;
 }
 
@@ -63,10 +65,10 @@ export interface InteractiveConfig {
   /** Selected output formats configuration */
   outputFormats: OutputFormat;
   /** Processing options configuration */
-  processingOptions: ProcessingOptions;
+  processingOptions: CliProcessingOptions;
   /** Archive options configuration */
   archiveOptions: ArchiveOptions;
-  /** Optional path to CSS file for styling HTML/PDF output */
+  /** Optional path to CSS file for styling HTML/PDF/DOCX output */
   cssFile?: string;
 }
 

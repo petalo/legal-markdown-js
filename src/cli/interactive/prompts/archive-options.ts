@@ -16,7 +16,7 @@ import chalk from 'chalk';
 /**
  * Result of the archive options prompt
  */
-export interface ArchivePromptResult {
+interface ArchivePromptResult {
   /** Whether archiving is enabled */
   enableArchiving: boolean;
   /** Custom archive directory (if provided) */
@@ -54,31 +54,26 @@ export async function promptArchiveOptions(): Promise<ArchivePromptResult> {
   let archiveDirectory: string | undefined;
 
   if (useCustomDirectory) {
-    let validDirectory = false;
-
     // Show where the custom directory will be created
     console.log(chalk.gray(`Custom directory will be created relative to: ${process.cwd()}`));
 
-    while (!validDirectory) {
-      const customDir = await input({
-        message: 'Enter custom archive directory:',
-        default: 'processed',
-        validate: (input: string) => {
-          if (!input.trim()) {
-            return 'Archive directory cannot be empty';
-          }
+    const customDir = await input({
+      message: 'Enter custom archive directory:',
+      default: 'processed',
+      validate: (input: string) => {
+        if (!input.trim()) {
+          return 'Archive directory cannot be empty';
+        }
 
-          if (!ArchiveManager.isValidArchiveDirectory(input.trim())) {
-            return 'Invalid directory path or cannot create directory';
-          }
+        if (!ArchiveManager.isValidArchiveDirectory(input.trim())) {
+          return 'Invalid directory path or cannot create directory';
+        }
 
-          return true;
-        },
-      });
+        return true;
+      },
+    });
 
-      archiveDirectory = customDir.trim();
-      validDirectory = true;
-    }
+    archiveDirectory = customDir.trim();
   }
 
   return {

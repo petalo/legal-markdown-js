@@ -5,15 +5,15 @@
  * using AST-based processing. It handles:
  * - Simple variables: {{client.name}}
  * - Nested object access: {{client.contact.email}}
- * - Helper functions (Handlebars syntax): {{formatDate date "YYYY-MM-DD"}}
- * - Helper functions (legacy syntax, deprecated): {{formatDate(@today, "YYYY-MM-DD")}}
+ * - Helper functions: {{formatDate date "YYYY-MM-DD"}}
+ * - Parenthesized helper syntax: {{formatDate(@today, "YYYY-MM-DD")}}
  * - Subexpressions: {{formatDate (addYears today 2) "YYYY-MM-DD"}}
  * - Conditional expressions: {{active ? "Active" : "Inactive"}}
  * - Field tracking integration for highlighting
  *
  * Syntax Support (Issue #142):
- * - **Handlebars syntax** (current standard): {{helper arg1 arg2}}
- * - **Legacy syntax** (deprecated, removed in v4.0.0): {{helper(arg1, arg2)}}
+ * - **Space-separated syntax** (standard): {{helper arg1 arg2}}
+ * - **Parenthesized syntax**: {{helper(arg1, arg2)}}
  *
  * Architecture:
  * 1. Parse template field patterns in text nodes
@@ -46,10 +46,12 @@
 
 import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
-import type { Root, Text, HTML, Code, InlineCode, Node, Parent } from 'mdast';
+import type { Root } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
+import { fieldSpan } from '../../extensions/tracking/field-span';
 import { extensionHelpers as helpers } from '../../extensions/helpers/index';
-import { detectBracketValues } from '../../extensions/ast-mixin-processor';
+import { detectBracketValues, unescapeBracketLiteral } from '../../extensions/ast-mixin-processor';
+import type { YamlValue } from '../../types';
 
 /**
  * Template field definition extracted from text
@@ -67,13 +69,22 @@ interface TemplateField {
  */
 interface TemplateFieldOptions {
   /** Document metadata containing field values */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
   /** Enable debug logging */
   debug?: boolean;
   /** Custom field patterns (defaults to {{field}} syntax) */
   fieldPatterns?: string[];
   /** Enable field tracking with highlighting during AST processing */
   enableFieldTracking?: boolean;
+  /** Use AST-first field tracking tokens */
+  astFieldTracking?: boolean;
+  /** Highlight winner branches for conditionals */
+  logicBranchHighlighting?: boolean;
+}
+
+interface MutableTemplateNode {
+  type: 'text' | 'html' | 'code' | 'inlineCode';
+  value: string;
 }
 
 /**
@@ -81,17 +92,16 @@ interface TemplateFieldOptions {
  */
 const DEFAULT_FIELD_PATTERN = /\{\{\s*([^}]+)\s*\}\}/g;
 
-/**
- * Pattern for @today syntax without brackets
- */
-const TODAY_PATTERN = /@today(?:\[([^\]]+)\])?/g;
+const GENERATED_TRACKING_MARKER = 'data-lm-generated="1"';
 
 /**
  * Check if a position is inside a loop or conditional block
  */
 function isInsideLoopOrConditional(text: string, position: number): boolean {
-  // Pattern to match loop/conditional blocks (including underscores in variable names)
-  const blockPattern = /\{\{#([\w_]+)\}\}[\s\S]*?\{\{\/\1\}\}/g;
+  // Match block helpers with optional arguments:
+  // {{#each items}}...{{/each}}, {{#if cond}}...{{/if}}, {{#unless cond}}...{{/unless}}
+  // and custom blocks like {{#line_items}}...{{/line_items}}.
+  const blockPattern = /\{\{#([\w_]+)(?:\s+[^}]*)?\}\}[\s\S]*?\{\{\/\1\}\}/g;
 
   let match;
   while ((match = blockPattern.exec(text)) !== null) {
@@ -99,17 +109,6 @@ function isInsideLoopOrConditional(text: string, position: number): boolean {
     const blockEnd = match.index + match[0].length;
 
     // Check if position is inside this block
-    if (position > blockStart && position < blockEnd) {
-      return true;
-    }
-  }
-
-  // Also check for {{#if}} blocks
-  const ifBlockPattern = /\{\{#if\s+[^}]+\}\}[\s\S]*?\{\{\/if\}\}/g;
-  while ((match = ifBlockPattern.exec(text)) !== null) {
-    const blockStart = match.index;
-    const blockEnd = match.index + match[0].length;
-
     if (position > blockStart && position < blockEnd) {
       return true;
     }
@@ -175,49 +174,6 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
     }
   }
 
-  // Also search for @today patterns (without brackets), but skip those inside {{}} blocks
-  let todayMatch;
-  TODAY_PATTERN.lastIndex = 0; // Reset regex state
-
-  while ((todayMatch = TODAY_PATTERN.exec(text)) !== null) {
-    const [fullMatch, formatSpecifier] = todayMatch;
-
-    // Check if this @today is inside a {{}} block
-    const matchStart = todayMatch.index;
-    const matchEnd = todayMatch.index + fullMatch.length;
-
-    // Look for any {{}} blocks that contain this @today match
-    let isInsideTemplateField = false;
-    const templateFieldPattern = /\{\{[^}]*\}\}/g;
-    let templateMatch;
-    templateFieldPattern.lastIndex = 0;
-
-    while ((templateMatch = templateFieldPattern.exec(text)) !== null) {
-      const templateStart = templateMatch.index;
-      const templateEnd = templateMatch.index + templateMatch[0].length;
-
-      // Check if the @today match is inside this template field
-      if (matchStart >= templateStart && matchEnd <= templateEnd) {
-        isInsideTemplateField = true;
-        break;
-      }
-    }
-
-    // Only add @today as a separate field if it's not inside a template field
-    if (!isInsideTemplateField) {
-      // Create field name - if there's a format specifier, include it as a parameter
-      const fieldName = formatSpecifier ? `@today[${formatSpecifier}]` : '@today';
-
-      fields.push({
-        pattern: fullMatch,
-        fieldName: fieldName,
-        expression: fieldName,
-        startIndex: todayMatch.index,
-        endIndex: todayMatch.index + fullMatch.length,
-      });
-    }
-  }
-
   // Sort by start index for proper replacement order (reverse to avoid index shifting)
   return fields.sort((a, b) => b.startIndex - a.startIndex);
 }
@@ -227,15 +183,21 @@ function extractTemplateFields(text: string, patterns: string[]): TemplateField[
  */
 function resolveFieldValue(
   fieldName: string,
-  metadata: Record<string, any>
-): { value: any; hasLogic: boolean; mixinType?: string; isEmptyCondition?: boolean } {
+  metadata: Record<string, YamlValue>
+): {
+  value: YamlValue | undefined;
+  hasLogic: boolean;
+  mixinType?: string;
+  isEmptyCondition?: boolean;
+} {
   // Check if this field path has a bracket value (should be treated as missing)
   const bracketFields = detectBracketValues(metadata);
   const isBracketValue = bracketFields.has(fieldName);
   // Handle @today with format specifiers
   if (fieldName === '@today' || fieldName.startsWith('@today[')) {
     // Check if @today is defined in metadata first, otherwise use current date
-    const today = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+    const todayRaw = metadata['@today'];
+    const today = todayRaw ? new Date(todayRaw as string | number | Date) : new Date();
     let formattedDate: string;
 
     if (fieldName === '@today') {
@@ -290,13 +252,11 @@ function resolveFieldValue(
   }
 
   // ============================================================================
-  // DUAL SYNTAX SUPPORT: Legacy + Handlebars (Issue #142)
+  // DUAL SYNTAX SUPPORT
   // ============================================================================
-  // Support both:
-  // - Legacy syntax (DEPRECATED):  {{helper(arg1, arg2)}}
-  // - Handlebars syntax (CURRENT): {{helper arg1 arg2}}
-  //
-  // Legacy syntax will be removed in v4.0.0
+  // Both syntaxes are supported:
+  // - Space-separated: {{helper arg1 arg2}}
+  // - Parenthesized:   {{helper(arg1, arg2)}}
   // ============================================================================
 
   // Check for Handlebars helper pattern (current standard syntax)
@@ -313,7 +273,8 @@ function resolveFieldValue(
         const args = parseHandlebarsArguments(argsString, metadata);
 
         // Call the helper function
-        const result = (helper as any)(...args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- external helper function with unknown signature
+        const result = (helper as any)(...args) as YamlValue;
 
         return {
           value: result,
@@ -333,10 +294,9 @@ function resolveFieldValue(
   }
 
   // ============================================================================
-  // LEGACY HELPER SYNTAX - DEPRECATED - TO BE REMOVED IN v4.0.0
+  // PARENTHESIZED HELPER SYNTAX
   // ============================================================================
-  // Check for legacy helper function pattern: helperName(arg1, arg2)
-  // @deprecated Use Handlebars syntax instead: {{helperName arg1 arg2}}
+  // Check for parenthesized helper function pattern: helperName(arg1, arg2)
   const helperMatch = fieldName.match(/^(\w+)\((.*)?\)$/);
   if (helperMatch) {
     const [, helperName, argsString] = helperMatch;
@@ -348,7 +308,8 @@ function resolveFieldValue(
         const args = parseHelperArguments(argsString || '', metadata);
 
         // Call the helper function
-        const result = (helper as any)(...args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- external helper function with unknown signature
+        const result = (helper as any)(...args) as YamlValue;
 
         return {
           value: result,
@@ -406,8 +367,11 @@ function resolveFieldValue(
     };
   }
 
+  const normalizedValue =
+    typeof value === 'string' ? (unescapeBracketLiteral(value) ?? value) : value;
+
   return {
-    value,
+    value: normalizedValue,
     hasLogic: false,
     mixinType: 'variable',
   };
@@ -416,9 +380,12 @@ function resolveFieldValue(
 /**
  * Resolve nested value from metadata using dot notation
  */
-function resolveNestedValue(metadata: Record<string, any>, path: string): any {
-  const keys = path.split('.');
-  let current = metadata;
+function resolveNestedValue(
+  metadata: Record<string, YamlValue>,
+  path: string
+): YamlValue | undefined {
+  const keys = path.split('.').map(key => key.replace(/^\*/g, '_').replace(/\*$/g, '_'));
+  let current: YamlValue | undefined = metadata;
 
   for (const key of keys) {
     if (current === null || current === undefined) {
@@ -429,14 +396,28 @@ function resolveNestedValue(metadata: Record<string, any>, path: string): any {
     const arrayMatch = key.match(/^(.+?)\[(\d+)\]$/);
     if (arrayMatch) {
       const [, arrayName, index] = arrayMatch;
-      current = current[arrayName];
+      if (typeof current !== 'object' || Array.isArray(current)) {
+        return undefined;
+      }
+      current = (current as Record<string, YamlValue>)[arrayName];
       if (Array.isArray(current)) {
         current = current[parseInt(index, 10)];
       } else {
         return undefined;
       }
+    } else if (Array.isArray(current)) {
+      // Numeric key in dot notation: parties.1.name -> parties[1].name
+      const arrayIndex = parseInt(key, 10);
+      if (!isNaN(arrayIndex) && String(arrayIndex) === key) {
+        current = (current as YamlValue[])[arrayIndex];
+      } else {
+        return undefined; // Non-numeric key on an array
+      }
     } else {
-      current = current[key];
+      if (typeof current !== 'object' || current instanceof Date) {
+        return undefined;
+      }
+      current = (current as Record<string, YamlValue>)[key];
     }
   }
 
@@ -446,7 +427,7 @@ function resolveNestedValue(metadata: Record<string, any>, path: string): any {
 /**
  * Check if value is considered empty for field tracking purposes
  */
-function isEmptyValue(value: any): boolean {
+function isEmptyValue(value: unknown): boolean {
   return (
     value === undefined ||
     value === null ||
@@ -456,26 +437,10 @@ function isEmptyValue(value: any): boolean {
 }
 
 /**
- * Get CSS class for field based on its status
- */
-function getFieldCssClass(status: string): string {
-  switch (status) {
-    case 'filled':
-      return 'legal-field imported-value';
-    case 'empty':
-      return 'legal-field missing-value';
-    case 'logic':
-      return 'legal-field highlight';
-    default:
-      return 'legal-field imported-value';
-  }
-}
-
-/**
  * Format value for display with optional field tracking
  */
 function formatFieldValue(
-  value: any,
+  value: YamlValue | undefined,
   fieldName: string,
   enableFieldTracking: boolean = false,
   hasLogic: boolean = false,
@@ -507,8 +472,8 @@ function formatFieldValue(
     // Priority: empty > logic > filled
     // This ensures empty fields are marked as missing even if they have conditional logic
     const status = isEmptyField ? 'empty' : hasLogic ? 'logic' : 'filled';
-    const cssClass = getFieldCssClass(status);
-    return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${formattedValue}</span>`;
+    const kind = status === 'empty' ? 'missing' : status === 'logic' ? 'highlight' : 'imported';
+    return fieldSpan(fieldName, formattedValue, kind);
   }
 
   return formattedValue;
@@ -521,44 +486,119 @@ function hasExistingFieldSpans(text: string): boolean {
   return text.includes('class="legal-field') && text.includes('data-field="');
 }
 
+function isTrackedFieldSpanOpenTag(tag: string): boolean {
+  return (
+    /<span\b[^>]*class=(?:"[^"]*\blegal-field\b[^"]*"|'[^']*\blegal-field\b[^']*')[^>]*data-field=(?:"[^"]*"|'[^']*')[^>]*>/i.test(
+      tag
+    ) && !tag.includes(GENERATED_TRACKING_MARKER)
+  );
+}
+
+function stripGeneratedTrackingMarkers(text: string): string {
+  return text.replace(/\sdata-lm-generated="1"/g, '');
+}
+
+/**
+ * Masks {{...}} patterns inside existing legal-field spans while preserving
+ * string length so extracted indices stay aligned with the original text.
+ */
+function maskTemplateFieldsInsideTrackedSpans(text: string): string {
+  const spanTagRegex = /<\/?span\b[^>]*>/gi;
+  const templateRegex = /\{\{[^}]+\}\}/g;
+  const spanStack: boolean[] = [];
+
+  let output = '';
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  const maskSegment = (segment: string, insideTrackedSpan: boolean): string => {
+    if (!insideTrackedSpan) return segment;
+    return segment.replace(templateRegex, found => ' '.repeat(found.length));
+  };
+
+  while ((match = spanTagRegex.exec(text)) !== null) {
+    const tag = match[0];
+    const start = match.index;
+    const insideTrackedSpan = spanStack.includes(true);
+
+    output += maskSegment(text.slice(cursor, start), insideTrackedSpan);
+    output += tag;
+
+    if (tag.startsWith('</')) {
+      if (spanStack.length > 0) {
+        spanStack.pop();
+      }
+    } else {
+      spanStack.push(isTrackedFieldSpanOpenTag(tag));
+    }
+
+    cursor = start + tag.length;
+  }
+
+  output += maskSegment(text.slice(cursor), spanStack.includes(true));
+  return output;
+}
+
 /**
  * Check if a text node is inside existing field tracking spans by examining sibling HTML nodes
  */
-function isInsideFieldTrackingSpan(node: any, parent: any): boolean {
-  if (!parent || parent.type !== 'paragraph' || !parent.children) {
+function isInsideFieldTrackingSpan(node: unknown, parent: unknown): boolean {
+  if (
+    !parent ||
+    typeof parent !== 'object' ||
+    (parent as Record<string, unknown>)['type'] !== 'paragraph' ||
+    !Array.isArray((parent as Record<string, unknown>)['children'])
+  ) {
     return false;
   }
 
-  const nodeIndex = parent.children.indexOf(node);
+  const children = (parent as Record<string, unknown[]>)['children'];
+  const nodeIndex = children.indexOf(node);
   if (nodeIndex === -1) {
     return false;
   }
 
-  // Look for opening field tracking span before this node
-  let hasOpeningSpan = false;
-  for (let i = nodeIndex - 1; i >= 0; i--) {
-    const prevNode = parent.children[i];
-    if (
-      prevNode.type === 'html' &&
-      prevNode.value.includes('class="legal-field') &&
-      prevNode.value.includes('data-field="')
-    ) {
-      hasOpeningSpan = true;
-      break;
+  const countFieldSpanOpenTags = (html: string): number => {
+    const matches = html.match(/<span\b[^>]*>/g) ?? [];
+    return matches.filter(isTrackedFieldSpanOpenTag).length;
+  };
+
+  const countSpanCloseTags = (html: string): number => {
+    const matches = html.match(/<\/span>/g);
+    return matches ? matches.length : 0;
+  };
+
+  // Track net field-span depth before this node.
+  // A node is "inside" only if there is an unmatched opening field span before it.
+  let depthBeforeNode = 0;
+  for (let i = 0; i < nodeIndex; i++) {
+    const sibling = children[i] as Record<string, unknown>;
+    if (sibling['type'] !== 'html' || typeof sibling['value'] !== 'string') continue;
+    const value = sibling['value'];
+    depthBeforeNode += countFieldSpanOpenTags(value);
+    depthBeforeNode -= countSpanCloseTags(value);
+    if (depthBeforeNode < 0) depthBeforeNode = 0;
+  }
+
+  if (depthBeforeNode <= 0) {
+    return false;
+  }
+
+  // Confirm there is a closing span after this node so we only skip nodes that are
+  // actually enclosed by a bounded span region.
+  let remainingDepth = depthBeforeNode;
+  for (let i = nodeIndex + 1; i < children.length; i++) {
+    const sibling = children[i] as Record<string, unknown>;
+    if (sibling['type'] !== 'html' || typeof sibling['value'] !== 'string') continue;
+    const value = sibling['value'];
+    remainingDepth += countFieldSpanOpenTags(value);
+    remainingDepth -= countSpanCloseTags(value);
+    if (remainingDepth <= 0) {
+      return true;
     }
   }
 
-  // Look for closing span after this node
-  let hasClosingSpan = false;
-  for (let i = nodeIndex + 1; i < parent.children.length; i++) {
-    const nextNode = parent.children[i];
-    if (nextNode.type === 'html' && nextNode.value.includes('</span>')) {
-      hasClosingSpan = true;
-      break;
-    }
-  }
-
-  return hasOpeningSpan && hasClosingSpan;
+  return false;
 }
 
 /**
@@ -648,12 +688,15 @@ function smartSplitArguments(str: string): string[] {
  * // Returns: [1500, 'USD']
  * ```
  */
-function parseHelperArguments(argsString: string, metadata: Record<string, any>): any[] {
+function parseHelperArguments(
+  argsString: string,
+  metadata: Record<string, YamlValue>
+): (YamlValue | undefined)[] {
   if (!argsString.trim()) {
     return [];
   }
 
-  const args: any[] = [];
+  const args: (YamlValue | undefined)[] = [];
   const parts = smartSplitArguments(argsString);
 
   for (const part of parts) {
@@ -710,7 +753,8 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
           const nestedArgs = parseHelperArguments(nestedArgsString, metadata);
 
           // Call the nested helper function
-          const nestedResult = (helper as any)(...nestedArgs);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- external helper function with unknown signature
+          const nestedResult = (helper as any)(...nestedArgs) as YamlValue;
           args.push(nestedResult);
           continue;
         } catch (error) {
@@ -723,7 +767,8 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
     // Handle @today special case
     if (trimmed === '@today' || trimmed.startsWith('@today[')) {
       // Check if @today is defined in metadata first, otherwise use current date
-      const todayValue = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+      const todayRaw = metadata['@today'];
+      const todayValue = todayRaw ? new Date(todayRaw as string | number | Date) : new Date();
       args.push(todayValue);
       continue;
     }
@@ -762,12 +807,15 @@ function parseHelperArguments(argsString: string, metadata: Record<string, any>)
  * // Returns: [10, 5]
  * ```
  */
-function parseHandlebarsArguments(argsString: string, metadata: Record<string, any>): any[] {
+function parseHandlebarsArguments(
+  argsString: string,
+  metadata: Record<string, YamlValue>
+): (YamlValue | undefined)[] {
   if (!argsString.trim()) {
     return [];
   }
 
-  const args: any[] = [];
+  const args: (YamlValue | undefined)[] = [];
   let i = 0;
 
   while (i < argsString.length) {
@@ -844,7 +892,8 @@ function parseHandlebarsArguments(argsString: string, metadata: Record<string, a
             const nestedArgs = parseHandlebarsArguments(nestedArgsString, metadata);
 
             // Call the nested helper function
-            const nestedResult = (helper as any)(...nestedArgs);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- external helper function with unknown signature
+            const nestedResult = (helper as any)(...nestedArgs) as YamlValue;
             args.push(nestedResult);
             continue;
           } catch (error) {
@@ -900,14 +949,16 @@ function parseHandlebarsArguments(argsString: string, metadata: Record<string, a
     // Handle @today special case
     if (token === '@today' || token.startsWith('@today[')) {
       // Check if @today is defined in metadata first, otherwise use current date
-      const todayValue = metadata['@today'] ? new Date(metadata['@today']) : new Date();
+      const todayRaw = metadata['@today'];
+      const todayValue = todayRaw ? new Date(todayRaw as string | number | Date) : new Date();
       args.push(todayValue);
       continue;
     }
 
     // Handle 'today' variable (alias for @today in Handlebars context)
     if (token === 'today') {
-      const todayValue = metadata['today'] || metadata['@today'] || new Date();
+      const todayRaw2 = metadata['today'] || metadata['@today'];
+      const todayValue = todayRaw2 ? new Date(todayRaw2 as string | number | Date) : new Date();
       args.push(todayValue);
       continue;
     }
@@ -925,16 +976,20 @@ function parseHandlebarsArguments(argsString: string, metadata: Record<string, a
  */
 function processTemplateFieldsInAST(
   root: Root,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   fieldPatterns: string[],
   enableFieldTracking: boolean = false,
+  astFieldTracking: boolean = false,
   debug: boolean = false
 ): void {
   // Get field mappings from metadata if available
-  const fieldMappings = (metadata['_field_mappings'] as Map<string, string>) || new Map();
+  const fieldMappings =
+    (metadata['_field_mappings'] as unknown as Map<string, string>) || new Map();
 
   // Process text, HTML, code, and inlineCode nodes
-  visit(root, (node, index, parent) => {
+  visit(root, (node, _index, parent) => {
+    void _index;
+
     // Process text, HTML, code, and inlineCode nodes
     if (
       (node.type === 'text' ||
@@ -944,16 +999,94 @@ function processTemplateFieldsInAST(
       'value' in node &&
       typeof node.value === 'string'
     ) {
+      const mutableNode = node as MutableTemplateNode;
       const originalValue = node.value;
+      let workingValue = originalValue;
+      let transformedByAstTokens = false;
 
-      // Skip processing if this HTML already contains field tracking spans
-      if (node.type === 'html' && hasExistingFieldSpans(originalValue)) {
-        if (debug) {
-          console.log(
-            `⏭️ Skipping HTML node with existing field spans: "${originalValue.substring(0, 100)}..."`
-          );
+      if (astFieldTracking) {
+        let transformedValue = workingValue;
+        let transformed = false;
+
+        transformedValue = transformedValue.replace(
+          /<lm-field\b([^>]*)>/g,
+          (_full, attrs: string) => {
+            const fieldMatch = attrs.match(/data-field=(?:"([^"]*)"|'([^']*)')/);
+            const kindMatch = attrs.match(/data-kind=(?:"([^"]*)"|'([^']*)')/);
+            const fieldName = (fieldMatch?.[1] || fieldMatch?.[2] || '').replace(/&quot;/g, '"');
+            const kind = kindMatch?.[1] || kindMatch?.[2] || 'imported';
+            const cls =
+              kind === 'missing'
+                ? 'legal-field missing-value'
+                : kind === 'highlight' || kind === 'crossref'
+                  ? 'legal-field highlight'
+                  : 'legal-field imported-value';
+            transformed = true;
+            return `<span class="${cls}" data-field="${fieldName}" ${GENERATED_TRACKING_MARKER}>`;
+          }
+        );
+        transformedValue = transformedValue.replace(/<\/lm-field>/g, () => {
+          transformed = true;
+          return '</span>';
+        });
+
+        transformedValue = transformedValue.replace(
+          /<lm-logic-start\b([^>]*)>/g,
+          (_full, attrs: string) => {
+            const fieldMatch = attrs.match(/data-field=(?:"([^"]*)"|'([^']*)')/);
+            const helperMatch = attrs.match(/data-logic-helper=(?:"([^"]*)"|'([^']*)')/);
+            const resultMatch = attrs.match(/data-logic-result=(?:"([^"]*)"|'([^']*)')/);
+            const fieldName = fieldMatch?.[1] || fieldMatch?.[2] || '';
+            const helperName = helperMatch?.[1] || helperMatch?.[2] || 'if';
+            const logicResult = resultMatch?.[1] || resultMatch?.[2] || 'false';
+            transformed = true;
+            return `<span class="legal-field highlight" data-field="${fieldName}" data-logic-helper="${helperName}" data-logic-result="${logicResult}" ${GENERATED_TRACKING_MARKER}>`;
+          }
+        );
+        transformedValue = transformedValue.replace(/<\/lm-logic-start>/g, () => {
+          transformed = true;
+          return '';
+        });
+        transformedValue = transformedValue.replace(/<lm-logic-end>/g, () => {
+          transformed = true;
+          return '</span>';
+        });
+        transformedValue = transformedValue.replace(/<\/lm-logic-end>/g, () => {
+          transformed = true;
+          return '';
+        });
+
+        if (transformed) {
+          transformedByAstTokens = true;
+          workingValue = transformedValue;
+          if (
+            enableFieldTracking &&
+            node.type === 'text' &&
+            workingValue.includes('<span class="legal-field')
+          ) {
+            mutableNode.type = 'html';
+          }
+          if (!/\{\{[^}]+\}\}/.test(workingValue)) {
+            mutableNode.value = stripGeneratedTrackingMarkers(workingValue);
+            return;
+          }
         }
-        return;
+      }
+
+      // Skip processing if this HTML already contains field tracking spans AND
+      // there are no remaining {{...}} template fields to resolve.
+      // Nodes converted by remarkDates may have spans for @today but still
+      // contain unprocessed {{variable}} patterns that must not be skipped.
+      if (!astFieldTracking && node.type === 'html' && hasExistingFieldSpans(workingValue)) {
+        const hasUnresolvedFields = /\{\{[^}]+\}\}/.test(workingValue);
+        if (!hasUnresolvedFields) {
+          if (debug) {
+            console.log(
+              `⏭️ Skipping HTML node with existing field spans: "${workingValue.substring(0, 100)}..."`
+            );
+          }
+          return;
+        }
       }
 
       // Skip processing if this text node is inside existing field tracking spans
@@ -965,11 +1098,18 @@ function processTemplateFieldsInAST(
       }
       // Normalize escaped underscores from remark-parse (\_  back to _)
       // This happens when underscores are in bold/italic contexts
-      const normalizedValue = originalValue.replace(/\\_/g, '_');
+      const normalizedValue = workingValue.replace(/\\_/g, '_');
+      const valueForFieldExtraction =
+        node.type === 'html' && hasExistingFieldSpans(normalizedValue)
+          ? maskTemplateFieldsInsideTrackedSpans(normalizedValue)
+          : normalizedValue;
 
-      const templateFields = extractTemplateFields(normalizedValue, fieldPatterns);
+      const templateFields = extractTemplateFields(valueForFieldExtraction, fieldPatterns);
 
       if (templateFields.length === 0) {
+        if (transformedByAstTokens) {
+          mutableNode.value = stripGeneratedTrackingMarkers(workingValue);
+        }
         return; // No template fields found
       }
 
@@ -986,7 +1126,7 @@ function processTemplateFieldsInAST(
         const resolved = resolveFieldValue(field.fieldName, metadata);
         const { value, hasLogic, mixinType } = resolved;
         // For conditionals, check if the original condition was empty
-        const isEmptyCondition = (resolved as any).isEmptyCondition;
+        const isEmptyCondition = resolved.isEmptyCondition;
         const isEmptyField =
           isEmptyCondition !== undefined ? isEmptyCondition : isEmptyValue(value);
 
@@ -1024,7 +1164,8 @@ function processTemplateFieldsInAST(
       }
 
       // Update the node value
-      (node as any).value = processedText;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mutating mdast node value in-place
+      (node as any).value = stripGeneratedTrackingMarkers(processedText);
 
       // If we added field tracking HTML and this is a text node, convert it to HTML node
       // to prevent remark-stringify from escaping the HTML
@@ -1033,6 +1174,7 @@ function processTemplateFieldsInAST(
         node.type === 'text' &&
         processedText.includes('<span class="legal-field')
       ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mutating mdast node type in-place
         (node as any).type = 'html';
       }
     }
@@ -1043,7 +1185,13 @@ function processTemplateFieldsInAST(
  * Remark plugin for processing template fields in Legal Markdown documents
  */
 const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
-  const { metadata, debug = false, fieldPatterns = [], enableFieldTracking = false } = options;
+  const {
+    metadata,
+    debug = false,
+    fieldPatterns = [],
+    enableFieldTracking = false,
+    astFieldTracking,
+  } = options;
 
   return (tree: Root) => {
     if (debug) {
@@ -1057,7 +1205,14 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
     }
 
     // Process all template fields in the AST with optional field tracking
-    processTemplateFieldsInAST(tree, metadata, fieldPatterns, enableFieldTracking, debug);
+    processTemplateFieldsInAST(
+      tree,
+      metadata,
+      fieldPatterns,
+      enableFieldTracking,
+      astFieldTracking ?? false,
+      debug
+    );
 
     if (debug) {
       console.log('✅ Template field processing completed');
@@ -1067,3 +1222,16 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
 
 export default remarkTemplateFields;
 export type { TemplateFieldOptions, TemplateField };
+
+// Exported for testing - not part of public API
+export {
+  isInsideLoopOrConditional as _isInsideLoopOrConditional,
+  extractTemplateFields as _extractTemplateFields,
+  resolveFieldValue as _resolveFieldValue,
+  resolveNestedValue as _resolveNestedValue,
+  formatFieldValue as _formatFieldValue,
+  isInsideFieldTrackingSpan as _isInsideFieldTrackingSpan,
+  smartSplitArguments as _smartSplitArguments,
+  parseHelperArguments as _parseHelperArguments,
+  parseHandlebarsArguments as _parseHandlebarsArguments,
+};

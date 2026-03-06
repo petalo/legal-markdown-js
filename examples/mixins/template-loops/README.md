@@ -30,5 +30,5 @@ Array iteration and loops in templates using the {{#array}}...{{/array}} syntax.
 
 ## 💡 Learn more
 
-- [Template Loops Guide](../../../docs/template-loops.md)
-- [Array Processing](../../../docs/arrays.md)
+- [Template Loops Guide](../../../docs/features/template-loops.md)
+- [Variables & Mixins](../../../docs/features/mixins-variables.md)

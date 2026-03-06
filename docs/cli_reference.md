@@ -60,13 +60,15 @@ legal-md --version
 | ----------------------------- | --------------------------------------------------------- |
 | `--debug`, `-d`               | Enable debug mode with detailed output                    |
 | `--yaml`, `-y`                | Process only YAML front matter                            |
-| `--headers`                   | Process only headers                                      |
+| `--headers`                   | Auto-populate YAML front matter with header patterns      |
 | `--no-headers`                | Skip header processing                                    |
 | `--no-clauses`                | Skip optional clause processing                           |
 | `--no-references`             | Skip cross-reference processing                           |
 | `--no-imports`                | Skip import processing                                    |
 | `--no-mixins`                 | Skip mixin processing                                     |
 | `--enable-field-tracking`     | Add field tracking spans to markdown output               |
+| `--ast-field-tracking`        | AST-first Phase2->Phase3 tracking route                   |
+| `--logic-branch-highlighting` | Winner-branch logic annotations                           |
 | `--disable-frontmatter-merge` | Disable automatic frontmatter merging from imported files |
 | `--import-tracing`            | Add HTML comments showing imported content boundaries     |
 | `--validate-import-types`     | Validate type compatibility during frontmatter merging    |
@@ -74,25 +76,27 @@ legal-md --version
 
 ### Output Control
 
-| Option                              | Description                       |
-| ----------------------------------- | --------------------------------- |
-| `--stdout`                          | Write output to standard output   |
-| `--stdin`                           | Read input from standard input    |
-| `--to-markdown`                     | Convert output to markdown format |
-| `--export-yaml`                     | Export metadata as YAML           |
-| `--export-json`                     | Export metadata as JSON           |
-| `--output-path <path>`, `-o <path>` | Specify output path for metadata  |
+| Option                              | Description                                                |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `--stdout`                          | Write output to standard output (text/HTML workflows only) |
+| `--stdin`                           | Read input from standard input                             |
+| `--to-markdown`                     | Convert output to markdown format                          |
+| `--export-yaml`                     | Export metadata as YAML                                    |
+| `--export-json`                     | Export metadata as JSON                                    |
+| `--output-path <path>`, `-o <path>` | Specify output path for metadata                           |
 
 ### Format Generation
 
-| Option                   | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ |
-| `--pdf`                  | Generate PDF output                                          |
-| `--html`                 | Generate HTML output                                         |
-| `--highlight`            | Enable field highlighting in HTML/PDF                        |
-| `--css <path>`           | Path to custom CSS file                                      |
-| `--title <title>`        | Document title for HTML/PDF                                  |
-| `--archive-source [dir]` | Archive source file after successful processing to directory |
+| Option                   | Description                                                            |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `--pdf`                  | Generate PDF output                                                    |
+| `--pdf-connector <name>` | Select PDF backend: `auto`, `puppeteer`, `system-chrome`, `weasyprint` |
+| `--html`                 | Generate HTML output                                                   |
+| `--docx`                 | Generate DOCX output                                                   |
+| `--highlight`            | Enable field highlighting in HTML/PDF/DOCX                             |
+| `--css <path>`           | Path to custom CSS file                                                |
+| `--title <title>`        | Document title for HTML/PDF/DOCX                                       |
+| `--archive-source [dir]` | Archive source file after successful processing to directory           |
 
 ### Advanced Processing
 
@@ -141,9 +145,16 @@ legal-md --no-headers --no-mixins input.md output.md
 # Enable field tracking in markdown output (Ruby compatibility: disabled by default)
 legal-md --enable-field-tracking input.md output.md
 
-# Field tracking is automatically enabled for HTML and PDF output
+# AST-first route
+legal-md --enable-field-tracking --ast-field-tracking input.md output.md
+
+# Winner-branch highlighting (typically used with AST-first flag)
+legal-md --enable-field-tracking --ast-field-tracking --logic-branch-highlighting input.md output.md
+
+# Field tracking is automatically enabled for HTML, PDF, and DOCX output
 legal-md --html --highlight input.md        # HTML with field tracking
 legal-md --pdf --highlight input.md         # PDF with field tracking
+legal-md --docx --highlight input.md        # DOCX with field tracking
 ```
 
 **Note**: Field tracking adds HTML `<span>` elements to mark template variables
@@ -216,6 +227,12 @@ legal-md input.md --stdout
 legal-md input.md  # Same as above when no output file specified
 ```
 
+Notes:
+
+- `--docx --stdout` is rejected (DOCX is binary).
+- `--stdin --pdf --stdout` and `--stdin --docx --stdout` are rejected (binary
+  outputs must go to files).
+
 ### Metadata Export
 
 ```bash
@@ -236,6 +253,9 @@ legal-md --export-json --output-path ./metadata input.md output.md
 ```bash
 # Generate PDF
 legal-md input.md --pdf
+
+# Generate PDF with a specific backend
+legal-md input.md --pdf --pdf-connector system-chrome
 
 # PDF with custom title
 legal-md input.md --pdf --title "Legal Document"
@@ -266,11 +286,40 @@ legal-md input.md --html --css ./styles/legal.css
 legal-md input.md --html --title "Legal Document"
 ```
 
+### DOCX Generation
+
+```bash
+# Generate DOCX
+legal-md input.md --docx
+
+# DOCX with highlighting
+legal-md input.md --docx --highlight
+
+# DOCX with custom CSS
+legal-md input.md --docx --css ./styles/legal.css
+
+# DOCX with title
+legal-md input.md --docx --title "Legal Document"
+
+# DOCX from stdin (binary output must go to file)
+cat input.md | legal-md --stdin --docx ./output/document.docx
+
+# DOCX + HIGHLIGHT versions from stdin
+cat input.md | legal-md --stdin --docx --highlight ./output/document.docx
+```
+
+DOCX CLI notes:
+
+- Custom DOCX `headerTemplate` / `footerTemplate` are API options (not CLI
+  flags).
+- Use [DOCX Generation](output/docx-generation.md) for full mapping details
+  (`list-style-type`, structural classes, page breaks, signatures/TOC behavior).
+
 ### Combined Output
 
 ```bash
-# Generate both PDF and HTML
-legal-md input.md --pdf --html --highlight --title "Contract"
+# Generate PDF, HTML and DOCX in one run
+legal-md input.md --pdf --html --docx --highlight --title "Contract"
 ```
 
 ### Source File Archiving
@@ -389,14 +438,15 @@ When processed, this document will automatically:
 ```yaml
 ---
 force_commands: >
-  --css theme.css --pdf --highlight --output-name {{title}}_{{formatDate(date,
-  "YYYYMMDD")}}.pdf --title "{{title}} - {{client}}"
+  --css theme.css --pdf --highlight --output-name {{title}}_{{formatDate date
+  "YYYYMMDD"}}.pdf --title "{{title}} - {{client}}"
 ---
 ```
 
 ### Supported Commands
 
-All CLI options are supported in force_commands:
+`force_commands` supports a focused subset of options, plus a few force-only
+aliases:
 
 | Command                | Description                    | Example                                 |
 | ---------------------- | ------------------------------ | --------------------------------------- |
@@ -404,6 +454,7 @@ All CLI options are supported in force_commands:
 | `--output-name <name>` | Custom output filename         | `--output-name Contract_{{client}}.pdf` |
 | `--pdf`                | Generate PDF output            | `--pdf`                                 |
 | `--html`               | Generate HTML output           | `--html`                                |
+| `--docx`               | Generate DOCX output           | `--docx`                                |
 | `--highlight`          | Enable field highlighting      | `--highlight`                           |
 | `--export-yaml`        | Export metadata as YAML        | `--export-yaml`                         |
 | `--export-json`        | Export metadata as JSON        | `--export-json`                         |
@@ -411,6 +462,12 @@ All CLI options are supported in force_commands:
 | `--format <format>`    | PDF format (A4, letter, legal) | `--format A4`                           |
 | `--landscape`          | Landscape orientation          | `--landscape`                           |
 | `--debug`              | Enable debug mode              | `--debug`                               |
+
+Notes:
+
+- `--output-name`, `--format`, and `--landscape` are force-commands parser
+  options (not regular `legal-md` top-level CLI flags).
+- Unspecified CLI options keep their existing values.
 
 ### Template Support
 
@@ -421,8 +478,8 @@ Force commands support full template variable resolution:
 client_name: Acme Corporation
 effective_date: 2024-01-01
 force_commands: >
-  --output-name Contract_{{titleCase(client_name)}}_{{formatDate(effective_date,
-  "YYYYMMDD")}}.pdf --title "Agreement - {{client_name}}" --pdf --export-yaml
+  --output-name Contract_{{titleCase(client_name)}}_{{formatDate effective_date
+  "YYYYMMDD"}}.pdf --title "Agreement - {{client_name}}" --pdf --export-yaml
 ---
 ```
 
@@ -439,8 +496,9 @@ The feature supports multiple naming conventions:
 
 ### Security Features
 
-- **Protected Commands**: Critical options like `--stdin`, `--yaml`, `--no-*`
-  flags cannot be overridden
+- **Protected Commands**: `--stdin`, `--stdout`, `--yaml`, `--headers`,
+  `--no-headers`, `--no-clauses`, `--no-references`, `--no-imports`,
+  `--no-mixins`, and `--throwOnYamlError` cannot be overridden
 - **Path Validation**: File paths are validated to prevent directory traversal
   attacks
 - **Template Sandboxing**: Only document metadata is available for template
@@ -448,13 +506,13 @@ The feature supports multiple naming conventions:
 
 ### Priority
 
-Force commands **override** CLI arguments. If both are specified:
+Force commands override only the options they explicitly set:
 
 ```bash
 legal-md document.md --html  # CLI says HTML
 
 # Document has: force_commands: --pdf
-# Result: PDF is generated (force_commands wins)
+# Result: PDF is generated (force_commands value wins for this option)
 ```
 
 ### Examples
@@ -467,7 +525,7 @@ legal-md self-configuring-document.md
 # Force commands handle: --pdf --highlight --css --title --export-yaml
 ```
 
-See the [Force Commands Guide](../examples/force-commands/) for detailed
+See the [Force Commands Guide](features/force-commands.md) for detailed
 examples.
 
 ## Advanced Options
@@ -522,6 +580,28 @@ legal-md input.md --stdout
 cat input.md | legal-md --stdin --stdout > output.md
 ```
 
+### Standard Input with Formatted Output (HTML/PDF/DOCX)
+
+```bash
+# HTML from stdin to stdout
+cat input.md | legal-md --stdin --html --stdout
+
+# HTML from stdin to file
+cat input.md | legal-md --stdin --html output.html
+
+# PDF from stdin to file
+cat input.md | legal-md --stdin --pdf output.pdf
+
+# DOCX from stdin to file
+cat input.md | legal-md --stdin --docx output.docx
+```
+
+Restrictions:
+
+- Binary outputs (`--pdf`, `--docx`) cannot be streamed to stdout in stdin mode.
+- When using `--stdin` with formatted output (`--html`, `--pdf`, `--docx`),
+  provide an output file path unless you are explicitly using `--html --stdout`.
+
 ### Combining with Other Tools
 
 ```bash
@@ -546,8 +626,8 @@ legal-md contract.md processed-contract.md
 # Process with debug output
 legal-md --debug contract.md processed-contract.md
 
-# Process only headers
-legal-md --headers contract.md headers-only.md
+# Auto-populate header patterns into YAML metadata
+legal-md --headers contract.md contract-with-auto-headers.md
 ```
 
 ### PDF Generation Examples
@@ -695,35 +775,66 @@ legal-md input.md output.md || {
 
 ## Configuration Files
 
-### Project Configuration
+Use the built-in commands:
 
-Create `.legalmdrc` in your project root:
+```bash
+# Interactive project config in current repo
+legal-md init
 
-```json
-{
-  "debug": false,
-  "exportFormat": "json",
-  "enableFieldTracking": true,
-  "pdfOptions": {
-    "format": "Letter",
-    "margins": "1in"
-  },
-  "htmlOptions": {
-    "includeHighlighting": true
-  }
-}
+# Interactive global config in ~/.config/legal-md/config.yaml
+legal-md init --global
+
+# Inspect active config and source files
+legal-md config show
+
+# Read one value
+legal-md config get paths.input
+
+# Set one value
+legal-md config set processing.validationMode strict
 ```
 
-### Global Configuration
+### Supported project config files
 
-Create `~/.legalmdrc` for global settings:
+`legal-md` resolves project config through cosmiconfig (first match wins):
 
-```json
-{
-  "basePath": "~/legal-documents",
-  "exportMetadata": true,
-  "defaultCss": "~/legal-styles/default.css"
-}
+- `package.json` (`legalmd` key)
+- `.legalmdrc`
+- `.legalmdrc.yaml`
+- `.legalmdrc.json`
+- `legalmd.config.js`
+- `legalmd.config.ts`
+
+### Config shape (current)
+
+```yaml
+paths:
+  images: .
+  styles: .
+  input: .
+  output: .
+  archive: .
+
+logging:
+  level: error # error | warn | info | debug
+  debug: false
+
+processing:
+  highlight: false
+  enableFieldTracking: false
+  astFieldTracking: false
+  logicBranchHighlighting: false
+  validationMode: auto # strict | permissive | auto
+  locale: en-US
+
+pdf:
+  connector: auto # auto | puppeteer | system-chrome | weasyprint
+  format: A4 # A4 | Letter
+  margin:
+    top: 1in
+    bottom: 1in
+    left: 1in
+    right: 1in
 ```
 
 ## Troubleshooting
@@ -740,7 +851,7 @@ npm list -g legal-markdown-js
 npm install -g legal-markdown-js
 
 # Use npx as alternative
-npx legal-markdown-js input.md output.md
+npx legal-md input.md output.md
 ```
 
 #### Permission Errors

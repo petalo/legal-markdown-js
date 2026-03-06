@@ -31,5 +31,5 @@ support.
 
 ## 💡 Learn more
 
-- [Field Tracking Guide](../../../docs/field-tracking.md)
-- [Highlighting Features](../../../docs/highlighting.md)
+- [Field Tracking Guide](../../../docs/processing/field-tracking.md)
+- [Field Highlighting](../../../docs/output/field-highlighting.md)

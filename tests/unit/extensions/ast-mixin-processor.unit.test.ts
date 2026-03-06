@@ -407,10 +407,63 @@ describe('AST Mixin Processor', () => {
     it('should preserve whitespace correctly', () => {
       const content = '  {{name}}  \n  {{company}}  ';
       const metadata = { name: 'John', company: 'Acme' };
-      
+
       const result = processMixins(content, metadata);
-      
+
       expect(result).toBe('  John  \n  Acme  ');
+    });
+  });
+
+  describe('Edge Cases Ported from Old Processor Tests', () => {
+    it('should handle whitespace inside mixin braces {{ variable }}', () => {
+      const content = 'The client is {{ client_name }}.';
+      const metadata = { client_name: 'Acme Corp' };
+
+      const result = processMixins(content, metadata);
+
+      expect(result).toBe('The client is Acme Corp.');
+    });
+
+    it('should handle enableFieldTracking as backward compatible alias', () => {
+      const content = 'The client is {{client_name}}.';
+      const metadata = { client_name: 'Acme Corp' };
+
+      // enableFieldTracking (old name) should still work and track fields
+      const result = processMixins(content, metadata, { enableFieldTracking: true });
+
+      // Field should be tracked
+      const fields = fieldTracker.getFields();
+      expect(fields.get('client_name')).toMatchObject({
+        name: 'client_name',
+        status: FieldStatus.FILLED,
+        value: 'Acme Corp',
+      });
+    });
+
+    it('should handle null metadata values without crashing', () => {
+      const content = 'Value: {{null_value}}, Other: {{undefined_value}}';
+      const metadata = {
+        null_value: null,
+        undefined_value: undefined,
+      };
+
+      const result = processMixins(content, metadata);
+
+      // null/undefined should leave the mixin unresolved
+      expect(result).toContain('Value:');
+      expect(result).toContain('Other:');
+    });
+
+    it('should prevent infinite recursion in nested mixin resolution', () => {
+      const content = 'Value: {{recursive}}';
+      const metadata = {
+        recursive: '{{recursive}}',
+      };
+
+      // Should not hang or throw, should return with unresolved reference
+      const result = processMixins(content, metadata);
+
+      expect(result).toContain('Value:');
     });
   });
 });

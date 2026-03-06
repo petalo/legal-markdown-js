@@ -33,5 +33,5 @@ Basic cross-reference processing for internal section references using the
 
 ## 💡 Learn more
 
-- [Cross-References Guide](../../../docs/cross-references.md)
-- [Metadata Integration](../../../docs/metadata.md)
+- [Cross-References Guide](../../../docs/features/cross-references.md)
+- [YAML Frontmatter](../../../docs/features/yaml-frontmatter.md)

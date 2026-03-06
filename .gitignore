@@ -88,6 +88,13 @@ tests/output/*.html
 tests/output/*.css
 tests/output/*.pdf
 tests/output/*.md
+tests/output/*.json
+
+# Playwright results (failure screenshots, traces, videos)
+test-results/
+
+# Local Playwright MCP sessions and captures
+.playwright-mcp/
 
 
 # =============================================================================
@@ -115,6 +122,15 @@ examples/**/*.html
 examples/**/*.pdf
 examples/**/*output*
 
+# Docx files
+*.docx
+*.doc
+
+# Root-level generated binary artifacts
+/*.pdf
+/web-*.png
+
+
 # =============================================================================
 # DOCUMENTATION
 # =============================================================================
@@ -132,3 +148,10 @@ docs/api/
 # =============================================================================
 *petalo*
 input/
+.worktrees/
+
+# Web playground build artifacts (copied from dist/ by copy-web-bundle.js)
+src/web/public/legal-markdown-browser.js
+src/web/public/browser-modern-*.js
+src/web/public/force-commands-parser-*.js
+src/web/public/types.js

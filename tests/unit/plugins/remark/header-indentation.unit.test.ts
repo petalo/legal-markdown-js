@@ -197,17 +197,17 @@ Final thoughts.`;
       // This test documents the expected usage patterns:
       
       // For CLI markdown output:
-      // processLegalMarkdownWithRemark(input, { noIndent: false }) or default
+      // processLegalMarkdown(input, { noIndent: false }) or default
       
       // For CLI HTML/PDF output:
-      // processLegalMarkdownWithRemark(input, { noIndent: true })
+      // processLegalMarkdown(input, { noIndent: true })
       
       // For web playground:
       // - Markdown preview: { noIndent: false }
       // - HTML preview: { noIndent: true }
       
       // For unit tests reading/writing markdown:
-      // processLegalMarkdownWithRemark(input, { noIndent: true })
+      // processLegalMarkdown(input, { noIndent: true })
       
       expect(true).toBe(true); // Documentation test
     });

@@ -1,7 +1,7 @@
 /**
  * Unit tests for remark dates plugin
  *
- * Tests the complete date processing functionality including @today tokens,
+ * Tests the complete date processing functionality including {{@today}} tokens,
  * arithmetic operations, format specifiers, and field tracking integration.
  *
  * @module
@@ -44,37 +44,37 @@ describe('remarkDates Plugin', () => {
     vi.useRealTimers();
   });
 
-  describe('Basic @today Processing', () => {
-    it('should process @today with default format', async () => {
-      const input = 'Contract signed on @today.';
+  describe('Basic {{@today}} Processing', () => {
+    it('should process {{@today}} with default format', async () => {
+      const input = 'Contract signed on {{@today}}.';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('Contract signed on 2024-01-15.');
     });
 
-    it('should process @today with ISO format specifier', async () => {
-      const input = 'Document dated @today[ISO].';
+    it('should process {{@today}} with ISO format specifier', async () => {
+      const input = 'Document dated {{@today[ISO]}}.';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('Document dated 2024-01-15.');
     });
 
-    it('should process @today with US format specifier', async () => {
-      const input = 'Document dated @today[US].';
+    it('should process {{@today}} with US format specifier', async () => {
+      const input = 'Document dated {{@today[US]}}.';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('Document dated 01/15/2024.');
     });
 
-    it('should process @today with legal format specifier', async () => {
-      const input = 'Document dated @today[legal].';
+    it('should process {{@today}} with legal format specifier', async () => {
+      const input = 'Document dated {{@today[legal]}}.';
       const result = await processor.process(input);
 
       expect(result.toString().trim()).toBe('Document dated January 15th, 2024.');
     });
 
-    it('should process multiple @today references', async () => {
-      const input = 'From @today to @today[US].';
+    it('should process multiple {{@today}} references', async () => {
+      const input = 'From {{@today}} to {{@today[US]}}.';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('From 2024-01-15 to 01/15/2024.');
@@ -92,8 +92,8 @@ describe('remarkDates Plugin', () => {
   });
 
   describe('Format Processing', () => {
-    it('should process @today with EU format', async () => {
-      const input = 'Document dated @today[EU].';
+    it('should process {{@today}} with EU format', async () => {
+      const input = 'Document dated {{@today[EU]}}.';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('Document dated 15/01/2024.');
@@ -115,14 +115,14 @@ describe('remarkDates Plugin', () => {
       ];
 
       for (const testCase of testCases) {
-        const input = `Date: @today[${testCase.format}]`;
+        const input = `Date: {{@today[${testCase.format}]}}`;
         const result = await processor.process(input);
         expect(result.toString().trim()).toBe(`Date: ${testCase.expected}`);
       }
     });
 
     it('should fallback to ISO format for unknown formats', async () => {
-      const input = 'Date: @today[unknown_format]';
+      const input = 'Date: {{@today[unknown_format]}}';
       const result = await processor.process(input);
       
       expect(result.toString().trim()).toBe('Date: 2024-01-15');
@@ -140,7 +140,7 @@ describe('remarkDates Plugin', () => {
         })
         .use(remarkStringify);
 
-      const input = 'Document dated @today.';
+      const input = 'Document dated {{@today}}.';
       const result = await processorWithMetadata.process(input);
 
       expect(result.toString().trim()).toBe('Document dated January 15th, 2024.');
@@ -156,7 +156,7 @@ describe('remarkDates Plugin', () => {
         })
         .use(remarkStringify);
 
-      const input = 'Document dated @today[US].';
+      const input = 'Document dated {{@today[US]}}.';
       const result = await processorWithMetadata.process(input);
       
       expect(result.toString().trim()).toBe('Document dated 01/15/2024.');
@@ -174,7 +174,7 @@ describe('remarkDates Plugin', () => {
         })
         .use(remarkStringify);
 
-      const input = 'Contract dated @today.';
+      const input = 'Contract dated {{@today}}.';
       const result = await processorWithTracking.process(input);
       
       // Check that field was tracked
@@ -186,7 +186,7 @@ describe('remarkDates Plugin', () => {
       expect(result.toString()).toContain('data-field="date.today"');
     });
 
-    it('should use imported-value class for basic @today dates', async () => {
+    it('should use imported-value class for basic {{@today}} dates', async () => {
       const processorWithTracking = unified()
         .use(remarkParse)
         .use(remarkDates, {
@@ -196,11 +196,11 @@ describe('remarkDates Plugin', () => {
         })
         .use(remarkStringify);
 
-      const input = 'Today: @today, Also: @today[legal]';
+      const input = 'Today: {{@today}}, Also: {{@today[legal]}}';
       const result = await processorWithTracking.process(input);
       const output = result.toString();
       
-      // Both dates should have 'imported-value' class since they're basic @today without arithmetic
+      // Both dates should have 'imported-value' class since they're basic {{@today}} without arithmetic
       expect(output).toContain('class="legal-field imported-value"');
       expect(output).toContain('data-field="date.today"');
       expect(output).toContain('data-field="date.todaylegal"');
@@ -208,32 +208,32 @@ describe('remarkDates Plugin', () => {
   });
 
   describe('Date Arithmetic Operations', () => {
-    it('should process @today with addition operations', async () => {
-      const input = 'Payment due: @today+30';
+    it('should process {{@today}} with addition operations', async () => {
+      const input = 'Payment due: {{@today+30}}';
       const result = await processor.process(input);
       
       // 2024-01-15 + 30 days = 2024-02-14
       expect(result.toString().trim()).toBe('Payment due: 2024-02-14');
     });
 
-    it('should process @today with subtraction operations', async () => {
-      const input = 'Document created: @today-7';
+    it('should process {{@today}} with subtraction operations', async () => {
+      const input = 'Document created: {{@today-7}}';
       const result = await processor.process(input);
       
       // 2024-01-15 - 7 days = 2024-01-08
       expect(result.toString().trim()).toBe('Document created: 2024-01-08');
     });
 
-    it('should process @today with month arithmetic', async () => {
-      const input = 'Renewal date: @today+6m';
+    it('should process {{@today}} with month arithmetic', async () => {
+      const input = 'Renewal date: {{@today+6m}}';
       const result = await processor.process(input);
       
       // 2024-01-15 + 6 months = 2024-07-15
       expect(result.toString().trim()).toBe('Renewal date: 2024-07-15');
     });
 
-    it('should process @today with year arithmetic', async () => {
-      const input = 'Contract expires: @today+1y';
+    it('should process {{@today}} with year arithmetic', async () => {
+      const input = 'Contract expires: {{@today+1y}}';
       const result = await processor.process(input);
       
       // 2024-01-15 + 1 year = 2025-01-15
@@ -241,7 +241,7 @@ describe('remarkDates Plugin', () => {
     });
 
     it('should process arithmetic with format specifiers', async () => {
-      const input = 'Due date: @today+30[US]';
+      const input = 'Due date: {{@today+30[US]}}';
       const result = await processor.process(input);
       
       // Should apply arithmetic then format
@@ -250,12 +250,12 @@ describe('remarkDates Plugin', () => {
 
     it('should handle complex arithmetic operations', async () => {
       const testCases = [
-        { input: '@today+365', expected: '2025-01-14' }, // +365 days (not exactly 1 year)
-        { input: '@today-365', expected: '2023-01-15' }, // -365 days
-        { input: '@today+1m', expected: '2024-02-15' },  // +1 month
-        { input: '@today-1m', expected: '2023-12-15' },  // -1 month
-        { input: '@today+1y', expected: '2025-01-15' },  // +1 year
-        { input: '@today-1y', expected: '2023-01-15' },  // -1 year
+        { input: '{{@today+365}}', expected: '2025-01-14' }, // +365 days (not exactly 1 year)
+        { input: '{{@today-365}}', expected: '2023-01-15' }, // -365 days
+        { input: '{{@today+1m}}', expected: '2024-02-15' },  // +1 month
+        { input: '{{@today-1m}}', expected: '2023-12-15' },  // -1 month
+        { input: '{{@today+1y}}', expected: '2025-01-15' },  // +1 year
+        { input: '{{@today-1y}}', expected: '2023-01-15' },  // -1 year
       ];
 
       for (const testCase of testCases) {
@@ -274,7 +274,7 @@ describe('remarkDates Plugin', () => {
         })
         .use(remarkStringify);
 
-      const input = 'Due: @today+30';
+      const input = 'Due: {{@today+30}}';
       const result = await processorWithTracking.process(input);
       
       // Arithmetic operations should get 'highlight' class
@@ -285,7 +285,7 @@ describe('remarkDates Plugin', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid format gracefully', async () => {
-      const input = 'Document dated @today[invalid_format].';
+      const input = 'Document dated {{@today[invalid_format]}}.';
       const result = await processor.process(input);
       
       // Should fall back to ISO format
@@ -293,10 +293,10 @@ describe('remarkDates Plugin', () => {
     });
 
     it('should handle invalid arithmetic gracefully', async () => {
-      const input = 'Invalid: @today+invalid';
+      const input = 'Invalid: {{@today}}+invalid';
       const result = await processor.process(input);
       
-      // Should process @today correctly and leave invalid arithmetic as text
+      // Should process {{@today}} correctly and leave invalid arithmetic as text
       expect(result.toString().trim()).toBe('Invalid: 2024-01-15+invalid');
     });
   });
@@ -305,13 +305,13 @@ describe('remarkDates Plugin', () => {
     it('should process dates in different parts of document', async () => {
       const input = `# Contract
 
-This agreement is effective @today.
+This agreement is effective {{@today}}.
 
 **Payment Terms:**
-- Initial payment: @today[legal]
-- Review date: @today[US]
+- Initial payment: {{@today[legal]}}
+- Review date: {{@today[US]}}
 
-*Note: All dates are in ISO format: @today[ISO]*`;
+*Note: All dates are in ISO format: {{@today[ISO]}}*`;
 
       const result = await processor.process(input);
       const output = result.toString();
@@ -323,7 +323,7 @@ This agreement is effective @today.
     });
 
     it('should process dates in HTML nodes', async () => {
-      const input = 'Document with <em>@today</em> and <strong>@today[US]</strong>';
+      const input = 'Document with <em>{{@today}}</em> and <strong>{{@today[US]}}</strong>';
       const result = await processor.process(input);
       
       const output = result.toString().trim();
@@ -334,8 +334,8 @@ This agreement is effective @today.
 
   describe('Real-world Use Cases', () => {
     it('should handle document dating', async () => {
-      const input = `This contract begins on @today.
-All references are current as of @today[legal].`;
+      const input = `This contract begins on {{@today}}.
+All references are current as of {{@today[legal]}}.`;
 
       const result = await processor.process(input);
       const output = result.toString();
@@ -355,10 +355,10 @@ All references are current as of @today[legal].`;
         .use(remarkStringify);
 
       const input = `Document Information:
-- Date created: @today
-- ISO format: @today[ISO]
-- US format: @today[US]
-- EU format: @today[EU]`;
+- Date created: {{@today}}
+- ISO format: {{@today[ISO]}}
+- US format: {{@today[US]}}
+- EU format: {{@today[EU]}}`;
 
       const result = await processorWithLegal.process(input);
       const output = result.toString();
@@ -367,6 +367,71 @@ All references are current as of @today[legal].`;
       expect(output).toContain('ISO format: 2024-01-15');
       expect(output).toContain('US format: 01/15/2024');
       expect(output).toContain('EU format: 15/01/2024');
+    });
+  });
+
+  describe('Ordinal Suffix Edge Cases (Ported from Old Processor Tests)', () => {
+    it('should handle ordinal suffixes for 1st, 2nd, 3rd correctly', async () => {
+      const dates = [
+        { date: '2024-03-01T10:30:00Z', expected: 'March 1st, 2024' },
+        { date: '2024-03-02T10:30:00Z', expected: 'March 2nd, 2024' },
+        { date: '2024-03-03T10:30:00Z', expected: 'March 3rd, 2024' },
+        { date: '2024-03-04T10:30:00Z', expected: 'March 4th, 2024' },
+      ];
+
+      for (const { date, expected } of dates) {
+        vi.setSystemTime(new Date(date));
+        const input = 'Date: {{@today[legal]}}';
+        const result = await processor.process(input);
+        expect(result.toString().trim()).toBe(`Date: ${expected}`);
+      }
+    });
+
+    it('should handle ordinal teen exceptions (11th, 12th, 13th)', async () => {
+      const dates = [
+        { date: '2024-03-11T10:30:00Z', expected: 'March 11th, 2024' },
+        { date: '2024-03-12T10:30:00Z', expected: 'March 12th, 2024' },
+        { date: '2024-03-13T10:30:00Z', expected: 'March 13th, 2024' },
+      ];
+
+      for (const { date, expected } of dates) {
+        vi.setSystemTime(new Date(date));
+        const input = 'Date: {{@today[legal]}}';
+        const result = await processor.process(input);
+        expect(result.toString().trim()).toBe(`Date: ${expected}`);
+      }
+    });
+
+    it('should handle ordinal suffixes for 21st, 22nd, 23rd correctly', async () => {
+      const dates = [
+        { date: '2024-03-21T10:30:00Z', expected: 'March 21st, 2024' },
+        { date: '2024-03-22T10:30:00Z', expected: 'March 22nd, 2024' },
+        { date: '2024-03-23T10:30:00Z', expected: 'March 23rd, 2024' },
+      ];
+
+      for (const { date, expected } of dates) {
+        vi.setSystemTime(new Date(date));
+        const input = 'Date: {{@today[legal]}}';
+        const result = await processor.process(input);
+        expect(result.toString().trim()).toBe(`Date: ${expected}`);
+      }
+    });
+
+    it('should use inline format override over metadata format', async () => {
+      const processorWithMetadata = unified()
+        .use(remarkParse)
+        .use(remarkDates, {
+          metadata: { 'date-format': 'legal' },
+          debug: false,
+          enableFieldTracking: false,
+        })
+        .use(remarkStringify);
+
+      const input = 'Date: {{@today[US]}}';
+      const result = await processorWithMetadata.process(input);
+
+      // Inline [US] should override the metadata 'legal' format
+      expect(result.toString().trim()).toBe('Date: 01/15/2024');
     });
   });
 });

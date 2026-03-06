@@ -21,7 +21,7 @@ And:
 referred to as "THE LESSEE".
 
 Represented by {{lessee.representative.full_name}} with ID
-{{lessee.representative.id_number ? lessee.representative.id_number : "[ID Required]"}}.
+{{default lessee.representative.id_number "[ID Required]"}}.
 
 ## Property Details
 
@@ -30,7 +30,7 @@ Represented by {{lessee.representative.full_name}} with ID
 - **Parking Spots**: {{property.parking_spots}}
 - **Monthly Rent**: {{payment.monthly_rent.text}}
   ({{payment.monthly_rent.number}})
-  {{payment.currency ? payment.currency : "USD"}}
+  {{default payment.currency "USD"}}
 
 [## Late Payment Clause
 
@@ -39,7 +39,7 @@ month.]{payment.late_fee_applies}
 
 [## Maintenance
 
-The following maintenance services are included: {{#maintenance_included}}
+The following maintenance services are included: {{#if maintenance_included}}
 {{#each maintenance.included_services}}
 
-- {{this}} {{/each}} {{/maintenance_included}}]{maintenance_included}
+- {{this}} {{/each}} {{/if}}]{maintenance_included}

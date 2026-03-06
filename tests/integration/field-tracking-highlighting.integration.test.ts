@@ -9,9 +9,15 @@
  */
 
 import { generateHtml, generatePdf } from '../../src/index';
+import { isPdfAvailable } from '../../src/extensions/generators';
 import { CliService } from '../../src/cli/service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+const pdfAvailable = await isPdfAvailable();
+const describePdf = pdfAvailable ? describe : describe.skip;
+const CLI_PROCESS_TIMEOUT = process.env.CI ? 60_000 : 30_000;
+const CLI_TEST_TIMEOUT = process.env.CI ? 90_000 : 45_000;
 
 describe('Field Tracking vs Highlighting Integration', () => {
   const testContent = `---
@@ -41,7 +47,11 @@ ll. First Section
 lll. First Subsection
 `;
 
-  const outputDir = path.join(__dirname, '../output', `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const outputDir = path.join(
+    __dirname,
+    '../output',
+    `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  );
 
   beforeAll(async () => {
     await fs.mkdir(outputDir, { recursive: true });
@@ -94,11 +104,17 @@ lll. First Subsection
       });
 
       // Only highlighted version should contain highlight CSS
-      expect(htmlWithoutHighlight).not.toContain('border: 1px solid #0066cc');
-      expect(htmlWithoutHighlight).not.toContain('border: 1px solid #dc3545');
+      expect(htmlWithoutHighlight).not.toContain('--highlight-imported-border: #0066cc');
+      expect(htmlWithoutHighlight).not.toContain('--highlight-missing-border: #dc3545');
+      expect(htmlWithoutHighlight).not.toContain(
+        'border: 1px solid var(--highlight-imported-border)'
+      );
+      expect(htmlWithoutHighlight).not.toContain('border: 1px solid var(--highlight-missing-border)');
 
-      expect(htmlWithHighlight).toContain('border: 1px solid #0066cc');
-      expect(htmlWithHighlight).toContain('border: 1px solid #dc3545');
+      expect(htmlWithHighlight).toContain('--highlight-imported-border: #0066cc');
+      expect(htmlWithHighlight).toContain('--highlight-missing-border: #dc3545');
+      expect(htmlWithHighlight).toContain('border: 1px solid var(--highlight-imported-border)');
+      expect(htmlWithHighlight).toContain('border: 1px solid var(--highlight-missing-border)');
     });
 
     it('should include header spans with CSS classes for styling', async () => {
@@ -117,7 +133,7 @@ lll. First Subsection
     });
   });
 
-  describe('PDF Generation', () => {
+  describePdf('PDF Generation', () => {
     it('should always include field tracking classes for both normal and highlight versions', async () => {
       // Use unique file names to avoid conflicts between parallel tests
       const testId = Math.random().toString(36).substr(2, 9);
@@ -149,12 +165,12 @@ lll. First Subsection
         // Both should have content (size > 0)
         const normalStats = await fs.stat(normalPdfPath);
         const highlightStats = await fs.stat(highlightPdfPath);
-        
+
         expect(normalStats.size).toBeGreaterThan(0);
         expect(highlightStats.size).toBeGreaterThan(0);
       } catch (error) {
         console.error('PDF Generation test failed:', error);
-        
+
         // List actual files for debugging
         try {
           const actualFiles = await fs.readdir(outputDir);
@@ -162,13 +178,13 @@ lll. First Subsection
         } catch (listError) {
           console.log('Could not list test directory files:', listError);
         }
-        
+
         throw error;
       }
     }, 60000); // Increase timeout to 60 seconds for PDF generation
   });
 
-  describe('CLI Service Dual Generation', () => {
+  describePdf('CLI Service Dual Generation', () => {
     it('should generate separate normal and highlight versions when highlight flag is used', async () => {
       const cliService = new CliService({
         html: true,
@@ -184,14 +200,22 @@ lll. First Subsection
       // Process with CLI service with timeout
       const baseName = 'field-tracking-test-cli';
       const outputPath = path.join(outputDir, `${baseName}.md`);
-      
+
       try {
         // Add timeout wrapper to prevent hanging
         await Promise.race([
           cliService.processFile(inputPath, outputPath),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('CLI Service timeout after 20 seconds')), 20000)
-          )
+          new Promise((_, reject) =>
+            setTimeout(
+              () =>
+                reject(
+                  new Error(
+                    `CLI Service timeout after ${Math.round(CLI_PROCESS_TIMEOUT / 1000)} seconds`
+                  )
+                ),
+              CLI_PROCESS_TIMEOUT
+            )
+          ),
         ]);
       } catch (error) {
         console.log('CLI Service error:', error);
@@ -216,7 +240,7 @@ lll. First Subsection
       for (const fileName of expectedFiles) {
         const filePath = path.join(outputDir, fileName);
         let fileExists = false;
-        
+
         for (let retry = 0; retry < maxRetries; retry++) {
           try {
             await fs.stat(filePath);
@@ -234,7 +258,7 @@ lll. First Subsection
             await new Promise(resolve => setTimeout(resolve, retryDelay));
           }
         }
-        
+
         expect(fileExists).toBe(true);
       }
 
@@ -244,7 +268,7 @@ lll. First Subsection
       } catch (error) {
         // Ignore if file doesn't exist (already cleaned up)
       }
-    }, 30000); // 30 second timeout
+    }, CLI_TEST_TIMEOUT);
 
     it('should generate only normal versions when highlight flag is not used', async () => {
       const cliService = new CliService({
@@ -261,14 +285,22 @@ lll. First Subsection
       // Process with CLI service with timeout - use base path without extension
       const baseName = 'field-tracking-test-cli-no-highlight';
       const outputPath = path.join(outputDir, baseName);
-      
+
       try {
         // Add timeout wrapper to prevent hanging
         await Promise.race([
           cliService.processFile(inputPath, outputPath),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('CLI Service timeout after 20 seconds')), 20000)
-          )
+          new Promise((_, reject) =>
+            setTimeout(
+              () =>
+                reject(
+                  new Error(
+                    `CLI Service timeout after ${Math.round(CLI_PROCESS_TIMEOUT / 1000)} seconds`
+                  )
+                ),
+              CLI_PROCESS_TIMEOUT
+            )
+          ),
         ]);
       } catch (error) {
         console.log('CLI Service error:', error);
@@ -279,15 +311,9 @@ lll. First Subsection
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Should generate only 2 files: normal versions for HTML and PDF
-      const expectedFiles = [
-        `${baseName}.html`,
-        `${baseName}.pdf`,
-      ];
+      const expectedFiles = [`${baseName}.html`, `${baseName}.pdf`];
 
-      const notExpectedFiles = [
-        `${baseName}.HIGHLIGHT.html`,
-        `${baseName}.HIGHLIGHT.pdf`,
-      ];
+      const notExpectedFiles = [`${baseName}.HIGHLIGHT.html`, `${baseName}.HIGHLIGHT.pdf`];
 
       // Wait for all files to be generated with retry mechanism
       const maxRetries = 15; // 3 seconds total
@@ -296,7 +322,7 @@ lll. First Subsection
       for (const fileName of expectedFiles) {
         const filePath = path.join(outputDir, fileName);
         let fileExists = false;
-        
+
         for (let retry = 0; retry < maxRetries; retry++) {
           try {
             await fs.stat(filePath);
@@ -314,7 +340,7 @@ lll. First Subsection
             await new Promise(resolve => setTimeout(resolve, retryDelay));
           }
         }
-        
+
         expect(fileExists).toBe(true);
       }
 
@@ -329,7 +355,7 @@ lll. First Subsection
       } catch (error) {
         // Ignore if file doesn't exist (already cleaned up)
       }
-    }, 30000); // 30 second timeout
+    }, CLI_TEST_TIMEOUT);
   });
 
   describe('Content Verification', () => {
@@ -345,12 +371,19 @@ lll. First Subsection
       });
 
       // Both should have the same field tracking spans
-      const normalSpans = (normalHtml.match(/<span class="legal-field imported-value"/g) || []).length;
-      const highlightSpans = (highlightHtml.match(/<span class="legal-field imported-value"/g) || []).length;
+      const normalSpans = (normalHtml.match(/<span class="legal-field imported-value"/g) || [])
+        .length;
+      const highlightSpans = (
+        highlightHtml.match(/<span class="legal-field imported-value"/g) || []
+      ).length;
       expect(normalSpans).toBe(highlightSpans);
 
-      const normalMissingSpans = (normalHtml.match(/<span class="legal-field missing-value"/g) || []).length;
-      const highlightMissingSpans = (highlightHtml.match(/<span class="legal-field missing-value"/g) || []).length;
+      const normalMissingSpans = (
+        normalHtml.match(/<span class="legal-field missing-value"/g) || []
+      ).length;
+      const highlightMissingSpans = (
+        highlightHtml.match(/<span class="legal-field missing-value"/g) || []
+      ).length;
       expect(normalMissingSpans).toBe(highlightMissingSpans);
 
       const normalHeaders = (normalHtml.match(/<h[1-6]>/g) || []).length;
@@ -399,9 +432,12 @@ Payments as per |listado-servicios| schedule.
       });
 
       // Should have cross-reference highlights
-      const crossrefHighlights = html.match(/<span class="legal-field highlight"[^>]*data-field="crossref\.[^"]*"[^>]*>[^<]*<\/span>/g) || [];
+      const crossrefHighlights =
+        html.match(
+          /<span class="legal-field highlight"[^>]*data-field="crossref\.[^"]*"[^>]*>[^<]*<\/span>/g
+        ) || [];
       expect(crossrefHighlights.length).toBeGreaterThan(0);
-      
+
       // Headers should not contain pipe keys
       const headersWithPipes = html.match(/<h[1-6][^>]*>[^<]*\|[^|]+\|[^<]*<\/h[1-6]>/g) || [];
       expect(headersWithPipes).toHaveLength(0);
@@ -423,9 +459,12 @@ Payments as per |listado-servicios| schedule.
 
       // Should highlight the template field {{contrato.plazo_meses_prorroga.numero}} -> "2"
       // because it's a processed template field (reasonable length simple var)
-      const highlightedTwos = html.match(/<span[^>]*data-field="contrato\.plazo_meses_prorroga\.numero"[^>]*>2<\/span>/g) || [];
+      const highlightedTwos =
+        html.match(
+          /<span[^>]*data-field="contrato\.plazo_meses_prorroga\.numero"[^>]*>2<\/span>/g
+        ) || [];
       expect(highlightedTwos.length).toBe(1); // Should highlight the template field
-      
+
       // Headers should be clean and properly formatted
       expect(html).toContain('<h2>Art. 1 -');
       expect(html).toContain('<h2>Art. 2 -');
@@ -446,7 +485,7 @@ Payments as per |listado-servicios| schedule.
       // Headers should be present and properly formatted
       const headerElements = html.match(/<h[1-6][^>]*>.*?<\/h[1-6]>/g) || [];
       expect(headerElements.length).toBeGreaterThan(0);
-      
+
       headerElements.forEach(headerElement => {
         // The header element itself should not have visible pipe syntax
         // (cross-references should be processed and highlighted)
@@ -454,11 +493,14 @@ Payments as per |listado-servicios| schedule.
       });
 
       // Check that cross-reference highlights don't break HTML structure
-      const crossrefSpans = html.match(/<span class="legal-field highlight"[^>]*>[^<]*<\/span>/g) || [];
+      const crossrefSpans =
+        html.match(/<span class="legal-field highlight"[^>]*>[^<]*<\/span>/g) || [];
       expect(crossrefSpans.length).toBeGreaterThan(0);
-      
+
       crossrefSpans.forEach(span => {
-        expect(span).toMatch(/<span class="legal-field highlight" data-field="crossref\.[^"]*">[^<]+<\/span>/);
+        expect(span).toMatch(
+          /<span class="legal-field highlight" data-field="crossref\.[^"]*">[^<]+<\/span>/
+        );
       });
     });
 
@@ -470,13 +512,12 @@ Payments as per |listado-servicios| schedule.
 
       // Generate field report would be called internally
       // We verify by checking the expected highlights exist
-      const crossrefFields = [
-        'crossref.objeto-contrato',
-        'crossref.listado-servicios'
-      ];
+      const crossrefFields = ['crossref.objeto-contrato', 'crossref.listado-servicios'];
 
       crossrefFields.forEach(fieldName => {
-        const fieldHighlight = new RegExp(`<span class="legal-field highlight"[^>]*data-field="${fieldName}"[^>]*>[^<]*</span>`);
+        const fieldHighlight = new RegExp(
+          `<span class="legal-field highlight"[^>]*data-field="${fieldName}"[^>]*>[^<]*</span>`
+        );
         expect(html).toMatch(fieldHighlight);
       });
     });

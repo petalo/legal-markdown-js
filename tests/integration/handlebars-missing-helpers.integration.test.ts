@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown as processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 describe('Previously Untested Handlebars Helpers', () => {
   describe('capitalizeWords', () => {
@@ -106,7 +106,7 @@ search: "WORLD"
 {{#if (contains text search)}}Found{{else}}Not found{{/if}}`;
 
       const result = await processLegalMarkdown(content);
-      expect(result.content).toContain('Not found');
+      expect(result.content).toContain('Found');
     });
   });
 

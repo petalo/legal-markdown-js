@@ -60,14 +60,14 @@ dollars) shall be paid within {{payment_terms}} days of the contract date.
 
 This document uses **Handlebars syntax** (current standard):
 
-- Helper functions use space-separated arguments: `{{helper arg1 arg2}}`
-- Subexpressions use parentheses: `{{helper (subhelper arg1) arg2}}`
+- Helper functions use space-separated arguments: `\{\{helper arg1 arg2\}\}`
+- Subexpressions use parentheses: `\{\{helper (subhelper arg1) arg2\}\}`
 - No commas between arguments
 
 **Examples:**
 
-- `{{formatDate today "MMMM Do, YYYY"}}` - Date formatting
-- `{{formatCurrency amount currency}}` - Currency formatting
-- `{{titleCase client_name}}` - String manipulation
-- `{{formatDate (addMonths today 6) "YYYY-MM-DD"}}` - Nested helpers
+- `\{\{formatDate today "MMMM Do, YYYY"\}\}` - Date formatting
+- `\{\{formatCurrency amount currency\}\}` - Currency formatting
+- `\{\{titleCase client_name\}\}` - String manipulation
+- `\{\{formatDate (addMonths today 6) "YYYY-MM-DD"\}\}` - Nested helpers
   (subexpressions)

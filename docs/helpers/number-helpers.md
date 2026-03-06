@@ -12,6 +12,7 @@ Helpers for formatting currency, percentages, and numbers in legal documents.
 - [`formatPercent`](#formatpercent) - Format as percentage
 - [`numberToWords`](#numbertowords) - Convert numbers to words
 - [`round`](#round) - Round to decimal places
+- [`ordinal`](#ordinal) - Ordinal suffix (1st, 2nd, 3rd...)
 
 ---
 
@@ -322,6 +323,43 @@ Rounds a number to a specified number of decimal places.
 
 - Uses standard rounding (0.5 rounds up)
 - Decimal places default to 0 (whole number)
+
+---
+
+## `ordinal`
+
+Converts a number to its ordinal form. Supports English, Spanish, French,
+German, Portuguese, and Italian locales via the `_XX` suffix convention.
+
+### Syntax
+
+```handlebars
+{{ordinal number}}
+```
+
+### Examples
+
+```handlebars
+Payment due on the
+{{ordinal payment_day}}
+of each month. # 15 -> "15th" This is the
+{{ordinal edition}}
+edition of the agreement. # 3 -> "3rd"
+```
+
+### Locale support
+
+Use the `_XX` locale suffix in format strings for localized ordinals:
+
+```handlebars
+El {{ordinal dia}}º dia del mes. # Spanish: 15 -> "15º"
+```
+
+### Notes
+
+- English: 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st...
+- Spanish: 1º, 2º, 3º...
+- French: 1er, 2e, 3e...
 
 ---
 

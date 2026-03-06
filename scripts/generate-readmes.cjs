@@ -41,7 +41,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { EXAMPLE_CONFIG } = require('./migrate-examples');
+const { EXAMPLE_CONFIG } = require('./example-config.cjs');
 
 // Templates detallados para README por tipo
 const README_TEMPLATES = {
@@ -665,7 +665,7 @@ async function generateReadmes() {
 
   const examplesDir = path.resolve('examples');
 
-  for (const [examplePath, config] of Object.entries(EXAMPLE_CONFIG)) {
+  for (const [examplePath] of Object.entries(EXAMPLE_CONFIG)) {
     const fullPath = path.join(examplesDir, examplePath);
     const readmePath = path.join(fullPath, 'README.md');
 

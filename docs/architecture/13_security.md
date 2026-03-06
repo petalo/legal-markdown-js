@@ -30,8 +30,8 @@ and script injection while keeping the CLI/browser experiences predictable.
 - CLI resolves paths relative to the provided `basePath` and rejects missing
   files early
 - The import plugin is limited to markdown documents on disk; future work
-  tracked in `docs/legacy-deprecation-plan.md` covers additional restrictions
-  (e.g., import allowlists)
+  tracked in `plans/2026-03-03-phase2-phase3-span-refactor-plan.md` covers
+  additional restrictions (e.g., import allowlists)
 - Archive manager writes to user-chosen directories but never deletes source
   files
 
@@ -55,3 +55,10 @@ and script injection while keeping the CLI/browser experiences predictable.
 Security is an ongoing effort. Any feature that touches metadata parsing,
 filesystem access or external execution should start with a threat analysis and
 update this document with new mitigations.
+
+## YAML Safety Limits
+
+- MAX_YAML_SIZE: 1MB
+- MAX_YAML_DEPTH: 20
+- MAX_YAML_ALIAS_REFS: 100 Circular import detection uses canonical path
+  resolution (maxDepth=10).

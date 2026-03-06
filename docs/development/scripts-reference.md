@@ -100,6 +100,9 @@ npm run test:integration
 
 # Run only end-to-end tests
 npm run test:e2e
+
+# Run Playwright smoke tests for the web playground (not part of CI)
+npm run test:playground:ui
 ```
 
 ### Test with Specific Patterns
@@ -279,8 +282,8 @@ npm audit fix
 ### Web Development
 
 ```bash
-# Build and serve web version
-npm run web
+# Start web playground in dev mode
+npm run dev:web
 
 # Serve existing build (smart port detection)
 npm run web:serve
@@ -291,11 +294,14 @@ npm run web:serve -- --port=3000
 # Serve custom directory
 npm run web:serve -- --dir=examples
 
-# Build UMD bundle for web
-npm run build:umd
-
 # Build standalone web bundle
 npm run build:web
+
+# Development: copy browser bundle + start Vite dev server on :5173
+npm run dev:web
+
+# Same as dev:web but on port 5174 (no auto-open)
+npm run dev:web:server
 ```
 
 **Features of `web:serve`:**

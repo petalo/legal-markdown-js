@@ -31,5 +31,5 @@ syntax in the same document.
 
 ## 💡 Learn more
 
-- [Header Syntax Guide](../../../docs/headers.md)
-- [Style Mixing](../../../docs/advanced-headers.md)
+- [Header Syntax Guide](../../../docs/features/headers-numbering.md)
+- [Custom Headers](../../../docs/advanced/custom-headers.md)

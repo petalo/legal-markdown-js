@@ -129,10 +129,7 @@ invalidDate: "not-a-date"
 
 Date: {{formatDate invalidDate "US"}}`;
 
-      const result = await processLegalMarkdown(input);
-
-      // Should handle gracefully without crashing
-      expect(result.content).toBeDefined();
+      await expect(processLegalMarkdown(input)).rejects.toThrow();
     });
 
     it('should handle missing helper arguments', async () => {
@@ -169,7 +166,7 @@ No items found
     it('should handle large arrays (100+ items)', async () => {
       const items = Array.from({ length: 150 }, (_, i) => ({
         id: i + 1,
-        name: `Item ${i + 1}`
+        name: `Item ${i + 1}`,
       }));
 
       const input = `---
@@ -233,7 +230,7 @@ NotEmpty: "{{notEmpty}}"`;
 
       const result = await processLegalMarkdown(input);
 
-      expect(result.content).toContain('Empty: ""');
+      expect(result.content).toContain('Empty: "{{empty}}"');
       expect(result.content).toContain('NotEmpty: "value"');
     });
 
@@ -479,7 +476,7 @@ Content: {{html}}`;
       // Note: We render to markdown first, then to HTML
       // So HTML in variables passes through at markdown stage
       // Final HTML escaping happens during HTML generation
-      expect(result.content).toContain("<script>alert('test')</script>");
+      expect(result.content).toContain("\\<script>alert('test')\\</script>");
     });
 
     it('should handle very long variable names', async () => {

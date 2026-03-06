@@ -111,6 +111,29 @@ See [String Transformations](./string-transformations.md) for detailed
 documentation and decision tree for when to use string transforms vs AST
 plugins.
 
+### Experimental AST-First Field Tracking (Phase 2 -> Phase 3)
+
+Two optional flags can be enabled to route field tracking through internal
+tokens instead of legacy inline spans generated directly in Phase 2:
+
+- `astFieldTracking`
+- `logicBranchHighlighting`
+
+When `astFieldTracking` is enabled:
+
+1. Phase 2 emits internal tags (`<lm-field>`, `<lm-logic-start>`,
+   `<lm-logic-end>`) rather than final `<span class="legal-field ...">`.
+2. Phase 3 converts those tags into final tracking spans while resolving
+   remaining `{{...}}` fields in the same AST pass.
+3. Legacy span-heuristic guards are bypassed in this route.
+
+When both flags are enabled and field tracking is on, winner conditional
+branches (`#if` / `#unless`) are annotated with:
+
+- `data-field="logic.branch.N"` (stable DFS order)
+- `data-logic-helper="if|unless"`
+- `data-logic-result="true|false"`
+
 ## Phase 3 - AST Processing
 
 Phase 3 uses the existing remark processor from
@@ -215,7 +238,7 @@ Templates using Handlebars syntax benefit from:
 - Native loop helpers: `{{@index}}`, `{{@first}}`, `{{@last}}`
 - 30+ registered helpers (date, number, string, math)
 
-See `docs/handlebars-helpers-reference.md` for complete reference.
+See `docs/helpers/README.md` for complete reference.
 
 #### Legacy Expression Evaluation (Deprecated)
 
@@ -367,9 +390,10 @@ for scenarios where only markdown is requested.
 - New helpers (`buildProcessingContext`, `applyStringTransformations`,
   `generateAllFormats`, `processAndGenerateFormats`) provide clear integration
   points for upcoming API layers or background workers
-- Legacy pipeline code paths tracked in `docs/legacy-deprecation-plan.md` can be
-  migrated incrementally by swapping in the four-phase helpers without touching
-  business logic
+- Legacy pipeline code paths tracked in
+  `plans/2026-03-03-phase2-phase3-span-refactor-plan.md` can be migrated
+  incrementally by swapping in the four-phase helpers without touching business
+  logic
 - **Issue #149:** The `remarkClauses` plugin has been removed. Optional clauses
   are now processed in Phase 2 (String Transformations), enabling proper
   handling of multi-line content with markdown formatting

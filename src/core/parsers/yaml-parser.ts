@@ -38,7 +38,8 @@
 
 import * as yaml from 'js-yaml';
 import { YamlParsingResult } from '../../types';
-import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-date-helpers';
+import type { YamlValue } from '../../types';
+import { YamlParsingError } from '../../errors';
 
 // ============================================================================
 // CUSTOM YAML SCHEMA FOR ISO DATE PARSING
@@ -58,6 +59,7 @@ import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-
  */
 const DateType = new yaml.Type('tag:yaml.org,2002:timestamp', {
   kind: 'scalar',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- js-yaml TypeConstructorOptions requires any
   resolve: (data: any) => {
     if (typeof data === 'string') {
       // Match ISO date patterns: YYYY-MM-DD or full ISO datetime
@@ -66,16 +68,18 @@ const DateType = new yaml.Type('tag:yaml.org,2002:timestamp', {
     }
     return false;
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- js-yaml TypeConstructorOptions requires any
   construct: (data: any) => {
     // Parse ISO string to Date object
     const date = new Date(data);
     // Validate that the date is valid
     if (isNaN(date.getTime())) {
-      throw new Error(`Invalid date: ${data}`);
+      throw new YamlParsingError(`Invalid date: ${data}`, { data });
     }
     return date;
   },
   instanceOf: Date,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- js-yaml TypeConstructorOptions requires any
   represent: (data: any) => {
     if (data instanceof Date) {
       return data.toISOString();
@@ -88,6 +92,10 @@ const DateType = new yaml.Type('tag:yaml.org,2002:timestamp', {
  * Custom YAML schema extending default schema with ISO date parsing
  */
 const LEGAL_MARKDOWN_SCHEMA = yaml.DEFAULT_SCHEMA.extend([DateType]);
+
+const MAX_YAML_SIZE = 1024 * 1024;
+const MAX_YAML_DEPTH = 20;
+const MAX_YAML_ALIAS_REFS = 100;
 
 /**
  * Parses YAML Front Matter from a markdown document
@@ -149,8 +157,25 @@ export function parseYamlFrontMatter(
   }
 
   // Extract YAML content
-  let yamlContent = content.substring(3, endDelimiterIndex).trim();
+  const rawYamlContent = content.substring(3, endDelimiterIndex).trim();
+  let yamlContent = rawYamlContent;
   const remainingContent = content.substring(endDelimiterIndex + 3).trim();
+
+  if (Buffer.byteLength(rawYamlContent, 'utf8') > MAX_YAML_SIZE) {
+    throw new YamlParsingError(`YAML frontmatter exceeds maximum size of ${MAX_YAML_SIZE} bytes`, {
+      safetyLimit: true,
+      limit: 'size',
+      max: MAX_YAML_SIZE,
+    });
+  }
+
+  const aliasReferenceCount = countYamlAliasReferences(rawYamlContent);
+  if (aliasReferenceCount > MAX_YAML_ALIAS_REFS) {
+    throw new YamlParsingError(
+      `YAML frontmatter exceeds maximum alias references (${MAX_YAML_ALIAS_REFS})`,
+      { safetyLimit: true, limit: 'aliasRefs', max: MAX_YAML_ALIAS_REFS }
+    );
+  }
 
   // Process @today references in YAML content before parsing
   yamlContent = processDateReferencesInYaml(yamlContent);
@@ -159,7 +184,15 @@ export function parseYamlFrontMatter(
     // Parse YAML with custom schema that auto-parses ISO dates
     const metadata = yaml.load(yamlContent, {
       schema: LEGAL_MARKDOWN_SCHEMA,
-    }) as Record<string, any>;
+    }) as Record<string, YamlValue>;
+
+    if (getYamlDepth(metadata) > MAX_YAML_DEPTH) {
+      throw new YamlParsingError(`YAML frontmatter exceeds maximum depth of ${MAX_YAML_DEPTH}`, {
+        safetyLimit: true,
+        limit: 'depth',
+        max: MAX_YAML_DEPTH,
+      });
+    }
 
     // Handle empty YAML
     if (!metadata || typeof metadata !== 'object') {
@@ -174,9 +207,13 @@ export function parseYamlFrontMatter(
       metadata,
     };
   } catch (error) {
+    if (error instanceof YamlParsingError && error.context?.safetyLimit === true) {
+      throw error;
+    }
+
     if (throwOnError) {
       // Throw error for CLI to handle
-      throw new Error(
+      throw new YamlParsingError(
         `Invalid YAML Front Matter: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     } else {
@@ -189,6 +226,34 @@ export function parseYamlFrontMatter(
       };
     }
   }
+}
+
+function countYamlAliasReferences(yamlContent: string): number {
+  const aliasPattern = /(?:^|[\s[\]{},])\*[A-Za-z0-9_-]+/gm;
+  return yamlContent.match(aliasPattern)?.length ?? 0;
+}
+
+function getYamlDepth(value: unknown, currentDepth = 0): number {
+  if (value === null || value === undefined || typeof value !== 'object') {
+    return currentDepth;
+  }
+
+  const nextDepth = currentDepth + 1;
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return nextDepth;
+    }
+
+    return Math.max(...value.map(item => getYamlDepth(item, nextDepth)));
+  }
+
+  const objectValues = Object.values(value);
+  if (objectValues.length === 0) {
+    return nextDepth;
+  }
+
+  return Math.max(...objectValues.map(item => getYamlDepth(item, nextDepth)));
 }
 
 /**
@@ -223,7 +288,7 @@ export function parseYamlFrontMatter(
  * //     role: Client
  * ```
  */
-export function serializeToYaml(metadata: Record<string, any>): string {
+export function serializeToYaml(metadata: Record<string, YamlValue>): string {
   try {
     return yaml.dump(metadata);
   } catch (error) {
@@ -266,7 +331,7 @@ export function serializeToYaml(metadata: Record<string, any>): string {
  * // }
  * ```
  */
-export function extractMetadataOutputConfig(metadata: Record<string, any>): {
+export function extractMetadataOutputConfig(metadata: Record<string, YamlValue>): {
   yamlOutput?: string;
   jsonOutput?: string;
   outputPath?: string;
@@ -280,63 +345,25 @@ export function extractMetadataOutputConfig(metadata: Record<string, any>): {
   };
 }
 
-/**
- * Parse arithmetic operation from date token
- */
-function parseArithmetic(
-  operation: string
-): { type: 'days' | 'months' | 'years'; amount: number } | null {
-  if (!operation) return null;
-
-  const match = operation.match(/^([+-])(\d+)([dmy]?)$/);
-  if (!match) {
-    // Simple number without suffix defaults to days
-    const simpleMatch = operation.match(/^([+-])(\d+)$/);
-    if (simpleMatch) {
-      const [, sign, amount] = simpleMatch;
-      return {
-        type: 'days',
-        amount: parseInt(amount) * (sign === '-' ? -1 : 1),
-      };
-    }
-    return null;
-  }
-
-  const [, sign, amount, suffix] = match;
-  const numAmount = parseInt(amount) * (sign === '-' ? -1 : 1);
-
-  switch (suffix) {
-    case 'd':
-    case '':
-      return { type: 'days', amount: numAmount };
-    case 'm':
-      return { type: 'months', amount: numAmount };
-    case 'y':
-      return { type: 'years', amount: numAmount };
-    default:
-      return { type: 'days', amount: numAmount };
-  }
-}
-
 // Date arithmetic functionality is now handled by the remark dates plugin
 
 /**
- * Processes @today references in YAML content before parsing
+ * Processes `@today` references in YAML content before parsing.
  *
- * Replaces @today references with properly formatted date strings that are valid YAML.
- * Supports arithmetic operations like @today+365 or @today-30 and format specifiers.
- * This prevents YAML parsing errors when @today is used in frontmatter.
+ * Replaces `@today` references with properly formatted date strings that are valid YAML.
+ * Supports arithmetic operations like `@today+365` or `@today-30` and format specifiers.
+ * This prevents YAML parsing errors when `@today` is used in frontmatter.
  *
  * @private
- * @param {string} yamlContent - The raw YAML content containing @today references
- * @returns {string} YAML content with @today references replaced by actual dates
+ * @param {string} yamlContent - The raw YAML content containing `@today` references.
+ * @returns {string} YAML content with `@today` references replaced by actual dates.
  * @example
  * ```typescript
  * const yamlContent = `
  * title: Document
- * date: @today
- * deadline: @today+365
- * start_date: @today-30[long]
+ * date: "@today"
+ * deadline: "@today+365"
+ * start_date: "@today-30[long]"
  * `;
  *
  * const processed = processDateReferencesInYaml(yamlContent);
@@ -442,8 +469,15 @@ function formatDateForYaml(date: Date, format: string): string {
         // For any other format, default to ISO
         return `${year}-${month}-${day}`;
     }
-  } catch (error) {
+  } catch (_error) {
     // Fallback to ISO format if there's an error
     return date.toISOString().split('T')[0];
   }
 }
+
+// Exported for testing - not part of public API
+export {
+  getYamlDepth as _getYamlDepth,
+  processDateReferencesInYaml as _processDateReferencesInYaml,
+  formatDateForYaml as _formatDateForYaml,
+};

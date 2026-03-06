@@ -49,6 +49,7 @@ describe('Format Helper Utilities', () => {
         outputFormats: {
           html: true,
           pdf: true,
+          docx: false,
           markdown: false,
           metadata: true,
         },
@@ -81,6 +82,7 @@ describe('Format Helper Utilities', () => {
         outputFormats: {
           html: true,
           pdf: false,
+          docx: false,
           markdown: true,
           metadata: false,
         },
@@ -110,6 +112,7 @@ describe('Format Helper Utilities', () => {
         outputFormats: {
           html: false,
           pdf: true,
+          docx: false,
           markdown: false,
           metadata: false,
         },
@@ -137,6 +140,7 @@ describe('Format Helper Utilities', () => {
         outputFormats: {
           html: false,
           pdf: true,
+          docx: false,
           markdown: false,
           metadata: false,
         },
@@ -165,6 +169,7 @@ describe('Format Helper Utilities', () => {
         outputFormats: {
           html: false,
           pdf: true,
+          docx: false,
           markdown: false,
           metadata: false,
         },

@@ -8,15 +8,13 @@
 
 import * as path from 'path';
 import { LegalMarkdownOptions } from '../../types';
-import { CliService } from '../service';
 import { RESOLVED_PATHS } from '../../constants/index';
 import { InteractiveConfig, ProcessingResult } from './types';
 import { ArchiveManager } from '../../utils/archive-manager';
 import { readFileSync } from '../../utils/index';
-import { processLegalMarkdown } from '../../index';
 import {
   buildProcessingContext,
-  processLegalMarkdownWithRemark,
+  processLegalMarkdown,
   generateAllFormats,
   buildFormatGenerationOptions,
 } from '../../core/pipeline';
@@ -69,6 +67,7 @@ export class InteractiveService {
     verbose?: boolean;
     pdf?: boolean;
     html?: boolean;
+    docx?: boolean;
     highlight?: boolean;
     css?: string;
     title?: string;
@@ -96,6 +95,7 @@ export class InteractiveService {
       verbose: processingOptions.debug,
       pdf: outputFormats.pdf,
       html: outputFormats.html,
+      docx: outputFormats.docx,
       highlight: processingOptions.highlight,
       enableFieldTrackingInMarkdown: processingOptions.fieldTracking,
       css: cssFile ? path.join(RESOLVED_PATHS.STYLES_DIR, cssFile) : undefined,
@@ -143,7 +143,7 @@ export class InteractiveService {
       const context = await buildProcessingContext(content, processingOptions, inputDir);
 
       // PHASE 2: Process content ONCE (runs remark pipeline, caches AST)
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata, // Pass YAML metadata for header processing
       });
@@ -157,6 +157,7 @@ export class InteractiveService {
         baseFilename: outputFilename,
         pdf: outputFormats.pdf,
         html: outputFormats.html,
+        docx: outputFormats.docx,
         markdown: outputFormats.markdown && !archiveOptions.enabled, // Skip if archiving
         metadata: outputFormats.metadata,
         highlight: processingOptions.highlight,

@@ -21,7 +21,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { buildProcessingContext, generateAllFormats } from '../../src/core/pipeline';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 
 // TODO: Uncomment when pdf-parse is installed
 // import pdfParse from 'pdf-parse';
@@ -81,7 +81,7 @@ Final content.`;
       const context = await buildProcessingContext(content, {}, testDir);
 
       // PHASE 2: Process content
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata,
         noIndent: true,
@@ -120,7 +120,7 @@ This is **bold** and this is *italic*.
 - List item 2`;
 
       const context = await buildProcessingContext(content, {}, testDir);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata,
         noIndent: true,
@@ -170,7 +170,7 @@ This agreement is between {{party_a}} and {{party_b}}.
 The total amount is {{amount}}.`;
 
       const context = await buildProcessingContext(content, {}, testDir);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata,
         noIndent: true,
@@ -216,7 +216,7 @@ ll. Subheader
 Nested content.`;
 
       const context = await buildProcessingContext(content, {}, testDir);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         additionalMetadata: context.metadata,
         noIndent: true,
@@ -270,7 +270,7 @@ Nested content.`;
 **Bold text** and *italic text*.`;
 
       const context = await buildProcessingContext(content, {}, testDir);
-      const processedResult = await processLegalMarkdownWithRemark(context.content, {
+      const processedResult = await processLegalMarkdown(context.content, {
         ...context.options,
         noIndent: true,
       });

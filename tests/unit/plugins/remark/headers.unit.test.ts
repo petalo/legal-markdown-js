@@ -42,9 +42,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'Article %n.',
           'level-two': 'Section %n.',
-          'level-three': '(%n)'
+          'level-three': '(%n)',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -59,9 +59,9 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -76,9 +76,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'Article %n.',
           'level-four': '(%n%c)',
-          'level-five': '(%n%c%r)'
+          'level-five': '(%n%c%r)',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -94,13 +94,13 @@ describe('remarkHeaders Plugin', () => {
       const input = `l. Title\n\nll. Subtitle`;
       const options: RemarkHeadersOptions = {
         metadata: {},
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
 
-      expect(result).toContain('# {{undefined-level-1}} Title');
-      expect(result).toContain('## {{undefined-level-2}} Subtitle');
+      expect(result).toContain('# 1. Title');
+      expect(result).toContain('## 1. Subtitle');
     });
 
     it('should respect custom level formats', async () => {
@@ -109,9 +109,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'I.',
           'level-two': 'A.',
-          'level-three': '1.'
+          'level-three': '1.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -125,10 +125,10 @@ describe('remarkHeaders Plugin', () => {
       const input = `l. Title\n\nll. Subtitle`;
       const options: RemarkHeadersOptions = {
         metadata: {
-          'level_one': 'Article',
-          'level_two': 'Section'
+          level_one: 'Article',
+          level_two: 'Section',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -142,17 +142,17 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
           // level-four will use default '(%n%c)'
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
 
       expect(result).toContain('# Article 1. Title');
       expect(result).toContain('## Section 1. Subtitle');
-      expect(result).toContain('#### {{undefined-level-4}} Deep Header'); // Uses undefined template
+      expect(result).toContain('#### 1. Deep Header');
     });
   });
 
@@ -163,9 +163,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'Article %n.',
           'level-two': 'Section %n.',
-          'level-three': '(%n)'
+          'level-three': '(%n)',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -173,11 +173,11 @@ describe('remarkHeaders Plugin', () => {
       // Should increment level-one numbers
       expect(result).toMatch(/# Article 1\. First/);
       expect(result).toMatch(/# Article 2\. Second/);
-      
+
       // Should increment level-two numbers
       expect(result).toMatch(/## Section 1\. Sub One/);
       expect(result).toMatch(/## Section 2\. Sub Two/);
-      
+
       // Should have level-three
       expect(result).toMatch(/### \(1\) Deep/);
     });
@@ -187,9 +187,9 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -197,8 +197,10 @@ describe('remarkHeaders Plugin', () => {
       // After "Part Two", Section A should be reset to first Section.
       const lines = result.split('\n');
       const partTwoIndex = lines.findIndex(line => line.includes('Part Two'));
-      const sectionAAfterPartTwo = lines.slice(partTwoIndex).find(line => line.includes('Section A'));
-      
+      const sectionAAfterPartTwo = lines
+        .slice(partTwoIndex)
+        .find(line => line.includes('Section A'));
+
       expect(sectionAAfterPartTwo).toContain('Section 1. Section A');
     });
 
@@ -207,10 +209,10 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
         noReset: true,
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -227,9 +229,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'Article %n.',
           'level-two': 'Section %n.',
-          'level-three': '(%n)'
+          'level-three': '(%n)',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -245,9 +247,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'Article %n.',
           'level-two': 'Section %n.',
-          'level-three': '(%n)'
+          'level-three': '(%n)',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -264,9 +266,9 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -281,9 +283,9 @@ describe('remarkHeaders Plugin', () => {
         metadata: {
           'level-one': 'll.',
           'level-two': 'I.',
-          'level-three': '1.'
+          'level-three': '1.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -300,9 +302,9 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -317,9 +319,9 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -334,10 +336,10 @@ describe('remarkHeaders Plugin', () => {
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
         noIndent: true,
-        debug: true
+        debug: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -350,9 +352,9 @@ describe('remarkHeaders Plugin', () => {
       const input = `llllll. Level 6`;
       const options: RemarkHeadersOptions = {
         metadata: {
-          'level-six': 'Part %n.'
+          'level-six': 'Part %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -367,9 +369,9 @@ describe('remarkHeaders Plugin', () => {
       const input = `l. Test Header`;
       const options: RemarkHeadersOptions = {
         metadata: {
-          'level-one': 'Article %n.'
+          'level-one': 'Article %n.',
         },
-        debug: true
+        debug: true,
       };
 
       // Capture console.log calls
@@ -389,9 +391,9 @@ describe('remarkHeaders Plugin', () => {
       const input = `l. Test Header`;
       const options: RemarkHeadersOptions = {
         metadata: {
-          'level-one': 'Article %n.'
+          'level-one': 'Article %n.',
         },
-        debug: false
+        debug: false,
       };
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -431,9 +433,9 @@ Final thoughts.
         metadata: {
           'level-one': 'Article',
           'level-two': 'Section',
-          'level-three': 'Subsection'
+          'level-three': 'Subsection',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -442,7 +444,7 @@ Final thoughts.
       expect(result).toContain('## Section Background');
       expect(result).toContain('### Subsection Technical Details');
       expect(result).toContain('## Section Conclusion');
-      
+
       // Non-header content should be preserved
       expect(result).toContain('This is a paragraph');
       expect(result).toContain('- List item 1');
@@ -457,9 +459,9 @@ Final thoughts.
           'level-one': 'I.',
           'level-two': 'A.',
           'level-three': '1.',
-          'level-four': 'a.'
+          'level-four': 'a.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const result = await processMarkdownWithHeaders(input, options);
@@ -481,9 +483,9 @@ Final thoughts.
 
       const options: RemarkHeadersOptions = {
         metadata: {
-          'level-one': 'Article %n.'
+          'level-one': 'Article %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       const startTime = Date.now();
@@ -502,9 +504,9 @@ Final thoughts.
       const options: RemarkHeadersOptions = {
         metadata: {
           'level-one': 'Article %n.',
-          'level-two': 'Section %n.'
+          'level-two': 'Section %n.',
         },
-        noIndent: true
+        noIndent: true,
       };
 
       // Process the same document multiple times
@@ -516,6 +518,155 @@ Final thoughts.
 
       // If we get here without running out of memory, the test passes
       expect(true).toBe(true);
+    });
+  });
+
+  describe('Edge Cases Ported from Old Processor Tests', () => {
+    it('should handle skip-level numbering (l. then lll. skipping ll.)', async () => {
+      const input = `l. Level 1\n\nlll. Level 3 skipped 2\n\nl. Level 1 again\n\nll. Level 2\n\nllll. Level 4 skipped 3`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': 'Article %n.',
+          'level-two': 'Section %n.',
+          'level-three': '(%n)',
+          'level-four': '(%n%c)',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# Article 1. Level 1');
+      expect(result).toContain('### (1) Level 3 skipped 2');
+      expect(result).toContain('# Article 2. Level 1 again');
+      expect(result).toContain('## Section 1. Level 2');
+      expect(result).toContain('#### (1a) Level 4 skipped 3');
+    });
+
+    it('should pass through malformed header notation (missing dot after l)', async () => {
+      const input = `l. Valid header\n\nl Invalid header without dot\n\nll. Another valid header`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': 'Article %n.',
+          'level-two': 'Section %n.',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# Article 1. Valid header');
+      // Malformed header should remain as a paragraph, not be processed
+      expect(result).toContain('l Invalid header without dot');
+      expect(result).toContain('## Section 1. Another valid header');
+    });
+
+    it('should handle headers with special characters in text', async () => {
+      const input = `l. Header with "quotes" and symbols!\n\nll. Header with numbers 123 and $%^\n\nlll. Header with unicode chars`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': 'Article %n.',
+          'level-two': 'Section %n.',
+          'level-three': '(%n)',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# Article 1. Header with "quotes" and symbols!');
+      expect(result).toContain('## Section 1. Header with numbers 123 and $%^');
+      expect(result).toContain('### (1) Header with unicode chars');
+    });
+
+    it('should handle outline numbering with Roman, alphabetic, and numeric mixed', async () => {
+      const input = `l. Major Topic One\n\nll. Subtopic A\n\nlll. Point One\n\nllll. Subpoint A\n\nlllll. Detail One\n\nlllll. Detail Two\n\nllll. Subpoint B\n\nlll. Point Two\n\nll. Subtopic B\n\nl. Major Topic Two`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': '%r.',
+          'level-two': '%c.',
+          'level-three': '%n.',
+          'level-four': '%c)',
+          'level-five': '(%n)',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# i. Major Topic One');
+      expect(result).toContain('## a. Subtopic A');
+      expect(result).toContain('### 1. Point One');
+      expect(result).toContain('#### a) Subpoint A');
+      expect(result).toContain('##### (1) Detail One');
+      expect(result).toContain('##### (2) Detail Two');
+      expect(result).toContain('#### b) Subpoint B');
+      expect(result).toContain('### 2. Point Two');
+      expect(result).toContain('## b. Subtopic B');
+      expect(result).toContain('# ii. Major Topic Two');
+    });
+
+    it('should handle angle-bracket style header formats', async () => {
+      const input = `l. Introduction\n\nll. Background\n\nlll. Context\n\nllll. Historical\n\nlllll. Ancient Period`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': '%n)',
+          'level-two': '%n.%l1)',
+          'level-three': '[%n]',
+          'level-four': '{%n%c}',
+          'level-five': '<%n%c%r>',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# 1) Introduction');
+      expect(result).toContain('## 1.1) Background');
+      // remark-stringify escapes square brackets, so [1] becomes \[1]
+      expect(result).toContain('### \\[1] Context');
+      expect(result).toContain('#### {1a} Historical');
+      expect(result).toContain('##### <1ai> Ancient Period');
+    });
+
+    it('should cap invalid header levels beyond level 6', async () => {
+      const input = `l. Valid Level 1\n\nll. Valid Level 2\n\nllllllllll. Invalid Level 10`;
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': 'Article %n.',
+          'level-two': 'Section %n.',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# Article 1. Valid Level 1');
+      expect(result).toContain('## Section 1. Valid Level 2');
+      // Invalid level (>6) should not be processed as a heading
+      // It may remain as paragraph text or be capped
+      const lines = result.split('\n');
+      const level10Line = lines.find(l => l.includes('Invalid Level 10'));
+      // Should not have more than 6 # marks
+      if (level10Line && level10Line.startsWith('#')) {
+        const hashCount = (level10Line.match(/^#+/) || [''])[0].length;
+        expect(hashCount).toBeLessThanOrEqual(6);
+      }
+    });
+
+    it('should support leading zero numbering via %02n format', async () => {
+      const input = Array.from({ length: 11 }, (_, i) => `l. Item ${i + 1}`).join('\n\n');
+      const options: RemarkHeadersOptions = {
+        metadata: {
+          'level-one': '%02n.',
+        },
+        noIndent: true,
+      };
+
+      const result = await processMarkdownWithHeaders(input, options);
+
+      expect(result).toContain('# 01. Item 1');
+      expect(result).toContain('# 11. Item 11');
     });
   });
 });

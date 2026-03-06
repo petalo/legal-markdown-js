@@ -1,0 +1,5 @@
+_cross_references: []
+_field_mappings: {}
+amount: 2500
+currency: USD
+include_payment: true

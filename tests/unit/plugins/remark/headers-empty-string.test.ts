@@ -42,14 +42,14 @@ lll. Third Level`;
     const options: RemarkHeadersOptions = {
       metadata: {
         'level-1': 'Article %n.',
-        'level-2': '',  // Empty string - should be treated as valid
-        'level-3': 'Section %n.'
+        'level-2': '', // Empty string - should be treated as valid
+        'level-3': 'Section %n.',
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
+
     expect(result).toContain('# Article 1. First Level');
     // Should NOT contain undefined-level-2, should just have empty prefix
     expect(result).not.toContain('{{undefined-level-2}}');
@@ -66,20 +66,20 @@ llll. Four`;
     const options: RemarkHeadersOptions = {
       metadata: {
         'level-1': 'Chapter %n:',
-        'level-2': '',      // Empty string
+        'level-2': '', // Empty string
         // level-3 not defined (undefined)
-        'level-4': '   '    // Whitespace only
+        'level-4': '   ', // Whitespace only
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
+
     expect(result).toContain('# Chapter 1: One');
-    expect(result).toContain('## &#x20;Two');  // Empty string prefix becomes encoded space
+    expect(result).toContain('## &#x20;Two'); // Empty string prefix becomes encoded space
     expect(result).not.toContain('## {{undefined-level-2}}');
-    expect(result).toContain('### {{undefined-level-3}} Three');  // Undefined
-    expect(result).toContain('####     Four');  // Whitespace preserved
+    expect(result).toContain('### 1. Three');
+    expect(result).toContain('####     Four'); // Whitespace preserved
   });
 
   it('should handle empty string with numbering variables', async () => {
@@ -90,15 +90,15 @@ ll. Sub Two`;
     const options: RemarkHeadersOptions = {
       metadata: {
         'level-1': 'Part %n:',
-        'level-2': '%n. '  // Just the number and dot
+        'level-2': '%n. ', // Just the number and dot
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
+
     expect(result).toContain('# Part 1: Main');
-    expect(result).toContain('## 1.  Sub One');  // Note the extra space after dot
+    expect(result).toContain('## 1.  Sub One'); // Note the extra space after dot
     expect(result).toContain('## 2.  Sub Two');
   });
 
@@ -111,30 +111,30 @@ lllll. Test Five`;
 
     const options: RemarkHeadersOptions = {
       metadata: {
-        'level-1': '',         // Empty string
-        'level-2': null,       // Explicit null
-        'level-3': undefined,  // Explicit undefined
+        'level-1': '', // Empty string
+        'level-2': null, // Explicit null
+        'level-3': undefined, // Explicit undefined
         // level-4 not present (implicit undefined)
-        'level-5': '(%n)'      // Normal format
+        'level-5': '(%n)', // Normal format
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
+
     // Empty string - encoded space prefix
     expect(result).toContain('# &#x20;Test One');
     expect(result).not.toContain('# {{undefined-level-1}}');
-    
+
     // Null - undefined template
-    expect(result).toContain('## {{undefined-level-2}} Test Two');
-    
-    // Explicit undefined - undefined template  
-    expect(result).toContain('### {{undefined-level-3}} Test Three');
-    
+    expect(result).toContain('## 1. Test Two');
+
+    // Explicit undefined - undefined template
+    expect(result).toContain('### 1. Test Three');
+
     // Not present - undefined template
-    expect(result).toContain('#### {{undefined-level-4}} Test Four');
-    
+    expect(result).toContain('#### 1. Test Four');
+
     // Normal format
     expect(result).toContain('##### (1) Test Five');
   });
@@ -145,14 +145,14 @@ ll. Header Two`;
 
     const options: RemarkHeadersOptions = {
       metadata: {
-        'level-one': '',      // Empty string with dash format
-        'level_two': ''       // Empty string with underscore format
+        'level-one': '', // Empty string with dash format
+        level_two: '', // Empty string with underscore format
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
+
     expect(result).toContain('# &#x20;Header One');
     expect(result).toContain('## &#x20;Header Two');
     expect(result).not.toContain('{{undefined-level-');
@@ -167,14 +167,14 @@ lll. Subsection with reference |key|`;
       metadata: {
         'level-1': '%n. ',
         'level-2': '',
-        'level-3': '- '
+        'level-3': '- ',
       },
-      noIndent: true
+      noIndent: true,
     };
 
     const result = await processMarkdownWithHeaders(input, options);
-    
-    expect(result).toContain('# 1.  Article');  // Note extra space after dot
+
+    expect(result).toContain('# 1.  Article'); // Note extra space after dot
     expect(result).toContain('## &#x20;Section');
     expect(result).toContain('### -  Subsection with reference');
   });

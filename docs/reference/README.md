@@ -13,7 +13,7 @@ Additional reference materials and resources for Legal Markdown JS.
 ### External Resources
 
 - [CLI Reference](../cli_reference.md) - Complete command-line documentation
-- [Architecture](../architecture.md) - Technical system architecture
+- [Architecture](../ARCHITECTURE.md) - Technical system architecture
 - [Getting Started](../getting_started.md) - Quick start guide
 
 ### Security Topics

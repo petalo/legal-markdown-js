@@ -36,6 +36,8 @@
 import { logger } from '../../utils/logger';
 import { FieldStatus } from '../../core/tracking/field-state';
 import type { TrackedField } from '../../core/tracking/field-state';
+import { fieldSpan } from './field-span';
+import type { YamlValue } from '../../types';
 
 // Re-export for compatibility
 export { FieldStatus };
@@ -70,7 +72,6 @@ export type { TrackedField };
  */
 export class FieldTracker {
   private fields: Map<string, TrackedField> = new Map();
-  private processedContent: string = '';
   private totalOccurrences: number = 0;
 
   /**
@@ -117,8 +118,8 @@ export class FieldTracker {
   trackField(
     fieldName: string,
     options: {
-      value?: any;
-      originalValue?: any;
+      value?: YamlValue;
+      originalValue?: YamlValue;
       hasLogic?: boolean;
       mixinUsed?: string;
     }
@@ -181,7 +182,13 @@ export class FieldTracker {
           field.value !== undefined && field.value !== null && field.value !== ''
             ? String(field.value)
             : match; // Keep the original pattern for empty fields
-        return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${value}</span>`;
+        const kind =
+          cssClass === 'legal-field missing-value'
+            ? 'missing'
+            : cssClass === 'legal-field highlight'
+              ? 'highlight'
+              : 'imported';
+        return fieldSpan(fieldName, value, kind);
       });
 
       // For fields with specific values, apply highlighting based on field logic, not value characteristics
@@ -225,7 +232,13 @@ export class FieldTracker {
               // Apply highlighting to this text part
               const escapedValue = this.escapeRegex(fieldValue);
               parts[i] = textPart.replace(new RegExp(escapedValue, 'g'), match => {
-                return `<span class="${cssClass}" data-field="${fieldName.replace(/"/g, '&quot;')}">${match}</span>`;
+                const kind =
+                  cssClass === 'legal-field missing-value'
+                    ? 'missing'
+                    : cssClass === 'legal-field highlight'
+                      ? 'highlight'
+                      : 'imported';
+                return fieldSpan(fieldName, match, kind);
               });
             }
           }
@@ -235,7 +248,6 @@ export class FieldTracker {
       }
     });
 
-    this.processedContent = processedContent;
     return processedContent;
   }
 
@@ -292,7 +304,7 @@ export class FieldTracker {
     empty: number;
     logic: number;
     fields: TrackedField[];
-    // eslint-disable-next-line indent
+     
   } {
     const fields = Array.from(this.fields.values());
 
@@ -310,7 +322,6 @@ export class FieldTracker {
    */
   clear(): void {
     this.fields.clear();
-    this.processedContent = '';
     this.totalOccurrences = 0;
   }
 }

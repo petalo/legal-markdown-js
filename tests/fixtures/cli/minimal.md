@@ -1,0 +1,5 @@
+---
+title: Minimal
+---
+
+Hello world.

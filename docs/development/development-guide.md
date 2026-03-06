@@ -369,7 +369,7 @@ For other editors, ensure:
 
 ## Path Aliases
 
-Configured in `tsconfig.json` and Jest:
+Configured in `tsconfig.json` and Vitest:
 
 ```typescript
 // Instead of relative imports
@@ -377,8 +377,8 @@ import { LegalMarkdownError } from '../../errors';
 
 // Use clean aliases
 import { LegalMarkdownError } from '@errors';
-import { processHeaders } from '@core/processors/header-processor';
-import { validateDocument } from '@extensions/validators';
+import { PATHS } from '@constants';
+import { logger } from '@utils/logger';
 ```
 
 **Available aliases**:
@@ -387,9 +387,10 @@ import { validateDocument } from '@extensions/validators';
 - `@types` → `src/types.ts`
 - `@extensions/*` → `src/extensions/*`
 - `@cli/*` → `src/cli/*`
-- `@lib` → `src/lib/index.ts`
 - `@constants` → `src/constants/index.ts`
 - `@errors` → `src/errors/index.ts`
+- `@utils/*` → `src/utils/*`
+- `@plugins/*` → `src/plugins/*`
 
 ## Monitoring and Analytics
 

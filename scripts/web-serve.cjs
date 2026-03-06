@@ -32,7 +32,7 @@ function isPortAvailable(port) {
  * @param {number} maxTries - Maximum number of ports to try
  * @returns {Promise<number|null>} - Available port number or null if none found
  */
-async function findAvailablePort(startPort = 8080, maxTries = 10) {
+async function findAvailablePort(startPort = 7891, maxTries = 10) {
   for (let i = 0; i < maxTries; i++) {
     const port = startPort + i;
     if (await isPortAvailable(port)) {
@@ -47,8 +47,8 @@ async function findAvailablePort(startPort = 8080, maxTries = 10) {
  * @param {string} directory - Directory to serve
  * @param {number} preferredPort - Preferred port to start with
  */
-async function startWebServer(directory = 'dist/web', preferredPort = 8080) {
-  const webDir = path.resolve(process.cwd(), directory);
+async function startWebServer(directory = 'dist/web', preferredPort = 7891) {
+  const webDir = path.resolve(__dirname, '..', directory);
   
   console.log(`🔍 Looking for available port starting from ${preferredPort}...`);
   
@@ -173,7 +173,7 @@ const args = process.argv.slice(2);
 const portArg = args.find(arg => arg.startsWith('--port='));
 const dirArg = args.find(arg => arg.startsWith('--dir='));
 
-const preferredPort = portArg ? parseInt(portArg.split('=')[1]) : 8080;
+const preferredPort = portArg ? parseInt(portArg.split('=')[1]) : 7891;
 const directory = dirArg ? dirArg.split('=')[1] : 'dist/web';
 
 // Validate port

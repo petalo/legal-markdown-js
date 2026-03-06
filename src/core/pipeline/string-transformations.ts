@@ -27,6 +27,9 @@
  *
  * Transformation Order:
  * ────────────────────
+ * 0. Collect escaped template literals: \{{...}} → __LMESC_N__ placeholder
+ *    (Must happen before everything - prevents \{{}} from being processed)
+ *
  * 1. Normalize field patterns: |field| → {{field}}
  *    (Must happen before Handlebars compilation)
  *
@@ -42,19 +45,27 @@
  */
 
 import { processTemplateLoops } from '../../extensions/template-loops';
+import { logger } from '../../utils/logger';
+import type { YamlValue } from '../../types';
 
 /**
  * Options for string-level transformations
  */
-export interface StringTransformationOptions {
+interface StringTransformationOptions {
   /** Document metadata for condition evaluation and variable expansion */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
 
   /** Enable debug logging */
   debug?: boolean;
 
   /** Enable field tracking (passed to template loops) */
   enableFieldTracking?: boolean;
+
+  /** Use AST-first tracking tokens instead of direct spans in Phase 2 */
+  astFieldTracking?: boolean;
+
+  /** Highlight winner branches for conditional logic */
+  logicBranchHighlighting?: boolean;
 
   /** Disable optional clause processing */
   noClauses?: boolean;
@@ -66,12 +77,19 @@ export interface StringTransformationOptions {
 /**
  * Result of string transformations
  */
-export interface StringTransformationResult {
+interface StringTransformationResult {
   /** Transformed content ready for remark AST parsing */
   content: string;
 
   /** Updated metadata (includes field mappings and other tracked data) */
-  metadata: Record<string, any>;
+  metadata: Record<string, YamlValue>;
+
+  /**
+   * Literal template strings collected from \{{...}} escape sequences.
+   * Index N corresponds to placeholder __LMESC_N__ in content.
+   * Must be restored after remark processing.
+   */
+  escapedTemplates: string[];
 }
 
 /**
@@ -116,6 +134,26 @@ export async function applyStringTransformations(
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // Step 0: Collect Escaped Template Literals
+  // ──────────────────────────────────────────────────────────────────────────
+  // \{{...}} is the escape syntax for literal {{...}} in the output.
+  // Replace each occurrence with a unique placeholder __LMESC_N__ so it
+  // passes through Handlebars, remark, and remarkTemplateFields untouched.
+  // The caller restores the placeholders after remark processing.
+  const escapedTemplates: string[] = [];
+  processedContent = processedContent.replace(/\\\{\{([^{}]+)\}\}/g, (_, inner) => {
+    const idx = escapedTemplates.length;
+    escapedTemplates.push(`{{${inner}}}`);
+    return `__LMESC_${idx}__`;
+  });
+
+  if (escapedTemplates.length > 0) {
+    logger.debug(
+      `[String Transformations] Collected ${escapedTemplates.length} escaped template literal(s)`
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // Step 1: Normalize Field Patterns
   // ──────────────────────────────────────────────────────────────────────────
   // Convert custom field patterns (like |field|, <<field>>) to standard {{field}} format
@@ -126,7 +164,7 @@ export async function applyStringTransformations(
     options.debug
   );
   processedContent = normalized;
-  metadata['_field_mappings'] = mappings;
+  metadata['_field_mappings'] = mappings as unknown as YamlValue;
 
   if (options.debug && mappings.size > 0) {
     console.log(`[String Transformations] Normalized ${mappings.size} custom field patterns`);
@@ -162,11 +200,16 @@ export async function applyStringTransformations(
     console.log('[String Transformations] Processing template loops (Handlebars)');
   }
 
+  const astFieldTracking = options.astFieldTracking ?? false;
+  const logicBranchHighlighting = options.logicBranchHighlighting ?? false;
+
   processedContent = processTemplateLoops(
     processedContent,
     metadata,
     undefined, // context (for nested loops)
-    options.enableFieldTracking || false
+    options.enableFieldTracking || false,
+    astFieldTracking,
+    logicBranchHighlighting
   );
 
   if (options.debug) {
@@ -177,6 +220,7 @@ export async function applyStringTransformations(
   return {
     content: processedContent,
     metadata,
+    escapedTemplates,
   };
 }
 
@@ -300,7 +344,7 @@ function normalizeFieldPatterns(
  */
 function preprocessOptionalClauses(
   content: string,
-  metadata: Record<string, any>,
+  metadata: Record<string, YamlValue>,
   debug: boolean = false
 ): string {
   // Regex to match optional clauses: [content]{condition}
@@ -350,3 +394,9 @@ function preprocessOptionalClauses(
 
   return processedContent;
 }
+
+// Exported for testing - not part of public API
+export {
+  normalizeFieldPatterns as _normalizeFieldPatterns,
+  preprocessOptionalClauses as _preprocessOptionalClauses,
+};

@@ -34,5 +34,5 @@ Importing external markdown files into documents using the @import syntax.
 
 ## 💡 Learn more
 
-- [Import System Guide](../../../docs/imports.md)
-- [Modular Documents](../../../docs/modular-design.md)
+- [Partial Imports Guide](../../../docs/features/partial-imports.md)
+- [Best Practices](../../../docs/advanced/best-practices.md)

@@ -44,15 +44,19 @@ graph LR
 | `tests/unit/cli/interactive/service.test.ts`                    | Tests interactive CLI mapping and archiving behaviour                               |
 | `tests/integration/legacy-remark-parity.integration.test.ts`    | Guards compatibility with historical remark outputs                                 |
 | `tests/e2e` scripts                                             | Generate PDF/HTML artefacts for manual review (run on demand)                       |
+| `tests/playground/playground.spec.ts`                           | Playwright UI smoke tests for the web playground (6 scenarios, not in CI)           |
 
 All suites run under Vitest; heavier PDF/visual checks are opt-in via env flags.
 
 ## Tooling & Configuration
 
-- `vitest.config.ts` introduces path aliases and coverage instrumentation via
-  `@vitest/coverage-v8`
+- `vitest.config.ts` defines project groups (`unit/integration`, `e2e`,
+  `golden`, and `web`) and introduces path aliases and coverage instrumentation
+  via `@vitest/coverage-v8`
 - `npm run test`, `npm run test:unit`, `npm run test:integration`,
-  `npm run test:plugins` provide targeted entry points
+  `npm run test:e2e` provide targeted entry points
+- `npm run test:playground:ui` - Playwright smoke tests for the web playground
+  (not part of CI; run manually after `npm run build:web`)
 - `npm run typecheck` (`tsc --noEmit`) runs alongside tests in CI to keep typing
   honest
 - Coverage thresholds are enforced by Vitest configuration (see `package.json`
@@ -73,12 +77,19 @@ same sequence in prerelease checks.
 
 ## Data & Fixtures
 
-- Fixtures live under `tests/fixtures` and `tests/shared` for cross-suite reuse
+- Fixtures live under `tests/fixtures` for cross-suite reuse
 - Integration suites create temporary directories for output inspection and
   clean them up after runs
-- Visual/E2E tests place generated artefacts under `tmp/` or `dist/tests` for
+- Visual/E2E tests place generated artefacts under `tmp/` or `tests/output/` for
   manual inspection, ensuring they do not pollute source control
 
 Testing discipline focuses on guarding pipeline invariants (single remark run,
 plugin order, deterministic output) while keeping regression coverage for legacy
 constraints.
+
+## Golden Test Harness
+
+- 38+ fixtures in tests/golden/fixtures/
+- Runner: tests/golden/runner.test.ts
+- Regenerate: UPDATE_GOLDEN=1 npx vitest run tests/golden/
+- Naming: NN-feature-scenario/

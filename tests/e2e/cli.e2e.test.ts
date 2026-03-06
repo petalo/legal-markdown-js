@@ -107,7 +107,7 @@ Content for stdout.`;
         throw new Error('Should have thrown an error');
       } catch (error: any) {
         expect(error.code).toBe(1);
-        expect(error.stderr).toContain('Input file not found');
+        expect(error.stderr).toContain('File not found:');
       }
     });
   });
@@ -449,7 +449,7 @@ Cross reference: |client|
         throw new Error('Should have thrown an error');
       } catch (error: any) {
         expect(error.code).toBe(1);
-        expect(error.stderr).toContain('Input file not found');
+        expect(error.stderr).toContain('File not found:');
       }
     });
 

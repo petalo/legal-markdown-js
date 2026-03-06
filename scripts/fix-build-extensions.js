@@ -8,8 +8,8 @@
  * 3. Updates package.json references in CJS files
  */
 
-import { readdir, rename, readFile, writeFile } from 'fs/promises';
-import { join, extname, basename } from 'path';
+import { readdir, rename, readFile, writeFile, access } from 'fs/promises';
+import { join, extname, basename, dirname } from 'path';
 
 const ROOT_DIR = process.cwd();
 const DIST_DIR = join(ROOT_DIR, 'dist');
@@ -48,6 +48,19 @@ async function copyFile(src, dest) {
   }
 }
 
+async function findFirstExistingPath(candidates) {
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Continue to next candidate.
+    }
+  }
+
+  return null;
+}
+
 async function main() {
   console.log('🔧 Post-processing dual build...');
 
@@ -59,17 +72,21 @@ async function main() {
   // Step 2: Copy main entry points
   console.log('\n📋 Copying entry points...');
 
-  // Copy CJS entry point to dist/ (from src subdirectory after renaming)
-  const cjsCopySuccess = await copyFile(
+  // CJS outputs may live at dist-cjs/index.cjs (current) or dist-cjs/src/index.cjs (legacy)
+  const cjsEntryPath = await findFirstExistingPath([
+    join(DIST_CJS_DIR, 'index.cjs'),
     join(DIST_CJS_DIR, 'src', 'index.cjs'),
-    join(DIST_DIR, 'index.cjs')
-  );
+  ]);
 
-  // Copy CJS types from src subdirectory - only if CJS copy succeeded
-  if (cjsCopySuccess) {
-    await copyFile(join(DIST_CJS_DIR, 'src', 'index.d.ts'), join(DIST_DIR, 'index.d.ts'));
+  const cjsCopySuccess = cjsEntryPath
+    ? await copyFile(cjsEntryPath, join(DIST_DIR, 'index.cjs'))
+    : false;
+
+  // Copy CJS types from the same directory as the resolved CJS entry
+  if (cjsCopySuccess && cjsEntryPath) {
+    await copyFile(join(dirname(cjsEntryPath), 'index.d.ts'), join(DIST_DIR, 'index.d.ts'));
   } else {
-    // If src/index doesn't exist, skip silently (handled by new dual build)
+    // If CJS entry doesn't exist, skip silently (handled by new dual build)
     console.log('CJS entry point copy skipped - using ESM-generated types');
   }
 

@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 import { PluginOrderValidator } from '../../src/plugins/remark/plugin-order-validator';
 import { GLOBAL_PLUGIN_REGISTRY } from '../../src/plugins/remark/plugin-metadata-registry';
 
@@ -30,7 +30,7 @@ describe('Plugin Order Validation - Integration', () => {
 
 Some content here.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
       });
 
@@ -44,7 +44,7 @@ Some content here.`;
 
 Some content here.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         debug: true,
       });
 
@@ -63,7 +63,7 @@ l. Introduction
 
 Content with {{field}}.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
         additionalMetadata: {
           field: 'value',
@@ -86,7 +86,6 @@ Content with {{field}}.`;
         'remarkImports',
         'remarkLegalHeadersParser',
         'remarkMixins',
-        'remarkClauses',
         'remarkDates',
         'remarkSignatureLines',
         'remarkTemplateFields',
@@ -198,7 +197,7 @@ ll. Second Level Header
 
 This is content.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
         additionalMetadata: {
           'level-one': 'Article %n.',
@@ -219,7 +218,7 @@ Reference to |key|.
 
 Template field: {{name}}.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
         additionalMetadata: {
           name: 'Test Name',
@@ -251,7 +250,7 @@ Date: @today
 
 Signature: __________________________________________`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
         debug: false, // Don't spam console
         additionalMetadata: {
@@ -277,7 +276,7 @@ Signature: __________________________________________`;
     it('should handle processing with minimal plugins enabled', async () => {
       const content = `Simple content without special features.`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
         noHeaders: true,
         noReferences: true,
@@ -292,7 +291,7 @@ Signature: __________________________________________`;
     it('should handle empty content', async () => {
       const content = '';
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         validatePluginOrder: true,
       });
 
@@ -307,7 +306,7 @@ Signature: __________________________________________`;
 Content`;
 
       await expect(
-        processLegalMarkdownWithRemark(content, {
+        processLegalMarkdown(content, {
           validatePluginOrder: true,
         })
       ).resolves.toBeDefined();
@@ -319,7 +318,7 @@ Content`;
       const content = `l. Test`;
 
       // With validation enabled
-      await processLegalMarkdownWithRemark(content, {
+      await processLegalMarkdown(content, {
         validatePluginOrder: true,
       });
 
@@ -330,7 +329,7 @@ Content`;
     it('should skip validation when both debug and validatePluginOrder are false', async () => {
       const content = `l. Test`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         debug: false,
         validatePluginOrder: false,
       });
@@ -342,7 +341,7 @@ Content`;
     it('should validate when debug is true even if validatePluginOrder is false', async () => {
       const content = `l. Test`;
 
-      const result = await processLegalMarkdownWithRemark(content, {
+      const result = await processLegalMarkdown(content, {
         debug: true,
         validatePluginOrder: false,
       });

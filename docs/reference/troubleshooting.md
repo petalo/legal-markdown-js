@@ -658,13 +658,11 @@ legal-md --debug-config document.md
 ```json
 // ❌ Bad: Invalid JSON
 {
-  "outputFormat": "pdf",
   "enableFieldTracking": true,  // Trailing comma
 }
 
 // ✅ Good: Valid JSON
 {
-  "outputFormat": "pdf",
   "enableFieldTracking": true
 }
 

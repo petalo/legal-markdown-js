@@ -1,7 +1,7 @@
 ---
 # Handlebars Helper Functions Example
 # This example demonstrates the current Handlebars syntax for helper functions
-# See items-list-legacy.md for the deprecated legacy syntax
+# See docs/handlebars-migration.md for the deprecated legacy syntax
 amount: 50000
 client_name: 'john doe'
 company_name: 'ACME corp'
@@ -56,14 +56,14 @@ Date: {{formatDate today "DD/MM/YYYY"}}
 ## Syntax Notes
 
 This document uses **Handlebars syntax** (current standard since v3.5.0):
-- Helper functions use space-separated arguments: `{{helper arg1 arg2}}`
-- Subexpressions use parentheses: `{{helper (subhelper arg1) arg2}}`
+- Helper functions use space-separated arguments: `\{\{helper arg1 arg2\}\}`
+- Subexpressions use parentheses: `\{\{helper (subhelper arg1) arg2\}\}`
 - No commas between arguments
 
 **Examples:**
-- `{{formatDate today "MMMM Do, YYYY"}}` - Date formatting
-- `{{formatCurrency amount currency}}` - Currency formatting
-- `{{titleCase client_name}}` - String manipulation
-- `{{formatDate (addMonths today 6) "YYYY-MM-DD"}}` - Nested helpers (subexpressions)
+- `\{\{formatDate today "MMMM Do, YYYY"\}\}` - Date formatting
+- `\{\{formatCurrency amount currency\}\}` - Currency formatting
+- `\{\{titleCase client_name\}\}` - String manipulation
+- `\{\{formatDate (addMonths today 6) "YYYY-MM-DD"\}\}` - Nested helpers (subexpressions)
 
-For the deprecated legacy syntax `{{helper(arg1, arg2)}}`, see [items-list-legacy.md](items-list-legacy.md).
+For the deprecated legacy syntax `\{\{helper(arg1, arg2)\}\}`, see [Handlebars migration guide](../../../docs/handlebars-migration.md).

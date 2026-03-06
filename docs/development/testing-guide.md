@@ -77,11 +77,11 @@ const mockFn = vi.fn();
 ```bash
 # Fast test execution (recommended for development)
 npm test                     # Run all tests with Vitest
-npm run test:run            # Run tests once (CI mode)
+npm run test:ci             # Run tests once (CI mode)
 
 # Development-focused commands
-npm run test:fast           # Only changed files
-npm run test:changed        # Only changed files since HEAD~1
+npm run test:changed        # Only changed files
+npm run test:staged         # Only staged files (pre-commit)
 npm run test:watch          # Watch mode with instant feedback
 npm run test:ui             # Interactive UI for test debugging
 
@@ -89,9 +89,14 @@ npm run test:ui             # Interactive UI for test debugging
 npm run test:unit           # Unit tests only (fastest)
 npm run test:integration    # Integration tests
 npm run test:e2e           # End-to-end tests
-npm run test:core          # Core functionality tests
-npm run test:plugins       # Plugin tests
+npm run test:pdf:backends  # Validate Puppeteer + WeasyPrint prerequisites
+npx vitest run tests/unit/plugins # Plugin-focused tests
 ```
+
+> `npm run test:e2e` and `npm run test:ci` run a PDF-backend precheck and
+> validate PDF generation with explicit `--pdf-connector puppeteer` and
+> `--pdf-connector weasyprint` paths. Ensure both backends are available on your
+> machine/CI before running.
 
 ### Coverage and CI
 
@@ -108,17 +113,17 @@ npm run test:ci            # CI-specific optimizations
 ```bash
 # Staged files only (pre-commit)
 npm run test:staged        # Test only staged files with bail
-npm run test:related       # Test files related to specific changes
+npm run test:changed       # Test files related to specific changes
 ```
 
 ## Performance Tips
 
 ### For Development
 
-1. **Use `npm run test:fast`** for quick feedback during development
+1. **Use `npm run test:changed`** for quick feedback during development
 2. **Use `npm run test:changed`** when working on specific features
 3. **Avoid coverage collection** during active development
-4. **Use `npm run test:core`** when working on core functionality
+4. **Use `npm run test:unit`** when working on core functionality
 
 ### For CI/CD
 
@@ -187,8 +192,8 @@ NODE_ENV=development npm test
 
 ### Issue: Module resolution errors
 
-**Solution**: Check path mappings in `tsconfig.test.json` and `moduleNameMapper`
-in jest config
+**Solution**: Check path mappings in `tsconfig.test.json` and aliases in
+`vitest.config.ts`
 
 ### Issue: Coverage collection too slow
 

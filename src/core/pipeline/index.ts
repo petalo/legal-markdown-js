@@ -27,48 +27,16 @@ export {
   buildProcessingContext,
   mergeMetadata,
   validateProcessingContext,
-  ProcessingContext,
-  ProcessingOptions,
 } from './context-builder';
+export type { ProcessingContext, ProcessingOptions } from '../../types';
 
 // Phase 2: String Transformations
-export {
-  applyStringTransformations,
-  StringTransformationOptions,
-  StringTransformationResult,
-} from './string-transformations';
+export { applyStringTransformations } from './string-transformations';
 
 // Phase 3: AST Processing (uses existing legal-markdown-processor)
-export {
-  processLegalMarkdownWithRemark,
-  LegalMarkdownProcessorResult,
-} from '../../extensions/remark/legal-markdown-processor';
+export { processLegalMarkdown } from '../../extensions/remark/legal-markdown-processor';
+export type { LegalMarkdownProcessorResult } from '../../extensions/remark/legal-markdown-processor';
 
 // Phase 4: Format Generation
-export {
-  generateAllFormats,
-  processAndGenerateFormats,
-  buildFormatGenerationOptions,
-  FormatGenerationOptions,
-  FormatGenerationResult,
-} from './format-generator';
-
-// Pipeline Builder (Phase-based plugin ordering)
-export {
-  buildRemarkPipeline,
-  detectValidationMode,
-  groupPluginsByPhase,
-  validateCapabilities,
-  OrderedPipeline,
-  PipelineConfig,
-  ValidationOptions,
-} from './pipeline-builder';
-
-// Preprocessor Adapters (String-based processing integration)
-export {
-  PreprocessorAdapter,
-  PreprocessorPluginOptions,
-  wrapPreprocessor,
-} from './preprocessor-adapter';
-
-export { templateLoopsAdapter, remarkTemplateLoops, TemplateLoopsOptions } from './loops-adapter';
+export { generateAllFormats, buildFormatGenerationOptions } from './format-generator';
+export type { FormatGenerationOptions, FormatGenerationResult } from './format-generator';

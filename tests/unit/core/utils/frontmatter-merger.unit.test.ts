@@ -18,7 +18,8 @@ import {
   mergeSequentially,
   MergeValidationError,
   MergeOptions,
-  MergeResult
+  MergeResult,
+  _checkNestedConflicts
 } from '../../../../src/core/utils/frontmatter-merger';
 
 describe('Frontmatter Merger', () => {
@@ -494,6 +495,67 @@ describe('Frontmatter Merger', () => {
         currency: 'USD'                // Legitimate field added
         // All malicious reserved fields filtered out
       });
+    });
+  });
+
+  describe('checkNestedConflicts', () => {
+    it('should detect conflict when import primitive collides with current nested keys', () => {
+      // current has 'config.debug', import tries to set 'config' as a primitive
+      const currentFlat: Record<string, unknown> = {
+        'config.debug': true,
+        'config.level': 'high',
+      };
+
+      const result = _checkNestedConflicts('config', 'some-string', currentFlat, false);
+
+      expect(result.hasConflict).toBe(true);
+      expect(result.conflictedField).toBe('config');
+    });
+
+    it('should detect conflict when import nested key collides with current primitive', () => {
+      // current has 'enabled' as primitive, import tries to set 'enabled.verbose'
+      const currentFlat: Record<string, unknown> = {
+        enabled: true,
+      };
+
+      const result = _checkNestedConflicts('enabled.verbose', 'yes', currentFlat, false);
+
+      expect(result.hasConflict).toBe(true);
+      expect(result.conflictedField).toBe('enabled');
+    });
+
+    it('should report no conflict for compatible values', () => {
+      // current has 'config.debug', import adds 'theme' (no overlap)
+      const currentFlat: Record<string, unknown> = {
+        'config.debug': true,
+        title: 'Doc',
+      };
+
+      const result = _checkNestedConflicts('theme', 'dark', currentFlat, false);
+
+      expect(result.hasConflict).toBe(false);
+      expect(result.conflictedField).toBe('');
+    });
+
+    it('should detect deep nesting conflicts', () => {
+      // current has 'a.b.c.d' as a leaf, import tries to set 'a' as primitive
+      const currentFlat: Record<string, unknown> = {
+        'a.b.c.d': 42,
+      };
+
+      const result = _checkNestedConflicts('a', 'primitive-value', currentFlat, false);
+
+      expect(result.hasConflict).toBe(true);
+      expect(result.conflictedField).toBe('a');
+    });
+
+    it('should report no conflict for empty current flat object', () => {
+      const currentFlat: Record<string, unknown> = {};
+
+      const result = _checkNestedConflicts('anything', 'value', currentFlat, false);
+
+      expect(result.hasConflict).toBe(false);
+      expect(result.conflictedField).toBe('');
     });
   });
 

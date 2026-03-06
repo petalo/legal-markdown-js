@@ -32,12 +32,11 @@ import { marked } from 'marked';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import beautify from 'js-beautify';
-const { html: beautifyHtml } = beautify;
 import { logger } from '../../utils/logger';
 import { RESOLVED_PATHS } from '../../constants/index';
 import type { MarkdownString, HtmlString } from '../../types/content-formats';
 import { isHtml } from '../../types/content-formats';
+import { configureMarkedForLegal, formatHtml } from '../../utils/html-format';
 
 /**
  * Configuration options for HTML generation
@@ -53,8 +52,8 @@ export interface HtmlGeneratorOptions {
   includeHighlighting?: boolean;
   /** Document title for the HTML page */
   title?: string;
-  /** Additional metadata to include in HTML head */
-  metadata?: Record<string, string>;
+  /** Additional metadata to include in HTML head (only primitive values are rendered as meta tags) */
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -82,33 +81,24 @@ export class HtmlGenerator {
   }
 
   /**
-   * Configures the marked markdown parser with options optimized for legal documents
+   * Configures the marked markdown parser with options optimized for legal documents.
+   * Uses shared configuration from html-format.ts, then adds the Node-specific
+   * custom code renderer for preserving HTML spans in code blocks.
    *
    * @private
    */
   private configureMarked(): void {
-    // Configure marked options
-    marked.setOptions({
-      gfm: true,
-      breaks: true,
-      pedantic: false,
-    });
+    // Shared config: GFM, breaks, silent
+    configureMarkedForLegal();
 
-    // Create custom renderer to preserve HTML in code blocks
+    // Node-specific: custom code renderer that preserves HTML spans in code blocks
     const renderer = new marked.Renderer();
-
-    // Override code block renderer to preserve HTML spans
     renderer.code = function (args: { text: string; lang?: string; escaped?: boolean }) {
-      // Don't escape HTML tags - let them render as actual HTML
       const { text, lang } = args;
       const language = lang || '';
       const className = language ? ` class="language-${language}"` : '';
-
-      // Return the code with HTML preserved (not escaped)
       return `<pre><code${className}>${text}</code></pre>\n`;
     };
-
-    // Set the custom renderer
     marked.setOptions({ renderer });
   }
 
@@ -218,17 +208,10 @@ export class HtmlGenerator {
       // Remove YAML frontmatter if present
       const contentWithoutFrontmatter = this.removeYamlFrontmatter(markdownContent);
 
-      // WORKAROUND REMOVED: No longer need to unescape \< and \> (Issue #119)
-      // Previously, remarkStringify would escape HTML as \< and \> when converting
-      // AST back to markdown, requiring this unescape step. With AST-based imports,
-      // HTML nodes are preserved in the AST and don't go through string escaping.
-
-      // Convert markdown to HTML directly (no pre-processing needed)
+      // Convert markdown to HTML
       let htmlContent = await marked.parse(contentWithoutFrontmatter);
 
-      // Post-process: unescape specific HTML tags that were escaped in imported content
-      // Legacy behavior: imported content may be inserted as text causing HTML to escape
-      // We need to unescape certain structural tags like page-break divs
+      // Post-process: unescape structural HTML tags (e.g., page-break divs) that were escaped in imported content
       htmlContent = this.unescapeStructuralTags(htmlContent);
 
       // Load and manipulate with cheerio
@@ -255,20 +238,8 @@ export class HtmlGenerator {
         metadata: options.metadata,
       });
 
-      // Format the HTML for consistent output
-      const formattedHtml = beautifyHtml(completeHtml, {
-        indent_size: 2,
-        indent_char: ' ',
-        max_preserve_newlines: 2,
-        preserve_newlines: true,
-        indent_scripts: 'normal',
-        end_with_newline: true,
-        wrap_line_length: 0,
-        indent_inner_html: true,
-        unformatted: ['pre', 'code'],
-        content_unformatted: ['pre', 'script', 'style'],
-        extra_liners: ['head', 'body', '/html'],
-      });
+      // Format the HTML using shared configuration (same as browser bundle)
+      const formattedHtml = formatHtml(completeHtml);
 
       logger.debug('HTML generation completed', {
         htmlLength: formattedHtml.length,
@@ -369,7 +340,7 @@ export class HtmlGenerator {
     body: string;
     css: string;
     title: string;
-    metadata?: Record<string, string>;
+    metadata?: Record<string, unknown>;
     useDefaultCss?: boolean;
   }): Promise<string> {
     const { body, css, title, metadata = {}, useDefaultCss = true } = options;
@@ -381,9 +352,14 @@ export class HtmlGenerator {
       defaultCss = await this.loadCss(defaultCssPath);
     }
 
-    // Build metadata tags
+    // Build metadata tags - only include primitive values (objects/arrays/Maps
+    // would serialize as "[object Object]" which is useless in a meta tag)
     const metaTags = Object.entries(metadata)
-      .map(([name, content]) => `    <meta name="${name}" content="${content}">`)
+      .filter(
+        ([, value]) =>
+          typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+      )
+      .map(([name, value]) => `    <meta name="${name}" content="${String(value)}">`)
       .join('\n');
 
     return `<!DOCTYPE html>
@@ -409,8 +385,7 @@ ${body}
   /**
    * Unescape specific structural HTML tags that were escaped in imported content
    *
-   * Legacy behavior: remarkImports may insert content as text, causing HTML tags to be escaped.
-   * We selectively unescape certain structural tags that are needed for styling and page breaks.
+   * Selectively unescapes certain structural tags that are needed for styling and page breaks.
    *
    * Tags unescaped:
    * - <div class="page-break-before"></div>
@@ -458,3 +433,25 @@ ${body}
  */
 // Export singleton instance
 export const htmlGenerator = new HtmlGenerator();
+
+// Exported for testing - not part of public API
+// These wrap private HtmlGenerator methods for unit test access
+const _testInstance = new HtmlGenerator();
+export function _removeYamlFrontmatter(content: string): string {
+  return (_testInstance as unknown as { removeYamlFrontmatter: (c: string) => string }).removeYamlFrontmatter(content);
+}
+export function _applyDomTransformations($: cheerio.CheerioAPI): void {
+  (_testInstance as unknown as { applyDomTransformations: ($: cheerio.CheerioAPI) => void }).applyDomTransformations($);
+}
+export function _buildHtmlDocument(options: {
+  body: string;
+  css: string;
+  title: string;
+  metadata?: Record<string, unknown>;
+  useDefaultCss?: boolean;
+}): Promise<string> {
+  return (_testInstance as unknown as { buildHtmlDocument: (opts: typeof options) => Promise<string> }).buildHtmlDocument(options);
+}
+export function _unescapeStructuralTags(html: string): string {
+  return (_testInstance as unknown as { unescapeStructuralTags: (h: string) => string }).unescapeStructuralTags(html);
+}

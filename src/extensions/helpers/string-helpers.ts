@@ -331,6 +331,7 @@ export function truncate(
 ): string {
   if (!str) return '';
   if (str.length <= length) return str;
+  if (length <= suffix.length) return str.slice(0, length);
   return str.slice(0, length - suffix.length) + suffix;
 }
 
@@ -398,9 +399,8 @@ export function pluralize(word: string, count: number, plural?: string | object)
 
   // Simple pluralization rules
   const rules: Array<[RegExp, string]> = [
-    [/s$/i, 's'],
+    [/(s|x|z|sh|ch)$/i, '$&es'],
     [/([^aeiou])y$/i, '$1ies'],
-    [/(x|z|s|sh|ch)$/i, '$1es'],
     [/$/i, 's'],
   ];
 
@@ -565,7 +565,23 @@ export function replaceAll(
 export function initials(name: string | undefined | null): string {
   if (!name) return '';
   return name
-    .split(' ')
+    .split(/[\s-]+/)
+    .filter(Boolean)
     .map(word => word.charAt(0).toUpperCase())
     .join('');
+}
+
+export function join(arr: unknown[], separator: string = ', '): string {
+  if (!Array.isArray(arr)) return String(arr);
+  return arr.map(String).join(separator);
+}
+
+export function length(value: unknown): number {
+  if (Array.isArray(value)) return value.length;
+  if (typeof value === 'string') return value.length;
+  return 0;
+}
+
+export function defaultVal(value: unknown, fallback: string = ''): unknown {
+  return value || fallback;
 }

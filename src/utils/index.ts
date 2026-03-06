@@ -8,7 +8,6 @@
  */
 
 export * from './archive-manager';
-export * from './env-discovery';
 export * from './file-naming';
 export * from './file-system';
 export * from './functional';

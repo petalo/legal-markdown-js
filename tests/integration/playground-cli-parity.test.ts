@@ -2,13 +2,13 @@
  * Integration tests to ensure CLI and Playground produce identical output
  *
  * This test suite verifies that:
- * 1. Both CLI and Playground use the same processor (processLegalMarkdownWithRemark)
+ * 1. Both CLI and Playground use the same processor (processLegalMarkdown)
  * 2. Both produce identical output for the same input
  * 3. All processing options work consistently across both interfaces
  */
 
 import { describe, it, expect } from 'vitest';
-import { processLegalMarkdownWithRemark } from '../../src/extensions/remark/legal-markdown-processor';
+import { processLegalMarkdown } from '../../src/extensions/remark/legal-markdown-processor';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -67,8 +67,8 @@ describe('CLI vs Playground Parity', () => {
           exportPath: undefined,
         };
 
-        const cliResult = await processLegalMarkdownWithRemark(content, cliOptions);
-        const playgroundResult = await processLegalMarkdownWithRemark(content, playgroundOptions);
+        const cliResult = await processLegalMarkdown(content, cliOptions);
+        const playgroundResult = await processLegalMarkdown(content, playgroundOptions);
 
         expect(cliResult.content).toBe(playgroundResult.content);
         expect(cliResult.metadata).toEqual(playgroundResult.metadata);
@@ -93,8 +93,8 @@ describe('CLI vs Playground Parity', () => {
           exportPath: undefined,
         };
 
-        const cliResult = await processLegalMarkdownWithRemark(content, options);
-        const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+        const cliResult = await processLegalMarkdown(content, options);
+        const playgroundResult = await processLegalMarkdown(content, options);
 
         expect(cliResult.content).toBe(playgroundResult.content);
         expect(cliResult.metadata).toEqual(playgroundResult.metadata);
@@ -119,8 +119,8 @@ describe('CLI vs Playground Parity', () => {
           exportPath: undefined,
         };
 
-        const cliResult = await processLegalMarkdownWithRemark(content, options);
-        const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+        const cliResult = await processLegalMarkdown(content, options);
+        const playgroundResult = await processLegalMarkdown(content, options);
 
         expect(cliResult.content).toBe(playgroundResult.content);
         expect(cliResult.metadata).toEqual(playgroundResult.metadata);
@@ -145,8 +145,8 @@ describe('CLI vs Playground Parity', () => {
           exportPath: undefined,
         };
 
-        const cliResult = await processLegalMarkdownWithRemark(content, options);
-        const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+        const cliResult = await processLegalMarkdown(content, options);
+        const playgroundResult = await processLegalMarkdown(content, options);
 
         expect(cliResult.stats.pluginsUsed).toEqual(playgroundResult.stats.pluginsUsed);
         expect(cliResult.warnings).toEqual(playgroundResult.warnings);
@@ -170,8 +170,8 @@ Date: {{date}}`;
       debug: false,
     };
 
-    const cliResult = await processLegalMarkdownWithRemark(content, options);
-    const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+    const cliResult = await processLegalMarkdown(content, options);
+    const playgroundResult = await processLegalMarkdown(content, options);
 
     expect(cliResult.content).toBe(playgroundResult.content);
   });
@@ -196,8 +196,8 @@ hide_section: false
       noClauses: false,
     };
 
-    const cliResult = await processLegalMarkdownWithRemark(content, options);
-    const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+    const cliResult = await processLegalMarkdown(content, options);
+    const playgroundResult = await processLegalMarkdown(content, options);
 
     expect(cliResult.content).toBe(playgroundResult.content);
   });
@@ -224,8 +224,8 @@ Location: {{company.address.city}}, {{company.address.state}}`;
       debug: false,
     };
 
-    const cliResult = await processLegalMarkdownWithRemark(content, options);
-    const playgroundResult = await processLegalMarkdownWithRemark(content, options);
+    const cliResult = await processLegalMarkdown(content, options);
+    const playgroundResult = await processLegalMarkdown(content, options);
 
     expect(cliResult.content).toBe(playgroundResult.content);
   });

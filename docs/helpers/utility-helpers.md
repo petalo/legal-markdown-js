@@ -5,6 +5,9 @@ General-purpose utility helpers for string concatenation and field tracking.
 ## Table of Contents
 
 - [`concat`](#concat) - Concatenate strings
+- [`join`](#join) - Join array elements with separator
+- [`length`](#length) - Count array or string length
+- [`default`](#default) - Fallback value for empty fields
 - [`trackField`](#trackfield) - Field tracking for highlighting
 
 ---
@@ -131,6 +134,86 @@ Email: john.doe@example.com
 Profile: https://example.com/users/john.doe
 Archive: backup-2025.zip
 ```
+
+---
+
+## `join`
+
+Joins array elements into a single string with a separator.
+
+### Syntax
+
+```handlebars
+{{join array 'separator'}}
+```
+
+### Examples
+
+```handlebars
+Obligations:
+{{join obligations ', '}}
+# ["Confidentiality", "Non-compete", "IP Assignment"] # -> "Confidentiality,
+Non-compete, IP Assignment" Tags:
+{{join tags ' | '}}
+```
+
+### Notes
+
+- Default separator is `", "` if omitted
+- Works with any array from YAML frontmatter
+- Non-array values are returned as-is
+
+---
+
+## `length`
+
+Returns the length of an array or string.
+
+### Syntax
+
+```handlebars
+{{length value}}
+```
+
+### Examples
+
+```handlebars
+This agreement covers
+{{length items}}
+items. # items: ["a", "b", "c"] -> 3 Reference code length:
+{{length ref_code}}
+characters. # ref_code: "ABC-123" -> 7
+```
+
+---
+
+## `default`
+
+Returns a fallback value when the field is empty, undefined, or falsy. Useful
+for contracts with optional fields that need placeholder text.
+
+### Syntax
+
+```handlebars
+{{default value 'fallback'}}
+```
+
+### Examples
+
+```handlebars
+Contact:
+{{default contact_email '[Email not provided]'}}
+# If contact_email is empty -> "[Email not provided]" # If contact_email is
+"a@b.com" -> "a@b.com" Currency:
+{{default currency 'EUR'}}
+# Defaults to EUR when no currency specified
+```
+
+### Notes
+
+- Checks for `undefined`, `null`, empty string, and `false`
+- Useful alternative to `{{#if}}...{{else}}...{{/if}}` for simple fallbacks
+- The fallback value is returned as-is (not processed as a template)
 
 ---
 

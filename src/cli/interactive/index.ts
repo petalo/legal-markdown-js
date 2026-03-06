@@ -9,9 +9,9 @@
  *
  * Features:
  * - Interactive file selection with recursive directory scanning
- * - Multiple output format selection (HTML, PDF, Markdown, Metadata)
+ * - Multiple output format selection (HTML, PDF, DOCX, Markdown, Metadata)
  * - Conditional processing options based on selected formats
- * - CSS file selection for HTML/PDF styling
+ * - CSS file selection for HTML/PDF/DOCX styling
  * - Configuration confirmation and summary display
  * - Integration with existing CliService for processing
  *
@@ -45,6 +45,7 @@ import { CliService } from '../service';
 import * as path from 'path';
 import { RESOLVED_PATHS } from '../../constants/index';
 import { getPackageVersion } from '../utils/version';
+import { loadConfig } from '../../config';
 
 const version = getPackageVersion('../../../package.json');
 
@@ -124,12 +125,20 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
           }
         }
 
+        if (forceCommands.docx) {
+          outputFiles.push(path.join(outputDir, `${outputBaseName}.docx`));
+
+          if (forceCommands.highlight) {
+            outputFiles.push(path.join(outputDir, `${outputBaseName}.HIGHLIGHT.docx`));
+          }
+        }
+
         // Show success message
         console.log(formatSuccessMessage(outputFiles));
         return;
       }
     }
-  } catch (error) {
+  } catch {
     // If there's any error parsing force commands, continue with normal flow
     console.log(
       chalk.gray('No force commands found or error parsing. Continuing with interactive mode...\n')
@@ -188,7 +197,7 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
  * This function orchestrates the entire interactive experience by:
  * 1. Displaying welcome message and scanning for input files
  * 2. Prompting for file selection from available documents
- * 3. Collecting output format preferences (PDF, HTML, Markdown, Metadata)
+ * 3. Collecting output format preferences (PDF, HTML, DOCX, Markdown, Metadata)
  * 4. Gathering processing options based on selected formats
  * 5. Optional CSS file selection for styling
  * 6. Output filename specification
@@ -200,6 +209,8 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
  */
 async function runInteractiveMode(): Promise<void> {
   try {
+    await loadConfig();
+
     console.log(chalk.bold.blue('\n🎯 Legal Markdown Interactive CLI\n'));
     console.log(chalk.gray('Follow the prompts to configure your document processing.\n'));
 

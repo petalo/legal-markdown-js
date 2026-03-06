@@ -1,0 +1,17 @@
+_cross_references:
+  - key: appointment
+    sectionNumber: Article 1.
+    sectionText: Article 1. Appointment and Role
+  - key: compensation
+    sectionNumber: Article 2.
+    sectionText: Article 2. Compensation and Benefits
+_field_mappings: {}
+bonus_target_percent: 15
+employee_name: Anaïs Müller
+employer_name: Northbridge Counsel Group
+governing_law: Federal Republic of Germany
+position_title: Senior Legal Operations Manager
+salary_annual: 165000
+start_date: '2026-03-01'
+title: Employment Agreement
+work_city: Berlin

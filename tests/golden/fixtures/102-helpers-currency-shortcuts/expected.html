@@ -1,0 +1,48 @@
+<html>
+
+  <head></head>
+
+  <body>
+    <h1>Currency Shortcut Helpers</h1>
+    <p>These helpers format amounts in specific currencies without needing to pass
+      the currency code each time.</p>
+    <h2>formatDollar</h2>
+    <p>Monthly fee: $2,500.00</p>
+    <p>Consulting rate: $150.75</p>
+    <h2>formatEuro</h2>
+    <p>Annual license: 18,000.50 €</p>
+    <p>Monthly fee: 2,500.00 €</p>
+    <h2>formatPound</h2>
+    <p>Penalty amount: £5,000.00</p>
+    <p>Consulting rate: £150.75</p>
+    <h2>Comparison with formatCurrency</h2>
+    <p>The following should produce equivalent results:</p>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>USD</th>
+            <th>EUR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Shortcut</td>
+            <td>$2,500.00</td>
+            <td>2,500.00 €</td>
+          </tr>
+          <tr>
+            <td>Explicit</td>
+            <td>$2,500.00</td>
+            <td>2,500.00 €</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>With math expressions</h2>
+    <p>Total with VAT: 21,780.60 €</p>
+    <p>Quarterly fee: $4,500.13</p>
+  </body>
+
+</html>
