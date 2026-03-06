@@ -77,6 +77,39 @@ function openBrowser(url: string): void {
   exec(cmd);
 }
 
+type StaticFileResolution =
+  | { ok: true; filePath: string }
+  | { ok: false; status: number; message: string };
+
+function resolveStaticFilePath(
+  webDir: string,
+  requestUrl: string | undefined
+): StaticFileResolution {
+  const rawUrl = requestUrl === '' || requestUrl === undefined ? '/index.html' : requestUrl;
+  const urlPath = rawUrl === '/' ? '/index.html' : rawUrl.split('?')[0];
+
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(urlPath);
+  } catch {
+    return { ok: false, status: 400, message: 'Bad request' };
+  }
+
+  const normalizedPath = path.posix.normalize(decodedPath.replace(/\\/g, '/'));
+  const relativePath = normalizedPath.replace(/^\/+/, '');
+  const absoluteWebDir = path.resolve(webDir);
+  const absoluteFilePath = path.resolve(absoluteWebDir, relativePath);
+
+  if (
+    absoluteFilePath !== absoluteWebDir &&
+    !absoluteFilePath.startsWith(`${absoluteWebDir}${path.sep}`)
+  ) {
+    return { ok: false, status: 403, message: 'Forbidden' };
+  }
+
+  return { ok: true, filePath: absoluteFilePath };
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const portArg = args.find(a => a.startsWith('--port='));
@@ -91,18 +124,23 @@ async function main(): Promise<void> {
   }
 
   const server = http.createServer((req, res) => {
-    const reqPath = req.url === '/' || req.url === '' ? '/index.html' : (req.url ?? '/index.html');
-    const filePath = path.join(webDir, reqPath.split('?')[0]);
+    const resolved = resolveStaticFilePath(webDir, req.url);
 
-    fs.stat(filePath, (err, stats) => {
+    if (!resolved.ok) {
+      res.writeHead(resolved.status, { 'Content-Type': 'text/plain' });
+      res.end(resolved.message);
+      return;
+    }
+
+    fs.stat(resolved.filePath, (err, stats) => {
       if (err || !stats.isFile()) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not found');
         return;
       }
-      const ext = path.extname(filePath);
+      const ext = path.extname(resolved.filePath);
       res.writeHead(200, { 'Content-Type': MIME[ext] ?? 'text/plain' });
-      fs.createReadStream(filePath).pipe(res);
+      fs.createReadStream(resolved.filePath).pipe(res);
     });
   });
 

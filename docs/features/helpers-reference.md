@@ -67,14 +67,12 @@ Use these helpers in `if`/`unless` subexpressions:
 See [Conditionals](./conditionals.md#comparison-helpers) for full examples and
 inline operator conversion behavior.
 
-## Notes on Non-Registered Helpers
+## Additional Registered Helpers
 
-The following names are **not** registered helpers and should not be used:
+These helpers are also available and documented in detail in the helper docs:
 
-- `ordinal`
-- `abs`
-- `max`
-- `min`
+- `ordinal` (Number helpers)
+- `abs`, `max`, `min` (Math helpers)
 
 ## Golden Fixture Examples
 

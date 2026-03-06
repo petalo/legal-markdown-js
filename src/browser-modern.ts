@@ -20,8 +20,9 @@
 // a TypeScript error. The guard ensures we never overwrite a natively available
 // Buffer (e.g. in Node.js or a bundler that already provides one).
 import { Buffer as BufferPolyfill } from 'buffer';
-if (typeof globalThis.Buffer === 'undefined') {
-  (globalThis as unknown as Record<string, unknown>).Buffer = BufferPolyfill;
+const browserGlobal = globalThis as unknown as { Buffer?: unknown };
+if (typeof browserGlobal.Buffer === 'undefined') {
+  browserGlobal.Buffer = BufferPolyfill;
 }
 
 // Import the remark-based processor

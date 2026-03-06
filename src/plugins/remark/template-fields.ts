@@ -982,9 +982,24 @@ function processTemplateFieldsInAST(
   astFieldTracking: boolean = false,
   debug: boolean = false
 ): void {
+  function toFieldMappingsMap(value: unknown): Map<string, string> {
+    if (value instanceof Map) {
+      return value as Map<string, string>;
+    }
+
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return new Map(
+        Object.entries(value as Record<string, unknown>)
+          .filter(([, v]) => typeof v === 'string')
+          .map(([k, v]) => [k, v as string])
+      );
+    }
+
+    return new Map();
+  }
+
   // Get field mappings from metadata if available
-  const fieldMappings =
-    (metadata['_field_mappings'] as unknown as Map<string, string>) || new Map();
+  const fieldMappings = toFieldMappingsMap(metadata['_field_mappings']);
 
   // Process text, HTML, code, and inlineCode nodes
   visit(root, (node, _index, parent) => {

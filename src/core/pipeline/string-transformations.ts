@@ -86,10 +86,18 @@ interface StringTransformationResult {
 
   /**
    * Literal template strings collected from \{{...}} escape sequences.
-   * Index N corresponds to placeholder __LMESC_N__ in content.
+   * Index N corresponds to placeholder `${prefix}${N}__` in content.
    * Must be restored after remark processing.
    */
   escapedTemplates: string[];
+}
+
+function createEscapePlaceholderPrefix(content: string): string {
+  let prefix = '__LMESC_';
+  while (content.includes(prefix)) {
+    prefix = `_${prefix}`;
+  }
+  return prefix;
 }
 
 /**
@@ -141,10 +149,11 @@ export async function applyStringTransformations(
   // passes through Handlebars, remark, and remarkTemplateFields untouched.
   // The caller restores the placeholders after remark processing.
   const escapedTemplates: string[] = [];
+  const escapePlaceholderPrefix = createEscapePlaceholderPrefix(processedContent);
   processedContent = processedContent.replace(/\\\{\{([^{}]+)\}\}/g, (_, inner) => {
     const idx = escapedTemplates.length;
     escapedTemplates.push(`{{${inner}}}`);
-    return `__LMESC_${idx}__`;
+    return `${escapePlaceholderPrefix}${idx}__`;
   });
 
   if (escapedTemplates.length > 0) {

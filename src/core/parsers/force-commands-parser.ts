@@ -82,6 +82,17 @@ const PROTECTED_COMMANDS = [
   'throwOnYamlError',
 ];
 
+function isSimpleTemplatePath(path: string): boolean {
+  return /^[a-zA-Z_$][\w$]*(?:\[[0-9]+\]|\.[a-zA-Z_$][\w$]*|\[["'][^"'\]]+["']\])*$/u.test(path);
+}
+
+function extractUnsupportedTemplateExpressions(command: string): string[] {
+  const matches = Array.from(command.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g));
+  return matches
+    .map(match => String(match[1]).trim())
+    .filter(expression => !isSimpleTemplatePath(expression));
+}
+
 /**
  * Parse a force_commands string into structured options
  *
@@ -116,6 +127,14 @@ export function parseForceCommands(
   try {
     // First, resolve any template variables in the command string
     const resolvedCommandString = replaceTemplateVariables(commandString, metadata);
+
+    const unsupportedExpressions = extractUnsupportedTemplateExpressions(resolvedCommandString);
+    if (unsupportedExpressions.length > 0) {
+      logger.warn(
+        'force_commands contains unsupported template expressions; only simple metadata paths are resolved',
+        { unsupportedExpressions }
+      );
+    }
 
     logger.debug('Resolved command string', {
       original: commandString,

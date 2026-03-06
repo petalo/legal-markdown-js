@@ -1,11 +1,19 @@
 import { DEFAULT_CONFIG, type LegalMdConfig } from './schema';
 
-let runtimeConfig: LegalMdConfig = { ...DEFAULT_CONFIG };
+function cloneConfig(config: LegalMdConfig): LegalMdConfig {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(config);
+  }
+
+  return JSON.parse(JSON.stringify(config)) as LegalMdConfig;
+}
+
+let runtimeConfig: LegalMdConfig = cloneConfig(DEFAULT_CONFIG);
 
 export function getRuntimeConfig(): LegalMdConfig {
-  return runtimeConfig;
+  return cloneConfig(runtimeConfig);
 }
 
 export function setRuntimeConfig(config: LegalMdConfig): void {
-  runtimeConfig = config;
+  runtimeConfig = cloneConfig(config);
 }
