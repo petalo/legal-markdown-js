@@ -1,3 +1,33 @@
+## [4.0.0](https://github.com/petalo/legal-markdown-js/compare/v3.5.0...v4.0.0) (2026-03-06)
+
+### ⚠ BREAKING CHANGES
+
+- v4 release - pipeline consolidation, DOCX/PDF, and playground overhaul (#160)
+
+### Features
+
+- v4 release - pipeline consolidation, DOCX/PDF, and playground overhaul
+  ([#160](https://github.com/petalo/legal-markdown-js/issues/160))
+  ([55c7738](https://github.com/petalo/legal-markdown-js/commit/55c77387272cf2f61b79acd6467fe685ad548855))
+
+### Documentation
+
+- **playground:** fix Pages paths and release Node runtime
+  ([#172](https://github.com/petalo/legal-markdown-js/issues/172))
+  ([f915997](https://github.com/petalo/legal-markdown-js/commit/f9159975dbc23899aba81e4ccdf29ef5e632fee3))
+
+### Tests
+
+- add math helpers module and fix 24 skipped tests for v4.0 preparation
+  ([#158](https://github.com/petalo/legal-markdown-js/issues/158))
+  ([9913c0e](https://github.com/petalo/legal-markdown-js/commit/9913c0e4cba9e0788691f33e3b3909eb4e2c7b44)),
+  closes [#142](https://github.com/petalo/legal-markdown-js/issues/142)
+
+### Continuous Integration
+
+- re-trigger release workflow
+  ([e55b98a](https://github.com/petalo/legal-markdown-js/commit/e55b98aa45bf1c863d1d2836e6653045b066df9d))
+
 ## 3.5.0 (2025-10-28)
 
 - feat: formalize Phase 2 string transformations in pipeline (#149) (#157)
