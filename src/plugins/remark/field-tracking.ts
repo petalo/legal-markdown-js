@@ -123,7 +123,12 @@ function resolveFieldValue(fieldName: string, metadata: Record<string, YamlValue
   let current: YamlValue = metadata;
 
   for (const key of keys) {
-    if (current !== null && typeof current === 'object' && !Array.isArray(current) && key in current) {
+    if (
+      current !== null &&
+      typeof current === 'object' &&
+      !Array.isArray(current) &&
+      key in current
+    ) {
       current = (current as Record<string, YamlValue>)[key];
     } else {
       return ''; // Field not found

@@ -199,7 +199,10 @@ function extractDefinitionsFromAST(
 
   // Get level formats from metadata (supporting expanded system)
   const mStr = (keys: string[], fallback: string): string => {
-    for (const k of keys) { const v = metadata[k]; if (typeof v === 'string') return v; }
+    for (const k of keys) {
+      const v = metadata[k];
+      if (typeof v === 'string') return v;
+    }
     return fallback;
   };
   const levelFormats: Record<string, string> = {
@@ -507,7 +510,12 @@ function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue
   let value: YamlValue = obj;
 
   for (const key of keys) {
-    if (value === undefined || value === null || typeof value !== 'object' || Array.isArray(value)) {
+    if (
+      value === undefined ||
+      value === null ||
+      typeof value !== 'object' ||
+      Array.isArray(value)
+    ) {
       return undefined;
     }
     value = (value as Record<string, YamlValue>)[key];
@@ -519,7 +527,11 @@ function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue
 /**
  * Format metadata values based on type and context
  */
-function formatMetadataValue(value: YamlValue | undefined, key: string, metadata: Record<string, YamlValue>): string {
+function formatMetadataValue(
+  value: YamlValue | undefined,
+  key: string,
+  metadata: Record<string, YamlValue>
+): string {
   if (value === undefined) return '';
   if (value === null) return 'null';
 

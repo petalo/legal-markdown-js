@@ -61,4 +61,3 @@ export const DEFAULT_PROPERTIES = {
   'no-reset': '',
   'level-style': '',
 } as const;
-

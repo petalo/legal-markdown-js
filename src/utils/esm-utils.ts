@@ -39,4 +39,3 @@ export function getCurrentDir(importMetaUrl?: string): string {
   // Final fallback - use process.cwd()
   return process.cwd();
 }
-

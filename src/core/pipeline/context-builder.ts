@@ -167,7 +167,10 @@ export function mergeMetadata(
   for (const [key, value] of Object.entries(source)) {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       // Recursively merge nested objects
-      result[key] = mergeMetadata((result[key] || {}) as Record<string, YamlValue>, value as Record<string, YamlValue>);
+      result[key] = mergeMetadata(
+        (result[key] || {}) as Record<string, YamlValue>,
+        value as Record<string, YamlValue>
+      );
     } else {
       // Direct assignment for primitives and arrays
       result[key] = value;

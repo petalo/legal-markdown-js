@@ -196,7 +196,10 @@ export function mergeFlattened(
   let filteredImported = imported;
   if (filterReserved) {
     const originalKeys = Object.keys(imported);
-    filteredImported = filterReservedFields(imported, { logFiltered: logOperations }) as Record<string, YamlValue>;
+    filteredImported = filterReservedFields(imported, { logFiltered: logOperations }) as Record<
+      string,
+      YamlValue
+    >;
     const filteredKeys = Object.keys(filteredImported);
 
     stats.reservedFieldsFiltered = originalKeys.length - filteredKeys.length;
@@ -205,8 +208,17 @@ export function mergeFlattened(
 
   // Flatten both objects for granular comparison with timeout protection
   // Both inputs are Record<string, YamlValue>; cast from unknown for downstream type safety
-  const currentFlat = flattenObject(current, '', new WeakSet(), startTime, timeoutMs) as Record<string, YamlValue>;
-  const importedFlat = flattenObject(filteredImported, '', new WeakSet(), Date.now(), timeoutMs) as Record<string, YamlValue>;
+  const currentFlat = flattenObject(current, '', new WeakSet(), startTime, timeoutMs) as Record<
+    string,
+    YamlValue
+  >;
+  const importedFlat = flattenObject(
+    filteredImported,
+    '',
+    new WeakSet(),
+    Date.now(),
+    timeoutMs
+  ) as Record<string, YamlValue>;
 
   stats.currentProperties = Object.keys(currentFlat).length;
   stats.importedProperties = Object.keys(importedFlat).length;

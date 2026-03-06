@@ -617,7 +617,11 @@ function getNestedValue(obj: Record<string, YamlValue>, path: string): YamlValue
 /**
  * Format metadata values based on type and context
  */
-function formatMetadataValue(value: YamlValue | undefined, key: string, metadata: Record<string, YamlValue>): string {
+function formatMetadataValue(
+  value: YamlValue | undefined,
+  key: string,
+  metadata: Record<string, YamlValue>
+): string {
   if (value === undefined) {
     return '';
   }

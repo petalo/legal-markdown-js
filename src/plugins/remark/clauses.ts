@@ -433,7 +433,10 @@ function evaluateSimpleCondition(condition: string, metadata: Record<string, Yam
 /**
  * Evaluate boolean expressions (&&, ||)
  */
-function evaluateBooleanExpression(condition: string, metadata: Record<string, YamlValue>): boolean {
+function evaluateBooleanExpression(
+  condition: string,
+  metadata: Record<string, YamlValue>
+): boolean {
   // Split by OR operators first (lower precedence)
   const orParts = condition.split('||');
 
@@ -460,7 +463,10 @@ function evaluateBooleanExpression(condition: string, metadata: Record<string, Y
 /**
  * Evaluate comparison expressions (==, !=, >, <)
  */
-function evaluateComparisonExpression(condition: string, metadata: Record<string, YamlValue>): boolean {
+function evaluateComparisonExpression(
+  condition: string,
+  metadata: Record<string, YamlValue>
+): boolean {
   // Find the comparison operator
   let operator = '';
   let leftSide = '';
@@ -524,7 +530,10 @@ function evaluateNestedVariable(condition: string, metadata: Record<string, Yaml
 /**
  * Get variable value from metadata
  */
-function getVariableValue(variable: string, metadata: Record<string, YamlValue>): YamlValue | undefined {
+function getVariableValue(
+  variable: string,
+  metadata: Record<string, YamlValue>
+): YamlValue | undefined {
   if (variable.includes('.')) {
     return getNestedValue(metadata, variable);
   }
@@ -538,8 +547,9 @@ function getNestedValue(
   obj: Record<string, YamlValue> | YamlValue,
   path: string
 ): YamlValue | undefined {
-  return path.split('.').reduce(
-    (current: YamlValue | undefined, key: string): YamlValue | undefined => {
+  return path
+    .split('.')
+    .reduce((current: YamlValue | undefined, key: string): YamlValue | undefined => {
       if (current === null || current === undefined) return undefined;
       if (Array.isArray(current)) {
         if (key === 'length') return current.length;
@@ -552,9 +562,7 @@ function getNestedValue(
         return record[key];
       }
       return undefined;
-    },
-    obj as YamlValue
-  );
+    }, obj as YamlValue);
 }
 
 /**

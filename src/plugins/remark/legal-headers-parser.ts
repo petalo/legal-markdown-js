@@ -213,7 +213,9 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                     ],
                   };
                   // Mark this as a legal header
-                  (headingNode as unknown as { data: Record<string, unknown> }).data = { isLegalHeader: true };
+                  (headingNode as unknown as { data: Record<string, unknown> }).data = {
+                    isLegalHeader: true,
+                  };
                   newNodes.push(headingNode);
 
                   convertedCount++;
@@ -324,7 +326,9 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                   children: parseMarkdownInlineFormatting(headerText.trim()),
                 };
                 // Mark this as a legal header using data attribute
-                (headingNode as unknown as { data: Record<string, unknown> }).data = { isLegalHeader: true };
+                (headingNode as unknown as { data: Record<string, unknown> }).data = {
+                  isLegalHeader: true,
+                };
                 newNodes.push(headingNode);
 
                 convertedCount++;
@@ -357,7 +361,8 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
         else if (node.children.length > 1) {
           // Reconstruct the full text content to check for legal headers
           let fullText = '';
-          const childrenMap: Map<number, { start: number; end: number; child: unknown }> = new Map();
+          const childrenMap: Map<number, { start: number; end: number; child: unknown }> =
+            new Map();
 
           for (let i = 0; i < node.children.length; i++) {
             const child = node.children[i];
@@ -366,14 +371,20 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
             if (child.type === 'text') {
               fullText += child.value;
             } else if (child.type === 'emphasis') {
-              const emphasisText = child.children.map((c: unknown) => (c as { value?: string }).value || '').join('');
+              const emphasisText = child.children
+                .map((c: unknown) => (c as { value?: string }).value || '')
+                .join('');
               fullText += `_${emphasisText}_`;
             } else if (child.type === 'strong') {
-              const strongText = child.children.map((c: unknown) => (c as { value?: string }).value || '').join('');
+              const strongText = child.children
+                .map((c: unknown) => (c as { value?: string }).value || '')
+                .join('');
               fullText += `__${strongText}__`;
             } else if (child.type === 'link') {
               // Handle links - reconstruct markdown syntax [text](url)
-              const linkText = child.children.map((c: unknown) => (c as { value?: string }).value || '').join('');
+              const linkText = child.children
+                .map((c: unknown) => (c as { value?: string }).value || '')
+                .join('');
               const url = child.url || '';
               fullText += `[${linkText}](${url})`;
             } else if (child.type === 'inlineCode') {
@@ -431,7 +442,9 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                   children: parseMarkdownInlineFormatting(headerText.trim()),
                 };
                 // Mark this as a legal header using data attribute
-                (headingNode as unknown as { data: Record<string, unknown> }).data = { isLegalHeader: true };
+                (headingNode as unknown as { data: Record<string, unknown> }).data = {
+                  isLegalHeader: true,
+                };
                 newNodes.push(headingNode);
 
                 convertedCount++;

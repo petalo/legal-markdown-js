@@ -17,11 +17,7 @@ export function lmFieldToken(fieldName: string, content: string, kind: TrackingT
   return `<lm-field data-field="${escapeAttr(fieldName)}" data-kind="${escapeAttr(kind)}">${escapeContent(content)}</lm-field>`;
 }
 
-export function lmLogicStartToken(
-  fieldName: string,
-  helperName: string,
-  result: boolean
-): string {
+export function lmLogicStartToken(fieldName: string, helperName: string, result: boolean): string {
   return `<lm-logic-start data-field="${escapeAttr(fieldName)}" data-logic-helper="${escapeAttr(
     helperName
   )}" data-logic-result="${result ? 'true' : 'false'}"></lm-logic-start>`;

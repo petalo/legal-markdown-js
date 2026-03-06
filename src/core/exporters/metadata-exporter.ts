@@ -190,7 +190,9 @@ export function exportMetadata(
  * // Internal meta-* keys are removed
  * ```
  */
-export function filterMetadataForExport(metadata: Record<string, YamlValue>): Record<string, YamlValue> {
+export function filterMetadataForExport(
+  metadata: Record<string, YamlValue>
+): Record<string, YamlValue> {
   // Deep clone the metadata to avoid modifying original
   const result = JSON.parse(JSON.stringify(metadata));
 

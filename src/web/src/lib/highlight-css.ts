@@ -16,4 +16,3 @@ export function ensureHighlightCss(css: string, enableFieldTracking: boolean): s
 
   return `${css}\n\n/* Field highlighting (auto-injected) */\n${highlightCSS}`;
 }
-

@@ -304,7 +304,6 @@ export class FieldTracker {
     empty: number;
     logic: number;
     fields: TrackedField[];
-     
   } {
     const fields = Array.from(this.fields.values());
 

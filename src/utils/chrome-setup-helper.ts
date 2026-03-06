@@ -91,4 +91,3 @@ export function checkChromeStatus(): ChromeStatus {
 
   return status;
 }
-

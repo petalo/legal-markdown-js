@@ -141,8 +141,7 @@ export function processDateReferences(content: string, metadata: Record<string, 
  * ```
  */
 function extractDateOptions(metadata: Record<string, unknown>): DateFormatOptions {
-  const asString = (v: unknown): string | undefined =>
-    typeof v === 'string' ? v : undefined;
+  const asString = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
   return {
     dateFormat: asString(metadata['date-format']) || asString(metadata.dateFormat),
     timezone: asString(metadata['timezone']) || asString(metadata.tz),

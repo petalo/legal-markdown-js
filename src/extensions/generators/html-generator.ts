@@ -438,10 +438,14 @@ export const htmlGenerator = new HtmlGenerator();
 // These wrap private HtmlGenerator methods for unit test access
 const _testInstance = new HtmlGenerator();
 export function _removeYamlFrontmatter(content: string): string {
-  return (_testInstance as unknown as { removeYamlFrontmatter: (c: string) => string }).removeYamlFrontmatter(content);
+  return (
+    _testInstance as unknown as { removeYamlFrontmatter: (c: string) => string }
+  ).removeYamlFrontmatter(content);
 }
 export function _applyDomTransformations($: cheerio.CheerioAPI): void {
-  (_testInstance as unknown as { applyDomTransformations: ($: cheerio.CheerioAPI) => void }).applyDomTransformations($);
+  (
+    _testInstance as unknown as { applyDomTransformations: ($: cheerio.CheerioAPI) => void }
+  ).applyDomTransformations($);
 }
 export function _buildHtmlDocument(options: {
   body: string;
@@ -450,8 +454,12 @@ export function _buildHtmlDocument(options: {
   metadata?: Record<string, unknown>;
   useDefaultCss?: boolean;
 }): Promise<string> {
-  return (_testInstance as unknown as { buildHtmlDocument: (opts: typeof options) => Promise<string> }).buildHtmlDocument(options);
+  return (
+    _testInstance as unknown as { buildHtmlDocument: (opts: typeof options) => Promise<string> }
+  ).buildHtmlDocument(options);
 }
 export function _unescapeStructuralTags(html: string): string {
-  return (_testInstance as unknown as { unescapeStructuralTags: (h: string) => string }).unescapeStructuralTags(html);
+  return (
+    _testInstance as unknown as { unescapeStructuralTags: (h: string) => string }
+  ).unescapeStructuralTags(html);
 }
