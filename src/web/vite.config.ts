@@ -5,6 +5,8 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Use relative asset URLs so the app works when served from a repo subpath on GitHub Pages.
+  base: './',
   root: path.resolve(__dirname),
   build: {
     outDir: path.resolve(__dirname, '../../dist/web'),
