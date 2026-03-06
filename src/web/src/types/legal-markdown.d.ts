@@ -59,6 +59,13 @@ export interface LegalMarkdownLib {
 
   /** Wrap HTML body in a complete HTML5 document with embedded CSS */
   wrapHtmlDocument(body: string, css: string, title: string): string;
+
+  /** Generate a DOCX buffer from HTML body and CSS strings - browser-safe */
+  generateDocxBuffer(
+    html: string,
+    css: string,
+    options?: { title?: string; format?: 'A4' | 'Letter' | 'Legal'; landscape?: boolean }
+  ): Promise<Uint8Array>;
 }
 
 declare global {
