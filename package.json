@@ -1,6 +1,6 @@
 {
   "name": "legal-markdown-js",
-  "version": "3.5.0",
+  "version": "4.0.1",
   "description": "Node.js implementation of LegalMarkdown for processing legal documents with markdown and YAML - Complete feature parity with Ruby version",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,7 +26,8 @@
     "prepare": "husky",
     "prepublishOnly": "npm run build",
     "prerelease": "npm run clean && npm run build && npm run test",
-    "build": "npm run build:ts && npm run build:styles && npm run build:assets && npm run build:examples && npm run build:vite && npm run build:web && npm run build:copy-browser && npm run build:docs",
+    "build": "npm run build:ts && npm run build:chmod && npm run build:styles && npm run build:assets && npm run build:examples && npm run build:vite && npm run build:web && npm run build:copy-browser && npm run build:docs",
+    "build:chmod": "chmod +x dist/cli/index.js dist/cli/interactive/index.js",
     "build:assets": "mkdir -p dist/assets && cp -r $(node scripts/build-paths.js images)/* dist/assets/ 2>/dev/null || true",
     "build:cjs": "tsc --project tsconfig.cjs.json && tsc-alias --project tsconfig.cjs.json",
     "build:copy-browser": "cp dist/legal-markdown-browser.js dist/web/ 2>/dev/null || true",
@@ -198,9 +199,9 @@
     "vitest": "^4.0.18"
   },
   "bin": {
-    "legal-md": "./dist/cli/index.js",
-    "legal-md-ui": "./dist/cli/interactive/index.js",
-    "legal-md-playground": "./scripts/web-serve.cjs"
+    "legal-md": "dist/cli/index.js",
+    "legal-md-ui": "dist/cli/interactive/index.js",
+    "legal-md-playground": "scripts/web-serve.cjs"
   },
   "files": ["dist", "scripts", "README.md", "LICENSE", "CHANGELOG.md"],
   "engines": {
