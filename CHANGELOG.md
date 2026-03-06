@@ -1,3 +1,11 @@
+## [4.1.0](https://github.com/petalo/legal-markdown-js/compare/v4.0.1...v4.1.0) (2026-03-06)
+
+### Features
+
+- add .docx and .pdf download buttons to playground toolbar
+  ([#173](https://github.com/petalo/legal-markdown-js/issues/173))
+  ([194e7d0](https://github.com/petalo/legal-markdown-js/commit/194e7d0939b25bd52b3a7f0771e10fa00d17e5a4))
+
 ## [4.0.1](https://github.com/petalo/legal-markdown-js/compare/v4.0.0...v4.0.1) (2026-03-06)
 
 ### Bug Fixes
