@@ -49,8 +49,8 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, 'src/utils'),
       // Provide browser shims for Node.js modules
       cosmiconfig: path.resolve(__dirname, 'src/utils/cosmiconfig-shim.ts'),
-      fs: path.resolve(__dirname, 'src/utils/browser-shims.ts'),
       'fs/promises': path.resolve(__dirname, 'src/utils/browser-shims.ts'),
+      fs: path.resolve(__dirname, 'src/utils/browser-shims.ts'),
       path: 'path-browserify',
       buffer: 'buffer',
     },

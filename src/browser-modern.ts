@@ -35,6 +35,10 @@ import {
 // Import shared HTML formatting utilities (browser-compatible)
 import { markdownToHtmlBody, formatHtml, wrapHtmlDocument } from './utils/html-format';
 
+import { generateDocxBuffer } from './extensions/generators/docx-browser';
+export type { DocxBrowserOptions } from './extensions/generators/docx-browser';
+export { generateDocxBuffer };
+
 declare const __LEGAL_MARKDOWN_VERSION__: string;
 
 // Re-export the types for convenience
@@ -85,6 +89,7 @@ const LegalMarkdown = {
   markdownToHtmlBody,
   formatHtml,
   wrapHtmlDocument,
+  generateDocxBuffer,
 
   // Version info
   version: __LEGAL_MARKDOWN_VERSION__,
