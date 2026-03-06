@@ -32,6 +32,7 @@ export interface UseLegalMarkdownReturn {
   error: string | null;
   processNow: () => Promise<void>;
   downloadContent: (content: string, filename: string) => void;
+  downloadDocx: (html: string, css: string, title: string) => Promise<void>;
   printDocument: () => void;
   copyContent: (content: string) => Promise<void>;
 }
@@ -98,6 +99,19 @@ export function useLegalMarkdown(): UseLegalMarkdownReturn {
     URL.revokeObjectURL(url);
   }, []);
 
+  const downloadDocx = useCallback(async (html: string, css: string, title: string) => {
+    const buffer = await window.LegalMarkdown.generateDocxBuffer(html, css, { title });
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9]/g, '-')}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
   const printDocument = useCallback(() => {
     if (!result) return;
     const { markdownToHtmlBody, wrapHtmlDocument } = window.LegalMarkdown;
@@ -137,6 +151,7 @@ export function useLegalMarkdown(): UseLegalMarkdownReturn {
     error,
     processNow,
     downloadContent,
+    downloadDocx,
     printDocument,
     copyContent,
   };
