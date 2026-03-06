@@ -100,10 +100,7 @@ export function useLegalMarkdown(): UseLegalMarkdownReturn {
   }, []);
 
   const downloadDocx = useCallback(async (html: string, css: string, title: string) => {
-    const buffer = await window.LegalMarkdown.generateDocxBuffer(html, css, { title });
-    const blob = new Blob([buffer as unknown as ArrayBuffer], {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    });
+    const blob = await window.LegalMarkdown.generateDocxBuffer(html, css, { title });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

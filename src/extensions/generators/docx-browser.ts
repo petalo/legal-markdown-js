@@ -27,17 +27,17 @@ export interface DocxBrowserOptions {
 }
 
 /**
- * Generate a DOCX buffer from HTML and CSS strings - browser-safe.
+ * Generate a DOCX Blob from HTML and CSS strings - browser-safe.
  *
  * Does not touch the filesystem. CSS is accepted as a string instead
- * of a file path. Returns a Uint8Array that can be wrapped in a Blob
- * and downloaded via URL.createObjectURL.
+ * of a file path. Returns a Blob that can be downloaded directly via
+ * URL.createObjectURL.
  */
 export async function generateDocxBuffer(
   html: string,
   css: string,
   options: DocxBrowserOptions = {}
-): Promise<Uint8Array> {
+): Promise<Blob> {
   const stylePreset = adaptCssToDocxStyles(css);
 
   const blocks = await convertHtmlToDocxBlocks(html, {
@@ -95,5 +95,13 @@ export async function generateDocxBuffer(
     ],
   });
 
-  return Packer.toBuffer(document);
+  const base64 = await Packer.toBase64String(document);
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new Blob([bytes], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
 }
