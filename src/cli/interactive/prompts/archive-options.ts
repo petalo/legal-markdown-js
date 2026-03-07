@@ -8,6 +8,7 @@
  * @module
  */
 
+import * as path from 'path';
 import { confirm, input } from '@inquirer/prompts';
 import { RESOLVED_PATHS } from '../../../constants/index';
 import { ArchiveManager } from '../../../utils/archive-manager';
@@ -29,9 +30,6 @@ interface ArchivePromptResult {
  * @returns Promise resolving to the archive configuration
  */
 export async function promptArchiveOptions(): Promise<ArchivePromptResult> {
-  console.log(chalk.bold.cyan('\n📁 Source File Management'));
-  console.log('Configure what happens to your source files after processing.\n');
-
   // Ask if user wants to enable archiving
   const enableArchiving = await confirm({
     message: 'Archive source file after successful processing?',
@@ -59,7 +57,7 @@ export async function promptArchiveOptions(): Promise<ArchivePromptResult> {
 
     const customDir = await input({
       message: 'Enter custom archive directory:',
-      default: 'processed',
+      default: path.basename(RESOLVED_PATHS.ARCHIVE_DIR),
       validate: (input: string) => {
         if (!input.trim()) {
           return 'Archive directory cannot be empty';

@@ -11,15 +11,13 @@ import { CliProcessingOptions, OutputFormat } from '../types';
 export async function promptProcessingOptions(
   outputFormats: OutputFormat
 ): Promise<CliProcessingOptions> {
-  console.log('\n⚙️  Processing Options:\n');
-
   // Build choices based on selected output formats
-  const choices = [{ name: '🐛 Debug mode', value: 'debug', checked: false }];
+  const choices = [{ name: 'Debug mode', value: 'debug', checked: false }];
 
   // Add field tracking only if Markdown is selected
   if (outputFormats.markdown) {
     choices.push({
-      name: '📝 Field tracking in Markdown output',
+      name: 'Field tracking (Markdown output)',
       value: 'fieldTracking',
       checked: false,
     });
@@ -28,7 +26,7 @@ export async function promptProcessingOptions(
   // Add highlight only if HTML, PDF, or DOCX is selected - pre-selected by default
   if (outputFormats.html || outputFormats.pdf || outputFormats.docx) {
     choices.push({
-      name: '🎯 Field highlighting in HTML/PDF/DOCX output',
+      name: 'Field highlighting (HTML/PDF/DOCX)',
       value: 'highlight',
       checked: true,
     });

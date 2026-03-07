@@ -10,7 +10,7 @@ import { scanCssFiles } from '../utils/file-scanner';
 import { formatWarningMessage } from '../utils/format-helpers';
 import { OutputFormat } from '../types';
 
-const NO_CSS_OPTION = 'No custom CSS';
+const NO_CSS_OPTION = 'None';
 
 /**
  * Prompt user to select a CSS file if HTML, PDF, or DOCX formats are selected
@@ -20,8 +20,6 @@ export async function selectCssFile(outputFormats: OutputFormat): Promise<string
   if (!outputFormats.html && !outputFormats.pdf && !outputFormats.docx) {
     return undefined;
   }
-
-  console.log('\n🎨 CSS Selection:\n');
 
   const cssFiles = scanCssFiles(RESOLVED_PATHS.STYLES_DIR);
 

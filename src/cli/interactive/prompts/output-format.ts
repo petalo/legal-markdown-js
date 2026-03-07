@@ -12,11 +12,11 @@ export async function selectOutputFormats(): Promise<OutputFormat> {
   const selectedFormats = await checkbox({
     message: 'Select output formats:',
     choices: [
-      { name: '🌐 HTML', value: 'html' },
-      { name: '📄 PDF', value: 'pdf', checked: true }, // Default selected
-      { name: '🧾 DOCX', value: 'docx' },
-      { name: '📝 Markdown', value: 'markdown' },
-      { name: '📊 Export metadata (YAML/JSON)', value: 'metadata' },
+      { name: 'HTML', value: 'html' },
+      { name: 'PDF', value: 'pdf', checked: true },
+      { name: 'DOCX', value: 'docx' },
+      { name: 'Markdown', value: 'markdown' },
+      { name: 'Export metadata (YAML)', value: 'metadata' },
     ],
     required: true, // This ensures at least one option is selected
   });
