@@ -1,3 +1,11 @@
+## [4.3.0](https://github.com/petalo/legal-markdown-js/compare/v4.2.1...v4.3.0) (2026-03-07)
+
+### Features
+
+- **playground:** make legal-md playground self-contained in compiled binary
+  ([#177](https://github.com/petalo/legal-markdown-js/issues/177))
+  ([9a88f61](https://github.com/petalo/legal-markdown-js/commit/9a88f610b5a4663226b5ed2e1bf39e52849a5d59))
+
 ## [4.2.1](https://github.com/petalo/legal-markdown-js/compare/v4.2.0...v4.2.1) (2026-03-07)
 
 ### Bug Fixes
