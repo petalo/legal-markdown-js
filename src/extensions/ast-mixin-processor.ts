@@ -43,6 +43,7 @@
 
 import { LegalMarkdownOptions } from '../types';
 import type { YamlValue } from '../types';
+import { logger } from '../utils/logger';
 import { fieldTracker } from './tracking/field-tracker';
 import { extensionHelpers as helpers } from './helpers/index';
 
@@ -616,7 +617,10 @@ function resolveHelper(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic helper dispatch requires any to call unknown function signature
     return (helper as any)(...args) as YamlValue | undefined;
   } catch (error) {
-    console.warn(`Error evaluating helper expression: ${expression}`, error);
+    logger.warn('Error evaluating helper expression', {
+      expression,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return undefined;
   }
 }
@@ -650,7 +654,10 @@ function resolveConditional(
     // Parse the selected part as an argument (could be string, variable, etc.)
     return parseArgument(selectedPart, metadata);
   } catch (error) {
-    console.warn(`Error evaluating conditional expression: ${expression}`, error);
+    logger.warn('Error evaluating conditional expression', {
+      expression,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return undefined;
   }
 }
@@ -798,16 +805,15 @@ export function processMixins(
 
     // Log any parsing errors for debugging
     if (parseResult.hasErrors) {
-      console.warn('Mixin parsing errors detected:', parseResult.errors);
+      logger.warn('Mixin parsing errors detected', { errors: parseResult.errors });
     }
 
     // Process the AST and return resolved content
     return processMixinAST(parseResult.nodes, metadata, options);
   } catch (error) {
-    console.error(
-      'Critical error in AST mixin processing, falling back to original content:',
-      error
-    );
+    logger.error('Critical error in AST mixin processing, falling back to original content', {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Fallback: return original content if AST processing fails completely
     return content;

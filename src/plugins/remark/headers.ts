@@ -37,6 +37,7 @@ import { Root, Heading } from 'mdast';
 import { visit } from 'unist-util-visit';
 import { DEFAULT_HEADER_PATTERNS } from '../../constants/headers';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /** Extended heading node with remark-specific data properties */
 interface LegalHeading extends Heading {
@@ -117,8 +118,8 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
 
   return (tree: Root) => {
     if (debug) {
-      console.log('[remarkHeaders] Processing headers with options:', options);
-      console.log('[remarkHeaders] Metadata:', metadata);
+      logger.debug('Processing headers with options:', options);
+      logger.debug('Metadata:', metadata);
     }
 
     // Initialize header configuration from metadata
@@ -134,15 +135,15 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
     });
 
     if (debug) {
-      console.log(`[remarkHeaders] Found ${headingCount} legal headings in document`);
+      logger.debug(`Found ${headingCount} legal headings in document`);
     }
 
     // Process only headings that come from legal header syntax
     visit(tree, 'heading', (node: Heading, _index, _parent) => {
       if ((node as LegalHeading).data?.isLegalHeader) {
         if (debug) {
-          console.log(
-            `[remarkHeaders] Processing legal heading at depth ${node.depth}:`,
+          logger.debug(
+            `Processing legal heading at depth ${node.depth}:`,
             extractTextContent(node)
           );
         }
@@ -154,7 +155,7 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
     visit(tree, 'heading', (node: Heading, index, parent) => {
       if ((node as LegalHeading).__needsHtmlReplacement && parent && typeof index === 'number') {
         if (debug) {
-          console.log('[remarkHeaders] Replacing heading with HTML node to preserve indentation');
+          logger.debug('Replacing heading with HTML node to preserve indentation');
         }
 
         // Replace the heading node with an HTML node
@@ -168,7 +169,7 @@ export const remarkHeaders: Plugin<[RemarkHeadersOptions], Root> = options => {
     });
 
     if (debug) {
-      console.log('[remarkHeaders] Final header state:', state);
+      logger.debug('Final header state:', state);
     }
   };
 };
@@ -312,8 +313,8 @@ function processHeader(
   }
 
   if (debug) {
-    console.log(`[remarkHeaders] Processed level ${level} header:`, headerText);
-    console.log(`[remarkHeaders] Added CSS class:`, cssClass);
+    logger.debug(`Processed level ${level} header:`, headerText);
+    logger.debug('Added CSS class:', cssClass);
   }
 }
 
@@ -504,7 +505,7 @@ function formatHeaderText(
 
   if (!currentText) {
     if (debug) {
-      console.log('[remarkHeaders] No text content found in header');
+      logger.debug('No text content found in header');
     }
     return null;
   }
@@ -512,7 +513,7 @@ function formatHeaderText(
   // Check if header already has numbering
   if (hasExistingNumbering(currentText, format)) {
     if (debug) {
-      console.log('[remarkHeaders] Header already has numbering, skipping');
+      logger.debug('Header already has numbering, skipping');
     }
     return null;
   }

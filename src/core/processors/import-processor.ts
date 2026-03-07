@@ -44,6 +44,7 @@ import { ImportProcessingResult, LegalMarkdownOptions, YamlValue } from '../../t
 import { parseYamlFrontMatter } from '../parsers/yaml-parser';
 import { mergeSequentially, MergeOptions } from '../utils/frontmatter-merger';
 import { ImportError } from '../../errors';
+import { logger } from '../../utils/logger';
 
 /**
  * Processes partial imports in a LegalMarkdown document
@@ -104,8 +105,8 @@ export function processPartialImports(
 ): ImportProcessingResult {
   // DEPRECATION WARNING
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
-    console.warn(
-      '[DEPRECATION] processPartialImports() is deprecated and will be removed in v4.0.0. ' +
+    logger.warn(
+      'processPartialImports() is deprecated and will be removed in v4.0.0. ' +
         'Use processLegalMarkdownWithRemark() with remarkImports plugin instead. ' +
         'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
     );
@@ -166,7 +167,7 @@ export function processPartialImports(
 
           if (options?.logImportOperations) {
             const fieldCount = Object.keys(importedMetadata).length;
-            console.log(`Extracted ${fieldCount} metadata fields from ${cleanFilename}`);
+            logger.debug(`Extracted ${fieldCount} metadata fields from ${cleanFilename}`);
           }
         }
       }
@@ -210,7 +211,7 @@ export function processPartialImports(
 
     if (options?.logImportOperations) {
       const currentFieldCount = Object.keys(initialMetadata).length;
-      console.log(
+      logger.debug(
         `Merging metadata from ${importedMetadataList.length} imports with ${currentFieldCount} current fields`
       );
     }
@@ -231,15 +232,15 @@ export function processPartialImports(
     mergedMetadata = mergeResult.metadata;
 
     if (options?.logImportOperations && mergeResult.stats) {
-      console.log('Frontmatter merge completed:');
-      console.log(`  - Properties added: ${mergeResult.stats.propertiesAdded}`);
-      console.log(`  - Conflicts resolved: ${mergeResult.stats.conflictsResolved}`);
-      console.log(`  - Reserved fields filtered: ${mergeResult.stats.reservedFieldsFiltered}`);
+      logger.debug('Frontmatter merge completed:');
+      logger.debug(`  - Properties added: ${mergeResult.stats.propertiesAdded}`);
+      logger.debug(`  - Conflicts resolved: ${mergeResult.stats.conflictsResolved}`);
+      logger.debug(`  - Reserved fields filtered: ${mergeResult.stats.reservedFieldsFiltered}`);
       if (mergeResult.stats.addedFields.length > 0) {
-        console.log(`  - Added fields: ${mergeResult.stats.addedFields.join(', ')}`);
+        logger.debug(`  - Added fields: ${mergeResult.stats.addedFields.join(', ')}`);
       }
       if (mergeResult.stats.conflictedFields.length > 0) {
-        console.log(
+        logger.debug(
           `  - Conflicted fields (source wins): ${mergeResult.stats.conflictedFields.join(', ')}`
         );
       }
@@ -332,8 +333,8 @@ function resolveImportPath(importPath: string, basePath?: string): string {
 export function validateImports(content: string, basePath?: string): string[] {
   // DEPRECATION WARNING
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
-    console.warn(
-      '[DEPRECATION] validateImports() is deprecated and will be removed in v4.0.0. ' +
+    logger.warn(
+      'validateImports() is deprecated and will be removed in v4.0.0. ' +
         'Use processLegalMarkdownWithRemark() with remarkImports plugin instead. ' +
         'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
     );

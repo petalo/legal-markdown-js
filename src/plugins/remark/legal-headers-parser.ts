@@ -26,6 +26,7 @@
 import { Plugin } from 'unified';
 import { Root, Paragraph, Heading } from 'mdast';
 import { visit } from 'unist-util-visit';
+import { logger } from '../../utils/logger';
 
 interface LegalHeadersParserOptions {
   debug?: boolean;
@@ -146,7 +147,7 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
 
   return (tree: Root) => {
     if (debug) {
-      console.log('🔍 [remarkLegalHeadersParser] Parsing legal header syntax');
+      logger.debug('Parsing legal header syntax');
     }
 
     let convertedCount = 0;
@@ -196,8 +197,8 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                   const level = getHeadingLevel(levelPattern);
 
                   if (debug) {
-                    console.log(
-                      `🔄 [remarkLegalHeadersParser] Converting HTML legal header (multiline) to level ${level} heading`
+                    logger.debug(
+                      `Converting HTML legal header (multiline) to level ${level} heading`
                     );
                   }
 
@@ -251,9 +252,7 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
               const level = getHeadingLevel(levelPattern);
 
               if (debug) {
-                console.log(
-                  `🔄 [remarkLegalHeadersParser] Converting HTML legal header to level ${level} heading`
-                );
+                logger.debug(`Converting HTML legal header to level ${level} heading`);
               }
 
               // Create a heading with the HTML content (minus the l. prefix)
@@ -314,8 +313,8 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                 const level = getHeadingLevel(levelPattern);
 
                 if (debug) {
-                  console.log(
-                    `🔄 [remarkLegalHeadersParser] Converting "${line.substring(0, 50)}..." to level ${level} heading`
+                  logger.debug(
+                    `Converting "${line.substring(0, 50)}..." to level ${level} heading`
                   );
                 }
 
@@ -429,8 +428,8 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
                 const level = getHeadingLevel(levelPattern);
 
                 if (debug) {
-                  console.log(
-                    `🔄 [remarkLegalHeadersParser] Converting complex "${line.substring(0, 50)}..." to level ${level} heading`
+                  logger.debug(
+                    `Converting complex "${line.substring(0, 50)}..." to level ${level} heading`
                   );
                 }
 
@@ -478,15 +477,15 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
         if (debug) {
           const firstChildText =
             node.children[0]?.type === 'text' ? node.children[0].value : '<non-text>';
-          console.log(`🔍 [remarkLegalHeadersParser] Single-line paragraph: "${firstChildText}"`);
+          logger.debug(`Single-line paragraph: "${firstChildText}"`);
         }
         const headerInfo = isLegalHeader(node);
 
         if (headerInfo && parent && typeof index === 'number') {
           if (debug) {
             const firstChildText = node.children[0].type === 'text' ? node.children[0].value : '';
-            console.log(
-              `🔄 [remarkLegalHeadersParser] Converting "${firstChildText.substring(0, 50)}..." to level ${headerInfo.level} heading`
+            logger.debug(
+              `Converting "${firstChildText.substring(0, 50)}..." to level ${headerInfo.level} heading`
             );
           }
 
@@ -506,7 +505,7 @@ const remarkLegalHeadersParser: Plugin<[LegalHeadersParserOptions?], Root> = (op
     }
 
     if (debug) {
-      console.log(`✅ [remarkLegalHeadersParser] Converted ${convertedCount} legal headers`);
+      logger.debug(`Converted ${convertedCount} legal headers`);
     }
   };
 };

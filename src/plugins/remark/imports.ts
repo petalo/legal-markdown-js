@@ -44,6 +44,7 @@ import { parseYamlFrontMatter } from '../../core/parsers/yaml-parser';
 import { mergeSequentially, MergeOptions, MergeResult } from '../../core/utils/frontmatter-merger';
 import type { PluginMetadata } from './types';
 import { ProcessingPhase } from './types';
+import { logger } from '../../utils/logger';
 
 /**
  * Options for the remark imports plugin
@@ -211,7 +212,7 @@ export const remarkImports: Plugin<[RemarkImportsOptions], Root> = options => {
     const startTime = Date.now();
 
     if (debug) {
-      console.log('[remarkImports] Processing imports with options:', {
+      logger.debug('Processing imports with options:', {
         basePath,
         mergeMetadata,
         maxDepth,
@@ -327,7 +328,7 @@ async function processParagraphWithImports(
     }
 
     if (context.debug) {
-      console.log(`[remarkImports] Found ${directives.length} import directives`);
+      logger.debug(`Found ${directives.length} import directives`);
     }
 
     // Process each import directive and build AST nodes
@@ -433,8 +434,8 @@ async function processImportDirectiveToAST(
   context: ImportContext
 ): Promise<Content[]> {
   if (context.depth >= context.maxDepth) {
-    console.warn(
-      `[remarkImports] Maximum import depth (${context.maxDepth}) reached for file "${directive.filePath}"`
+    logger.warn(
+      `Maximum import depth (${context.maxDepth}) reached for file "${directive.filePath}"`
     );
     // Return the original directive as text
     return [{ type: 'text', value: directive.fullMatch }];
@@ -447,21 +448,19 @@ async function processImportDirectiveToAST(
 
   // Check for circular imports
   if (context.importStack.includes(canonicalPath)) {
-    console.warn(`[remarkImports] Circular import detected: ${canonicalPath}`);
+    logger.warn(`Circular import detected: ${canonicalPath}`);
     return [{ type: 'text', value: directive.fullMatch }];
   }
 
   if (context.debug) {
-    console.log(
-      `[remarkImports] Processing import "${directive.filePath}" (resolved: ${normalizedPath})`
-    );
+    logger.debug(`Processing import "${directive.filePath}" (resolved: ${normalizedPath})`);
   }
 
   // Load file content
   const fileContent = loadFileContent(canonicalPath, context);
 
   if (!fileContent) {
-    console.warn(`[remarkImports] Import file not found: ${directive.filePath}`);
+    logger.warn(`Import file not found: ${directive.filePath}`);
     return [{ type: 'text', value: directive.fullMatch }];
   }
 
@@ -491,10 +490,7 @@ async function processImportDirectiveToAST(
       }
 
       if (context.debug) {
-        console.log(
-          `[remarkImports] Collected metadata from ${directive.filePath}:`,
-          Object.keys(metadata)
-        );
+        logger.debug(`Collected metadata from ${directive.filePath}:`, Object.keys(metadata));
       }
     }
   }
@@ -571,9 +567,7 @@ function performSequentialMerge(context: ImportContext): MergeResult {
   const metadataList = context.importedMetadataList.map(item => item.metadata);
 
   if (context.debug) {
-    console.log(
-      `[remarkImports] Performing sequential merge of ${metadataList.length} metadata objects`
-    );
+    logger.debug(`Performing sequential merge of ${metadataList.length} metadata objects`);
   }
 
   try {
@@ -588,7 +582,9 @@ function performSequentialMerge(context: ImportContext): MergeResult {
     return result;
   } catch (error) {
     if (context.debug) {
-      console.warn('[remarkImports] Sequential merge failed:', error);
+      logger.warn(
+        `Sequential merge failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
     throw error;
   }
@@ -611,7 +607,9 @@ function loadFileContent(filePath: string, context: ImportContext): string | nul
     }
   } catch (error) {
     if (context.debug) {
-      console.warn(`[remarkImports] Failed to load import file "${filePath}":`, error);
+      logger.warn(
+        `Failed to load import file "${filePath}": ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -656,7 +654,7 @@ function extractSection(content: string, sectionName: string, debug: boolean): s
         sectionStart = i + 1; // Start after the header
         sectionLevel = level;
         if (debug) {
-          console.log(`[remarkImports] Found section '${sectionName}' at line ${i}`);
+          logger.debug(`Found section '${sectionName}' at line ${i}`);
         }
         break;
       }
@@ -665,7 +663,7 @@ function extractSection(content: string, sectionName: string, debug: boolean): s
 
   if (sectionStart === -1) {
     if (debug) {
-      console.warn(`[remarkImports] Section '${sectionName}' not found`);
+      logger.debug(`Section '${sectionName}' not found`);
     }
     return content; // Return full content if section not found
   }

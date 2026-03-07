@@ -16,6 +16,7 @@ import type {
 import { PluginOrderValidator } from '../../plugins/remark/plugin-order-validator';
 import { PipelineError } from '../../errors';
 import { getRuntimeConfig } from '../../config/runtime';
+import { logger } from '../../utils/logger';
 
 /**
  * Ordered pipeline result from builder
@@ -200,7 +201,7 @@ export function validateCapabilities(
       for (const cap of metadata.capabilities) {
         providedCapabilities.add(cap);
         if (debug) {
-          console.log(`[PipelineBuilder] Plugin "${pluginName}" provides capability: ${cap}`);
+          logger.debug(`Plugin "${pluginName}" provides capability: ${cap}`);
         }
       }
     }
@@ -254,18 +255,18 @@ export function buildRemarkPipeline(
   const validationMode = config.validationMode || detectValidationMode();
 
   if (config.debug) {
-    console.log('[PipelineBuilder] Building pipeline with mode:', validationMode);
-    console.log('[PipelineBuilder] Requested plugins:', config.enabledPlugins);
+    logger.debug('Building pipeline with mode', validationMode);
+    logger.debug('Requested plugins', config.enabledPlugins);
   }
 
   // Step 2: Group plugins by phase
   const byPhase = groupPluginsByPhase(config.enabledPlugins, registry);
 
   if (config.debug) {
-    console.log('[PipelineBuilder] Plugins by phase:');
+    logger.debug('Plugins by phase:');
     for (const [phase, plugins] of byPhase.entries()) {
       if (plugins.length > 0) {
-        console.log(`  Phase ${phase}: ${plugins.join(', ')}`);
+        logger.debug(`  Phase ${phase}: ${plugins.join(', ')}`);
       }
     }
   }
@@ -277,7 +278,7 @@ export function buildRemarkPipeline(
     if (phasePlugins.length === 0) continue;
 
     if (config.debug) {
-      console.log(`[PipelineBuilder] Sorting phase ${phase} plugins:`, phasePlugins);
+      logger.debug(`Sorting phase ${phase} plugins`, phasePlugins);
     }
 
     const sorted = validator.topologicalSort(phasePlugins);
@@ -287,7 +288,7 @@ export function buildRemarkPipeline(
     byPhase.set(phase, sorted);
 
     if (config.debug) {
-      console.log(`[PipelineBuilder] Phase ${phase} sorted order:`, sorted);
+      logger.debug(`Phase ${phase} sorted order`, sorted);
     }
   }
 
@@ -303,14 +304,14 @@ export function buildRemarkPipeline(
 
   if (config.debug) {
     if (validation.valid) {
-      console.log('[PipelineBuilder] ✓ Validation passed');
+      logger.debug('Validation passed');
     } else {
-      console.log('[PipelineBuilder] ✗ Validation failed');
+      logger.debug('Validation failed');
       if (validation.errors.length > 0) {
-        console.log('[PipelineBuilder] Errors:', validation.errors);
+        logger.debug('Errors', validation.errors);
       }
       if (validation.warnings.length > 0) {
-        console.log('[PipelineBuilder] Warnings:', validation.warnings);
+        logger.debug('Warnings', validation.warnings);
       }
     }
   }
@@ -328,8 +329,8 @@ export function buildRemarkPipeline(
   validateCapabilities(orderedNames, registry, config.debug);
 
   if (config.debug) {
-    console.log('[PipelineBuilder] Final order:', orderedNames.join(' → '));
-    console.log('[PipelineBuilder] Capabilities provided:', Array.from(capabilities));
+    logger.debug('Final order', orderedNames.join(' → '));
+    logger.debug('Capabilities provided', Array.from(capabilities));
   }
 
   return {

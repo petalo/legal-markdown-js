@@ -9,7 +9,7 @@ import { visit } from 'unist-util-visit';
 
 export const remarkDebugAST: Plugin<[], Root> = () => {
   return (tree: Root) => {
-    console.log('\n=== AST DEBUG ===');
+    process.stderr.write('\n=== AST DEBUG ===\n');
 
     let nodeCount = 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unist-util-visit generic node callback
@@ -17,16 +17,16 @@ export const remarkDebugAST: Plugin<[], Root> = () => {
       if (node.type === 'text' || node.type === 'html') {
         const value: string = node.value || '';
         if (value.includes('{{#') || value.includes('{{/')) {
-          console.log(`\nNode #${nodeCount} (${node.type}):`);
-          console.log('Value:', JSON.stringify(value));
-          console.log('Parent type:', parent?.type);
-          console.log('Full value length:', value.length);
+          process.stderr.write(`\nNode #${nodeCount} (${node.type}):\n`);
+          process.stderr.write(`Value: ${JSON.stringify(value)}\n`);
+          process.stderr.write(`Parent type: ${JSON.stringify(parent?.type)}\n`);
+          process.stderr.write(`Full value length: ${JSON.stringify(value.length)}\n`);
         }
       }
       nodeCount++;
     });
 
-    console.log(`\nTotal nodes visited: ${nodeCount}`);
-    console.log('=== END AST DEBUG ===\n');
+    process.stderr.write(`\nTotal nodes visited: ${nodeCount}\n`);
+    process.stderr.write('=== END AST DEBUG ===\n\n');
   };
 };

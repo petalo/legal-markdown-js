@@ -37,6 +37,7 @@ import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { fieldSpan } from '../../extensions/tracking/field-span';
 import { DEFAULT_HEADER_PATTERNS } from '../../constants/headers';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Custom AST node type for cross-references
@@ -260,7 +261,7 @@ function extractDefinitionsFromAST(
       });
 
       if (debug) {
-        console.log(`[CrossRefAST] Found definition: ${definitionKey} -> ${sectionNumber}`);
+        logger.debug(`Found definition: ${definitionKey} -> ${sectionNumber}`);
       }
     }
   });
@@ -455,7 +456,7 @@ function resolveReferences(
     });
 
     if (debug) {
-      console.log(`[CrossRefAST] Resolving ${key} -> ${resolvedValue || 'UNRESOLVED'}`);
+      logger.debug(`Resolving ${key} -> ${resolvedValue || 'UNRESOLVED'}`);
     }
 
     // Create replacement node
@@ -562,7 +563,7 @@ export const remarkCrossReferencesAST: Plugin<[CrossReferenceASTOptions], Root> 
 
   return (tree: Root) => {
     if (debug) {
-      console.log('🔗 [CrossRefAST] Starting enhanced cross-reference processing');
+      logger.debug('Starting enhanced cross-reference processing');
     }
 
     // Phase 1: Parse |key| patterns into custom reference nodes
@@ -572,8 +573,8 @@ export const remarkCrossReferencesAST: Plugin<[CrossReferenceASTOptions], Root> 
     const crossReferences = extractDefinitionsFromAST(tree, metadata, debug);
 
     if (debug) {
-      console.log(
-        `[CrossRefAST] Found ${crossReferences.length} definitions:`,
+      logger.debug(
+        `Found ${crossReferences.length} definitions:`,
         crossReferences.map(ref => `${ref.key} -> ${ref.sectionNumber}`)
       );
     }
@@ -592,7 +593,7 @@ export const remarkCrossReferencesAST: Plugin<[CrossReferenceASTOptions], Root> 
     cleanupDefinitions(tree);
 
     if (debug) {
-      console.log('✅ [CrossRefAST] Enhanced cross-reference processing completed');
+      logger.debug('Enhanced cross-reference processing completed');
     }
   };
 };

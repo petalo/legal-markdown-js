@@ -30,6 +30,7 @@ import remarkStringify from 'remark-stringify';
 import remarkTemplateFields from '../../../../src/plugins/remark/template-fields';
 import type { TemplateFieldOptions } from '../../../../src/plugins/remark/template-fields';
 import { fieldTracker } from '../../../../src/extensions/tracking/field-tracker';
+import { logger } from '../../../../src/utils/logger';
 
 describe('Template Fields Plugin', () => {
   beforeEach(() => {
@@ -1391,7 +1392,7 @@ Other
 
   describe('Debug Mode', () => {
     it('should log debug information when enabled', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const processor = unified()
         .use(remarkParse)
@@ -1403,16 +1404,16 @@ Other
 
       await processor.process('{{name}}');
 
-      expect(consoleSpy).toHaveBeenCalled();
-      expect(consoleSpy.mock.calls.some(call =>
+      expect(debugSpy).toHaveBeenCalled();
+      expect(debugSpy.mock.calls.some(call =>
         call[0]?.includes('Processing template fields')
       )).toBe(true);
 
-      consoleSpy.mockRestore();
+      debugSpy.mockRestore();
     });
 
     it('should not log when debug disabled', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const processor = unified()
         .use(remarkParse)
@@ -1424,9 +1425,19 @@ Other
 
       await processor.process('{{name}}');
 
-      expect(consoleSpy).not.toHaveBeenCalled();
+      // The plugin itself should not log; other modules (e.g. field-tracker) may call logger.debug
+      const pluginDebugCalls = debugSpy.mock.calls.filter(call =>
+        typeof call[0] === 'string' && (
+          call[0].includes('Processing template fields') ||
+          call[0].includes('template field') ||
+          call[0].includes('Replaced') ||
+          call[0].includes('Found') ||
+          call[0].includes('Skipping')
+        )
+      );
+      expect(pluginDebugCalls).toHaveLength(0);
 
-      consoleSpy.mockRestore();
+      debugSpy.mockRestore();
     });
   });
 });

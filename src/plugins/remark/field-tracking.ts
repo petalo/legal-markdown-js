@@ -34,6 +34,7 @@ import type { Plugin } from 'unified';
 import type { Root, Text, Node } from 'mdast';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Configuration options for the field tracking plugin
@@ -183,7 +184,7 @@ function trackFieldsInTextNode(
       results.push(result);
 
       if (debug) {
-        console.log(`📋 Tracked field: ${fieldName} = "${resolvedValue}" (${originalValue})`);
+        logger.debug(`Tracked field: ${fieldName} = "${resolvedValue}" (${originalValue})`);
       }
     }
   }
@@ -205,14 +206,14 @@ const remarkFieldTracking: Plugin<[FieldTrackingOptions?], Root> = (options = {}
   return (tree: Root) => {
     if (!trackingEnabled) {
       if (debug) {
-        console.log('📋 Field tracking is disabled');
+        logger.debug('Field tracking is disabled');
       }
       return;
     }
 
     if (debug) {
-      console.log('📋 Processing field tracking with remark plugin');
-      console.log(`📋 Using patterns: ${patterns.join(', ')}`);
+      logger.debug('Processing field tracking with remark plugin');
+      logger.debug(`Using patterns: ${patterns.join(', ')}`);
     }
 
     let totalFieldsTracked = 0;
@@ -244,8 +245,8 @@ const remarkFieldTracking: Plugin<[FieldTrackingOptions?], Root> = (options = {}
     }
 
     if (debug) {
-      console.log(
-        `📋 Field tracking completed: ${totalFieldsTracked} fields tracked (${trackedFields.size} unique)`
+      logger.debug(
+        `Field tracking completed: ${totalFieldsTracked} fields tracked (${trackedFields.size} unique)`
       );
     }
   };

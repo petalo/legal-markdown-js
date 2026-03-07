@@ -47,6 +47,7 @@
 import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
 import type { Root } from 'mdast';
+import { logger } from '../../utils/logger';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { fieldSpan } from '../../extensions/tracking/field-span';
 import { extensionHelpers as helpers } from '../../extensions/helpers/index';
@@ -282,7 +283,10 @@ function resolveFieldValue(
           mixinType: 'helper',
         };
       } catch (error) {
-        console.warn(`Error calling Handlebars helper '${helperName}':`, error);
+        logger.warn(
+          `Error calling Handlebars helper '${helperName}':`,
+          error instanceof Error ? error.message : String(error)
+        );
         return {
           value: undefined,
           hasLogic: true,
@@ -317,7 +321,10 @@ function resolveFieldValue(
           mixinType: 'helper',
         };
       } catch (error) {
-        console.warn(`Error calling helper '${helperName}':`, error);
+        logger.warn(
+          `Error calling helper '${helperName}':`,
+          error instanceof Error ? error.message : String(error)
+        );
         return {
           value: undefined,
           hasLogic: true,
@@ -758,7 +765,10 @@ function parseHelperArguments(
           args.push(nestedResult);
           continue;
         } catch (error) {
-          console.warn(`Error calling nested helper '${helperName}':`, error);
+          logger.warn(
+            `Error calling nested helper '${helperName}':`,
+            error instanceof Error ? error.message : String(error)
+          );
           // Fall through to treat as metadata reference
         }
       }
@@ -897,7 +907,10 @@ function parseHandlebarsArguments(
             args.push(nestedResult);
             continue;
           } catch (error) {
-            console.warn(`Error calling Handlebars subexpression helper '${helperName}':`, error);
+            logger.warn(
+              `Error calling Handlebars subexpression helper '${helperName}':`,
+              error instanceof Error ? error.message : String(error)
+            );
             args.push(undefined);
             continue;
           }
@@ -1096,8 +1109,8 @@ function processTemplateFieldsInAST(
         const hasUnresolvedFields = /\{\{[^}]+\}\}/.test(workingValue);
         if (!hasUnresolvedFields) {
           if (debug) {
-            console.log(
-              `⏭️ Skipping HTML node with existing field spans: "${workingValue.substring(0, 100)}..."`
+            logger.debug(
+              `Skipping HTML node with existing field spans: "${workingValue.substring(0, 100)}..."`
             );
           }
           return;
@@ -1107,7 +1120,7 @@ function processTemplateFieldsInAST(
       // Skip processing if this text node is inside existing field tracking spans
       if (node.type === 'text' && isInsideFieldTrackingSpan(node, parent)) {
         if (debug) {
-          console.log(`⏭️ Skipping text node inside existing field spans: "${originalValue}"`);
+          logger.debug(`Skipping text node inside existing field spans: "${originalValue}"`);
         }
         return;
       }
@@ -1129,8 +1142,8 @@ function processTemplateFieldsInAST(
       }
 
       if (debug) {
-        console.log(
-          `📋 Found ${templateFields.length} template fields in ${node.type}: "${normalizedValue}"`
+        logger.debug(
+          `Found ${templateFields.length} template fields in ${node.type}: "${normalizedValue}"`
         );
       }
 
@@ -1172,8 +1185,8 @@ function processTemplateFieldsInAST(
           processedText.substring(field.endIndex);
 
         if (debug) {
-          console.log(
-            `🔄 Replaced ${field.pattern} with "${formattedValue}" (original: ${originalPattern})`
+          logger.debug(
+            `Replaced ${field.pattern} with "${formattedValue}" (original: ${originalPattern})`
           );
         }
       }
@@ -1210,13 +1223,13 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
 
   return (tree: Root) => {
     if (debug) {
-      console.log('📝 Processing template fields with remark plugin');
-      console.log('📊 Metadata:', metadata);
-      console.log('📋 Field patterns:', fieldPatterns);
+      logger.debug('Processing template fields with remark plugin');
+      logger.debug('Metadata:', metadata);
+      logger.debug('Field patterns:', fieldPatterns);
       if (enableFieldTracking) {
-        console.log('🎯 Field tracking highlighting enabled');
+        logger.debug('Field tracking highlighting enabled');
       }
-      console.log('🔧 Code block processing enabled by default');
+      logger.debug('Code block processing enabled by default');
     }
 
     // Process all template fields in the AST with optional field tracking
@@ -1230,7 +1243,7 @@ const remarkTemplateFields: Plugin<[TemplateFieldOptions], Root> = options => {
     );
 
     if (debug) {
-      console.log('✅ Template field processing completed');
+      logger.debug('Template field processing completed');
     }
   };
 };

@@ -236,7 +236,7 @@ export class CliService {
           const resolvedOutputPath = this.resolveOutputPath(outputPath);
           writeFileSync(resolvedOutputPath, result.content);
           this.log(`Output written to: ${resolvedOutputPath}`, 'success');
-          console.log('Successfully processed');
+          console.error('Successfully processed');
         } else {
           console.log(result.content);
         }
@@ -247,7 +247,7 @@ export class CliService {
 
         if (result.metadata && this.options.verbose) {
           this.log('Metadata:', 'info');
-          console.log(JSON.stringify(result.metadata, null, 2));
+          console.error(JSON.stringify(result.metadata, null, 2));
         }
 
         // Archive source file if requested
@@ -329,13 +329,13 @@ export class CliService {
     };
 
     const prefix = {
-      info: '📝',
-      success: '✅',
-      warn: '⚠️',
-      error: '❌',
+      info: '[info]',
+      success: '[ok]',
+      warn: '[warn]',
+      error: '[error]',
     };
 
-    console.log(`${prefix[level]} ${colors[level](message)}`);
+    console.error(`${prefix[level]} ${colors[level](message)}`);
   }
 
   /**

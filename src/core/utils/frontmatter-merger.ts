@@ -44,6 +44,7 @@ import {
   isBigIntTypedArray,
 } from './object-flattener';
 import { ProcessingError } from '../../errors';
+import { logger } from '../../utils/logger';
 import { filterReservedFields } from './reserved-fields-filter';
 import type { YamlValue } from '../../types';
 
@@ -224,7 +225,7 @@ export function mergeFlattened(
   stats.importedProperties = Object.keys(importedFlat).length;
 
   if (logOperations) {
-    console.log(
+    logger.debug(
       `Merging frontmatter: ${stats.currentProperties} current + ${stats.importedProperties} imported properties`
     );
   }
@@ -250,7 +251,7 @@ export function mergeFlattened(
           validateMergeCompatibility(currentValue, importedValue, key);
         } catch (error) {
           if (logOperations) {
-            console.warn(
+            logger.warn(
               `Type conflict for '${key}': ${error instanceof Error ? error.message : String(error)}`
             );
           }
@@ -265,7 +266,7 @@ export function mergeFlattened(
       stats.conflictedFields.push(key);
 
       if (logOperations) {
-        console.log(`Conflict for '${key}': current value kept`);
+        logger.debug(`Conflict for '${key}': current value kept`);
       }
     } else {
       // Check for nested conflicts in both directions
@@ -285,7 +286,7 @@ export function mergeFlattened(
         stats.addedFields.push(key);
 
         if (logOperations) {
-          console.log(`Added '${key}' from import`);
+          logger.debug(`Added '${key}' from import`);
         }
       }
     }
@@ -517,7 +518,7 @@ export function mergeSequentially(
     }
 
     if (options.logOperations) {
-      console.log(
+      logger.debug(
         `Merged import ${i + 1}/${imports.length}: +${result.stats?.propertiesAdded} properties`
       );
     }
@@ -555,7 +556,7 @@ function checkNestedConflicts(
         validateMergeCompatibility({}, importedValue, key);
       } catch (error) {
         if (logOperations) {
-          console.warn(
+          logger.warn(
             `Type conflict for '${key}': ${error instanceof Error ? error.message : String(error)}`
           );
         }
@@ -575,7 +576,7 @@ function checkNestedConflicts(
     } catch (error) {
       if (logOperations) {
         const message = error instanceof Error ? error.message : String(error);
-        console.warn(`Type conflict for '${baseKey}': ${message}`);
+        logger.warn(`Type conflict for '${baseKey}': ${message}`);
       }
       return { hasConflict: true, conflictedField: baseKey };
     }
