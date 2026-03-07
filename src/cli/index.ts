@@ -57,8 +57,16 @@ import {
   validateConfig,
 } from '../config';
 import type { PdfConnectorPreference } from '../extensions/generators/pdf-connectors';
+import { LLMS_TXT } from '../generated/llms-txt';
 
 const version = getPackageVersion('../../package.json');
+
+function printLlmsTxt(): void {
+  process.stdout.write(LLMS_TXT);
+  if (!LLMS_TXT.endsWith('\n')) {
+    process.stdout.write('\n');
+  }
+}
 
 /**
  * Helper function to read content from standard input
@@ -220,11 +228,14 @@ const program = new Command();
 // Setup CLI information
 program
   .name('legal-md')
-  .description('Node.js implementation of LegalMarkdown for processing legal documents')
-  .version(version);
+  .description(
+    'Process Legal Markdown documents into Markdown, HTML, PDF, DOCX, or metadata exports.'
+  )
+  .commandsGroup('Commands:');
 
 program
   .command('init')
+  .helpGroup('Commands:')
   .description('Create a legal-md configuration file')
   .option('-g, --global', 'Write to global config (~/.config/legal-md/config.yaml)')
   .action(async options => {
@@ -322,6 +333,7 @@ program
 
 program
   .command('config')
+  .helpGroup('Commands:')
   .description('Show, get, or set legal-md configuration values')
   .argument('[action]', 'show | get | set', 'show')
   .argument('[key]', 'dot-path key (e.g. paths.input)')
@@ -437,7 +449,14 @@ program
 program
   .argument('[input]', 'Input file path')
   .argument('[output]', 'Output file path')
-  .option('-d, --debug', 'Enable debug mode')
+  .optionsGroup('Common options:')
+  .option('--stdin', 'Read input from standard input')
+  .option('--stdout', 'Write text/HTML output to standard output')
+  .option('--title <title>', 'Document title for HTML/PDF/DOCX')
+  .option('--css <path>', 'Custom CSS for HTML/PDF/DOCX')
+  .version(version, '-V, --version', 'Output the version number')
+  .helpOption('-h, --help', 'Show help')
+  .optionsGroup('Processing:')
   .option('-y, --yaml', 'Process only YAML front matter')
   .option('--headers', 'Auto-populate YAML front matter with header patterns and properties')
   .option('--no-headers', 'Skip header processing')
@@ -449,22 +468,26 @@ program
   .option('--no-indent', 'Disable header indentation (flat formatting)')
   .option('--throwOnYamlError', 'Throw error on invalid YAML')
   .option('--to-markdown', 'Convert output to markdown format')
-  .option('--stdin', 'Read from standard input')
-  .option('--stdout', 'Write to standard output')
+  .optionsGroup('Metadata export:')
   .option('--export-yaml', 'Export metadata as YAML')
   .option('--export-json', 'Export metadata as JSON')
-  .option('-o, --output-path <path>', 'Path for metadata export')
+  .option('-o, --output-path <path>', 'Output path for metadata export')
+  .optionsGroup('Output formats:')
+  .option('--html', 'Generate HTML output')
   .option('--pdf', 'Generate PDF output')
+  .option('--docx', 'Generate DOCX output')
+  .option('--highlight', 'Enable review highlighting in HTML/PDF/DOCX')
   .option(
     '--pdf-connector <connector>',
     'PDF backend: auto | puppeteer | system-chrome | weasyprint'
   )
-  .option('--html', 'Generate HTML output')
-  .option('--docx', 'Generate DOCX output')
-  .option('--highlight', 'Enable field highlighting in HTML/PDF/DOCX output')
+  .option('--archive-source [dir]', 'Archive source file after successful processing')
+  .optionsGroup('Review and debugging:')
+  .option('-d, --debug', 'Enable debug mode')
   .option('--enable-field-tracking', 'Add field tracking spans to markdown output')
   .option('--ast-field-tracking', 'Use AST-first field tracking route (Phase 2 tokens -> Phase 3)')
   .option('--logic-branch-highlighting', 'Annotate winner branches for conditional blocks')
+  .optionsGroup('Imports and frontmatter:')
   .option(
     '--disable-frontmatter-merge',
     'Disable automatic frontmatter merging from imported files (enabled by default)'
@@ -472,11 +495,15 @@ program
   .option('--import-tracing', 'Add HTML comments showing imported content boundaries')
   .option('--validate-import-types', 'Validate type compatibility during frontmatter merging')
   .option('--log-import-operations', 'Log detailed frontmatter merge operations')
-  .option('--css <path>', 'Path to custom CSS file for HTML/PDF/DOCX')
-  .option('--title <title>', 'Document title for HTML/PDF/DOCX')
-  .option('--archive-source [dir]', 'Archive source file after successful processing to directory')
+  .optionsGroup('AI docs:')
+  .option('--llms-txt', 'Print bundled llms.txt for AI agents')
   .action(async (input, output, options) => {
     try {
+      if (options.llmsTxt) {
+        printLlmsTxt();
+        return;
+      }
+
       await loadConfig();
 
       if (options.docx && options.stdout) {
@@ -712,7 +739,20 @@ program
 
 program.addHelpText(
   'after',
-  '\nConfiguration: Run "legal-md config show" to inspect active settings and config file paths.'
+  `
+Examples:
+  legal-md contract.md output.md
+  legal-md contract.md --html
+  legal-md contract.md --pdf --highlight
+  cat contract.md | legal-md --stdin --stdout
+  legal-md --export-json contract.md -o metadata.json
+  legal-md --llms-txt
+`
+);
+
+program.addHelpText(
+  'after',
+  'More:\n  legal-md config show                      Show active configuration and config file paths\n'
 );
 
 // Parse command line arguments

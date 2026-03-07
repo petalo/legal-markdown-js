@@ -165,6 +165,19 @@ describe('--help', () => {
   }
 });
 
+describe('--llms-txt', () => {
+  const expectedLlmsTxt = fs.readFileSync(path.join(ROOT, 'llms.txt'), 'utf8');
+
+  for (const target of TARGETS) {
+    it(`[${target.name}] prints bundled llms.txt and exits 0`, async () => {
+      const { stdout, stderr, exitCode } = await target.run('--llms-txt');
+      expect(exitCode).toBe(0);
+      expect(stderr).toBe('');
+      expect(stdout).toBe(expectedLlmsTxt);
+    });
+  }
+});
+
 // ------------------------------------------------------------------ //
 // Error cases
 // ------------------------------------------------------------------ //

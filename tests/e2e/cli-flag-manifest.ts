@@ -51,6 +51,7 @@ export const TESTED_FLAGS = new Set([
   '--validate-import-types',
   '--log-import-operations',
   '--archive-source',
+  '--llms-txt',
   // meta
   '--version',
   '--help',
