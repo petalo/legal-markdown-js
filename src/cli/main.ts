@@ -22,7 +22,8 @@ if (firstArg === 'ui') {
   await import('./interactive/index.js');
 } else if (firstArg === 'playground') {
   process.argv.splice(2, 1);
-  await import('./playground/index.js');
+  const { main } = await import('./playground/index.js');
+  await main();
 } else {
   await import('./index.js');
 }

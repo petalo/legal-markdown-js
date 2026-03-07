@@ -165,7 +165,7 @@ export function buildRequestHandler(assetMap: AssetMap, webDir: string): http.Re
   };
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const portArg = args.find(a => a.startsWith('--port='));
   const preferredPort = portArg ? parseInt(portArg.split('=')[1], 10) : DEFAULT_PORT;
