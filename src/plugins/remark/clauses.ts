@@ -36,6 +36,7 @@ import { visit } from 'unist-util-visit';
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { fieldSpan } from '../../extensions/tracking/field-span';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Options for the remark clauses plugin
@@ -85,7 +86,7 @@ export const remarkClauses: Plugin<[RemarkClausesOptions], Root> = options => {
 
   return (tree: Root) => {
     if (debug) {
-      console.log('[remarkClauses] Processing clauses with metadata:', Object.keys(metadata));
+      logger.debug('Processing clauses with metadata:', Object.keys(metadata));
     }
 
     // Process all text nodes that might contain conditional blocks
@@ -115,8 +116,8 @@ function processTextNode(
   const conditionalBlocks = extractConditionalBlocks(originalText);
 
   if (debug && originalText.includes('{{#')) {
-    console.log(`[remarkClauses] DEBUG - Text node content: "${originalText}"`);
-    console.log(`[remarkClauses] DEBUG - Found ${conditionalBlocks.length} conditional blocks`);
+    logger.debug(`Text node content: "${originalText}"`);
+    logger.debug(`Found ${conditionalBlocks.length} conditional blocks`);
   }
 
   if (conditionalBlocks.length === 0) {
@@ -124,9 +125,7 @@ function processTextNode(
   }
 
   if (debug) {
-    console.log(
-      `[remarkClauses] Found ${conditionalBlocks.length} conditional blocks in text node`
-    );
+    logger.debug(`Found ${conditionalBlocks.length} conditional blocks in text node`);
   }
 
   // Process blocks in reverse order to maintain correct positions
@@ -166,9 +165,7 @@ function processHtmlNode(
   }
 
   if (debug) {
-    console.log(
-      `[remarkClauses] Found ${conditionalBlocks.length} conditional blocks in HTML node`
-    );
+    logger.debug(`Found ${conditionalBlocks.length} conditional blocks in HTML node`);
   }
 
   // Process blocks in reverse order to maintain correct positions
@@ -302,7 +299,7 @@ function evaluateConditionalBlock(
       const result = evaluateCondition(actualCondition, metadata);
 
       if (debug) {
-        console.log(`[remarkClauses] Conditional "if ${actualCondition}" evaluated to:`, result);
+        logger.debug(`Conditional "if ${actualCondition}" evaluated to:`, result);
       }
 
       if (result) {
@@ -319,8 +316,8 @@ function evaluateConditionalBlock(
 
     if (Array.isArray(value)) {
       if (debug) {
-        console.log(
-          `[remarkClauses] Array condition "${condition}" with ${value.length} items - processing as loop`
+        logger.debug(
+          `Array condition "${condition}" with ${value.length} items - processing as loop`
         );
       }
       // Process as array loop
@@ -331,7 +328,7 @@ function evaluateConditionalBlock(
     const result = evaluateCondition(condition, metadata);
 
     if (debug) {
-      console.log(`[remarkClauses] Condition "${condition}" evaluated to:`, result);
+      logger.debug(`Condition "${condition}" evaluated to:`, result);
     }
 
     if (result) {
@@ -343,7 +340,9 @@ function evaluateConditionalBlock(
     }
   } catch (error) {
     if (debug) {
-      console.warn(`[remarkClauses] Error evaluating condition "${condition}":`, error);
+      logger.warn(
+        `Error evaluating condition "${condition}": ${error instanceof Error ? error.message : String(error)}`
+      );
     }
     // On error, include the content by default (safe behavior)
     return content;
@@ -376,7 +375,7 @@ function evaluateCondition(condition: string, metadata: Record<string, YamlValue
 function sanitizeCondition(condition: string): string | null {
   // Check for HTML tags (dangerous)
   if (/<[^>]*>/.test(condition)) {
-    console.warn('[remarkClauses] Unsafe condition detected, skipping:', condition);
+    logger.warn(`Unsafe condition detected, skipping: ${condition}`);
     return null;
   }
 
@@ -385,7 +384,7 @@ function sanitizeCondition(condition: string): string | null {
   const lowerCondition = condition.toLowerCase();
   for (const keyword of dangerousKeywords) {
     if (lowerCondition.includes(keyword)) {
-      console.warn('[remarkClauses] Unsafe condition detected, skipping:', condition);
+      logger.warn(`Unsafe condition detected, skipping: ${condition}`);
       return null;
     }
   }
@@ -394,7 +393,7 @@ function sanitizeCondition(condition: string): string | null {
   const safePattern = /^[a-zA-Z0-9_.\s==!=<>!&|()'"@]+$/;
 
   if (!safePattern.test(condition)) {
-    console.warn('[remarkClauses] Unsafe condition detected, skipping:', condition);
+    logger.warn(`Unsafe condition detected, skipping: ${condition}`);
     return null;
   }
 
@@ -669,7 +668,7 @@ function processArrayLoop(
       const value = getNestedValue(enhancedMetadata, trimmedField);
 
       if (debug) {
-        console.log(`[remarkClauses] Loop field "${trimmedField}" resolved to:`, value);
+        logger.debug(`Loop field "${trimmedField}" resolved to:`, value);
       }
 
       // Apply field tracking if enabled

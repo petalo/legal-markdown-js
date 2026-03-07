@@ -8,6 +8,7 @@
 import { flattenObject } from '../../../../src/core/utils/object-flattener';
 import { mergeFlattened } from '../../../../src/core/utils/frontmatter-merger';
 import { vi } from 'vitest';
+import { logger } from '../../../../src/utils/logger';
 
 describe('Timeout Safety Tests', () => {
   describe('Object Flattener Timeout', () => {
@@ -35,23 +36,23 @@ describe('Timeout Safety Tests', () => {
     });
 
     it('should handle circular references with warning', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+      const loggerSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+
       const circular: any = { name: 'test' };
       circular.self = circular;
 
       const result = flattenObject(circular);
-      
+
       expect(result).toEqual({
         name: 'test',
         self: '[Circular Reference]'
       });
-      
-      expect(consoleSpy).toHaveBeenCalledWith(
+
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining("Circular reference detected at path 'self'")
       );
 
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
 
     it('should complete normal operations within timeout', () => {

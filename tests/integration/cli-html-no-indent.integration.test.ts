@@ -87,7 +87,7 @@ Final content.`;
             return;
           }
 
-          expect(stdout).toContain('Files generated successfully!');
+          expect(stderr).toContain('Files generated successfully!');
 
           // Check that HTML file was generated
           const htmlPath = path.join(testOutputDir, 'test-headers.html');
@@ -160,7 +160,7 @@ Final content.`;
             return;
           }
 
-          expect(stdout).toContain('Files generated successfully!');
+          expect(stderr).toContain('Files generated successfully!');
 
           // Check that PDF file was generated
           const pdfPath = path.join(testOutputDir, 'test-headers.pdf');

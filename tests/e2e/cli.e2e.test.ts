@@ -65,7 +65,7 @@ This is test content.`;
       fs.writeFileSync(inputPath, inputContent);
 
       try {
-        const { stdout } = await execAsync(`node "${cliPath}" "${inputPath}" "${outputPath}"`);
+        const { stderr } = await execAsync(`node "${cliPath}" "${inputPath}" "${outputPath}"`);
 
         expect(fs.existsSync(outputPath)).toBe(true);
 
@@ -73,7 +73,7 @@ This is test content.`;
         expect(outputContent).toContain('Article 1. First Section');
         expect(outputContent).toContain('  Section 1. Subsection');
         expect(outputContent).toContain('This is test content.');
-        expect(stdout).toContain('Successfully processed');
+        expect(stderr).toContain('Successfully processed');
       } catch (error: any) {
         console.error('CLI Error:', error.stderr);
         throw new Error(`CLI command failed: ${error.message}`);
@@ -129,12 +129,12 @@ Debug content.`;
 
       fs.writeFileSync(inputPath, inputContent);
 
-      const { stdout } = await execAsync(`node ${cliPath} --debug "${inputPath}" "${outputPath}"`);
+      const { stderr } = await execAsync(`node ${cliPath} --debug "${inputPath}" "${outputPath}"`);
 
-      expect(stdout).toContain('Metadata:');
-      expect(stdout).toContain('"title": "Debug Test"');
-      expect(stdout).toContain('"author": "Test Author"');
-      expect(stdout).toContain('"debug_field": "debug_value"');
+      expect(stderr).toContain('Metadata:');
+      expect(stderr).toContain('"title": "Debug Test"');
+      expect(stderr).toContain('"author": "Test Author"');
+      expect(stderr).toContain('"debug_field": "debug_value"');
     });
 
     it('should show exported files in debug mode', async () => {
@@ -150,12 +150,12 @@ Content with metadata export.`;
 
       fs.writeFileSync(inputPath, inputContent);
 
-      const { stdout } = await execAsync(
+      const { stderr } = await execAsync(
         `node ${cliPath} --debug --export-json --output-path "${testDir}" "${inputPath}" "${outputPath}"`
       );
 
-      expect(stdout).toContain('Exported files:');
-      expect(stdout).toContain('debug-metadata.json');
+      expect(stderr).toContain('Exported files:');
+      expect(stderr).toContain('debug-metadata.json');
     });
   });
 
@@ -345,14 +345,14 @@ Reference: |reference_value|`;
 
       fs.writeFileSync(inputPath, inputContent);
 
-      const { stdout } = await execAsync(
+      const { stderr } = await execAsync(
         `node ${cliPath} --debug --export-json --output-path "${testDir}" "${inputPath}" "${outputPath}"`
       );
 
       expect(fs.existsSync(outputPath)).toBe(true);
       expect(fs.existsSync(path.join(testDir, 'metadata.json'))).toBe(true);
-      expect(stdout).toContain('Metadata:');
-      expect(stdout).toContain('Exported files:');
+      expect(stderr).toContain('Metadata:');
+      expect(stderr).toContain('Exported files:');
 
       const outputContent = fs.readFileSync(outputPath, 'utf8');
       expect(outputContent).toContain('Article 1. Main Section');

@@ -44,6 +44,7 @@
  */
 
 import { ParseError } from '../../errors';
+import { logger } from '../../utils/logger';
 
 /**
  * Date format options that can be specified in YAML front matter
@@ -96,8 +97,8 @@ export interface DateFormatOptions {
 export function processDateReferences(content: string, metadata: Record<string, unknown>): string {
   // DEPRECATION WARNING
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
-    console.warn(
-      '[DEPRECATION] processDateReferences() is deprecated and will be removed in v4.0.0. ' +
+    logger.warn(
+      'processDateReferences() is deprecated and will be removed in v4.0.0. ' +
         'Use processLegalMarkdownWithRemark() with remarkDates plugin instead. ' +
         'See: https://github.com/yourrepo/legal-markdown-js/blob/main/docs/migration-guide.md'
     );

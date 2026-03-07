@@ -22,7 +22,7 @@ describe('CliService PDF dependency handling', () => {
 
   it('prints friendly install instructions for PdfDependencyError', () => {
     const service = new CliService({});
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     (service as any).handleError(new PdfDependencyError());
 

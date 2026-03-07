@@ -236,7 +236,7 @@ export class CliService {
           const resolvedOutputPath = this.resolveOutputPath(outputPath);
           writeFileSync(resolvedOutputPath, result.content);
           this.log(`Output written to: ${resolvedOutputPath}`, 'success');
-          console.log('Successfully processed');
+          console.error('Successfully processed');
         } else {
           console.log(result.content);
         }
@@ -247,7 +247,7 @@ export class CliService {
 
         if (result.metadata && this.options.verbose) {
           this.log('Metadata:', 'info');
-          console.log(JSON.stringify(result.metadata, null, 2));
+          console.error(JSON.stringify(result.metadata, null, 2));
         }
 
         // Archive source file if requested
@@ -329,13 +329,13 @@ export class CliService {
     };
 
     const prefix = {
-      info: '📝',
-      success: '✅',
-      warn: '⚠️',
-      error: '❌',
+      info: '[info]',
+      success: '[ok]',
+      warn: '[warn]',
+      error: '[error]',
     };
 
-    console.log(`${prefix[level]} ${colors[level](message)}`);
+    console.error(`${prefix[level]} ${colors[level](message)}`);
   }
 
   /**
@@ -463,7 +463,7 @@ export class CliService {
     }
 
     this.log('Files generated successfully!', 'success');
-    console.log(chalk.bold('\n📄 Generated files:'));
+    console.error(chalk.bold('\n📄 Generated files:'));
 
     if (hasHighlight) {
       // Group files by extension
@@ -496,23 +496,23 @@ export class CliService {
       for (const ext of ['md', 'html', 'pdf', 'docx']) {
         if (!extensions.has(ext)) continue;
 
-        console.log(chalk.gray(`\n   ${ext.toUpperCase()}:`));
+        console.error(chalk.gray(`\n   ${ext.toUpperCase()}:`));
 
         for (const [key, fileGroup] of grouped) {
           if (!key.endsWith(`.${ext}`)) continue;
 
           if (fileGroup.normal) {
-            console.log(`   ${chalk.cyan(fileGroup.normal)}`);
+            console.error(`   ${chalk.cyan(fileGroup.normal)}`);
           }
           if (fileGroup.highlight) {
-            console.log(`   ${chalk.cyan(fileGroup.highlight)}`);
+            console.error(`   ${chalk.cyan(fileGroup.highlight)}`);
           }
         }
       }
     } else {
       // Simple list when no highlight
       for (const file of files) {
-        console.log(`   ${chalk.cyan(file)}`);
+        console.error(`   ${chalk.cyan(file)}`);
       }
     }
   }
@@ -585,20 +585,20 @@ export class CliService {
   private handleError(error: unknown): void {
     if (error instanceof PdfDependencyError) {
       this.log('PDF support is not currently installed.', 'error');
-      console.log(chalk.cyan('Install with: npm install puppeteer'));
-      console.log(
+      console.error(chalk.cyan('Install with: npm install puppeteer'));
+      console.error(
         chalk.cyan(
           'Or install Chrome/Chromium/Edge/Brave/Arc and use --pdf-connector=system-chrome'
         )
       );
-      console.log(chalk.cyan('Or install WeasyPrint and use --pdf-connector=weasyprint'));
+      console.error(chalk.cyan('Or install WeasyPrint and use --pdf-connector=weasyprint'));
       return;
     }
 
     if (error instanceof LegalMarkdownError) {
       this.log(`${error.name}: ${error.message}`, 'error');
       if (error.context && this.options.verbose) {
-        console.log('Context:', error.context);
+        console.error('Context:', error.context);
       }
     } else if (error instanceof Error) {
       this.log(`Error: ${error.message}`, 'error');

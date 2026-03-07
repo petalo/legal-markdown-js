@@ -6,6 +6,7 @@
  */
 
 import { vi } from 'vitest';
+import { logger } from '../../../../src/utils/logger';
 
 // Import fail function from vitest
 const fail = (message: string) => {
@@ -151,7 +152,7 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should validate types when enabled', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const loggerSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
 
       const current = {
         count: 42,
@@ -163,7 +164,7 @@ describe('Frontmatter Merger', () => {
         config: 'not an object' // Type conflict: object vs string
       };
 
-      const result = mergeFlattened(current, imported, { 
+      const result = mergeFlattened(current, imported, {
         validateTypes: true,
         logOperations: true
       });
@@ -173,14 +174,14 @@ describe('Frontmatter Merger', () => {
         config: { debug: true }       // Current value preserved
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining("Type conflict for 'count'")
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining("Type conflict for 'config'")
       );
 
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
 
     it('should handle arrays as atomic values', () => {
@@ -204,24 +205,24 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should log operations when enabled', () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const loggerSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const current = { title: 'Current' };
       const imported = { title: 'Imported', author: 'John' };
 
       mergeFlattened(current, imported, { logOperations: true });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Merging frontmatter')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining("Conflict for 'title': current value kept")
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining("Added 'author' from import")
       );
 
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
   });
 
@@ -367,7 +368,7 @@ describe('Frontmatter Merger', () => {
     });
 
     it('should log sequential operations when enabled', () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const loggerSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const initial = { title: 'Main' };
       const imports = [
@@ -377,14 +378,14 @@ describe('Frontmatter Merger', () => {
 
       mergeSequentially(initial, imports, { logOperations: true });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Merged import 1/2: +1 properties')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Merged import 2/2: +1 properties')
       );
 
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
   });
 

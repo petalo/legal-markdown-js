@@ -11,6 +11,7 @@ import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { remarkHeaders, RemarkHeadersOptions } from '../../../../src/plugins/remark/headers';
 import { remarkLegalHeadersParser } from '../../../../src/plugins/remark/legal-headers-parser';
+import { logger } from '../../../../src/utils/logger';
 
 /**
  * Helper function to process markdown with headers plugin
@@ -374,17 +375,17 @@ describe('remarkHeaders Plugin', () => {
         debug: true,
       };
 
-      // Capture console.log calls
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      // Capture logger.debug calls
+      const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       await processMarkdownWithHeaders(input, options);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[remarkHeaders] Processing headers'),
+      expect(debugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Processing headers'),
         expect.any(Object)
       );
 
-      consoleSpy.mockRestore();
+      debugSpy.mockRestore();
     });
 
     it('should not produce debug output when disabled', async () => {
@@ -396,13 +397,13 @@ describe('remarkHeaders Plugin', () => {
         debug: false,
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       await processMarkdownWithHeaders(input, options);
 
-      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(debugSpy).not.toHaveBeenCalled();
 
-      consoleSpy.mockRestore();
+      debugSpy.mockRestore();
     });
   });
 

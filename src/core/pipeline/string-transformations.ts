@@ -137,8 +137,8 @@ export async function applyStringTransformations(
   const metadata = { ...options.metadata };
 
   if (options.debug) {
-    console.log('[String Transformations] Starting Phase 2 transformations');
-    console.log('[String Transformations] Content length:', content.length);
+    logger.debug('Starting Phase 2 transformations');
+    logger.debug('Content length', content.length);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -176,7 +176,7 @@ export async function applyStringTransformations(
   metadata['_field_mappings'] = mappings as unknown as YamlValue;
 
   if (options.debug && mappings.size > 0) {
-    console.log(`[String Transformations] Normalized ${mappings.size} custom field patterns`);
+    logger.debug(`Normalized ${mappings.size} custom field patterns`);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ export async function applyStringTransformations(
   // This allows multi-line content with markdown formatting inside clauses
   if (!options.noClauses) {
     if (options.debug) {
-      console.log('[String Transformations] Processing optional clauses');
+      logger.debug('Processing optional clauses');
     }
 
     processedContent = preprocessOptionalClauses(
@@ -196,7 +196,7 @@ export async function applyStringTransformations(
     );
 
     if (options.debug) {
-      console.log('[String Transformations] Optional clauses processed');
+      logger.debug('Optional clauses processed');
     }
   }
 
@@ -206,7 +206,7 @@ export async function applyStringTransformations(
   // Handle Handlebars {{#each}}, {{#if}}, etc.
   // This must run AFTER field normalization so all fields use {{}} syntax
   if (options.debug) {
-    console.log('[String Transformations] Processing template loops (Handlebars)');
+    logger.debug('Processing template loops (Handlebars)');
   }
 
   const astFieldTracking = options.astFieldTracking ?? false;
@@ -222,8 +222,8 @@ export async function applyStringTransformations(
   );
 
   if (options.debug) {
-    console.log('[String Transformations] Template loops processed');
-    console.log('[String Transformations] Final content length:', processedContent.length);
+    logger.debug('Template loops processed');
+    logger.debug('Final content length', processedContent.length);
   }
 
   return {
@@ -285,10 +285,7 @@ function normalizeFieldPatterns(
   }
 
   if (debug && fieldMappings.size > 0) {
-    console.log(
-      '[normalizeFieldPatterns] Normalized patterns:',
-      Array.from(fieldMappings.entries())
-    );
+    logger.debug('Normalized patterns', Array.from(fieldMappings.entries()));
   }
 
   return {
@@ -376,7 +373,7 @@ function preprocessOptionalClauses(
   }
 
   if (debug && matches.length > 0) {
-    console.log(`[preprocessOptionalClauses] Found ${matches.length} optional clauses`);
+    logger.debug(`Found ${matches.length} optional clauses`);
   }
 
   // Process matches in reverse order to maintain correct positions
@@ -388,9 +385,7 @@ function preprocessOptionalClauses(
     const shouldInclude = Boolean(conditionValue);
 
     if (debug) {
-      console.log(
-        `[preprocessOptionalClauses] Condition "${condition}" = ${conditionValue} (include: ${shouldInclude})`
-      );
+      logger.debug(`Condition "${condition}" = ${conditionValue} (include: ${shouldInclude})`);
     }
 
     // Replace the clause with its content if true, or remove it if false

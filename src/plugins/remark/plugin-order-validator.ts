@@ -16,6 +16,7 @@ import type {
   PluginOrderWarning,
   PluginOrderValidationOptions,
 } from './types';
+import { logger } from '../../utils/logger';
 
 /**
  * Validator for plugin execution order
@@ -60,7 +61,7 @@ export class PluginOrderValidator {
     const warnings: PluginOrderWarning[] = [];
 
     if (debug) {
-      console.log('[PluginOrderValidator] Validating plugin order:', pluginNames);
+      logger.debug('Validating plugin order:', pluginNames);
     }
 
     // Build a position map for quick lookups
@@ -86,7 +87,7 @@ export class PluginOrderValidator {
       }
 
       if (debug) {
-        console.log(`[PluginOrderValidator] Checking constraints for ${pluginName}`);
+        logger.debug(`Checking constraints for ${pluginName}`);
       }
 
       // Check runBefore constraints
@@ -162,7 +163,7 @@ export class PluginOrderValidator {
     // Log warnings if requested
     if (logWarnings && warnings.length > 0) {
       for (const warning of warnings) {
-        console.warn(`[PluginOrderValidator] WARNING: ${warning.message}`);
+        logger.warn(warning.message);
       }
     }
 
@@ -174,11 +175,13 @@ export class PluginOrderValidator {
       try {
         suggestedOrder = this.topologicalSort(pluginNames);
         if (debug) {
-          console.log('[PluginOrderValidator] Suggested order:', suggestedOrder);
+          logger.debug('Suggested order:', suggestedOrder);
         }
       } catch (error) {
         if (debug) {
-          console.error('[PluginOrderValidator] Failed to generate suggested order:', error);
+          logger.error(
+            `Failed to generate suggested order: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
     }
@@ -417,7 +420,7 @@ export class PluginOrderValidator {
         for (const cap of metadata.capabilities) {
           providedCapabilities.add(cap);
           if (options.debug) {
-            console.log(`[PluginOrderValidator] Plugin "${pluginName}" provides: ${cap}`);
+            logger.debug(`Plugin "${pluginName}" provides: ${cap}`);
           }
         }
       }

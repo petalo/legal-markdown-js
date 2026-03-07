@@ -40,6 +40,7 @@ import * as yaml from 'js-yaml';
 import { YamlParsingResult } from '../../types';
 import type { YamlValue } from '../../types';
 import { YamlParsingError } from '../../errors';
+import { logger } from '../../utils/logger';
 
 // ============================================================================
 // CUSTOM YAML SCHEMA FOR ISO DATE PARSING
@@ -292,7 +293,10 @@ export function serializeToYaml(metadata: Record<string, YamlValue>): string {
   try {
     return yaml.dump(metadata);
   } catch (error) {
-    console.error('Error serializing metadata to YAML:', error);
+    logger.error(
+      'Error serializing metadata to YAML:',
+      error instanceof Error ? error.message : String(error)
+    );
     return '';
   }
 }
@@ -390,7 +394,10 @@ function processDateReferencesInYaml(yamlContent: string): string {
       // Quote the date string to ensure it's valid YAML
       return `"${formattedDate}"`;
     } catch (error) {
-      console.warn(`Error processing YAML date reference ${match}:`, error);
+      logger.warn(
+        `Error processing YAML date reference ${match}:`,
+        error instanceof Error ? error.message : String(error)
+      );
       return `"${match}"`; // Return quoted original on error for valid YAML
     }
   });
