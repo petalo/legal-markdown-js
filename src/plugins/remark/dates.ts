@@ -309,7 +309,10 @@ function processDateReferencesInAST(
         hasChanges = true;
         return formatDateValue(formattedDate, fullToken, enableFieldTracking, hasArithmetic);
       } catch (error) {
-        logger.warn(`Error processing date reference ${match}:`, error);
+        logger.warn(
+          `Error processing date reference ${match}:`,
+          error instanceof Error ? error.message : String(error)
+        );
         return match; // Return original on error
       }
     });
@@ -382,7 +385,10 @@ function processDateReferencesInAST(
             return formattedDate;
           }
         } catch (error) {
-          logger.warn(`Error processing date reference ${match}:`, error);
+          logger.warn(
+            `Error processing date reference ${match}:`,
+            error instanceof Error ? error.message : String(error)
+          );
           return match;
         }
       }

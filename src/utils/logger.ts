@@ -53,8 +53,20 @@ let debugEnabled = false;
 
 let logLevel: 'debug' | 'info' | 'warn' | 'error' | 'none' = getConfig().logging.level;
 
+function safeSerialize(data: unknown): string {
+  try {
+    return JSON.stringify(data);
+  } catch {
+    try {
+      return String(data);
+    } catch {
+      return '[Unserializable data]';
+    }
+  }
+}
+
 function writeToStderr(prefix: string, message: string, data?: unknown): void {
-  const dataPart = data !== undefined ? ` ${JSON.stringify(data)}` : '';
+  const dataPart = data !== undefined ? ` ${safeSerialize(data)}` : '';
   process.stderr.write(`${prefix} ${message}${dataPart}\n`);
 }
 

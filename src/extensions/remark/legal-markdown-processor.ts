@@ -768,7 +768,7 @@ export async function processLegalMarkdown(
     if (updatedOptions.debug) {
       logger.debug('Phase 2 complete. Content length', preprocessedContent.length);
       if (preprocessedContent.includes('{{#')) {
-        logger.debug('WARNING: Content still has {{# patterns!');
+        logger.warn('Content still has {{# patterns after Phase 2');
       }
     }
 
