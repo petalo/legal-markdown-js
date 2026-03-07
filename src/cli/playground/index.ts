@@ -17,6 +17,9 @@ import fs from 'fs';
 import path from 'path';
 import net from 'net';
 import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
+import { EMBEDDED_WEB_ASSETS } from './embedded-assets.js';
+import type { AssetMap } from './embedded-assets.js';
 
 const DEFAULT_PORT = 7891;
 const MAX_TRIES = 10;
@@ -110,20 +113,37 @@ function resolveStaticFilePath(
   return { ok: true, filePath: absoluteFilePath };
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const portArg = args.find(a => a.startsWith('--port='));
-  const preferredPort = portArg ? parseInt(portArg.split('=')[1], 10) : DEFAULT_PORT;
+export function buildRequestHandler(assetMap: AssetMap, webDir: string): http.RequestListener {
+  const isEmbedded = Object.keys(assetMap).length > 0;
 
-  const webDir = resolveWebDir();
-  const port = await findPort(preferredPort);
-  const url = `http://localhost:${port}`;
+  return (req, res) => {
+    // Embedded mode: serve from in-memory map
+    if (isEmbedded) {
+      const rawUrl = req.url ?? '/';
+      const rawPath = rawUrl === '/' ? '/index.html' : rawUrl.split('?')[0];
+      let urlPath: string;
+      try {
+        urlPath = decodeURIComponent(rawPath);
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Bad request');
+        return;
+      }
 
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} busy, using ${port} instead.`);
-  }
+      const entry = assetMap[urlPath];
+      if (!entry) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not found');
+        return;
+      }
 
-  const server = http.createServer((req, res) => {
+      const buf = Buffer.from(entry.content, 'base64');
+      res.writeHead(200, { 'Content-Type': entry.mime });
+      res.end(buf);
+      return;
+    }
+
+    // Filesystem mode (dev / npm link): existing logic unchanged
     const resolved = resolveStaticFilePath(webDir, req.url);
 
     if (!resolved.ok) {
@@ -142,7 +162,24 @@ async function main(): Promise<void> {
       res.writeHead(200, { 'Content-Type': MIME[ext] ?? 'text/plain' });
       fs.createReadStream(resolved.filePath).pipe(res);
     });
-  });
+  };
+}
+
+export async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const portArg = args.find(a => a.startsWith('--port='));
+  const preferredPort = portArg ? parseInt(portArg.split('=')[1], 10) : DEFAULT_PORT;
+
+  const isEmbedded = Object.keys(EMBEDDED_WEB_ASSETS).length > 0;
+  const webDir = isEmbedded ? '' : resolveWebDir();
+  const port = await findPort(preferredPort);
+  const url = `http://localhost:${port}`;
+
+  if (port !== preferredPort) {
+    console.log(`Port ${preferredPort} busy, using ${port} instead.`);
+  }
+
+  const server = http.createServer(buildRequestHandler(EMBEDDED_WEB_ASSETS, webDir));
 
   server.listen(port, () => {
     console.log(`Legal Markdown playground running at ${url}`);
@@ -160,7 +197,12 @@ async function main(): Promise<void> {
   });
 }
 
-void main().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+// Only run main() when executed directly (not when imported in tests)
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  void main().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}

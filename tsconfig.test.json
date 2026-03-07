@@ -46,6 +46,6 @@
     // Types for Vitest
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", "coverage", "examples", "scripts"]
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist", "coverage", "examples"]
 }

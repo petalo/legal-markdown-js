@@ -755,5 +755,13 @@ program.addHelpText(
   'More:\n  legal-md config show                      Show active configuration and config file paths\n'
 );
 
+program.addHelpText(
+  'after',
+  `Subcommands (pass as first argument before any options):
+  legal-md ui                       Launch interactive terminal UI
+  legal-md playground               Start local web playground (http://localhost:7891)
+`
+);
+
 // Parse command line arguments
 program.parse();

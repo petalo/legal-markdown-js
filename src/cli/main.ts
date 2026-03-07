@@ -12,7 +12,8 @@
  *   legal-md playground                  - local web playground
  */
 
-const [, , firstArg] = process.argv;
+const [, , rawFirstArg] = process.argv;
+const firstArg = rawFirstArg?.startsWith('--') ? rawFirstArg.slice(2) : rawFirstArg;
 
 export {};
 
@@ -21,7 +22,8 @@ if (firstArg === 'ui') {
   await import('./interactive/index.js');
 } else if (firstArg === 'playground') {
   process.argv.splice(2, 1);
-  await import('./playground/index.js');
+  const { main } = await import('./playground/index.js');
+  await main();
 } else {
   await import('./index.js');
 }
