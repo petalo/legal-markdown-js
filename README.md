@@ -3,8 +3,8 @@
 TypeScript/Node.js implementation of
 [LegalMarkdown](https://github.com/compleatang/legal-markdown)
 
-**Check out the [playground](https://petalo.github.io/legal-markdown-js/) for an
-interactive experience!**
+Try it live in the
+**[hosted playground](https://petalo.github.io/legal-markdown-js/)**.
 
 ## What It Does
 
@@ -23,20 +23,82 @@ Core syntax supported:
 - Cross references between sections (`|reference|`)
 - Imports (`@import path/to/file.md`)
 
+Check the [features overview](docs/features/README.md) document for more
+details.
+
 ![Legal Markdown JS Playground](docs/playground-master-services-agreement.png)
 
-## Quick Start
+## Install
 
-### 1. Install
+### npm
+
+Run without installing globally:
+
+```bash
+npx legal-md contract.md output.md
+```
+
+Install the package locally in a project:
 
 ```bash
 npm install legal-markdown-js
 ```
 
-### 2. Quick example
+Available binaries:
+
+- `legal-md`
+- `legal-md-ui`
+- `legal-md-playground`
+
+### Homebrew
+
+Install the standalone macOS binary:
 
 ```bash
-npx legal-md contract.md output.md
+brew tap petalo/legal-markdown
+brew install legal-md
+```
+
+After installing with Homebrew, you can use:
+
+- `legal-md`
+- `legal-md ui`
+- `legal-md playground`
+
+### Install script
+
+```bash
+curl -fsSL https://github.com/petalo/legal-markdown-js/releases/latest/download/install.sh | sh
+```
+
+## Quick Start
+
+Install, then run your first conversion in seconds:
+
+**1. Install**
+
+```bash
+# npm
+npm install legal-markdown-js
+
+# Homebrew (macOS)
+brew tap petalo/legal-markdown && brew install legal-md
+```
+
+**2. Process a document**
+
+Convert a Legal Markdown file to processed Markdown:
+
+```bash
+legal-md contract.md output.md
+```
+
+Generate HTML, PDF, or DOCX:
+
+```bash
+legal-md contract.md --html
+legal-md contract.md --pdf
+legal-md contract.md --docx
 ```
 
 <table>
@@ -92,37 +154,48 @@ Agreement with **ACME Corp**.
 </tr>
 </table>
 
-### 3. Generate PDF
+## Playground And UI
+
+### Hosted playground
+
+Use the browser-based playground for a quick interactive test:
+[petalo.github.io/legal-markdown-js](https://petalo.github.io/legal-markdown-js/)
+
+### Interactive CLI
+
+Launch the terminal UI:
 
 ```bash
-npx legal-md input.md output.pdf --pdf
+legal-md-ui
+# or
+legal-md ui
 ```
 
-## Installation Options
+### Local playground
 
-### npm package (recommended)
+If you installed from npm or Homebrew:
 
 ```bash
-npm install legal-markdown-js
+legal-md-playground
+# or
+legal-md playground
 ```
 
-Available binaries:
-
-- `legal-md`
-- `legal-md-ui`
-- `legal-md-playground`
-
-### macOS standalone binary
+If you are working from this repository:
 
 ```bash
-brew tap petalo/legal-markdown
-brew install legal-md
+npm run build:web
+npm run web:serve
 ```
 
-Or install script:
+Useful variants:
 
 ```bash
-curl -fsSL https://github.com/petalo/legal-markdown-js/releases/latest/download/install.sh | sh
+# Vite dev server for playground development
+npm run dev:web
+
+# Serve an existing build on a custom port
+npm run web:serve -- --port=3000
 ```
 
 ## CLI Usage
@@ -134,7 +207,7 @@ curl -fsSL https://github.com/petalo/legal-markdown-js/releases/latest/download/
 legal-md input.md output.md
 
 # Input -> stdout markdown
-legal-md input.md
+legal-md input.md --stdout
 
 # Read from stdin
 cat input.md | legal-md --stdin --stdout
@@ -144,29 +217,29 @@ cat input.md | legal-md --stdin --stdout
 
 ```bash
 # HTML
-legal-md input.md --html
+legal-md input.md output.html --html
 
 # PDF
-legal-md input.md --pdf
+legal-md input.md output.pdf --pdf
 
 # DOCX
-legal-md input.md --docx
+legal-md input.md output.docx --docx
 
 # Highlighted review variants
-legal-md input.md --pdf --highlight
-legal-md input.md --docx --highlight
+legal-md input.md output.pdf --pdf --highlight
+legal-md input.md output.docx --docx --highlight
 ```
 
 ### PDF connector selection
 
 ```bash
 # Auto (default)
-legal-md input.md --pdf
+legal-md input.md output.pdf --pdf
 
 # Force specific backend
-legal-md input.md --pdf --pdf-connector puppeteer
-legal-md input.md --pdf --pdf-connector system-chrome
-legal-md input.md --pdf --pdf-connector weasyprint
+legal-md input.md output.pdf --pdf --pdf-connector puppeteer
+legal-md input.md output.pdf --pdf --pdf-connector system-chrome
+legal-md input.md output.pdf --pdf --pdf-connector weasyprint
 ```
 
 `auto` resolution order is:
@@ -175,18 +248,19 @@ legal-md input.md --pdf --pdf-connector weasyprint
 2. `system-chrome`
 3. `weasyprint`
 
-### Interactive mode
+### Metadata export
 
 ```bash
-legal-md-ui
+legal-md contract.md --export-yaml -o metadata.yaml
+legal-md contract.md --export-json -o metadata.json
 ```
 
-### Local playground
+### Useful flags
 
 ```bash
-legal-md-playground
-# or
-npm run web:serve
+legal-md contract.md --title "Master Services Agreement" --html
+legal-md contract.md output.html --html --css ./styles/print.css
+legal-md contract.md --enable-field-tracking --stdout
 ```
 
 ## Programmatic API
