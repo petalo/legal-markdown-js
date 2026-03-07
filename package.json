@@ -135,7 +135,7 @@
     "js-beautify": "^1.15.4",
     "js-yaml": "^4.1.1",
     "jszip": "^3.10.1",
-    "lucide-react": "^0.576.0",
+    "lucide-react": "^0.577.0",
     "marked": "^17.0.3",
     "mdast-util-to-string": "^4.0.0",
     "next-themes": "^0.4.6",
