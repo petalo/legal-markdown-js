@@ -12,7 +12,8 @@
  *   legal-md playground                  - local web playground
  */
 
-const [, , firstArg] = process.argv;
+const [, , rawFirstArg] = process.argv;
+const firstArg = rawFirstArg?.startsWith('--') ? rawFirstArg.slice(2) : rawFirstArg;
 
 export {};
 
