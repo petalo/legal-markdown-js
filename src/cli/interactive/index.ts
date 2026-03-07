@@ -62,9 +62,7 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
     const forceCommandsStr = extractForceCommands(metadata);
 
     if (forceCommandsStr) {
-      console.log(
-        chalk.cyan('\n📋 Found force commands in document. Executing automatic configuration...\n')
-      );
+      console.log(chalk.cyan('\nForce commands detected. Applying automatic configuration...\n'));
 
       // Parse the force commands
       const forceCommands = parseForceCommands(forceCommandsStr, metadata);
@@ -140,9 +138,7 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
     }
   } catch {
     // If there's any error parsing force commands, continue with normal flow
-    console.log(
-      chalk.gray('No force commands found or error parsing. Continuing with interactive mode...\n')
-    );
+    console.log(chalk.gray('No force commands found. Continuing with interactive mode...\n'));
   }
 
   // Normal interactive flow
@@ -179,7 +175,7 @@ async function continueInteractiveFlow(inputFile: string): Promise<void> {
   const confirmed = await confirmConfiguration(config);
 
   if (!confirmed) {
-    console.log(chalk.yellow('\n❌ Operation cancelled.\n'));
+    console.log(chalk.yellow('\nOperation cancelled.\n'));
     return;
   }
 
@@ -211,7 +207,7 @@ async function runInteractiveMode(): Promise<void> {
   try {
     await loadConfig();
 
-    console.log(chalk.bold.blue('\n🎯 Legal Markdown Interactive CLI\n'));
+    console.log(chalk.bold('\nLegal Markdown Interactive CLI\n'));
     console.log(chalk.gray('Follow the prompts to configure your document processing.\n'));
 
     // Step 1: Select input file
@@ -221,7 +217,7 @@ async function runInteractiveMode(): Promise<void> {
     await continueInteractiveFlow(inputFile);
   } catch (error) {
     if (error instanceof Error && error.message.includes('User force closed')) {
-      console.log(chalk.yellow('\n👋 Goodbye!\n'));
+      console.log(chalk.yellow('\nGoodbye.\n'));
       return;
     }
 
