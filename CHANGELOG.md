@@ -1,3 +1,11 @@
+## [4.2.0](https://github.com/petalo/legal-markdown-js/compare/v4.1.0...v4.2.0) (2026-03-07)
+
+### Features
+
+- add CLI flag for printing llms.txt
+  ([#174](https://github.com/petalo/legal-markdown-js/issues/174))
+  ([0da0722](https://github.com/petalo/legal-markdown-js/commit/0da0722ddd1d2f706769736b0e538e529fed5cd0))
+
 ## [4.1.0](https://github.com/petalo/legal-markdown-js/compare/v4.0.1...v4.1.0) (2026-03-06)
 
 ### Features
