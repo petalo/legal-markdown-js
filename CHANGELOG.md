@@ -1,3 +1,17 @@
+## [4.2.1](https://github.com/petalo/legal-markdown-js/compare/v4.2.0...v4.2.1) (2026-03-07)
+
+### Bug Fixes
+
+- route all processing diagnostic output to stderr
+  ([#176](https://github.com/petalo/legal-markdown-js/issues/176))
+  ([95f661b](https://github.com/petalo/legal-markdown-js/commit/95f661bd255b0fb2b5a11f91cefc711830789e08))
+
+### Documentation
+
+- improve README structure and accuracy
+  ([#175](https://github.com/petalo/legal-markdown-js/issues/175))
+  ([387ca44](https://github.com/petalo/legal-markdown-js/commit/387ca44b19594a222f6c3830c736baf1fce1765d))
+
 ## [4.2.0](https://github.com/petalo/legal-markdown-js/compare/v4.1.0...v4.2.0) (2026-03-07)
 
 ### Features
