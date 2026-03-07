@@ -7,7 +7,6 @@
  */
 
 import chalk from 'chalk';
-import * as path from 'path';
 import { InteractiveConfig, ProcessingResult } from '../types';
 
 /**
@@ -24,48 +23,38 @@ export function formatConfigSummary(config: InteractiveConfig): string {
   const { inputFile, outputFilename, outputFormats, processingOptions, archiveOptions, cssFile } =
     config;
 
-  let summary = chalk.bold.cyan('\n📋 Configuration Summary:\n\n');
+  let summary = chalk.bold('\nConfiguration summary:\n\n');
 
-  // Input file
-  summary += `📄 ${chalk.bold('Input file:')} ${inputFile}\n`;
+  summary += `  Input:      ${inputFile}\n`;
+  summary += `  Output:     ${outputFilename}\n`;
 
-  // Output filename
-  summary += `📝 ${chalk.bold('Output filename:')} ${outputFilename}\n`;
-
-  // Output formats
   const formats = [];
   if (outputFormats.pdf) formats.push('PDF');
   if (outputFormats.html) formats.push('HTML');
   if (outputFormats.docx) formats.push('DOCX');
   if (outputFormats.markdown) formats.push('Markdown');
   if (outputFormats.metadata) formats.push('Metadata');
+  summary += `  Formats:    ${formats.join(', ')}\n`;
 
-  summary += `🎯 ${chalk.bold('Output formats:')} ${formats.join(', ')}\n`;
-
-  // CSS file
-  if (cssFile) {
-    summary += `🎨 ${chalk.bold('CSS file:')} ${cssFile}\n`;
-  } else if (outputFormats.html || outputFormats.pdf || outputFormats.docx) {
-    summary += `🎨 ${chalk.bold('CSS file:')} None\n`;
+  if (outputFormats.html || outputFormats.pdf || outputFormats.docx) {
+    summary += `  CSS:        ${cssFile || 'none'}\n`;
   }
 
-  // Processing options
   const options = [];
-  if (processingOptions.debug) options.push('Debug');
-  if (processingOptions.fieldTracking) options.push('Field tracking');
-  if (processingOptions.highlight) options.push('Highlight');
+  if (processingOptions.debug) options.push('debug');
+  if (processingOptions.fieldTracking) options.push('field tracking');
+  if (processingOptions.highlight) options.push('highlight');
 
   if (options.length > 0) {
-    summary += `⚙️  ${chalk.bold('Processing options:')} ${options.join(', ')}\n`;
+    summary += `  Options:    ${options.join(', ')}\n`;
   }
 
-  // Archive options
   if (archiveOptions.enabled) {
     const archiveDir = archiveOptions.directory || 'default archive directory';
-    summary += `📦 ${chalk.bold('Source archiving:')} Enabled → ${chalk.cyan(archiveDir)}\n`;
-    summary += `   ${chalk.gray('Smart archiving will determine file handling based on content changes')}\n`;
+    summary += `  Archiving:  enabled -> ${chalk.cyan(archiveDir)}\n`;
+    summary += `              ${chalk.gray('Smart archiving will determine file handling based on content changes')}\n`;
   } else {
-    summary += `📦 ${chalk.bold('Source archiving:')} Disabled\n`;
+    summary += `  Archiving:  disabled\n`;
   }
 
   summary += '\n';
@@ -87,71 +76,17 @@ export function formatSuccessMessage(
   outputFiles: string[],
   archiveResult?: ProcessingResult['archiveResult']
 ): string {
-  let message = chalk.bold.green('\n✅ Files generated successfully!\n\n');
+  let message = chalk.bold.green('\n✓ Processing complete\n\n');
 
-  // Show generated files
-  message += chalk.bold('📄 Generated files:\n');
-
-  // Check if there are any highlight files
-  const hasHighlight = outputFiles.some(file => file.includes('.HIGHLIGHT.'));
-
-  if (hasHighlight) {
-    // Group files by extension
-    const grouped = new Map<string, { normal?: string; highlight?: string }>();
-
-    for (const file of outputFiles) {
-      const ext = path.extname(file);
-      const basename = path.basename(file, ext);
-      const isHighlight = basename.includes('.HIGHLIGHT');
-
-      if (isHighlight) {
-        const normalBasename = basename.replace('.HIGHLIGHT', '');
-        const key = `${normalBasename}${ext}`;
-        const existing = grouped.get(key) || {};
-        existing.highlight = file;
-        grouped.set(key, existing);
-      } else {
-        const key = `${basename}${ext}`;
-        const existing = grouped.get(key) || {};
-        existing.normal = file;
-        grouped.set(key, existing);
-      }
-    }
-
-    // Show grouped files by extension
-    const extensions = new Set(
-      Array.from(grouped.keys()).map(key => key.split('.').pop()?.toLowerCase())
-    );
-
-    for (const ext of ['md', 'html', 'pdf', 'docx']) {
-      if (!extensions.has(ext)) continue;
-
-      message += chalk.gray(`\n   ${ext.toUpperCase()}:\n`);
-
-      for (const [key, fileGroup] of grouped) {
-        if (!key.endsWith(`.${ext}`)) continue;
-
-        if (fileGroup.normal) {
-          message += `   ${chalk.cyan(fileGroup.normal)}\n`;
-        }
-        if (fileGroup.highlight) {
-          message += `   ${chalk.cyan(fileGroup.highlight)}\n`;
-        }
-      }
-    }
-  } else {
-    // Simple list when no highlight
-    for (const file of outputFiles) {
-      message += `   ${chalk.cyan(file)}\n`;
-    }
+  message += chalk.bold('Generated:\n');
+  for (const file of outputFiles) {
+    message += `  -> ${chalk.cyan(file)}\n`;
   }
 
-  // Show archiving results only if archiving failed
-  // (Successful archiving is already shown in Generated files section)
   if (archiveResult && !archiveResult.success) {
     message += '\n';
-    message += chalk.bold('📦 Source file archiving:\n');
-    message += `   ${chalk.red('✗')} Archiving failed: ${archiveResult.error}\n`;
+    message += chalk.bold('Archiving:\n');
+    message += `  ${chalk.red('✗')} Archiving failed: ${archiveResult.error}\n`;
   }
 
   message += '\n';
@@ -165,7 +100,7 @@ export function formatSuccessMessage(
  * @returns Formatted error message with red styling and error icon
  */
 export function formatErrorMessage(error: string): string {
-  return chalk.bold.red(`\n❌ Error: ${error}\n`);
+  return chalk.bold.red(`\n✗ Error: ${error}\n`);
 }
 
 /**
@@ -175,5 +110,5 @@ export function formatErrorMessage(error: string): string {
  * @returns Formatted warning message with yellow styling and warning icon
  */
 export function formatWarningMessage(warning: string): string {
-  return chalk.bold.yellow(`\n⚠️  Warning: ${warning}\n`);
+  return chalk.yellow(`\n! Warning: ${warning}\n`);
 }

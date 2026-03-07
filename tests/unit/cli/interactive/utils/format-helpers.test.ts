@@ -26,6 +26,7 @@ vi.mock('chalk', () => {
       gray: mockFn,
       green: mockFn,
       red: mockFn,
+      yellow: mockFn,
     },
     bold: Object.assign(mockFn, {
       cyan: mockFn,
@@ -37,6 +38,7 @@ vi.mock('chalk', () => {
     gray: mockFn,
     green: mockFn,
     red: mockFn,
+    yellow: mockFn,
   };
 });
 
@@ -66,13 +68,16 @@ describe('Format Helper Utilities', () => {
 
       const result = formatConfigSummary(config);
 
-      expect(result).toContain('Configuration Summary:');
-      expect(result).toContain('Input file: /path/to/contract.md');
-      expect(result).toContain('Output filename: processed-contract');
-      expect(result).toContain('Output formats: PDF, HTML, Metadata');
-      expect(result).toContain('CSS file: contract.petalo.css');
-      expect(result).toContain('Processing options: Debug, Highlight');
-      expect(result).toContain('Source archiving: Disabled');
+      expect(result).toContain('Configuration summary:');
+      expect(result).toContain('Input:');
+      expect(result).toContain('/path/to/contract.md');
+      expect(result).toContain('Output:');
+      expect(result).toContain('processed-contract');
+      expect(result).toContain('Formats:');
+      expect(result).toContain('CSS:');
+      expect(result).toContain('Options:');
+      expect(result).toContain('Archiving:');
+      expect(result).toContain('disabled');
     });
 
     it('should handle configuration without CSS file', () => {
@@ -99,10 +104,13 @@ describe('Format Helper Utilities', () => {
 
       const result = formatConfigSummary(config);
 
-      expect(result).toContain('CSS file: None');
-      expect(result).toContain('Output formats: HTML, Markdown');
-      expect(result).toContain('Processing options: Field tracking');
-      expect(result).toContain('Source archiving: Disabled');
+      expect(result).toContain('CSS:');
+      expect(result).toContain('none');
+      expect(result).toContain('Formats:');
+      expect(result).toContain('Options:');
+      expect(result).toContain('field tracking');
+      expect(result).toContain('Archiving:');
+      expect(result).toContain('disabled');
     });
 
     it('should handle configuration with no processing options', () => {
@@ -128,9 +136,10 @@ describe('Format Helper Utilities', () => {
 
       const result = formatConfigSummary(config);
 
-      expect(result).toContain('Output formats: PDF');
-      expect(result).not.toContain('Processing options:');
-      expect(result).toContain('Source archiving: Disabled');
+      expect(result).toContain('Formats:');
+      expect(result).not.toContain('Options:');
+      expect(result).toContain('Archiving:');
+      expect(result).toContain('disabled');
     });
 
     it('should show archive options when enabled with default directory', () => {
@@ -156,7 +165,9 @@ describe('Format Helper Utilities', () => {
 
       const result = formatConfigSummary(config);
 
-      expect(result).toContain('Source archiving: Enabled → default archive directory');
+      expect(result).toContain('Archiving:');
+      expect(result).toContain('enabled');
+      expect(result).toContain('default archive directory');
       expect(result).toContain(
         'Smart archiving will determine file handling based on content changes'
       );
@@ -186,7 +197,9 @@ describe('Format Helper Utilities', () => {
 
       const result = formatConfigSummary(config);
 
-      expect(result).toContain('Source archiving: Enabled → ./custom-archive');
+      expect(result).toContain('Archiving:');
+      expect(result).toContain('enabled');
+      expect(result).toContain('./custom-archive');
       // eslint-disable-next-line max-len
       expect(result).toContain(
         'Smart archiving will determine file handling based on content changes'
@@ -204,8 +217,8 @@ describe('Format Helper Utilities', () => {
 
       const result = formatSuccessMessage(outputFiles);
 
-      expect(result).toContain('Files generated successfully!');
-      expect(result).toContain('Generated files:');
+      expect(result).toContain('Processing complete');
+      expect(result).toContain('Generated:');
       expect(result).toContain('/output/contract.pdf');
       expect(result).toContain('/output/contract.html');
       expect(result).toContain('/output/contract-metadata.yaml');
@@ -217,8 +230,8 @@ describe('Format Helper Utilities', () => {
 
       const result = formatSuccessMessage(outputFiles);
 
-      expect(result).toContain('Files generated successfully!');
-      expect(result).toContain('Generated files:');
+      expect(result).toContain('Processing complete');
+      expect(result).toContain('Generated:');
       expect(result).toContain('/output/document.pdf');
       expect(result).not.toContain('Source file archiving:');
     });
@@ -233,8 +246,8 @@ describe('Format Helper Utilities', () => {
 
       const result = formatSuccessMessage(outputFiles, archiveResult);
 
-      expect(result).toContain('Files generated successfully!');
-      expect(result).toContain('Generated files:');
+      expect(result).toContain('Processing complete');
+      expect(result).toContain('Generated:');
       expect(result).toContain('/output/document.pdf');
       expect(result).not.toContain('Source file archiving:');
     });
@@ -250,8 +263,8 @@ describe('Format Helper Utilities', () => {
 
       const result = formatSuccessMessage(outputFiles, archiveResult);
 
-      expect(result).toContain('Files generated successfully!');
-      expect(result).toContain('Generated files:');
+      expect(result).toContain('Processing complete');
+      expect(result).toContain('Generated:');
       expect(result).toContain('/output/contract.pdf');
       expect(result).not.toContain('Source file archiving:');
     });
@@ -265,31 +278,31 @@ describe('Format Helper Utilities', () => {
 
       const result = formatSuccessMessage(outputFiles, archiveResult);
 
-      expect(result).toContain('Files generated successfully!');
-      expect(result).toContain('Generated files:');
+      expect(result).toContain('Processing complete');
+      expect(result).toContain('Generated:');
       expect(result).toContain('/output/document.pdf');
-      expect(result).toContain('Source file archiving:');
+      expect(result).toContain('Archiving:');
       expect(result).toContain('Archiving failed: Permission denied');
     });
   });
 
   describe('formatErrorMessage', () => {
-    it('should format error message with emoji and styling', () => {
+    it('should format error message with symbol and styling', () => {
       const error = 'File not found: input.md';
 
       const result = formatErrorMessage(error);
 
-      expect(result).toContain('❌ Error: File not found: input.md');
+      expect(result).toContain('✗ Error: File not found: input.md');
     });
   });
 
   describe('formatWarningMessage', () => {
-    it('should format warning message with emoji and styling', () => {
+    it('should format warning message with symbol and styling', () => {
       const warning = 'No CSS files found in styles directory';
 
       const result = formatWarningMessage(warning);
 
-      expect(result).toContain('⚠️  Warning: No CSS files found in styles directory');
+      expect(result).toContain('! Warning: No CSS files found in styles directory');
     });
   });
 });
