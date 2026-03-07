@@ -13,16 +13,17 @@ import {
   createPluginRegistry,
 } from '../../../src/plugins/remark/plugin-order-validator';
 import type { PluginMetadata } from '../../../src/plugins/remark/types';
+import { logger } from '../../../src/utils/logger';
 
 describe('PluginOrderValidator', () => {
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+  let loggerWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    loggerWarnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleWarnSpy.mockRestore();
+    loggerWarnSpy.mockRestore();
   });
 
   describe('Correct Plugin Order', () => {
@@ -532,8 +533,8 @@ describe('PluginOrderValidator', () => {
 
       validator.validate([], { throwOnError: false, logWarnings: true });
 
-      expect(consoleWarnSpy).toHaveBeenCalled();
-      expect(consoleWarnSpy.mock.calls[0][0]).toContain('requiredPlugin');
+      expect(loggerWarnSpy).toHaveBeenCalled();
+      expect(loggerWarnSpy.mock.calls[0][0]).toContain('requiredPlugin');
     });
 
     it('should not log warnings when logWarnings is false', () => {
@@ -550,7 +551,7 @@ describe('PluginOrderValidator', () => {
 
       validator.validate([], { throwOnError: false, logWarnings: false });
 
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
   });
 

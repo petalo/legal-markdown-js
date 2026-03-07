@@ -52,6 +52,7 @@ import { addDays, addMonths, addYears } from '../../extensions/helpers/advanced-
 import { fieldTracker } from '../../extensions/tracking/field-tracker';
 import { fieldSpan } from '../../extensions/tracking/field-span';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Plugin options for date processing
@@ -308,7 +309,10 @@ function processDateReferencesInAST(
         hasChanges = true;
         return formatDateValue(formattedDate, fullToken, enableFieldTracking, hasArithmetic);
       } catch (error) {
-        console.warn(`Error processing date reference ${match}:`, error);
+        logger.warn(
+          `Error processing date reference ${match}:`,
+          error instanceof Error ? error.message : String(error)
+        );
         return match; // Return original on error
       }
     });
@@ -381,7 +385,10 @@ function processDateReferencesInAST(
             return formattedDate;
           }
         } catch (error) {
-          console.warn(`Error processing date reference ${match}:`, error);
+          logger.warn(
+            `Error processing date reference ${match}:`,
+            error instanceof Error ? error.message : String(error)
+          );
           return match;
         }
       }
@@ -402,14 +409,14 @@ const remarkDates: Plugin<[DateProcessingOptions], Root> = options => {
 
   return (tree: Root) => {
     if (debug) {
-      console.log('📅 Processing date references with remark plugin');
+      logger.debug('Processing date references with remark plugin');
     }
 
     // Process date references in the AST
     processDateReferencesInAST(tree, metadata, enableFieldTracking);
 
     if (debug) {
-      console.log('✅ Date reference processing completed');
+      logger.debug('Date reference processing completed');
     }
   };
 };

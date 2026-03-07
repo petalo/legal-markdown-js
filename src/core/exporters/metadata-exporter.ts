@@ -35,6 +35,7 @@
  */
 
 import * as fs from 'fs';
+import { logger } from '../../utils/logger';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 import type { YamlValue } from '../../types';
@@ -131,9 +132,12 @@ export function exportMetadata(
       const yamlContent = yaml.dump(exportedMetadata);
       fs.writeFileSync(yamlPath, yamlContent, 'utf8');
       exportedFiles.push(yamlPath);
-      console.log(`Exported YAML metadata to: ${yamlPath}`);
+      logger.debug(`Exported YAML metadata to: ${yamlPath}`);
     } catch (error) {
-      console.error('Error exporting YAML metadata:', error);
+      logger.error(
+        'Error exporting YAML metadata:',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 
@@ -153,9 +157,12 @@ export function exportMetadata(
       const jsonContent = JSON.stringify(exportedMetadata, null, 2);
       fs.writeFileSync(jsonPath, jsonContent, 'utf8');
       exportedFiles.push(jsonPath);
-      console.log(`Exported JSON metadata to: ${jsonPath}`);
+      logger.debug(`Exported JSON metadata to: ${jsonPath}`);
     } catch (error) {
-      console.error('Error exporting JSON metadata:', error);
+      logger.error(
+        'Error exporting JSON metadata:',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 

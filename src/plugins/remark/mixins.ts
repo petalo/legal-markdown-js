@@ -38,6 +38,7 @@ import { visit } from 'unist-util-visit';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { YamlValue } from '../../types';
+import { logger } from '../../utils/logger';
 
 /**
  * Options for the remark mixins plugin
@@ -119,7 +120,7 @@ export const remarkMixins: Plugin<[RemarkMixinsOptions], Root> = options => {
 
   return (tree: Root) => {
     if (debug) {
-      console.log('[remarkMixins] Processing mixins with options:', {
+      logger.debug('Processing mixins with options:', {
         basePath,
         maxDepth,
         customMixinCount: Object.keys(customMixins).length,
@@ -159,7 +160,7 @@ function processTextNode(node: Text, context: MixinContext) {
   }
 
   if (context.debug) {
-    console.log(`[remarkMixins] Found ${mixinDirectives.length} mixin directives in text node`);
+    logger.debug(`Found ${mixinDirectives.length} mixin directives in text node`);
   }
 
   // Process directives in reverse order to maintain correct positions
@@ -207,7 +208,9 @@ function extractMixinDirectives(text: string): MixinDirective[] {
       try {
         parameters = parseParameters(paramString);
       } catch (error) {
-        console.warn(`[remarkMixins] Failed to parse parameters for mixin "${mixinName}":`, error);
+        logger.warn(
+          `Failed to parse parameters for mixin "${mixinName}": ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -271,24 +274,21 @@ function parseParameterValue(value: string): YamlValue {
  */
 function processMixinDirective(directive: MixinDirective, context: MixinContext): string {
   if (context.depth >= context.maxDepth) {
-    console.warn(
-      `[remarkMixins] Maximum recursion depth (${context.maxDepth}) reached for mixin "${directive.name}"`
+    logger.warn(
+      `Maximum recursion depth (${context.maxDepth}) reached for mixin "${directive.name}"`
     );
     return directive.fullMatch; // Return original directive
   }
 
   if (context.debug) {
-    console.log(
-      `[remarkMixins] Processing mixin "${directive.name}" with parameters:`,
-      directive.parameters
-    );
+    logger.debug(`Processing mixin "${directive.name}" with parameters:`, directive.parameters);
   }
 
   // Load mixin content
   const mixinContent = loadMixinContent(directive.name, context);
 
   if (!mixinContent) {
-    console.warn(`[remarkMixins] Mixin "${directive.name}" not found`);
+    logger.warn(`Mixin "${directive.name}" not found`);
     return directive.fullMatch; // Return original directive
   }
 
@@ -335,7 +335,9 @@ function loadMixinContent(mixinName: string, context: MixinContext): string | nu
     }
   } catch (error) {
     if (context.debug) {
-      console.warn(`[remarkMixins] Failed to load mixin file "${filePath}":`, error);
+      logger.warn(
+        `Failed to load mixin file "${filePath}": ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -359,13 +361,13 @@ function processTemplateFields(
 
     if (value !== undefined && value !== null) {
       if (debug) {
-        console.log(`[remarkMixins] Replacing template field "${trimmedField}" with value:`, value);
+        logger.debug(`Replacing template field "${trimmedField}" with value:`, value);
       }
       return String(value);
     }
 
     if (debug) {
-      console.log(`[remarkMixins] Template field "${trimmedField}" not found, keeping original`);
+      logger.debug(`Template field "${trimmedField}" not found, keeping original`);
     }
 
     return match; // Keep original if not found

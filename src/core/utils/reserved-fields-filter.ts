@@ -28,6 +28,8 @@
  * ```
  */
 
+import { logger } from '../../utils/logger';
+
 /**
  * Complete list of reserved field names that should not be imported
  *
@@ -141,7 +143,7 @@ export function filterReservedFields(
   for (const [key, value] of Object.entries(metadata)) {
     if (isReservedField(key, { additionalReserved, strictMode })) {
       if (logFiltered) {
-        console.warn(`Reserved field '${key}' ignored from import`);
+        logger.warn(`Reserved field '${key}' ignored from import`);
       }
     } else {
       filtered[key] = value;

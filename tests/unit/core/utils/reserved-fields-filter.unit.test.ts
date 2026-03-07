@@ -6,6 +6,7 @@
  */
 
 import { vi } from 'vitest';
+import { logger } from '../../../../src/utils/logger';
 import {
   filterReservedFields,
   isReservedField,
@@ -137,8 +138,8 @@ describe('Reserved Fields Filter', () => {
     });
 
     it('should support logging of filtered fields', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+      const loggerSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+
       const input = {
         'level-one': 'ARTICLE %n.',
         'force_commands': '--pdf',
@@ -147,11 +148,11 @@ describe('Reserved Fields Filter', () => {
 
       filterReservedFields(input, { logFiltered: true });
 
-      expect(consoleSpy).toHaveBeenCalledWith("Reserved field 'level-one' ignored from import");
-      expect(consoleSpy).toHaveBeenCalledWith("Reserved field 'force_commands' ignored from import");
-      expect(consoleSpy).toHaveBeenCalledTimes(2);
+      expect(loggerSpy).toHaveBeenCalledWith("Reserved field 'level-one' ignored from import");
+      expect(loggerSpy).toHaveBeenCalledWith("Reserved field 'force_commands' ignored from import");
+      expect(loggerSpy).toHaveBeenCalledTimes(2);
 
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
 
     it('should handle additional reserved fields', () => {

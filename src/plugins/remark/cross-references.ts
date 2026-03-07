@@ -338,10 +338,10 @@ function extractCrossReferencesFromAST(
       const misplacedMatch = headingText.match(/^(?:l+\.\s+)?(.+?)\s+\|([^|]+)\|\s+\S/);
       if (misplacedMatch) {
         const key = misplacedMatch[2].trim();
-        logger.warn(
-          `[remarkCrossReferences] |${key}| found in heading but not at end - definition will not be extracted`,
-          { key, line: node.position?.start.line }
-        );
+        logger.warn(`|${key}| found in heading but not at end - definition will not be extracted`, {
+          key,
+          line: node.position?.start.line,
+        });
         appendMisplacedKeyBadge(node);
       }
     }
@@ -657,14 +657,14 @@ const remarkCrossReferences: Plugin<[CrossReferenceOptions], Root> = options => 
 
   return (tree: Root) => {
     if (debug) {
-      console.log('🔗 Processing cross-references with remark plugin');
+      logger.debug('Processing cross-references with remark plugin');
     }
 
     // First pass: Extract cross-reference definitions from headers
     const crossReferences = extractCrossReferencesFromAST(tree, metadata, debug);
 
     if (debug) {
-      console.log(
+      logger.debug(
         `Found ${crossReferences.length} cross-reference definitions:`,
         crossReferences.map(ref => `${ref.key} -> ${ref.sectionNumber}`)
       );
@@ -687,12 +687,12 @@ const remarkCrossReferences: Plugin<[CrossReferenceOptions], Root> = options => 
 
     // Third pass: Replace cross-reference usage with section numbers
     if (debug) {
-      console.log('🔄 Starting cross-reference replacement in content...');
+      logger.debug('Starting cross-reference replacement in content...');
     }
     replaceCrossReferencesInAST(tree, crossReferences, metadata, enableFieldTracking);
 
     if (debug) {
-      console.log('✅ Cross-reference processing completed');
+      logger.debug('Cross-reference processing completed');
     }
   };
 };

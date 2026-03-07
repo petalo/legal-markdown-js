@@ -9,7 +9,7 @@
  * - Multiple log levels (debug, info, warn, error)
  * - Debug mode controlled by environment variable
  * - Structured logging with contextual data
- * - Console-based output with formatted prefixes
+ * - stderr output via process.stderr.write (debug/info) and console.warn/error (warn/error)
  * - Optional data parameter for detailed logging
  * - Lightweight with no external dependencies
  *
@@ -53,6 +53,23 @@ let debugEnabled = false;
 
 let logLevel: 'debug' | 'info' | 'warn' | 'error' | 'none' = getConfig().logging.level;
 
+function safeSerialize(data: unknown): string {
+  try {
+    return JSON.stringify(data);
+  } catch {
+    try {
+      return String(data);
+    } catch {
+      return '[Unserializable data]';
+    }
+  }
+}
+
+function writeToStderr(prefix: string, message: string, data?: unknown): void {
+  const dataPart = data !== undefined ? ` ${safeSerialize(data)}` : '';
+  process.stderr.write(`${prefix} ${message}${dataPart}\n`);
+}
+
 export const logger = {
   /**
    * Enable or disable debug logging
@@ -87,7 +104,7 @@ export const logger = {
   debug: (message: string, data?: unknown) => {
     const isDebugEnabled = debugEnabled || getConfig().logging.debug;
     if (isDebugEnabled) {
-      console.debug(`[DEBUG] ${message}`, data || '');
+      writeToStderr('[DEBUG]', message, data);
     }
   },
 
@@ -106,7 +123,7 @@ export const logger = {
    */
   info: (message: string, data?: unknown) => {
     if (logLevel === 'none' || logLevel === 'warn' || logLevel === 'error') return;
-    console.info(`[INFO] ${message}`, data || '');
+    writeToStderr('[INFO]', message, data);
   },
 
   /**

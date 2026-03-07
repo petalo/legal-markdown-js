@@ -238,11 +238,11 @@ describe('file -> output file', () => {
 describe('--debug', () => {
   for (const target of TARGETS) {
     it(`[${target.name}] shows Metadata: block in output`, async () => {
-      const { stdout, exitCode } = await target.run(
+      const { stderr, exitCode } = await target.run(
         `--debug "${path.join(FIXTURES, 'minimal.md')}"`
       );
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('Metadata:');
+      expect(stderr).toContain('Metadata:');
     });
   }
 });
@@ -878,12 +878,12 @@ describe('Combinations', () => {
       const metaDir = path.join(tmpDir, `${target.name}-combo`);
       fs.mkdirSync(metaDir);
       const out = path.join(metaDir, 'out.md');
-      const { stdout, exitCode } = await target.run(
+      const { stderr, exitCode } = await target.run(
         `--debug --export-json --output-path "${metaDir}" "${path.join(FIXTURES, 'full.md')}" "${out}"`
       );
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('Metadata:');
-      expect(stdout).toContain('Exported files:');
+      expect(stderr).toContain('Metadata:');
+      expect(stderr).toContain('Exported files:');
       expect(fs.existsSync(path.join(metaDir, 'metadata.json'))).toBe(true);
     });
 

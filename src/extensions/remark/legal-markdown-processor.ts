@@ -67,6 +67,7 @@ import type { YamlValue } from '../../types';
 import { applyStringTransformations } from '../../core/pipeline/string-transformations';
 import { detectSyntaxType } from '../template-loops';
 import { parseForceCommands, applyForceCommands } from '../../core/parsers/force-commands-parser';
+import { logger } from '../../utils/logger';
 
 /**
  * Unsafe patterns for markdown serialization, excluding underscore patterns.
@@ -574,18 +575,21 @@ function createLegalMarkdownProcessor(
       });
 
       if (!result.valid && options.debug) {
-        console.warn('[LegalMarkdownProcessor] Plugin order validation warnings detected');
+        logger.warn('Plugin order validation warnings detected');
         for (const error of result.errors) {
-          console.warn(`  - ${error.message}`);
+          logger.warn(`  - ${error.message}`);
         }
         if (result.suggestedOrder) {
-          console.warn('  Suggested order:', result.suggestedOrder.join(' → '));
+          logger.warn('Suggested order', result.suggestedOrder.join(' → '));
         }
       }
     } catch (error) {
       // If validation fails, just log a warning in debug mode
       if (options.debug) {
-        console.warn('[LegalMarkdownProcessor] Plugin order validation failed:', error);
+        logger.warn(
+          'Plugin order validation failed',
+          error instanceof Error ? error.message : String(error)
+        );
       }
     }
   }
@@ -634,16 +638,13 @@ export async function processLegalMarkdown(
     fieldTracker.clear();
 
     if (options.debug) {
-      console.log('🔄 Starting Legal Markdown processing with remark pipeline');
+      logger.debug('Starting Legal Markdown processing with remark pipeline');
     }
 
     // Parse YAML front matter first
     if (options.debug) {
-      console.log('[legal-markdown-processor] Raw content length:', content.length);
-      console.log(
-        '[legal-markdown-processor] Raw content first 500 chars:',
-        content.substring(0, 500)
-      );
+      logger.debug('Raw content length', content.length);
+      logger.debug('Raw content first 500 chars', content.substring(0, 500));
     }
 
     const { content: contentWithoutYaml, metadata: yamlMetadata } = parseYamlFrontMatter(
@@ -652,8 +653,8 @@ export async function processLegalMarkdown(
     );
 
     if (options.debug) {
-      console.log('[legal-markdown-processor] YAML parsed:', Object.keys(yamlMetadata));
-      console.log('[legal-markdown-processor] Sample metadata:', yamlMetadata);
+      logger.debug('YAML parsed', Object.keys(yamlMetadata));
+      logger.debug('Sample metadata', yamlMetadata);
     }
 
     // Pre-process: Escape underscores inside {{}} to prevent markdown italic parsing
@@ -661,7 +662,7 @@ export async function processLegalMarkdown(
     const contentWithEscapedTemplates = escapeTemplateUnderscores(contentWithoutYaml);
 
     if (options.debug && contentWithEscapedTemplates !== contentWithoutYaml) {
-      console.log('[legal-markdown-processor] Escaped template underscores');
+      logger.debug('Escaped template underscores');
     }
 
     // If key processing is disabled, return original content without remark processing
@@ -669,7 +670,7 @@ export async function processLegalMarkdown(
     const keyProcessingDisabled = options.noHeaders && options.noReferences && options.noMixins;
 
     if (options.debug) {
-      console.log('[legal-markdown-processor] Processing flags:', {
+      logger.debug('Processing flags', {
         noHeaders: options.noHeaders,
         noReferences: options.noReferences,
         noMixins: options.noMixins,
@@ -680,9 +681,7 @@ export async function processLegalMarkdown(
 
     if (keyProcessingDisabled && !options.enableFieldTracking) {
       if (options.debug) {
-        console.log(
-          '[legal-markdown-processor] Key processing disabled, returning original content'
-        );
+        logger.debug('Key processing disabled, returning original content');
       }
 
       return {
@@ -732,19 +731,10 @@ export async function processLegalMarkdown(
     }
 
     if (updatedOptions.debug) {
-      console.log(
-        '[legal-markdown-processor] Combined metadata keys:',
-        Object.keys(combinedMetadata)
-      );
-      console.log('[legal-markdown-processor] Combined metadata sample:', combinedMetadata);
-      console.log(
-        '[legal-markdown-processor] Services structure:',
-        JSON.stringify(combinedMetadata.services, null, 2)
-      );
-      console.log(
-        '[legal-markdown-processor] Milestones structure:',
-        JSON.stringify(combinedMetadata.milestones, null, 2)
-      );
+      logger.debug('Combined metadata keys', Object.keys(combinedMetadata));
+      logger.debug('Combined metadata sample', combinedMetadata);
+      logger.debug('Services structure', JSON.stringify(combinedMetadata.services, null, 2));
+      logger.debug('Milestones structure', JSON.stringify(combinedMetadata.milestones, null, 2));
     }
 
     const trackingOptions = resolveTrackingOptions(updatedOptions);
@@ -756,7 +746,7 @@ export async function processLegalMarkdown(
     // This includes: field normalization, optional clauses, template loops
     // See: docs/architecture/string-transformations.md
     if (updatedOptions.debug) {
-      console.log('[legal-markdown-processor] Starting Phase 2: String Transformations');
+      logger.debug('Starting Phase 2: String Transformations');
     }
 
     const stringTransformResult = await applyStringTransformations(contentWithEscapedTemplates, {
@@ -776,12 +766,9 @@ export async function processLegalMarkdown(
     Object.assign(combinedMetadata, stringTransformResult.metadata);
 
     if (updatedOptions.debug) {
-      console.log(
-        '[legal-markdown-processor] Phase 2 complete. Content length:',
-        preprocessedContent.length
-      );
+      logger.debug('Phase 2 complete. Content length', preprocessedContent.length);
       if (preprocessedContent.includes('{{#')) {
-        console.log('[legal-markdown-processor] WARNING: Content still has {{# patterns!');
+        logger.warn('Content still has {{# patterns after Phase 2');
       }
     }
 
@@ -807,7 +794,7 @@ export async function processLegalMarkdown(
     }
 
     if (updatedOptions.debug) {
-      console.log(`📋 Using plugins: ${pluginsUsed.join(', ')}`);
+      logger.debug(`Using plugins: ${pluginsUsed.join(', ')}`);
     }
 
     // Process the content (field highlighting is now done during AST processing)
@@ -839,8 +826,8 @@ export async function processLegalMarkdown(
     };
 
     if (updatedOptions.debug && Object.keys(importedMetadata).length > 0) {
-      console.log(
-        `📦 Merged ${Object.keys(importedMetadata).length} imported metadata fields:`,
+      logger.debug(
+        `Merged ${Object.keys(importedMetadata).length} imported metadata fields`,
         Object.keys(importedMetadata)
       );
     }
@@ -889,21 +876,24 @@ export async function processLegalMarkdown(
         exportedFiles = exportResult.exportedFiles;
 
         if (updatedOptions.debug) {
-          console.log(`📁 Exported metadata files: ${exportedFiles.join(', ')}`);
+          logger.debug(`Exported metadata files: ${exportedFiles.join(', ')}`);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         warnings.push(`Failed to export metadata: ${errorMessage}`);
         if (updatedOptions.debug) {
-          console.warn('⚠️ Metadata export failed:', error);
+          logger.warn(
+            'Metadata export failed',
+            error instanceof Error ? error.message : String(error)
+          );
         }
       }
     }
 
     if (updatedOptions.debug) {
-      console.log(`✅ Processing completed in ${Date.now() - startTime}ms`);
-      console.log(`📊 Cross-references found: ${crossReferencesFound}`);
-      console.log(`📋 Fields tracked: ${fieldsTracked}`);
+      logger.debug(`Processing completed in ${Date.now() - startTime}ms`);
+      logger.debug(`Cross-references found: ${crossReferencesFound}`);
+      logger.debug(`Fields tracked: ${fieldsTracked}`);
     }
 
     return {
@@ -922,7 +912,10 @@ export async function processLegalMarkdown(
     };
   } catch (error) {
     if (options.debug) {
-      console.error('❌ Legal Markdown processing failed:', error);
+      logger.error(
+        'Legal Markdown processing failed',
+        error instanceof Error ? error.message : String(error)
+      );
     }
 
     // Re-throw with additional context

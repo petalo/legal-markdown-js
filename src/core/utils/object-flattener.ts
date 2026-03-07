@@ -39,6 +39,7 @@
  */
 
 import { ProcessingError } from '../../errors';
+import { logger } from '../../utils/logger';
 
 /**
  * Numeric typed array constructors (Issue #141)
@@ -210,7 +211,7 @@ export function flattenObject(
 
   // Circular reference detection
   if (visited.has(objRecord)) {
-    console.warn(`Circular reference detected at path '${prefix}'. Replacing with placeholder.`);
+    logger.warn(`Circular reference detected at path '${prefix}'. Replacing with placeholder.`);
     if (prefix) {
       flattened[prefix] = '[Circular Reference]';
     }

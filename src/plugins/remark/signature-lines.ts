@@ -15,6 +15,7 @@
 import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
 import type { Root, Text, HTML } from 'mdast';
+import { logger } from '../../utils/logger';
 
 /**
  * Options for the signature lines plugin
@@ -72,9 +73,7 @@ function sanitizeCssClassName(className: string): string {
   const validPattern = /^[a-zA-Z_][\w-]*$/;
 
   if (!className || !validPattern.test(className)) {
-    console.warn(
-      `[signature-lines] Invalid CSS class name "${className}", using default "signature-line"`
-    );
+    logger.warn(`Invalid CSS class name "${className}", using default "signature-line"`);
     return 'signature-line';
   }
 
@@ -108,7 +107,7 @@ const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = 
 
   return (tree: Root) => {
     if (config.debug) {
-      console.log('[signature-lines] Processing tree...');
+      logger.debug('Processing tree...');
     }
 
     visit(tree, 'text', (node: Text, index, parent) => {
@@ -125,7 +124,7 @@ const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = 
       }
 
       if (config.debug) {
-        console.log('[signature-lines] Found signature line in text:', text);
+        logger.debug('Found signature line in text:', text);
       }
 
       // If we're not adding CSS classes, leave the text as-is
@@ -136,7 +135,7 @@ const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = 
       // Process the text and wrap signature lines in HTML spans
       const processedText = text.replace(underscorePattern, match => {
         if (config.debug) {
-          console.log(`[signature-lines] Wrapping ${match.length} underscores`);
+          logger.debug(`Wrapping ${match.length} underscores`);
         }
         return `<span class="${safeCssClassName}">${match}</span>`;
       });
@@ -152,7 +151,7 @@ const remarkSignatureLines: Plugin<[SignatureLinesOptions?], Root> = (options = 
     });
 
     if (config.debug) {
-      console.log('[signature-lines] Processing complete');
+      logger.debug('Processing complete');
     }
   };
 };

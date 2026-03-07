@@ -11,15 +11,15 @@ import remarkParse from 'remark-parse';
 import { remarkDebugAST } from '../../../../src/plugins/remark/debug-ast';
 
 describe('Debug AST Plugin', () => {
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
+  let stderrSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    // Spy on console.log to capture debug output
-    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // Spy on process.stderr.write to capture debug output
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
+    stderrSpy.mockRestore();
   });
 
   // ==========================================================================
@@ -35,7 +35,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('# Test');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
     });
 
     it('should log AST debug header', async () => {
@@ -46,7 +46,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('Test content');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('=== AST DEBUG ==='));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('=== AST DEBUG ==='));
     });
 
     it('should log total node count', async () => {
@@ -57,7 +57,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('Test content');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Total nodes visited:'));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('Total nodes visited:'));
     });
 
     it('should log debug footer', async () => {
@@ -68,7 +68,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('Test content');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('=== END AST DEBUG ==='));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('=== END AST DEBUG ==='));
     });
   });
 
@@ -85,7 +85,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('{{#items}}content{{/items}}');
       await processor.run(tree);
 
-      const calls = consoleSpy.mock.calls.flat().join(' ');
+      const calls = stderrSpy.mock.calls.flat().join(' ');
       expect(calls).toContain('{{#');
     });
 
@@ -97,7 +97,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('{{#items}}content{{/items}}');
       await processor.run(tree);
 
-      const calls = consoleSpy.mock.calls.flat().join(' ');
+      const calls = stderrSpy.mock.calls.flat().join(' ');
       expect(calls).toContain('{{/');
     });
 
@@ -110,7 +110,7 @@ describe('Debug AST Plugin', () => {
       await processor.run(tree);
 
       // Should log node type
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/Node #\d+/));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringMatching(/Node #\d+/));
     });
 
     it('should ignore simple template fields without # or /', async () => {
@@ -122,7 +122,7 @@ describe('Debug AST Plugin', () => {
       await processor.run(tree);
 
       // Should not log details for simple fields (no {{# or {{/)
-      const calls = consoleSpy.mock.calls.flat();
+      const calls = stderrSpy.mock.calls.flat();
       const hasNodeDetails = calls.some(call =>
         typeof call === 'string' && call.includes('Node #') && call.includes('{{name}}')
       );
@@ -143,7 +143,7 @@ describe('Debug AST Plugin', () => {
       const tree = processor.parse('{{#items}}text{{/items}}');
       await processor.run(tree);
 
-      const calls = consoleSpy.mock.calls.flat().join(' ');
+      const calls = stderrSpy.mock.calls.flat().join(' ');
       expect(calls).toMatch(/\(text\)/);
     });
 
@@ -163,7 +163,7 @@ Paragraph with content.
       await processor.run(tree);
 
       // Should have visited multiple nodes
-      const calls = consoleSpy.mock.calls.flat();
+      const calls = stderrSpy.mock.calls.flat();
       const nodeCountCall = calls.find(call =>
         typeof call === 'string' && call.includes('Total nodes visited:')
       );
@@ -197,9 +197,9 @@ Paragraph with content.
       const tree = processor.parse(markdown);
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
 
-      const calls = consoleSpy.mock.calls.flat().join(' ');
+      const calls = stderrSpy.mock.calls.flat().join(' ');
       expect(calls).toContain('{{#');
       expect(calls).toContain('{{/');
     });
@@ -220,7 +220,7 @@ Content
       const tree = processor.parse(markdown);
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
     });
 
     it('should handle mixed content', async () => {
@@ -243,7 +243,7 @@ Another paragraph with {{variable}}.
       const tree = processor.parse(markdown);
       await processor.run(tree);
 
-      const calls = consoleSpy.mock.calls.flat();
+      const calls = stderrSpy.mock.calls.flat();
       const totalNodesCall = calls.find(call =>
         typeof call === 'string' && call.includes('Total nodes visited:')
       );
@@ -264,8 +264,8 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('=== AST DEBUG ==='));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Total nodes visited:'));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('=== AST DEBUG ==='));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('Total nodes visited:'));
     });
 
     it('should handle document with only whitespace', async () => {
@@ -276,7 +276,7 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('   \n\n   ');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
     });
 
     it('should handle very long values', async () => {
@@ -288,9 +288,9 @@ Another paragraph with {{variable}}.
       const tree = processor.parse(`{{#items}}${longContent}{{/items}}`);
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
 
-      const calls = consoleSpy.mock.calls.flat();
+      const calls = stderrSpy.mock.calls.flat();
       const lengthCall = calls.find(call =>
         typeof call === 'string' && call.includes('Full value length:')
       );
@@ -305,7 +305,7 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('{{#items}}Content with émojis 🎉{{/items}}');
       await processor.run(tree);
 
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(stderrSpy).toHaveBeenCalled();
     });
   });
 
@@ -322,8 +322,8 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('{{#items}}test{{/items}}');
       await processor.run(tree);
 
-      // Just verify console was called - exact format may vary
-      expect(consoleSpy).toHaveBeenCalled();
+      // Just verify stderr was written - exact format may vary
+      expect(stderrSpy).toHaveBeenCalled();
     });
 
     it('should log value in JSON format', async () => {
@@ -334,8 +334,8 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('{{#items}}test{{/items}}');
       await processor.run(tree);
 
-      // Just verify console was called - exact format may vary
-      expect(consoleSpy).toHaveBeenCalled();
+      // Just verify stderr was written - exact format may vary
+      expect(stderrSpy).toHaveBeenCalled();
     });
 
     it('should log full value length', async () => {
@@ -346,8 +346,8 @@ Another paragraph with {{variable}}.
       const tree = processor.parse('{{#items}}test{{/items}}');
       await processor.run(tree);
 
-      // Just verify console was called - exact format may vary
-      expect(consoleSpy).toHaveBeenCalled();
+      // Just verify stderr was written - exact format may vary
+      expect(stderrSpy).toHaveBeenCalled();
     });
   });
 });

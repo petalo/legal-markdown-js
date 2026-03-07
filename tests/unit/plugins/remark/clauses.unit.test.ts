@@ -9,6 +9,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { remarkClauses, RemarkClausesOptions } from '../../../../src/plugins/remark/clauses';
+import { logger } from '../../../../src/utils/logger';
 
 /**
  * Helper function to process markdown with clauses plugin
@@ -588,13 +589,12 @@ describe('remarkClauses Plugin', () => {
         metadata: {},
       };
 
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
 
       const result = await processMarkdownWithClauses(input, options);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Unsafe condition'),
-        expect.stringContaining("eval('1+1')")
+        expect.stringContaining('Unsafe condition')
       );
 
       // Should not include the content due to safety rejection
@@ -676,12 +676,12 @@ describe('remarkClauses Plugin', () => {
         debug: true,
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[remarkClauses] Processing clauses with metadata:'),
+        expect.stringContaining('Processing clauses with metadata:'),
         expect.any(Array)
       );
 
@@ -695,12 +695,12 @@ describe('remarkClauses Plugin', () => {
         debug: true,
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[remarkClauses] Condition'),
+        expect.stringContaining('Condition'),
         expect.anything()
       );
 
@@ -714,7 +714,7 @@ describe('remarkClauses Plugin', () => {
         debug: false,
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
 
       await processMarkdownWithClauses(input, options);
 
