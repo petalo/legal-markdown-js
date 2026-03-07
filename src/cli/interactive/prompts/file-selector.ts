@@ -17,11 +17,11 @@ import { formatWarningMessage } from '../utils/format-helpers';
 import { handleBrowseFolder, handleManualInput } from '../utils/file-input-helpers';
 
 /** Option for browsing alternative directories */
-const BROWSE_OPTION = '📁 Browse other folder...';
+const BROWSE_OPTION = 'Browse other folder...';
 /** Option for manual path entry */
-const MANUAL_OPTION = '📝 Enter path manually...';
+const MANUAL_OPTION = 'Enter path manually...';
 /** Option for exiting the application */
-const EXIT_OPTION = '❌ Exit';
+const EXIT_OPTION = 'Exit';
 
 /**
  * Check if a directory exists and is accessible
@@ -50,7 +50,7 @@ function isConfigurationValid(): boolean {
  * Show warning when configuration is missing/invalid
  */
 async function showConfigurationWarning(): Promise<void> {
-  console.log(chalk.yellow('\n⚠️  Input directory not found'));
+  console.log(chalk.yellow('\n! Input directory not found'));
   console.log(chalk.gray(`Configured path "${RESOLVED_PATHS.DEFAULT_INPUT_DIR}" does not exist.`));
   console.log(chalk.gray('You can browse a different folder or enter a path manually.\n'));
 }
@@ -65,7 +65,7 @@ async function handleFileSelection(selectedFile: string): Promise<string> {
     case MANUAL_OPTION:
       return await handleManualInput();
     case EXIT_OPTION:
-      console.log(chalk.yellow('👋 Goodbye!'));
+      console.log(chalk.yellow('Goodbye.'));
       process.exit(0);
       break; // unreachable but satisfies eslint no-fallthrough
     default:
@@ -90,7 +90,7 @@ export async function selectInputFile(): Promise<string> {
   if (!isConfigurationValid()) {
     await showConfigurationWarning();
   } else {
-    console.log(chalk.cyan(`🔍 Searching for files in: ${searchDirectory}\n`));
+    console.log(chalk.gray(`Searching: ${searchDirectory}\n`));
   }
 
   const files = scanDirectory(searchDirectory, searchDirectory);

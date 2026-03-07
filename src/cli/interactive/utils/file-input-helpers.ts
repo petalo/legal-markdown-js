@@ -15,9 +15,9 @@ import { scanDirectory, isValidFile } from './file-scanner';
 import { formatWarningMessage } from './format-helpers';
 
 /** Option for manual path entry */
-const MANUAL_OPTION = '📝 Enter path manually...';
+const MANUAL_OPTION = 'Enter path manually...';
 /** Option for exiting the application */
-const EXIT_OPTION = '❌ Exit';
+const EXIT_OPTION = 'Exit';
 
 /**
  * Handle browsing to a different folder
@@ -45,7 +45,7 @@ export async function handleBrowseFolder(): Promise<string> {
   });
 
   const resolvedPath = path.resolve(folderPath);
-  console.log(chalk.cyan(`🔍 Searching for files in: ${resolvedPath}\\n`));
+  console.log(chalk.gray(`Searching: ${resolvedPath}\n`));
 
   const files = scanDirectory(resolvedPath, resolvedPath);
 
@@ -73,7 +73,7 @@ export async function handleBrowseFolder(): Promise<string> {
   }
 
   if (selectedFile === EXIT_OPTION) {
-    console.log(chalk.yellow('👋 Goodbye!'));
+    console.log(chalk.yellow('Goodbye.'));
     process.exit(0);
   }
 

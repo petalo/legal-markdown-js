@@ -213,9 +213,7 @@ describe('File Input Helpers', () => {
       expect(select).toHaveBeenCalledWith(
         expect.objectContaining({
           choices: expect.arrayContaining([
-            expect.objectContaining({
-              name: expect.stringContaining('Enter path manually'),
-            }),
+            expect.objectContaining({ name: 'Enter path manually...' }),
           ]),
         })
       );
@@ -235,9 +233,7 @@ describe('File Input Helpers', () => {
       expect(select).toHaveBeenCalledWith(
         expect.objectContaining({
           choices: expect.arrayContaining([
-            expect.objectContaining({
-              name: expect.stringContaining('Exit'),
-            }),
+            expect.objectContaining({ name: 'Exit' }),
           ]),
         })
       );
@@ -256,7 +252,7 @@ describe('File Input Helpers', () => {
       ] as any);
 
       // Select manual option
-      vi.mocked(select).mockResolvedValue('📝 Enter path manually...');
+      vi.mocked(select).mockResolvedValue('Enter path manually...');
       vi.mocked(isValidFile).mockReturnValue(true);
 
       const result = await handleBrowseFolder();
@@ -273,7 +269,7 @@ describe('File Input Helpers', () => {
         { name: 'file.md', path: '/test/file.md' },
       ] as any);
 
-      vi.mocked(select).mockResolvedValue('❌ Exit');
+      vi.mocked(select).mockResolvedValue('Exit');
 
       await handleBrowseFolder();
 
