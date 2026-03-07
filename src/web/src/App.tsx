@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Scale, Play, Download, Printer, BarChart2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -66,12 +67,14 @@ export default function App() {
     error,
     processNow,
     downloadContent,
+    downloadDocx,
     printDocument,
     copyContent,
   } = useLegalMarkdown();
 
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [currentCSSPresetKey, setCurrentCSSPresetKey] = useState(DEFAULT_CSS_KEY);
+  const [isDocxLoading, setIsDocxLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'rendered' | 'markdown' | 'html' | 'html-doc'>(
     'rendered'
   );
@@ -118,6 +121,22 @@ export default function App() {
     const { content } = getTabContent();
     if (content) await copyContent(content);
   }, [getTabContent, copyContent]);
+
+  const handleDownloadDocx = useCallback(async () => {
+    if (!result || !bodyHtml) return;
+    setIsDocxLoading(true);
+    try {
+      const title = (result.metadata?.title as string) || 'legal-document';
+      const effectiveCss = ensureHighlightCss(customCSS, Boolean(options.enableFieldTracking));
+      await downloadDocx(bodyHtml, effectiveCss, title);
+    } catch (err) {
+      toast.error('DOCX generation failed', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsDocxLoading(false);
+    }
+  }, [result, bodyHtml, customCSS, options.enableFieldTracking, downloadDocx]);
 
   const handleExampleChange = useCallback(
     (key: string) => {
@@ -268,6 +287,27 @@ export default function App() {
                   <IconButton label="Print document" onClick={printDocument} disabled={!result}>
                     <Printer className="h-4 w-4" />
                   </IconButton>
+                  <Separator orientation="vertical" className="h-5 bg-slate-700 mx-0.5" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDownloadDocx}
+                    disabled={!result || isDocxLoading}
+                    className="h-7 text-xs cursor-pointer text-slate-300 hover:text-slate-100 px-2"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    {isDocxLoading ? '...' : '.docx'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={printDocument}
+                    disabled={!result}
+                    className="h-7 text-xs cursor-pointer text-slate-300 hover:text-slate-100 px-2"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    .pdf
+                  </Button>
                   <Separator orientation="vertical" className="h-5 bg-slate-700 mx-0.5" />
                   <OptionsPopover options={options} onChange={setOptions} />
                   <Separator orientation="vertical" className="h-5 bg-slate-700 mx-0.5" />
