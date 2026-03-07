@@ -1,0 +1,138 @@
+# Legal Markdown JS
+
+TypeScript/Node.js implementation of LegalMarkdown for processing legal document templates written in Markdown with YAML frontmatter.
+
+## Overview
+
+- Converts Legal Markdown into processed Markdown, HTML, PDF, DOCX, and metadata exports.
+- Targets legal and structured business documents that need automatic numbering, templating, conditional clauses, imports, and review highlighting.
+- Exposes both a CLI (`legal-md`, `legal-md-ui`, `legal-md-playground`) and a programmatic TypeScript API.
+
+## Core Capabilities
+
+- Parse YAML frontmatter and expose values to templates.
+- Replace variables and evaluate helper functions inside `{{ ... }}` expressions.
+- Process legal headers such as `l.`, `ll.`, `lll.` with automatic numbering and indentation.
+- Render conditional content with bracket syntax and Handlebars-style blocks.
+- Resolve cross-references between sections.
+- Import partial Markdown files with recursive processing and frontmatter merging.
+- Generate HTML, PDF, and DOCX outputs, including highlighted review variants.
+- Track substituted fields and logic branches for document review/debugging.
+- Export merged metadata as YAML or JSON.
+- Support batch and interactive CLI workflows.
+
+## Key Concepts
+
+- Frontmatter: documents typically start with YAML metadata between `---` markers.
+- Variables and helpers: use `{{field}}`, nested paths like `{{client.name}}`, and helper calls such as `{{formatCurrency(amount, currency)}}`.
+- Headers: legal hierarchy uses repeated `l` markers (`l.` to `lllllllll.`) for up to 9 levels.
+- Conditional clauses:
+  - `[content]{condition}`
+  - `{{#if condition}}...{{else}}...{{/if}}`
+  - `{{#variable}}...{{/variable}}`
+- Imports: use `@import path/to/file.md` or quoted paths like `@import "clauses/standard terms.md"`.
+- Cross-references: use pipe-based references such as `|reference|` to link sections after numbering is resolved.
+- Frontmatter merging: imported files can contribute metadata; the source document keeps precedence on conflicts.
+- Field tracking: HTML/PDF/DOCX flows can annotate substituted fields and winning logic branches for review output.
+
+## CLI / API
+
+- CLI basic usage: `legal-md [options] [input] [output]`
+- Common CLI outputs:
+  - `legal-md input.md output.md`
+  - `legal-md input.md --html`
+  - `legal-md input.md --pdf`
+  - `legal-md input.md --docx`
+  - `cat input.md | legal-md --stdin --stdout`
+- Important CLI flags:
+  - Processing: `--no-headers`, `--no-clauses`, `--no-references`, `--no-imports`, `--no-mixins`
+  - Review/debug: `--enable-field-tracking`, `--ast-field-tracking`, `--logic-branch-highlighting`, `--debug`
+  - Output: `--html`, `--pdf`, `--docx`, `--highlight`, `--export-yaml`, `--export-json`
+  - PDF backend: `--pdf-connector auto|puppeteer|system-chrome|weasyprint`
+- Main library exports:
+  - `processLegalMarkdown(content, options)`
+  - `generateHtml(content, options)`
+  - `generatePdf(content, outputPath, options)`
+  - `generatePdfVersions(content, outputPath, options)`
+  - `generateDocx(content, outputPath, options)`
+  - `generateDocxVersions(content, outputPath, options)`
+
+## Documentation
+
+- Docs index: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/README.md
+- Getting started: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/getting_started.md
+- CLI reference: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/cli_reference.md
+- Features index: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/README.md
+- YAML frontmatter: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/yaml-frontmatter.md
+- Headers and numbering: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/headers-numbering.md
+- Cross-references: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/cross-references.md
+- Optional clauses: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/optional-clauses.md
+- Conditionals: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/conditionals.md
+- Partial imports: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/partial-imports.md
+- Variables and mixins: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/mixins-variables.md
+- Template loops: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/template-loops.md
+- Date processing: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/date-processing.md
+- Force commands: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/features/force-commands.md
+- Helpers index: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/helpers/README.md
+- Date helpers: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/helpers/date-helpers.md
+- Number helpers: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/helpers/number-helpers.md
+- String helpers: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/helpers/string-helpers.md
+- Math helpers: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/helpers/math-helpers.md
+- Output formats index: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/README.md
+- PDF generation: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/pdf-generation.md
+- HTML generation: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/html-generation.md
+- DOCX generation: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/docx-generation.md
+- Field highlighting: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/field-highlighting.md
+- CSS classes: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/output/css-classes.md
+- Advanced topics: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/advanced/README.md
+- Configuration: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/advanced/configuration.md
+- Batch processing: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/advanced/batch-processing.md
+- Best practices: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/advanced/best-practices.md
+- Processing pipeline: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/processing/README.md
+- Field tracking internals: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/processing/field-tracking.md
+- Architecture overview: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/ARCHITECTURE.md
+- Security notes: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/reference/security.md
+- Troubleshooting: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/docs/reference/troubleshooting.md
+
+## Examples
+
+- Examples index: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/README.md
+- Basic processing walkthrough: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/basic-processing/simple-document/README.md
+- Basic input document: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/basic-processing/simple-document/input.md
+- YAML frontmatter example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/basic-processing/yaml-frontmatter/README.md
+- CLI usage examples: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/integration/cli-usage/README.md
+- Cross-references example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/cross-references/basic-references/README.md
+- Optional clauses example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/optional-clauses/conditional-content/README.md
+- Boolean logic example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/optional-clauses/boolean-logic/README.md
+- Helper functions example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/mixins/helper-functions/README.md
+- Template loops example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/mixins/template-loops/README.md
+- Partial imports example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/imports/partial-imports/README.md
+- Frontmatter merging example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/imports/frontmatter-merging/README.md
+- PDF generation example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/output-formats/pdf-generation/README.md
+- Metadata export example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/output-formats/metadata-export/README.md
+- Advanced NDA example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/advanced/complex-nda/README.md
+- Advanced lease example: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/examples/advanced/office-lease-complete/README.md
+
+## Source Code
+
+- Package metadata: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/package.json
+- Public API entrypoint: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/index.ts
+- CLI entrypoint: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/cli/main.ts
+- CLI service: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/cli/service.ts
+- Interactive CLI: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/cli/interactive/service.ts
+- Core pipeline directory: https://github.com/petalo/legal-markdown-js/tree/main/src/core/pipeline
+- Remark processor: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/extensions/remark/legal-markdown-processor.ts
+- Remark plugins directory: https://github.com/petalo/legal-markdown-js/tree/main/src/plugins/remark
+- Generators directory: https://github.com/petalo/legal-markdown-js/tree/main/src/extensions/generators
+- PDF connector resolver: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/extensions/generators/pdf-connectors/resolver.ts
+- Types: https://raw.githubusercontent.com/petalo/legal-markdown-js/main/src/types.ts
+- Web playground app: https://github.com/petalo/legal-markdown-js/tree/main/src/web
+
+## Notes for AI Agents
+
+- Prefer the docs in `docs/features/` and `docs/helpers/` for syntax details; the README is only the top-level overview.
+- For CLI behavior, treat `docs/cli_reference.md` as the canonical option list.
+- For template syntax, expect a mix of LegalMarkdown-specific constructs (`l.`, `@import`, bracket clauses) and Handlebars-style constructs (`{{field}}`, `{{#if}}`).
+- For output generation, HTML/PDF/DOCX may enable field tracking automatically even when clean Markdown output does not.
+- For import behavior, remember that metadata from imported files merges into the main document, but the source document wins on conflicts.
+- For source-level reasoning, the processing path centers on the remark pipeline and plugins under `src/extensions/remark/` and `src/plugins/remark/`.
