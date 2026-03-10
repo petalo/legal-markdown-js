@@ -223,6 +223,7 @@
     "@puppeteer/browsers": "^2.13.0",
     "puppeteer": "^24.37.5"
   },
+  "bundleDependencies": ["commander", "chalk", "@inquirer/prompts"],
   "puppeteer": {
     "skipDownload": true,
     "cacheDirectory": "~/.cache/puppeteer-global"
